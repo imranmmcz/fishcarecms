@@ -67,7 +67,7 @@ const modules = [
     description: "মাছ চাষের সম্পূর্ণ খরচ এবং লাভ-ক্ষতির হিসাব করুন",
     icon: DollarSign,
     path: "/cost-calculator",
-    isActive: false,
+    isActive: true,
   },
   {
     id: 9,
