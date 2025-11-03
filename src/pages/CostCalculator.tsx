@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DollarSign, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Info, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface CostItem {
@@ -67,8 +67,12 @@ const CostCalculator = () => {
 
   // আয়
   const [income, setIncome] = useState({
-    fishWeight: "",
-    pricePerKg: "",
+    fishSalesWeight: "",
+    fishPricePerKg: "",
+    oldNetSales: "",
+    pondLease: "",
+    byProducts: "",
+    otherIncome: "",
   });
 
   const [result, setResult] = useState<any>(null);
@@ -127,9 +131,24 @@ const CostCalculator = () => {
                      totalMedicineCost + totalLaborCost + totalUtilityCost + totalOtherCost;
 
     // আয়
-    const fishWeight = parseFloat(income.fishWeight) || 0;
-    const fishPrice = parseFloat(income.pricePerKg) || 0;
-    const totalIncome = fishWeight * fishPrice;
+    const fishSalesWeight = parseFloat(income.fishSalesWeight) || 0;
+    const fishPricePerKg = parseFloat(income.fishPricePerKg) || 0;
+    const fishSalesIncome = fishSalesWeight * fishPricePerKg;
+    const oldNetSales = parseFloat(income.oldNetSales) || 0;
+    const pondLease = parseFloat(income.pondLease) || 0;
+    const byProducts = parseFloat(income.byProducts) || 0;
+    const otherIncome = parseFloat(income.otherIncome) || 0;
+    
+    const totalIncome = fishSalesIncome + oldNetSales + pondLease + byProducts + otherIncome;
+
+    // আয়ের বিস্তারিত
+    const incomeBreakdown = [
+      { name: "মাছ বিক্রয়", amount: fishSalesIncome, percentage: totalIncome > 0 ? (fishSalesIncome / totalIncome) * 100 : 0 },
+      { name: "পুরাতন জাল/সরঞ্জাম বিক্রয়", amount: oldNetSales, percentage: totalIncome > 0 ? (oldNetSales / totalIncome) * 100 : 0 },
+      { name: "পুকুর ভাড়া/লিজ", amount: pondLease, percentage: totalIncome > 0 ? (pondLease / totalIncome) * 100 : 0 },
+      { name: "উপজাত বিক্রয়", amount: byProducts, percentage: totalIncome > 0 ? (byProducts / totalIncome) * 100 : 0 },
+      { name: "অন্যান্য আয়", amount: otherIncome, percentage: totalIncome > 0 ? (otherIncome / totalIncome) * 100 : 0 },
+    ];
 
     // লাভ/ক্ষতি
     const profitLoss = totalIncome - totalCost;
@@ -146,13 +165,24 @@ const CostCalculator = () => {
       { name: "অন্যান্য", amount: totalOtherCost, percentage: (totalOtherCost / totalCost) * 100 },
     ];
 
+    // ROI (Return on Investment)
+    const roi = totalCost > 0 ? ((profitLoss / totalCost) * 100) : 0;
+    
+    // Cost per kg of fish
+    const costPerKg = fishSalesWeight > 0 ? (totalCost / fishSalesWeight) : 0;
+    const revenuePerKg = fishSalesWeight > 0 ? (totalIncome / fishSalesWeight) : 0;
+
     setResult({
       costBreakdown,
+      incomeBreakdown,
       totalCost,
       totalIncome,
       profitLoss,
       profitMargin,
       isProfitable: profitLoss > 0,
+      roi,
+      costPerKg,
+      revenuePerKg,
     });
   };
 
@@ -493,36 +523,78 @@ const CostCalculator = () => {
             </Card>
 
             {/* আয় */}
-            <Card>
+            <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle>৮. আয় হিসাব</CardTitle>
-                <CardDescription>মাছ বিক্রয় থেকে আয়</CardDescription>
+                <CardTitle>৮. আয়ের হিসাব</CardTitle>
+                <CardDescription>সকল খাত থেকে আয়ের বিস্তারিত</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fishWeight">মোট মাছের ওজন (কেজি)</Label>
-                  <Input
-                    id="fishWeight"
-                    type="number"
-                    placeholder="যেমন: 1500"
-                    value={income.fishWeight}
-                    onChange={(e) => setIncome({...income, fishWeight: e.target.value})}
-                  />
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fishSalesWeight">মাছ বিক্রয় - মোট ওজন (কেজি)</Label>
+                    <Input
+                      id="fishSalesWeight"
+                      type="number"
+                      placeholder="যেমন: 1500"
+                      value={income.fishSalesWeight}
+                      onChange={(e) => setIncome({...income, fishSalesWeight: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fishPricePerKg">মাছের দাম (প্রতি কেজি টাকা)</Label>
+                    <Input
+                      id="fishPricePerKg"
+                      type="number"
+                      placeholder="যেমন: 200"
+                      value={income.fishPricePerKg}
+                      onChange={(e) => setIncome({...income, fishPricePerKg: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="oldNetSales">পুরাতন জাল/সরঞ্জাম বিক্রয় (টাকা)</Label>
+                    <Input
+                      id="oldNetSales"
+                      type="number"
+                      placeholder="0"
+                      value={income.oldNetSales}
+                      onChange={(e) => setIncome({...income, oldNetSales: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pondLease">পুকুর ভাড়া/লিজ আয় (টাকা)</Label>
+                    <Input
+                      id="pondLease"
+                      type="number"
+                      placeholder="0"
+                      value={income.pondLease}
+                      onChange={(e) => setIncome({...income, pondLease: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="byProducts">উপজাত বিক্রয় (কাদা, গোবর ইত্যাদি) (টাকা)</Label>
+                    <Input
+                      id="byProducts"
+                      type="number"
+                      placeholder="0"
+                      value={income.byProducts}
+                      onChange={(e) => setIncome({...income, byProducts: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="otherIncome">অন্যান্য আয় (টাকা)</Label>
+                    <Input
+                      id="otherIncome"
+                      type="number"
+                      placeholder="0"
+                      value={income.otherIncome}
+                      onChange={(e) => setIncome({...income, otherIncome: e.target.value})}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fishPrice">প্রতি কেজি মাছের দাম (টাকা)</Label>
-                  <Input
-                    id="fishPrice"
-                    type="number"
-                    placeholder="যেমন: 200"
-                    value={income.pricePerKg}
-                    onChange={(e) => setIncome({...income, pricePerKg: e.target.value})}
-                  />
-                </div>
-                {income.fishWeight && income.pricePerKg && (
-                  <Alert className="bg-green-50 border-green-200">
+                {income.fishSalesWeight && income.fishPricePerKg && (
+                  <Alert className="bg-green-50 border-green-200 mt-4">
                     <AlertDescription className="text-green-800">
-                      মোট আয়: <strong>৳{(parseFloat(income.fishWeight) * parseFloat(income.pricePerKg)).toFixed(2)}</strong>
+                      মাছ বিক্রয় থেকে আয়: <strong>৳{(parseFloat(income.fishSalesWeight) * parseFloat(income.fishPricePerKg)).toFixed(2)}</strong>
                     </AlertDescription>
                   </Alert>
                 )}
@@ -537,7 +609,13 @@ const CostCalculator = () => {
 
           {result && (
             <div className="space-y-6">
-              {/* সারসংক্ষেপ */}
+              {/* আর্থিক ড্যাশবোর্ড - সারসংক্ষেপ */}
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-foreground mb-2">আর্থিক ড্যাশবোর্ড</h2>
+                <p className="text-muted-foreground">খামারের সম্পূর্ণ আয়-ব্যয় এবং লাভজনকতা বিশ্লেষণ</p>
+              </div>
+
+              {/* প্রধান সংখ্যা */}
               <Card className={`border-2 ${result.isProfitable ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
                 <CardHeader>
                   <div className="flex items-center gap-2">
@@ -547,71 +625,188 @@ const CostCalculator = () => {
                       <TrendingDown className="h-6 w-6 text-red-600" />
                     )}
                     <CardTitle className={result.isProfitable ? 'text-green-800' : 'text-red-800'}>
-                      {result.isProfitable ? 'লাভজনক' : 'ক্ষতি'}
+                      {result.isProfitable ? '✓ লাভজনক খামার' : '✗ ক্ষতিগ্রস্ত খামার'}
                     </CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-5 gap-4">
                     <div className="bg-background rounded-lg p-4">
                       <div className="text-sm text-muted-foreground mb-1">মোট খরচ</div>
-                      <div className="text-2xl font-bold text-red-600">৳{result.totalCost.toFixed(2)}</div>
+                      <div className="text-2xl font-bold text-red-600">৳{result.totalCost.toLocaleString('bn-BD')}</div>
                     </div>
                     <div className="bg-background rounded-lg p-4">
                       <div className="text-sm text-muted-foreground mb-1">মোট আয়</div>
-                      <div className="text-2xl font-bold text-green-600">৳{result.totalIncome.toFixed(2)}</div>
+                      <div className="text-2xl font-bold text-green-600">৳{result.totalIncome.toLocaleString('bn-BD')}</div>
                     </div>
                     <div className="bg-background rounded-lg p-4">
                       <div className="text-sm text-muted-foreground mb-1">নিট লাভ/ক্ষতি</div>
                       <div className={`text-2xl font-bold ${result.isProfitable ? 'text-green-600' : 'text-red-600'}`}>
-                        ৳{result.profitLoss.toFixed(2)}
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        মার্জিন: {result.profitMargin.toFixed(2)}%
+                        {result.isProfitable ? '+' : ''}৳{result.profitLoss.toLocaleString('bn-BD')}
                       </div>
                     </div>
+                    <div className="bg-background rounded-lg p-4">
+                      <div className="text-sm text-muted-foreground mb-1">লাভের মার্জিন</div>
+                      <div className={`text-2xl font-bold ${result.isProfitable ? 'text-green-600' : 'text-red-600'}`}>
+                        {result.profitMargin.toFixed(1)}%
+                      </div>
+                    </div>
+                    <div className="bg-background rounded-lg p-4">
+                      <div className="text-sm text-muted-foreground mb-1">ROI</div>
+                      <div className={`text-2xl font-bold ${result.roi > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {result.roi > 0 ? '+' : ''}{result.roi.toFixed(1)}%
+                      </div>
+                      <div className="text-xs text-muted-foreground">বিনিয়োগ রিটার্ন</div>
+                    </div>
+                  </div>
+                  
+                  {result.costPerKg > 0 && (
+                    <div className="grid md:grid-cols-2 gap-4 mt-4">
+                      <div className="bg-background rounded-lg p-3">
+                        <div className="text-sm text-muted-foreground">প্রতি কেজি উৎপাদন খরচ</div>
+                        <div className="text-xl font-bold text-foreground">৳{result.costPerKg.toFixed(2)}</div>
+                      </div>
+                      <div className="bg-background rounded-lg p-3">
+                        <div className="text-sm text-muted-foreground">প্রতি কেজি বিক্রয় মূল্য</div>
+                        <div className="text-xl font-bold text-foreground">৳{result.revenuePerKg.toFixed(2)}</div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* খরচ এবং আয়ের তুলনামূলক বিশ্লেষণ */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* খরচের বিস্তারিত */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-red-600">খরচের বিস্তারিত বিশ্লেষণ</CardTitle>
+                    <CardDescription>মোট খরচ: ৳{result.totalCost.toLocaleString('bn-BD')}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {result.costBreakdown
+                      .filter((item: any) => item.amount > 0)
+                      .map((item: any, index: number) => (
+                      <div key={index}>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-foreground">{item.name}</span>
+                          <div className="text-right">
+                            <div className="text-sm font-bold text-foreground">৳{item.amount.toLocaleString('bn-BD')}</div>
+                            <div className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}%</div>
+                          </div>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-red-500 h-2 rounded-full transition-all"
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </div>
+                        {index < result.costBreakdown.filter((i: any) => i.amount > 0).length - 1 && <Separator className="mt-3" />}
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* আয়ের বিস্তারিত */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-green-600">আয়ের বিস্তারিত বিশ্লেষণ</CardTitle>
+                    <CardDescription>মোট আয়: ৳{result.totalIncome.toLocaleString('bn-BD')}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {result.incomeBreakdown
+                      .filter((item: any) => item.amount > 0)
+                      .map((item: any, index: number) => (
+                      <div key={index}>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-foreground">{item.name}</span>
+                          <div className="text-right">
+                            <div className="text-sm font-bold text-foreground">৳{item.amount.toLocaleString('bn-BD')}</div>
+                            <div className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}%</div>
+                          </div>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-green-500 h-2 rounded-full transition-all"
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </div>
+                        {index < result.incomeBreakdown.filter((i: any) => i.amount > 0).length - 1 && <Separator className="mt-3" />}
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* পরামর্শ এবং কর্মপরিকল্পনা */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>বিশেষজ্ঞ পরামর্শ এবং কর্মপরিকল্পনা</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {result.isProfitable ? (
+                    <>
+                      <Alert className="bg-green-50 border-green-200">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <AlertDescription className="text-green-800">
+                          <strong>অভিনন্দন!</strong> আপনার খামার লাভজনক অবস্থায় আছে। ROI {result.roi.toFixed(1)}% যা ভালো বিনিয়োগ নির্দেশ করে।
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <div className="space-y-2 text-sm">
+                        <h4 className="font-semibold text-foreground">লাভজনকতা আরও বৃদ্ধির উপায়:</h4>
+                        <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                          <li>খাদ্য রূপান্তর হার (FCR) উন্নত করে খাদ্য খরচ ১০-১৫% কমান</li>
+                          <li>পানির গুণমান সঠিক রেখে ঔষধ খরচ কমান</li>
+                          <li>উচ্চমূল্যের মাছের জাত চাষ করে আয় বৃদ্ধি করুন</li>
+                          <li>মজুদ ঘনত্ব সঠিক রেখে প্রতি হেক্টরে উৎপাদন বাড়ান</li>
+                          <li>পুকুরের উপজাত (কাদা, জৈব সার) বিক্রয় করে অতিরিক্ত আয় করুন</li>
+                        </ul>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Alert className="bg-red-50 border-red-200">
+                        <AlertTriangle className="h-4 w-4 text-red-600" />
+                        <AlertDescription className="text-red-800">
+                          <strong>সতর্কতা!</strong> আপনার খামারে ক্ষতি হচ্ছে (৳{Math.abs(result.profitLoss).toLocaleString('bn-BD')})। জরুরি পদক্ষেপ প্রয়োজন।
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <div className="space-y-2 text-sm">
+                        <h4 className="font-semibold text-foreground">ক্ষতি কমানোর জরুরি পদক্ষেপ:</h4>
+                        <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                          {result.costBreakdown.find((item: any) => item.name === "খাদ্য" && item.percentage > 50) && (
+                            <li><strong>খাদ্য খরচ অতিরিক্ত ({result.costBreakdown.find((item: any) => item.name === "খাদ্য")?.percentage.toFixed(1)}%):</strong> FCR পরীক্ষা করুন, খাদ্যের মান যাচাই করুন</li>
+                          )}
+                          {result.costBreakdown.find((item: any) => item.name === "পোনা ক্রয়" && item.percentage > 25) && (
+                            <li><strong>পোনা খরচ বেশি ({result.costBreakdown.find((item: any) => item.name === "পোনা ক্রয়")?.percentage.toFixed(1)}%):</strong> স্থানীয় হ্যাচারি থেকে কম দামে মানসম্পন্ন পোনা সংগ্রহ করুন</li>
+                          )}
+                          {result.revenuePerKg < result.costPerKg && (
+                            <li><strong>বিক্রয়মূল্য কম:</strong> উৎপাদন খরচ (৳{result.costPerKg.toFixed(2)}/কেজি) থেকে কম দামে (৳{result.revenuePerKg.toFixed(2)}/কেজি) বিক্রয় হচ্ছে। বাজার যাচাই করুন</li>
+                          )}
+                          <li>শ্রম খরচ কমাতে অটোমেশন (অটো ফিডার, টাইমার) ব্যবহার করুন</li>
+                          <li>বিদ্যুৎ খরচ কমাতে সৌর প্যানেল ব্যবহার বিবেচনা করুন</li>
+                          <li>পরবর্তী চক্রে মজুদ ঘনত্ব এবং খাদ্য ব্যবস্থাপনা পুনর্মূল্যায়ন করুন</li>
+                        </ul>
+                      </div>
+                    </>
+                  )}
+
+                  <Separator />
+                  
+                  <div className="space-y-2 text-sm">
+                    <h4 className="font-semibold text-foreground">সাধারণ পরামর্শ:</h4>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                      <li>প্রতিদিন খরচ এবং আয়ের হিসাব রাখুন</li>
+                      <li>পানির গুণমান নিয়মিত পরীক্ষা করুন (pH, DO, NH₃)</li>
+                      <li>মাছের স্বাস্থ্য পর্যবেক্ষণ করুন এবং রোগ প্রতিরোধে সচেষ্ট থাকুন</li>
+                      <li>বাজার দর নিয়মিত জেনে রাখুন এবং সঠিক সময়ে মাছ বিক্রয় করুন</li>
+                      <li>অভিজ্ঞ মৎস্য চাষী এবং বিশেষজ্ঞদের পরামর্শ নিন</li>
+                    </ul>
                   </div>
                 </CardContent>
               </Card>
-
-              {/* খরচের বিস্তারিত */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>খরচের বিস্তারিত বিশ্লেষণ</CardTitle>
-                  <CardDescription>প্রতিটি ক্ষেত্রে খরচের হিসাব এবং শতাংশ</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {result.costBreakdown.map((item: any, index: number) => (
-                    <div key={index}>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-foreground">{item.name}</span>
-                        <div className="text-right">
-                          <div className="text-sm font-bold text-foreground">৳{item.amount.toFixed(2)}</div>
-                          <div className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}%</div>
-                        </div>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full transition-all"
-                          style={{ width: `${item.percentage}%` }}
-                        />
-                      </div>
-                      {index < result.costBreakdown.length - 1 && <Separator className="mt-3" />}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* পরামর্শ */}
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>পরামর্শ:</strong> {result.isProfitable 
-                    ? 'খামার লাভজনক চলছে। বর্তমান ব্যবস্থাপনা অব্যাহত রাখুন। খাদ্য খরচ কমাতে FCR উন্নত করুন।'
-                    : 'খামারে ক্ষতি হচ্ছে। খাদ্য খরচ, শ্রম খরচ কমানো এবং বিক্রয় মূল্য বৃদ্ধির দিকে মনোযোগ দিন।'
-                  }
-                </AlertDescription>
-              </Alert>
             </div>
           )}
         </div>
