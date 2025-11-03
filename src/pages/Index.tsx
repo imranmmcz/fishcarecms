@@ -51,7 +51,7 @@ const modules = [
     description: "পুকুরের উৎপাদনশীলতা বাড়াতে সঠিক সার প্রয়োগ করুন",
     icon: TrendingUp,
     path: "/fertilizer-calculator",
-    isActive: false,
+    isActive: true,
   },
   {
     id: 7,
@@ -59,7 +59,7 @@ const modules = [
     description: "পানির pH, অক্সিজেন এবং অন্যান্য পরামিতি পরীক্ষা করুন",
     icon: Droplets,
     path: "/water-quality",
-    isActive: false,
+    isActive: true,
   },
   {
     id: 8,
