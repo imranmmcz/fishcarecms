@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DollarSign, TrendingUp, TrendingDown, Info, CheckCircle2, AlertTriangle } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Info, CheckCircle2, AlertTriangle, Save } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { toast } from "@/hooks/use-toast";
 
 interface CostItem {
   name: string;
@@ -76,6 +78,64 @@ const CostCalculator = () => {
   });
 
   const [result, setResult] = useState<any>(null);
+
+  // Calculate totals in real-time
+  const getTotalExpenses = () => {
+    const prepCost = 
+      (parseFloat(pondPreparation.lime) || 0) +
+      (parseFloat(pondPreparation.urea) || 0) +
+      (parseFloat(pondPreparation.tsp) || 0) +
+      (parseFloat(pondPreparation.cowdung) || 0) +
+      (parseFloat(pondPreparation.labor) || 0) +
+      (parseFloat(pondPreparation.pondDigging) || 0);
+    
+    const fingerlingsCost = (parseFloat(fingerlings.quantity) || 0) * (parseFloat(fingerlings.pricePerPiece) || 0);
+    const feedTotal = (parseFloat(feedCost.totalFeed) || 0) * (parseFloat(feedCost.pricePerKg) || 0);
+    
+    const medicineCostTotal = 
+      (parseFloat(medicineCost.disinfectant) || 0) +
+      (parseFloat(medicineCost.antibiotics) || 0) +
+      (parseFloat(medicineCost.probiotics) || 0) +
+      (parseFloat(medicineCost.vitamins) || 0);
+    
+    const laborTotal = 
+      ((parseFloat(laborCost.dailyWage) || 0) * (parseFloat(laborCost.numberOfDays) || 0)) +
+      (parseFloat(laborCost.permanentLabor) || 0);
+    
+    const utilityTotal = (parseFloat(utilityCost.electricity) || 0) + (parseFloat(utilityCost.diesel) || 0);
+    
+    const otherTotal = 
+      (parseFloat(otherCost.netEquipment) || 0) +
+      (parseFloat(otherCost.waterPump) || 0) +
+      (parseFloat(otherCost.aerator) || 0) +
+      (parseFloat(otherCost.miscellaneous) || 0);
+    
+    return prepCost + fingerlingsCost + feedTotal + medicineCostTotal + laborTotal + utilityTotal + otherTotal;
+  };
+
+  const getTotalIncome = () => {
+    const fishSales = (parseFloat(income.fishSalesWeight) || 0) * (parseFloat(income.fishPricePerKg) || 0);
+    const oldNetSales = parseFloat(income.oldNetSales) || 0;
+    const pondLease = parseFloat(income.pondLease) || 0;
+    const byProducts = parseFloat(income.byProducts) || 0;
+    const otherIncome = parseFloat(income.otherIncome) || 0;
+    
+    return fishSales + oldNetSales + pondLease + byProducts + otherIncome;
+  };
+
+  const handleSaveExpenses = () => {
+    toast({
+      title: "ব্যয় সংরক্ষিত হয়েছে",
+      description: `মোট ব্যয়: ৳${getTotalExpenses().toLocaleString('bn-BD')}`,
+    });
+  };
+
+  const handleSaveIncome = () => {
+    toast({
+      title: "আয় সংরক্ষিত হয়েছে",
+      description: `মোট আয়: ৳${getTotalIncome().toLocaleString('bn-BD')}`,
+    });
+  };
 
   const calculateCost = () => {
     // পুকুর প্রস্তুতি খরচ
@@ -207,404 +267,456 @@ const CostCalculator = () => {
             </AlertDescription>
           </Alert>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* পুকুর প্রস্তুতি খরচ */}
-            <Card>
-              <CardHeader>
-                <CardTitle>১. পুকুর প্রস্তুতি খরচ</CardTitle>
-                <CardDescription>চুন, সার এবং পুকুর মেরামত</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="lime">চুন (টাকা)</Label>
-                  <Input
-                    id="lime"
-                    type="number"
-                    placeholder="0"
-                    value={pondPreparation.lime}
-                    onChange={(e) => setPondPreparation({...pondPreparation, lime: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="urea">ইউরিয়া (টাকা)</Label>
-                  <Input
-                    id="urea"
-                    type="number"
-                    placeholder="0"
-                    value={pondPreparation.urea}
-                    onChange={(e) => setPondPreparation({...pondPreparation, urea: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tsp">টিএসপি (টাকা)</Label>
-                  <Input
-                    id="tsp"
-                    type="number"
-                    placeholder="0"
-                    value={pondPreparation.tsp}
-                    onChange={(e) => setPondPreparation({...pondPreparation, tsp: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cowdung">গোবর (টাকা)</Label>
-                  <Input
-                    id="cowdung"
-                    type="number"
-                    placeholder="0"
-                    value={pondPreparation.cowdung}
-                    onChange={(e) => setPondPreparation({...pondPreparation, cowdung: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="prepLabor">প্রস্তুতি শ্রমিক (টাকা)</Label>
-                  <Input
-                    id="prepLabor"
-                    type="number"
-                    placeholder="0"
-                    value={pondPreparation.labor}
-                    onChange={(e) => setPondPreparation({...pondPreparation, labor: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="digging">পুকুর খনন/মেরামত (টাকা)</Label>
-                  <Input
-                    id="digging"
-                    type="number"
-                    placeholder="0"
-                    value={pondPreparation.pondDigging}
-                    onChange={(e) => setPondPreparation({...pondPreparation, pondDigging: e.target.value})}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* পোনা ক্রয় খরচ */}
-            <Card>
-              <CardHeader>
-                <CardTitle>২. পোনা ক্রয় খরচ</CardTitle>
-                <CardDescription>পোনার সংখ্যা এবং দাম</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fingerlingsQty">পোনার সংখ্যা</Label>
-                  <Input
-                    id="fingerlingsQty"
-                    type="number"
-                    placeholder="যেমন: 5000"
-                    value={fingerlings.quantity}
-                    onChange={(e) => setFingerlings({...fingerlings, quantity: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fingerlingsPrice">প্রতি পোনার দাম (টাকা)</Label>
-                  <Input
-                    id="fingerlingsPrice"
-                    type="number"
-                    placeholder="যেমন: 2.5"
-                    value={fingerlings.pricePerPiece}
-                    onChange={(e) => setFingerlings({...fingerlings, pricePerPiece: e.target.value})}
-                  />
-                </div>
-                {fingerlings.quantity && fingerlings.pricePerPiece && (
-                  <Alert>
-                    <AlertDescription>
-                      মোট পোনা খরচ: <strong>৳{(parseFloat(fingerlings.quantity) * parseFloat(fingerlings.pricePerPiece)).toFixed(2)}</strong>
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* খাদ্য খরচ */}
-            <Card>
-              <CardHeader>
-                <CardTitle>৩. খাদ্য খরচ</CardTitle>
-                <CardDescription>সম্পূর্ণ চক্রের খাদ্য খরচ</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="totalFeed">মোট খাদ্য (কেজি)</Label>
-                  <Input
-                    id="totalFeed"
-                    type="number"
-                    placeholder="যেমন: 2000"
-                    value={feedCost.totalFeed}
-                    onChange={(e) => setFeedCost({...feedCost, totalFeed: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="feedPrice">প্রতি কেজি খাদ্যের দাম (টাকা)</Label>
-                  <Input
-                    id="feedPrice"
-                    type="number"
-                    placeholder="যেমন: 55"
-                    value={feedCost.pricePerKg}
-                    onChange={(e) => setFeedCost({...feedCost, pricePerKg: e.target.value})}
-                  />
-                </div>
-                {feedCost.totalFeed && feedCost.pricePerKg && (
-                  <Alert>
-                    <AlertDescription>
-                      মোট খাদ্য খরচ: <strong>৳{(parseFloat(feedCost.totalFeed) * parseFloat(feedCost.pricePerKg)).toFixed(2)}</strong>
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* ঔষধ খরচ */}
-            <Card>
-              <CardHeader>
-                <CardTitle>৪. ঔষধ ও চিকিৎসা খরচ</CardTitle>
-                <CardDescription>রোগ প্রতিরোধ ও চিকিৎসা</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="disinfectant">জীবাণুনাশক (টাকা)</Label>
-                  <Input
-                    id="disinfectant"
-                    type="number"
-                    placeholder="0"
-                    value={medicineCost.disinfectant}
-                    onChange={(e) => setMedicineCost({...medicineCost, disinfectant: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="antibiotics">এন্টিবায়োটিক (টাকা)</Label>
-                  <Input
-                    id="antibiotics"
-                    type="number"
-                    placeholder="0"
-                    value={medicineCost.antibiotics}
-                    onChange={(e) => setMedicineCost({...medicineCost, antibiotics: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="probiotics">প্রোবায়োটিক (টাকা)</Label>
-                  <Input
-                    id="probiotics"
-                    type="number"
-                    placeholder="0"
-                    value={medicineCost.probiotics}
-                    onChange={(e) => setMedicineCost({...medicineCost, probiotics: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vitamins">ভিটামিন (টাকা)</Label>
-                  <Input
-                    id="vitamins"
-                    type="number"
-                    placeholder="0"
-                    value={medicineCost.vitamins}
-                    onChange={(e) => setMedicineCost({...medicineCost, vitamins: e.target.value})}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* শ্রম খরচ */}
-            <Card>
-              <CardHeader>
-                <CardTitle>৫. শ্রম খরচ</CardTitle>
-                <CardDescription>দৈনিক ও স্থায়ী শ্রমিক</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dailyWage">দৈনিক মজুরি (টাকা)</Label>
-                  <Input
-                    id="dailyWage"
-                    type="number"
-                    placeholder="যেমন: 500"
-                    value={laborCost.dailyWage}
-                    onChange={(e) => setLaborCost({...laborCost, dailyWage: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="numberOfDays">মোট দিন</Label>
-                  <Input
-                    id="numberOfDays"
-                    type="number"
-                    placeholder="যেমন: 180"
-                    value={laborCost.numberOfDays}
-                    onChange={(e) => setLaborCost({...laborCost, numberOfDays: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="permanentLabor">স্থায়ী শ্রমিক বেতন (টাকা)</Label>
-                  <Input
-                    id="permanentLabor"
-                    type="number"
-                    placeholder="0"
-                    value={laborCost.permanentLabor}
-                    onChange={(e) => setLaborCost({...laborCost, permanentLabor: e.target.value})}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* বিদ্যুৎ ও জ্বালানি */}
-            <Card>
-              <CardHeader>
-                <CardTitle>৬. বিদ্যুৎ ও জ্বালানি খরচ</CardTitle>
-                <CardDescription>এয়ারেটর, পাম্প ইত্যাদি</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="electricity">বিদ্যুৎ বিল (টাকা)</Label>
-                  <Input
-                    id="electricity"
-                    type="number"
-                    placeholder="0"
-                    value={utilityCost.electricity}
-                    onChange={(e) => setUtilityCost({...utilityCost, electricity: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="diesel">ডিজেল/জ্বালানি (টাকা)</Label>
-                  <Input
-                    id="diesel"
-                    type="number"
-                    placeholder="0"
-                    value={utilityCost.diesel}
-                    onChange={(e) => setUtilityCost({...utilityCost, diesel: e.target.value})}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* অন্যান্য খরচ */}
-            <Card>
-              <CardHeader>
-                <CardTitle>৭. অন্যান্য খরচ</CardTitle>
-                <CardDescription>সরঞ্জাম ও যন্ত্রপাতি</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="netEquipment">জাল ও সরঞ্জাম (টাকা)</Label>
-                  <Input
-                    id="netEquipment"
-                    type="number"
-                    placeholder="0"
-                    value={otherCost.netEquipment}
-                    onChange={(e) => setOtherCost({...otherCost, netEquipment: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="waterPump">পানির পাম্প (টাকা)</Label>
-                  <Input
-                    id="waterPump"
-                    type="number"
-                    placeholder="0"
-                    value={otherCost.waterPump}
-                    onChange={(e) => setOtherCost({...otherCost, waterPump: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="aerator">এয়ারেটর (টাকা)</Label>
-                  <Input
-                    id="aerator"
-                    type="number"
-                    placeholder="0"
-                    value={otherCost.aerator}
-                    onChange={(e) => setOtherCost({...otherCost, aerator: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="miscellaneous">অন্যান্য (টাকা)</Label>
-                  <Input
-                    id="miscellaneous"
-                    type="number"
-                    placeholder="0"
-                    value={otherCost.miscellaneous}
-                    onChange={(e) => setOtherCost({...otherCost, miscellaneous: e.target.value})}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* আয় */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>৮. আয়ের হিসাব</CardTitle>
-                <CardDescription>সকল খাত থেকে আয়ের বিস্তারিত</CardDescription>
+          {/* Dashboard Summary */}
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card className="border-2 border-red-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg text-red-600">মোট ব্যয়</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fishSalesWeight">মাছ বিক্রয় - মোট ওজন (কেজি)</Label>
-                    <Input
-                      id="fishSalesWeight"
-                      type="number"
-                      placeholder="যেমন: 1500"
-                      value={income.fishSalesWeight}
-                      onChange={(e) => setIncome({...income, fishSalesWeight: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="fishPricePerKg">মাছের দাম (প্রতি কেজি টাকা)</Label>
-                    <Input
-                      id="fishPricePerKg"
-                      type="number"
-                      placeholder="যেমন: 200"
-                      value={income.fishPricePerKg}
-                      onChange={(e) => setIncome({...income, fishPricePerKg: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="oldNetSales">পুরাতন জাল/সরঞ্জাম বিক্রয় (টাকা)</Label>
-                    <Input
-                      id="oldNetSales"
-                      type="number"
-                      placeholder="0"
-                      value={income.oldNetSales}
-                      onChange={(e) => setIncome({...income, oldNetSales: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pondLease">পুকুর ভাড়া/লিজ আয় (টাকা)</Label>
-                    <Input
-                      id="pondLease"
-                      type="number"
-                      placeholder="0"
-                      value={income.pondLease}
-                      onChange={(e) => setIncome({...income, pondLease: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="byProducts">উপজাত বিক্রয় (কাদা, গোবর ইত্যাদি) (টাকা)</Label>
-                    <Input
-                      id="byProducts"
-                      type="number"
-                      placeholder="0"
-                      value={income.byProducts}
-                      onChange={(e) => setIncome({...income, byProducts: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="otherIncome">অন্যান্য আয় (টাকা)</Label>
-                    <Input
-                      id="otherIncome"
-                      type="number"
-                      placeholder="0"
-                      value={income.otherIncome}
-                      onChange={(e) => setIncome({...income, otherIncome: e.target.value})}
-                    />
-                  </div>
+                <div className="text-3xl font-bold text-red-600">৳{getTotalExpenses().toLocaleString('bn-BD')}</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2 border-green-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg text-green-600">মোট আয়</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">৳{getTotalIncome().toLocaleString('bn-BD')}</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2 border-primary">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">নিট লাভ/ক্ষতি</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-3xl font-bold ${getTotalIncome() - getTotalExpenses() >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  ৳{(getTotalIncome() - getTotalExpenses()).toLocaleString('bn-BD')}
                 </div>
-                {income.fishSalesWeight && income.fishPricePerKg && (
-                  <Alert className="bg-green-50 border-green-200 mt-4">
-                    <AlertDescription className="text-green-800">
-                      মাছ বিক্রয় থেকে আয়: <strong>৳{(parseFloat(income.fishSalesWeight) * parseFloat(income.fishPricePerKg)).toFixed(2)}</strong>
-                    </AlertDescription>
-                  </Alert>
-                )}
               </CardContent>
             </Card>
           </div>
 
-          <Button onClick={calculateCost} className="w-full" size="lg">
+          {/* Accordion for Expenses and Income */}
+          <Accordion type="multiple" className="space-y-4">
+            {/* Expenses Section */}
+            <AccordionItem value="expenses" className="border rounded-lg px-4">
+              <AccordionTrigger className="text-xl font-bold text-red-600 hover:no-underline">
+                ব্যয়ের হিসাব (মোট: ৳{getTotalExpenses().toLocaleString('bn-BD')})
+              </AccordionTrigger>
+              <AccordionContent className="space-y-6 pt-4">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* পুকুর প্রস্তুতি খরচ */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>১. পুকুর প্রস্তুতি খরচ</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="lime">চুন (টাকা)</Label>
+                        <Input
+                          id="lime"
+                          type="number"
+                          placeholder="0"
+                          value={pondPreparation.lime}
+                          onChange={(e) => setPondPreparation({...pondPreparation, lime: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="urea">ইউরিয়া (টাকা)</Label>
+                        <Input
+                          id="urea"
+                          type="number"
+                          placeholder="0"
+                          value={pondPreparation.urea}
+                          onChange={(e) => setPondPreparation({...pondPreparation, urea: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="tsp">টিএসপি (টাকা)</Label>
+                        <Input
+                          id="tsp"
+                          type="number"
+                          placeholder="0"
+                          value={pondPreparation.tsp}
+                          onChange={(e) => setPondPreparation({...pondPreparation, tsp: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cowdung">গোবর (টাকা)</Label>
+                        <Input
+                          id="cowdung"
+                          type="number"
+                          placeholder="0"
+                          value={pondPreparation.cowdung}
+                          onChange={(e) => setPondPreparation({...pondPreparation, cowdung: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="prepLabor">প্রস্তুতি শ্রমিক (টাকা)</Label>
+                        <Input
+                          id="prepLabor"
+                          type="number"
+                          placeholder="0"
+                          value={pondPreparation.labor}
+                          onChange={(e) => setPondPreparation({...pondPreparation, labor: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="digging">পুকুর খনন/মেরামত (টাকা)</Label>
+                        <Input
+                          id="digging"
+                          type="number"
+                          placeholder="0"
+                          value={pondPreparation.pondDigging}
+                          onChange={(e) => setPondPreparation({...pondPreparation, pondDigging: e.target.value})}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* পোনা ক্রয় খরচ */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>২. পোনা ক্রয় খরচ</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fingerlingsQty">পোনার সংখ্যা</Label>
+                        <Input
+                          id="fingerlingsQty"
+                          type="number"
+                          placeholder="যেমন: 5000"
+                          value={fingerlings.quantity}
+                          onChange={(e) => setFingerlings({...fingerlings, quantity: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fingerlingsPrice">প্রতি পোনার দাম (টাকা)</Label>
+                        <Input
+                          id="fingerlingsPrice"
+                          type="number"
+                          placeholder="যেমন: 2.5"
+                          value={fingerlings.pricePerPiece}
+                          onChange={(e) => setFingerlings({...fingerlings, pricePerPiece: e.target.value})}
+                        />
+                      </div>
+                      {fingerlings.quantity && fingerlings.pricePerPiece && (
+                        <Alert>
+                          <AlertDescription>
+                            মোট পোনা খরচ: <strong>৳{(parseFloat(fingerlings.quantity) * parseFloat(fingerlings.pricePerPiece)).toFixed(2)}</strong>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* খাদ্য খরচ */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>৩. খাদ্য খরচ</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="totalFeed">মোট খাদ্য (কেজি)</Label>
+                        <Input
+                          id="totalFeed"
+                          type="number"
+                          placeholder="যেমন: 2000"
+                          value={feedCost.totalFeed}
+                          onChange={(e) => setFeedCost({...feedCost, totalFeed: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="feedPrice">প্রতি কেজি খাদ্যের দাম (টাকা)</Label>
+                        <Input
+                          id="feedPrice"
+                          type="number"
+                          placeholder="যেমন: 55"
+                          value={feedCost.pricePerKg}
+                          onChange={(e) => setFeedCost({...feedCost, pricePerKg: e.target.value})}
+                        />
+                      </div>
+                      {feedCost.totalFeed && feedCost.pricePerKg && (
+                        <Alert>
+                          <AlertDescription>
+                            মোট খাদ্য খরচ: <strong>৳{(parseFloat(feedCost.totalFeed) * parseFloat(feedCost.pricePerKg)).toFixed(2)}</strong>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* ঔষধ খরচ */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>৪. ঔষধ ও চিকিৎসা খরচ</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="disinfectant">জীবাণুনাশক (টাকা)</Label>
+                        <Input
+                          id="disinfectant"
+                          type="number"
+                          placeholder="0"
+                          value={medicineCost.disinfectant}
+                          onChange={(e) => setMedicineCost({...medicineCost, disinfectant: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="antibiotics">এন্টিবায়োটিক (টাকা)</Label>
+                        <Input
+                          id="antibiotics"
+                          type="number"
+                          placeholder="0"
+                          value={medicineCost.antibiotics}
+                          onChange={(e) => setMedicineCost({...medicineCost, antibiotics: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="probiotics">প্রোবায়োটিক (টাকা)</Label>
+                        <Input
+                          id="probiotics"
+                          type="number"
+                          placeholder="0"
+                          value={medicineCost.probiotics}
+                          onChange={(e) => setMedicineCost({...medicineCost, probiotics: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="vitamins">ভিটামিন (টাকা)</Label>
+                        <Input
+                          id="vitamins"
+                          type="number"
+                          placeholder="0"
+                          value={medicineCost.vitamins}
+                          onChange={(e) => setMedicineCost({...medicineCost, vitamins: e.target.value})}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* শ্রম খরচ */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>৫. শ্রম খরচ</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="dailyWage">দৈনিক মজুরি (টাকা)</Label>
+                        <Input
+                          id="dailyWage"
+                          type="number"
+                          placeholder="যেমন: 500"
+                          value={laborCost.dailyWage}
+                          onChange={(e) => setLaborCost({...laborCost, dailyWage: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="numberOfDays">মোট দিন</Label>
+                        <Input
+                          id="numberOfDays"
+                          type="number"
+                          placeholder="যেমন: 180"
+                          value={laborCost.numberOfDays}
+                          onChange={(e) => setLaborCost({...laborCost, numberOfDays: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="permanentLabor">স্থায়ী শ্রমিক বেতন (টাকা)</Label>
+                        <Input
+                          id="permanentLabor"
+                          type="number"
+                          placeholder="0"
+                          value={laborCost.permanentLabor}
+                          onChange={(e) => setLaborCost({...laborCost, permanentLabor: e.target.value})}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* বিদ্যুৎ ও জ্বালানি */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>৬. বিদ্যুৎ ও জ্বালানি খরচ</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="electricity">বিদ্যুৎ বিল (টাকা)</Label>
+                        <Input
+                          id="electricity"
+                          type="number"
+                          placeholder="0"
+                          value={utilityCost.electricity}
+                          onChange={(e) => setUtilityCost({...utilityCost, electricity: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="diesel">ডিজেল/জ্বালানি (টাকা)</Label>
+                        <Input
+                          id="diesel"
+                          type="number"
+                          placeholder="0"
+                          value={utilityCost.diesel}
+                          onChange={(e) => setUtilityCost({...utilityCost, diesel: e.target.value})}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* অন্যান্য খরচ */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>৭. অন্যান্য খরচ</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="netEquipment">জাল ও সরঞ্জাম (টাকা)</Label>
+                        <Input
+                          id="netEquipment"
+                          type="number"
+                          placeholder="0"
+                          value={otherCost.netEquipment}
+                          onChange={(e) => setOtherCost({...otherCost, netEquipment: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="waterPump">পানির পাম্প (টাকা)</Label>
+                        <Input
+                          id="waterPump"
+                          type="number"
+                          placeholder="0"
+                          value={otherCost.waterPump}
+                          onChange={(e) => setOtherCost({...otherCost, waterPump: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="aerator">এয়ারেটর (টাকা)</Label>
+                        <Input
+                          id="aerator"
+                          type="number"
+                          placeholder="0"
+                          value={otherCost.aerator}
+                          onChange={(e) => setOtherCost({...otherCost, aerator: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="miscellaneous">অন্যান্য (টাকা)</Label>
+                        <Input
+                          id="miscellaneous"
+                          type="number"
+                          placeholder="0"
+                          value={otherCost.miscellaneous}
+                          onChange={(e) => setOtherCost({...otherCost, miscellaneous: e.target.value})}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Button onClick={handleSaveExpenses} className="w-full" size="lg">
+                  <Save className="mr-2 h-5 w-5" />
+                  ব্যয় সংরক্ষণ করুন
+                </Button>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Income Section */}
+            <AccordionItem value="income" className="border rounded-lg px-4">
+              <AccordionTrigger className="text-xl font-bold text-green-600 hover:no-underline">
+                আয়ের হিসাব (মোট: ৳{getTotalIncome().toLocaleString('bn-BD')})
+              </AccordionTrigger>
+              <AccordionContent className="space-y-6 pt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>আয়ের বিস্তারিত</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fishSalesWeight">মাছ বিক্রয় - মোট ওজন (কেজি)</Label>
+                        <Input
+                          id="fishSalesWeight"
+                          type="number"
+                          placeholder="যেমন: 1500"
+                          value={income.fishSalesWeight}
+                          onChange={(e) => setIncome({...income, fishSalesWeight: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fishPricePerKg">মাছের দাম (প্রতি কেজি টাকা)</Label>
+                        <Input
+                          id="fishPricePerKg"
+                          type="number"
+                          placeholder="যেমন: 200"
+                          value={income.fishPricePerKg}
+                          onChange={(e) => setIncome({...income, fishPricePerKg: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="oldNetSales">পুরাতন জাল/সরঞ্জাম বিক্রয় (টাকা)</Label>
+                        <Input
+                          id="oldNetSales"
+                          type="number"
+                          placeholder="0"
+                          value={income.oldNetSales}
+                          onChange={(e) => setIncome({...income, oldNetSales: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="pondLease">পুকুর ভাড়া/লিজ আয় (টাকা)</Label>
+                        <Input
+                          id="pondLease"
+                          type="number"
+                          placeholder="0"
+                          value={income.pondLease}
+                          onChange={(e) => setIncome({...income, pondLease: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="byProducts">উপজাত বিক্রয় (কাদা, গোবর ইত্যাদি) (টাকা)</Label>
+                        <Input
+                          id="byProducts"
+                          type="number"
+                          placeholder="0"
+                          value={income.byProducts}
+                          onChange={(e) => setIncome({...income, byProducts: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="otherIncome">অন্যান্য আয় (টাকা)</Label>
+                        <Input
+                          id="otherIncome"
+                          type="number"
+                          placeholder="0"
+                          value={income.otherIncome}
+                          onChange={(e) => setIncome({...income, otherIncome: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    {income.fishSalesWeight && income.fishPricePerKg && (
+                      <Alert className="bg-green-50 border-green-200 mt-4">
+                        <AlertDescription className="text-green-800">
+                          মাছ বিক্রয় থেকে আয়: <strong>৳{(parseFloat(income.fishSalesWeight) * parseFloat(income.fishPricePerKg)).toFixed(2)}</strong>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Button onClick={handleSaveIncome} className="w-full" size="lg">
+                  <Save className="mr-2 h-5 w-5" />
+                  আয় সংরক্ষণ করুন
+                </Button>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          <Button onClick={calculateCost} className="w-full" size="lg" variant="default">
             <DollarSign className="mr-2 h-5 w-5" />
-            সম্পূর্ণ হিসাব করুন
+            বিস্তারিত বিশ্লেষণ দেখুন
           </Button>
 
           {result && (
