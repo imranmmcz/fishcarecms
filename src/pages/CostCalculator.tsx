@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DollarSign, TrendingUp, TrendingDown, Info, CheckCircle2, AlertTriangle, Save } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CostItem {
   name: string;
@@ -78,6 +78,8 @@ const CostCalculator = () => {
   });
 
   const [result, setResult] = useState<any>(null);
+  const [selectedExpenseCategory, setSelectedExpenseCategory] = useState<string>("");
+  const [selectedIncomeCategory, setSelectedIncomeCategory] = useState<string>("");
 
   // Calculate totals in real-time
   const getTotalExpenses = () => {
@@ -124,9 +126,21 @@ const CostCalculator = () => {
   };
 
   const handleSaveExpenses = () => {
+    const categoryNames: Record<string, string> = {
+      "pondPreparation": "পুকুর প্রস্তুতি",
+      "fingerlings": "পোনা ক্রয়",
+      "feed": "খাদ্য",
+      "medicine": "ঔষধ ও চিকিৎসা",
+      "labor": "শ্রম",
+      "utility": "বিদ্যুৎ ও জ্বালানি",
+      "other": "অন্যান্য"
+    };
+    
     toast({
       title: "ব্যয় সংরক্ষিত হয়েছে",
-      description: `মোট ব্যয়: ৳${getTotalExpenses().toLocaleString('bn-BD')}`,
+      description: selectedExpenseCategory 
+        ? `${categoryNames[selectedExpenseCategory]} খরচ সংরক্ষিত হয়েছে`
+        : `মোট ব্যয়: ৳${getTotalExpenses().toLocaleString('bn-BD')}`,
     });
   };
 
@@ -299,109 +313,130 @@ const CostCalculator = () => {
             </Card>
           </div>
 
-          {/* Accordion for Expenses and Income */}
-          <Accordion type="multiple" className="space-y-4">
-            {/* Expenses Section */}
-            <AccordionItem value="expenses" className="border rounded-lg px-4">
-              <AccordionTrigger className="text-xl font-bold text-red-600 hover:no-underline">
-                ব্যয়ের হিসাব (মোট: ৳{getTotalExpenses().toLocaleString('bn-BD')})
-              </AccordionTrigger>
-              <AccordionContent className="space-y-6 pt-4">
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* পুকুর প্রস্তুতি খরচ */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>১. পুকুর প্রস্তুতি খরচ</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="lime">চুন (টাকা)</Label>
-                        <Input
-                          id="lime"
-                          type="number"
-                          placeholder="0"
-                          value={pondPreparation.lime}
-                          onChange={(e) => setPondPreparation({...pondPreparation, lime: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="urea">ইউরিয়া (টাকা)</Label>
-                        <Input
-                          id="urea"
-                          type="number"
-                          placeholder="0"
-                          value={pondPreparation.urea}
-                          onChange={(e) => setPondPreparation({...pondPreparation, urea: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="tsp">টিএসপি (টাকা)</Label>
-                        <Input
-                          id="tsp"
-                          type="number"
-                          placeholder="0"
-                          value={pondPreparation.tsp}
-                          onChange={(e) => setPondPreparation({...pondPreparation, tsp: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cowdung">গোবর (টাকা)</Label>
-                        <Input
-                          id="cowdung"
-                          type="number"
-                          placeholder="0"
-                          value={pondPreparation.cowdung}
-                          onChange={(e) => setPondPreparation({...pondPreparation, cowdung: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="prepLabor">প্রস্তুতি শ্রমিক (টাকা)</Label>
-                        <Input
-                          id="prepLabor"
-                          type="number"
-                          placeholder="0"
-                          value={pondPreparation.labor}
-                          onChange={(e) => setPondPreparation({...pondPreparation, labor: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="digging">পুকুর খনন/মেরামত (টাকা)</Label>
-                        <Input
-                          id="digging"
-                          type="number"
-                          placeholder="0"
-                          value={pondPreparation.pondDigging}
-                          onChange={(e) => setPondPreparation({...pondPreparation, pondDigging: e.target.value})}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
+          {/* Expenses Section */}
+          <Card className="border-2 border-red-200">
+            <CardHeader>
+              <CardTitle className="text-2xl text-red-600 flex items-center justify-between">
+                <span>ব্যয়ের হিসাব</span>
+                <span className="text-lg">মোট: ৳{getTotalExpenses().toLocaleString('bn-BD')}</span>
+              </CardTitle>
+              <CardDescription>খরচের ক্যাটাগরি নির্বাচন করুন এবং তথ্য এন্ট্রি করুন</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>খরচের ক্যাটাগরি নির্বাচন করুন</Label>
+                <Select value={selectedExpenseCategory} onValueChange={setSelectedExpenseCategory}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="একটি ক্যাটাগরি নির্বাচন করুন..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pondPreparation">১. পুকুর প্রস্তুতি খরচ</SelectItem>
+                    <SelectItem value="fingerlings">২. পোনা ক্রয় খরচ</SelectItem>
+                    <SelectItem value="feed">৩. খাদ্য খরচ</SelectItem>
+                    <SelectItem value="medicine">৪. ঔষধ ও চিকিৎসা খরচ</SelectItem>
+                    <SelectItem value="labor">৫. শ্রম খরচ</SelectItem>
+                    <SelectItem value="utility">৬. বিদ্যুৎ ও জ্বালানি খরচ</SelectItem>
+                    <SelectItem value="other">৭. অন্যান্য খরচ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  {/* পোনা ক্রয় খরচ */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>২. পোনা ক্রয় খরচ</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="fingerlingsQty">পোনার সংখ্যা</Label>
-                        <Input
-                          id="fingerlingsQty"
-                          type="number"
-                          placeholder="যেমন: 5000"
-                          value={fingerlings.quantity}
-                          onChange={(e) => setFingerlings({...fingerlings, quantity: e.target.value})}
-                        />
+              {selectedExpenseCategory && (
+                <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+                  {/* পুকুর প্রস্তুতি */}
+                  {selectedExpenseCategory === "pondPreparation" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">পুকুর প্রস্তুতি খরচ</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="lime">চুন (টাকা)</Label>
+                          <Input
+                            id="lime"
+                            type="number"
+                            placeholder="0"
+                            value={pondPreparation.lime}
+                            onChange={(e) => setPondPreparation({...pondPreparation, lime: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="urea">ইউরিয়া (টাকা)</Label>
+                          <Input
+                            id="urea"
+                            type="number"
+                            placeholder="0"
+                            value={pondPreparation.urea}
+                            onChange={(e) => setPondPreparation({...pondPreparation, urea: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="tsp">টিএসপি (টাকা)</Label>
+                          <Input
+                            id="tsp"
+                            type="number"
+                            placeholder="0"
+                            value={pondPreparation.tsp}
+                            onChange={(e) => setPondPreparation({...pondPreparation, tsp: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="cowdung">গোবর (টাকা)</Label>
+                          <Input
+                            id="cowdung"
+                            type="number"
+                            placeholder="0"
+                            value={pondPreparation.cowdung}
+                            onChange={(e) => setPondPreparation({...pondPreparation, cowdung: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="prepLabor">প্রস্তুতি শ্রমিক (টাকা)</Label>
+                          <Input
+                            id="prepLabor"
+                            type="number"
+                            placeholder="0"
+                            value={pondPreparation.labor}
+                            onChange={(e) => setPondPreparation({...pondPreparation, labor: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="digging">পুকুর খনন/মেরামত (টাকা)</Label>
+                          <Input
+                            id="digging"
+                            type="number"
+                            placeholder="0"
+                            value={pondPreparation.pondDigging}
+                            onChange={(e) => setPondPreparation({...pondPreparation, pondDigging: e.target.value})}
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="fingerlingsPrice">প্রতি পোনার দাম (টাকা)</Label>
-                        <Input
-                          id="fingerlingsPrice"
-                          type="number"
-                          placeholder="যেমন: 2.5"
-                          value={fingerlings.pricePerPiece}
-                          onChange={(e) => setFingerlings({...fingerlings, pricePerPiece: e.target.value})}
-                        />
+                    </div>
+                  )}
+
+                  {/* পোনা ক্রয় */}
+                  {selectedExpenseCategory === "fingerlings" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">পোনা ক্রয় খরচ</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="fingerlingsQty">পোনার সংখ্যা</Label>
+                          <Input
+                            id="fingerlingsQty"
+                            type="number"
+                            placeholder="যেমন: 5000"
+                            value={fingerlings.quantity}
+                            onChange={(e) => setFingerlings({...fingerlings, quantity: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="fingerlingsPrice">প্রতি পোনার দাম (টাকা)</Label>
+                          <Input
+                            id="fingerlingsPrice"
+                            type="number"
+                            placeholder="যেমন: 2.5"
+                            value={fingerlings.pricePerPiece}
+                            onChange={(e) => setFingerlings({...fingerlings, pricePerPiece: e.target.value})}
+                          />
+                        </div>
                       </div>
                       {fingerlings.quantity && fingerlings.pricePerPiece && (
                         <Alert>
@@ -410,34 +445,34 @@ const CostCalculator = () => {
                           </AlertDescription>
                         </Alert>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  )}
 
                   {/* খাদ্য খরচ */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>৩. খাদ্য খরচ</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="totalFeed">মোট খাদ্য (কেজি)</Label>
-                        <Input
-                          id="totalFeed"
-                          type="number"
-                          placeholder="যেমন: 2000"
-                          value={feedCost.totalFeed}
-                          onChange={(e) => setFeedCost({...feedCost, totalFeed: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="feedPrice">প্রতি কেজি খাদ্যের দাম (টাকা)</Label>
-                        <Input
-                          id="feedPrice"
-                          type="number"
-                          placeholder="যেমন: 55"
-                          value={feedCost.pricePerKg}
-                          onChange={(e) => setFeedCost({...feedCost, pricePerKg: e.target.value})}
-                        />
+                  {selectedExpenseCategory === "feed" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">খাদ্য খরচ</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="totalFeed">মোট খাদ্য (কেজি)</Label>
+                          <Input
+                            id="totalFeed"
+                            type="number"
+                            placeholder="যেমন: 2000"
+                            value={feedCost.totalFeed}
+                            onChange={(e) => setFeedCost({...feedCost, totalFeed: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="feedPrice">প্রতি কেজি খাদ্যের দাম (টাকা)</Label>
+                          <Input
+                            id="feedPrice"
+                            type="number"
+                            placeholder="যেমন: 55"
+                            value={feedCost.pricePerKg}
+                            onChange={(e) => setFeedCost({...feedCost, pricePerKg: e.target.value})}
+                          />
+                        </div>
                       </div>
                       {feedCost.totalFeed && feedCost.pricePerKg && (
                         <Alert>
@@ -446,215 +481,252 @@ const CostCalculator = () => {
                           </AlertDescription>
                         </Alert>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  )}
 
                   {/* ঔষধ খরচ */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>৪. ঔষধ ও চিকিৎসা খরচ</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="disinfectant">জীবাণুনাশক (টাকা)</Label>
-                        <Input
-                          id="disinfectant"
-                          type="number"
-                          placeholder="0"
-                          value={medicineCost.disinfectant}
-                          onChange={(e) => setMedicineCost({...medicineCost, disinfectant: e.target.value})}
-                        />
+                  {selectedExpenseCategory === "medicine" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">ঔষধ ও চিকিৎসা খরচ</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="disinfectant">জীবাণুনাশক (টাকা)</Label>
+                          <Input
+                            id="disinfectant"
+                            type="number"
+                            placeholder="0"
+                            value={medicineCost.disinfectant}
+                            onChange={(e) => setMedicineCost({...medicineCost, disinfectant: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="antibiotics">এন্টিবায়োটিক (টাকা)</Label>
+                          <Input
+                            id="antibiotics"
+                            type="number"
+                            placeholder="0"
+                            value={medicineCost.antibiotics}
+                            onChange={(e) => setMedicineCost({...medicineCost, antibiotics: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="probiotics">প্রোবায়োটিক (টাকা)</Label>
+                          <Input
+                            id="probiotics"
+                            type="number"
+                            placeholder="0"
+                            value={medicineCost.probiotics}
+                            onChange={(e) => setMedicineCost({...medicineCost, probiotics: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="vitamins">ভিটামিন (টাকা)</Label>
+                          <Input
+                            id="vitamins"
+                            type="number"
+                            placeholder="0"
+                            value={medicineCost.vitamins}
+                            onChange={(e) => setMedicineCost({...medicineCost, vitamins: e.target.value})}
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="antibiotics">এন্টিবায়োটিক (টাকা)</Label>
-                        <Input
-                          id="antibiotics"
-                          type="number"
-                          placeholder="0"
-                          value={medicineCost.antibiotics}
-                          onChange={(e) => setMedicineCost({...medicineCost, antibiotics: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="probiotics">প্রোবায়োটিক (টাকা)</Label>
-                        <Input
-                          id="probiotics"
-                          type="number"
-                          placeholder="0"
-                          value={medicineCost.probiotics}
-                          onChange={(e) => setMedicineCost({...medicineCost, probiotics: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="vitamins">ভিটামিন (টাকা)</Label>
-                        <Input
-                          id="vitamins"
-                          type="number"
-                          placeholder="0"
-                          value={medicineCost.vitamins}
-                          onChange={(e) => setMedicineCost({...medicineCost, vitamins: e.target.value})}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  )}
 
                   {/* শ্রম খরচ */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>৫. শ্রম খরচ</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="dailyWage">দৈনিক মজুরি (টাকা)</Label>
-                        <Input
-                          id="dailyWage"
-                          type="number"
-                          placeholder="যেমন: 500"
-                          value={laborCost.dailyWage}
-                          onChange={(e) => setLaborCost({...laborCost, dailyWage: e.target.value})}
-                        />
+                  {selectedExpenseCategory === "labor" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">শ্রম খরচ</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="dailyWage">দৈনিক মজুরি (টাকা)</Label>
+                          <Input
+                            id="dailyWage"
+                            type="number"
+                            placeholder="যেমন: 500"
+                            value={laborCost.dailyWage}
+                            onChange={(e) => setLaborCost({...laborCost, dailyWage: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="numberOfDays">মোট দিন</Label>
+                          <Input
+                            id="numberOfDays"
+                            type="number"
+                            placeholder="যেমন: 180"
+                            value={laborCost.numberOfDays}
+                            onChange={(e) => setLaborCost({...laborCost, numberOfDays: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="permanentLabor">স্থায়ী শ্রমিক বেতন (টাকা)</Label>
+                          <Input
+                            id="permanentLabor"
+                            type="number"
+                            placeholder="0"
+                            value={laborCost.permanentLabor}
+                            onChange={(e) => setLaborCost({...laborCost, permanentLabor: e.target.value})}
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="numberOfDays">মোট দিন</Label>
-                        <Input
-                          id="numberOfDays"
-                          type="number"
-                          placeholder="যেমন: 180"
-                          value={laborCost.numberOfDays}
-                          onChange={(e) => setLaborCost({...laborCost, numberOfDays: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="permanentLabor">স্থায়ী শ্রমিক বেতন (টাকা)</Label>
-                        <Input
-                          id="permanentLabor"
-                          type="number"
-                          placeholder="0"
-                          value={laborCost.permanentLabor}
-                          onChange={(e) => setLaborCost({...laborCost, permanentLabor: e.target.value})}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  )}
 
                   {/* বিদ্যুৎ ও জ্বালানি */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>৬. বিদ্যুৎ ও জ্বালানি খরচ</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="electricity">বিদ্যুৎ বিল (টাকা)</Label>
-                        <Input
-                          id="electricity"
-                          type="number"
-                          placeholder="0"
-                          value={utilityCost.electricity}
-                          onChange={(e) => setUtilityCost({...utilityCost, electricity: e.target.value})}
-                        />
+                  {selectedExpenseCategory === "utility" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">বিদ্যুৎ ও জ্বালানি খরচ</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="electricity">বিদ্যুৎ বিল (টাকা)</Label>
+                          <Input
+                            id="electricity"
+                            type="number"
+                            placeholder="0"
+                            value={utilityCost.electricity}
+                            onChange={(e) => setUtilityCost({...utilityCost, electricity: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="diesel">ডিজেল/জ্বালানি (টাকা)</Label>
+                          <Input
+                            id="diesel"
+                            type="number"
+                            placeholder="0"
+                            value={utilityCost.diesel}
+                            onChange={(e) => setUtilityCost({...utilityCost, diesel: e.target.value})}
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="diesel">ডিজেল/জ্বালানি (টাকা)</Label>
-                        <Input
-                          id="diesel"
-                          type="number"
-                          placeholder="0"
-                          value={utilityCost.diesel}
-                          onChange={(e) => setUtilityCost({...utilityCost, diesel: e.target.value})}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  )}
 
                   {/* অন্যান্য খরচ */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>৭. অন্যান্য খরচ</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="netEquipment">জাল ও সরঞ্জাম (টাকা)</Label>
-                        <Input
-                          id="netEquipment"
-                          type="number"
-                          placeholder="0"
-                          value={otherCost.netEquipment}
-                          onChange={(e) => setOtherCost({...otherCost, netEquipment: e.target.value})}
-                        />
+                  {selectedExpenseCategory === "other" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">অন্যান্য খরচ</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="netEquipment">জাল ও সরঞ্জাম (টাকা)</Label>
+                          <Input
+                            id="netEquipment"
+                            type="number"
+                            placeholder="0"
+                            value={otherCost.netEquipment}
+                            onChange={(e) => setOtherCost({...otherCost, netEquipment: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="waterPump">পানির পাম্প (টাকা)</Label>
+                          <Input
+                            id="waterPump"
+                            type="number"
+                            placeholder="0"
+                            value={otherCost.waterPump}
+                            onChange={(e) => setOtherCost({...otherCost, waterPump: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="aerator">এয়ারেটর (টাকা)</Label>
+                          <Input
+                            id="aerator"
+                            type="number"
+                            placeholder="0"
+                            value={otherCost.aerator}
+                            onChange={(e) => setOtherCost({...otherCost, aerator: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="miscellaneous">অন্যান্য (টাকা)</Label>
+                          <Input
+                            id="miscellaneous"
+                            type="number"
+                            placeholder="0"
+                            value={otherCost.miscellaneous}
+                            onChange={(e) => setOtherCost({...otherCost, miscellaneous: e.target.value})}
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="waterPump">পানির পাম্প (টাকা)</Label>
-                        <Input
-                          id="waterPump"
-                          type="number"
-                          placeholder="0"
-                          value={otherCost.waterPump}
-                          onChange={(e) => setOtherCost({...otherCost, waterPump: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="aerator">এয়ারেটর (টাকা)</Label>
-                        <Input
-                          id="aerator"
-                          type="number"
-                          placeholder="0"
-                          value={otherCost.aerator}
-                          onChange={(e) => setOtherCost({...otherCost, aerator: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="miscellaneous">অন্যান্য (টাকা)</Label>
-                        <Input
-                          id="miscellaneous"
-                          type="number"
-                          placeholder="0"
-                          value={otherCost.miscellaneous}
-                          onChange={(e) => setOtherCost({...otherCost, miscellaneous: e.target.value})}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  )}
+
+                  <Button onClick={handleSaveExpenses} className="w-full" size="lg">
+                    <Save className="mr-2 h-5 w-5" />
+                    সংরক্ষণ করুন
+                  </Button>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                <Button onClick={handleSaveExpenses} className="w-full" size="lg">
-                  <Save className="mr-2 h-5 w-5" />
-                  ব্যয় সংরক্ষণ করুন
-                </Button>
-              </AccordionContent>
-            </AccordionItem>
+          {/* Income Section */}
+          <Card className="border-2 border-green-200">
+            <CardHeader>
+              <CardTitle className="text-2xl text-green-600 flex items-center justify-between">
+                <span>আয়ের হিসাব</span>
+                <span className="text-lg">মোট: ৳{getTotalIncome().toLocaleString('bn-BD')}</span>
+              </CardTitle>
+              <CardDescription>আয়ের ক্যাটাগরি নির্বাচন করুন এবং তথ্য এন্ট্রি করুন</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>আয়ের ক্যাটাগরি নির্বাচন করুন</Label>
+                <Select value={selectedIncomeCategory} onValueChange={setSelectedIncomeCategory}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="একটি ক্যাটাগরি নির্বাচন করুন..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fishSales">মাছ বিক্রয়</SelectItem>
+                    <SelectItem value="equipment">পুরাতন জাল/সরঞ্জাম বিক্রয়</SelectItem>
+                    <SelectItem value="lease">পুকুর ভাড়া/লিজ</SelectItem>
+                    <SelectItem value="byProducts">উপজাত বিক্রয়</SelectItem>
+                    <SelectItem value="other">অন্যান্য আয়</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Income Section */}
-            <AccordionItem value="income" className="border rounded-lg px-4">
-              <AccordionTrigger className="text-xl font-bold text-green-600 hover:no-underline">
-                আয়ের হিসাব (মোট: ৳{getTotalIncome().toLocaleString('bn-BD')})
-              </AccordionTrigger>
-              <AccordionContent className="space-y-6 pt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>আয়ের বিস্তারিত</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="fishSalesWeight">মাছ বিক্রয় - মোট ওজন (কেজি)</Label>
-                        <Input
-                          id="fishSalesWeight"
-                          type="number"
-                          placeholder="যেমন: 1500"
-                          value={income.fishSalesWeight}
-                          onChange={(e) => setIncome({...income, fishSalesWeight: e.target.value})}
-                        />
+              {selectedIncomeCategory && (
+                <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+                  {/* মাছ বিক্রয় */}
+                  {selectedIncomeCategory === "fishSales" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">মাছ বিক্রয়</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="fishSalesWeight">মোট ওজন (কেজি)</Label>
+                          <Input
+                            id="fishSalesWeight"
+                            type="number"
+                            placeholder="যেমন: 1500"
+                            value={income.fishSalesWeight}
+                            onChange={(e) => setIncome({...income, fishSalesWeight: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="fishPricePerKg">মাছের দাম (প্রতি কেজি টাকা)</Label>
+                          <Input
+                            id="fishPricePerKg"
+                            type="number"
+                            placeholder="যেমন: 200"
+                            value={income.fishPricePerKg}
+                            onChange={(e) => setIncome({...income, fishPricePerKg: e.target.value})}
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="fishPricePerKg">মাছের দাম (প্রতি কেজি টাকা)</Label>
-                        <Input
-                          id="fishPricePerKg"
-                          type="number"
-                          placeholder="যেমন: 200"
-                          value={income.fishPricePerKg}
-                          onChange={(e) => setIncome({...income, fishPricePerKg: e.target.value})}
-                        />
-                      </div>
+                      {income.fishSalesWeight && income.fishPricePerKg && (
+                        <Alert className="bg-green-50 border-green-200">
+                          <AlertDescription className="text-green-800">
+                            মাছ বিক্রয় থেকে আয়: <strong>৳{(parseFloat(income.fishSalesWeight) * parseFloat(income.fishPricePerKg)).toFixed(2)}</strong>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  )}
+
+                  {/* পুরাতন সরঞ্জাম */}
+                  {selectedIncomeCategory === "equipment" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">পুরাতন জাল/সরঞ্জাম বিক্রয়</h3>
                       <div className="space-y-2">
                         <Label htmlFor="oldNetSales">পুরাতন জাল/সরঞ্জাম বিক্রয় (টাকা)</Label>
                         <Input
@@ -665,6 +737,13 @@ const CostCalculator = () => {
                           onChange={(e) => setIncome({...income, oldNetSales: e.target.value})}
                         />
                       </div>
+                    </div>
+                  )}
+
+                  {/* পুকুর ভাড়া */}
+                  {selectedIncomeCategory === "lease" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">পুকুর ভাড়া/লিজ আয়</h3>
                       <div className="space-y-2">
                         <Label htmlFor="pondLease">পুকুর ভাড়া/লিজ আয় (টাকা)</Label>
                         <Input
@@ -675,6 +754,13 @@ const CostCalculator = () => {
                           onChange={(e) => setIncome({...income, pondLease: e.target.value})}
                         />
                       </div>
+                    </div>
+                  )}
+
+                  {/* উপজাত */}
+                  {selectedIncomeCategory === "byProducts" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">উপজাত বিক্রয়</h3>
                       <div className="space-y-2">
                         <Label htmlFor="byProducts">উপজাত বিক্রয় (কাদা, গোবর ইত্যাদি) (টাকা)</Label>
                         <Input
@@ -685,6 +771,13 @@ const CostCalculator = () => {
                           onChange={(e) => setIncome({...income, byProducts: e.target.value})}
                         />
                       </div>
+                    </div>
+                  )}
+
+                  {/* অন্যান্য আয় */}
+                  {selectedIncomeCategory === "other" && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">অন্যান্য আয়</h3>
                       <div className="space-y-2">
                         <Label htmlFor="otherIncome">অন্যান্য আয় (টাকা)</Label>
                         <Input
@@ -696,23 +789,16 @@ const CostCalculator = () => {
                         />
                       </div>
                     </div>
-                    {income.fishSalesWeight && income.fishPricePerKg && (
-                      <Alert className="bg-green-50 border-green-200 mt-4">
-                        <AlertDescription className="text-green-800">
-                          মাছ বিক্রয় থেকে আয়: <strong>৳{(parseFloat(income.fishSalesWeight) * parseFloat(income.fishPricePerKg)).toFixed(2)}</strong>
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </CardContent>
-                </Card>
+                  )}
 
-                <Button onClick={handleSaveIncome} className="w-full" size="lg">
-                  <Save className="mr-2 h-5 w-5" />
-                  আয় সংরক্ষণ করুন
-                </Button>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+                  <Button onClick={handleSaveIncome} className="w-full" size="lg">
+                    <Save className="mr-2 h-5 w-5" />
+                    সংরক্ষণ করুন
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Button onClick={calculateCost} className="w-full" size="lg" variant="default">
             <DollarSign className="mr-2 h-5 w-5" />
