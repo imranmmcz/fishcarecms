@@ -9,9 +9,13 @@ import { Calculator, Droplets, Ruler } from "lucide-react";
 import { toast } from "sonner";
 
 type PondShape = "rectangle" | "square" | "circle" | "trapezoid";
+type InputUnit = "meter" | "feet" | "centimeter";
+type OutputUnit = "shotak" | "katha" | "bigha" | "acre" | "hectare";
 
 export default function PondCalculator() {
   const [shape, setShape] = useState<PondShape>("rectangle");
+  const [inputUnit, setInputUnit] = useState<InputUnit>("meter");
+  const [outputUnit, setOutputUnit] = useState<OutputUnit>("shotak");
   const [length, setLength] = useState("");
   const [width, setWidth] = useState("");
   const [radius, setRadius] = useState("");
@@ -23,6 +27,38 @@ export default function PondCalculator() {
     volume: number;
   } | null>(null);
 
+  // Convert input to meters
+  const convertToMeters = (value: number): number => {
+    switch (inputUnit) {
+      case "meter":
+        return value;
+      case "feet":
+        return value * 0.3048;
+      case "centimeter":
+        return value / 100;
+      default:
+        return value;
+    }
+  };
+
+  // Convert square meters to selected output unit
+  const convertArea = (areaInSqMeters: number): { value: number; unit: string } => {
+    switch (outputUnit) {
+      case "shotak":
+        return { value: areaInSqMeters / 40.47, unit: "শতক" };
+      case "katha":
+        return { value: areaInSqMeters / 66.89, unit: "কাঠা" };
+      case "bigha":
+        return { value: areaInSqMeters / 1338.84, unit: "বিঘা" };
+      case "acre":
+        return { value: areaInSqMeters / 4046.86, unit: "একর" };
+      case "hectare":
+        return { value: areaInSqMeters / 10000, unit: "হেক্টর" };
+      default:
+        return { value: areaInSqMeters, unit: "বর্গ মিটার" };
+    }
+  };
+
   const calculatePond = () => {
     let area = 0;
     const depthNum = parseFloat(depth);
@@ -32,6 +68,8 @@ export default function PondCalculator() {
       return;
     }
 
+    const depthInMeters = convertToMeters(depthNum);
+
     switch (shape) {
       case "rectangle":
         const lengthNum = parseFloat(length);
@@ -40,7 +78,7 @@ export default function PondCalculator() {
           toast.error("অনুগ্রহ করে সঠিক দৈর্ঘ্য এবং প্রস্থ প্রদান করুন");
           return;
         }
-        area = lengthNum * widthNum;
+        area = convertToMeters(lengthNum) * convertToMeters(widthNum);
         break;
 
       case "square":
@@ -49,7 +87,8 @@ export default function PondCalculator() {
           toast.error("অনুগ্রহ করে সঠিক বাহুর দৈর্ঘ্য প্রদান করুন");
           return;
         }
-        area = sideLength * sideLength;
+        const sideInMeters = convertToMeters(sideLength);
+        area = sideInMeters * sideInMeters;
         break;
 
       case "circle":
@@ -58,7 +97,8 @@ export default function PondCalculator() {
           toast.error("অনুগ্রহ করে সঠিক ব্যাসার্ধ প্রদান করুন");
           return;
         }
-        area = Math.PI * radiusNum * radiusNum;
+        const radiusInMeters = convertToMeters(radiusNum);
+        area = Math.PI * radiusInMeters * radiusInMeters;
         break;
 
       case "trapezoid":
@@ -69,11 +109,11 @@ export default function PondCalculator() {
           toast.error("অনুগ্রহ করে সঠিক মাপ প্রদান করুন");
           return;
         }
-        area = ((topNum + bottomNum) / 2) * heightNum;
+        area = ((convertToMeters(topNum) + convertToMeters(bottomNum)) / 2) * convertToMeters(heightNum);
         break;
     }
 
-    const volume = area * depthNum;
+    const volume = area * depthInMeters;
     setResults({ area, volume });
     toast.success("গণনা সম্পন্ন হয়েছে!");
   };
@@ -115,6 +155,38 @@ export default function PondCalculator() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Unit Selection */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="inputUnit">পরিমাপের একক</Label>
+                  <Select value={inputUnit} onValueChange={(value) => setInputUnit(value as InputUnit)}>
+                    <SelectTrigger id="inputUnit">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="meter">মিটার (Meter)</SelectItem>
+                      <SelectItem value="feet">ফুট (Feet)</SelectItem>
+                      <SelectItem value="centimeter">সেন্টিমিটার (Centimeter)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="outputUnit">ফলাফলের একক</Label>
+                  <Select value={outputUnit} onValueChange={(value) => setOutputUnit(value as OutputUnit)}>
+                    <SelectTrigger id="outputUnit">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="shotak">শতক (Shotak)</SelectItem>
+                      <SelectItem value="katha">কাঠা (Katha)</SelectItem>
+                      <SelectItem value="bigha">বিঘা (Bigha)</SelectItem>
+                      <SelectItem value="acre">একর (Acre)</SelectItem>
+                      <SelectItem value="hectare">হেক্টর (Hectare)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               {/* Shape Selection */}
               <div className="space-y-2">
                 <Label htmlFor="shape">পুকুরের আকৃতি</Label>
@@ -139,7 +211,7 @@ export default function PondCalculator() {
                 {shape === "rectangle" && (
                   <>
                     <div className="space-y-2">
-                      <Label htmlFor="length">দৈর্ঘ্য (মিটার)</Label>
+                      <Label htmlFor="length">দৈর্ঘ্য ({inputUnit === "meter" ? "মিটার" : inputUnit === "feet" ? "ফুট" : "সেন্টিমিটার"})</Label>
                       <Input
                         id="length"
                         type="number"
@@ -151,7 +223,7 @@ export default function PondCalculator() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="width">প্রস্থ (মিটার)</Label>
+                      <Label htmlFor="width">প্রস্থ ({inputUnit === "meter" ? "মিটার" : inputUnit === "feet" ? "ফুট" : "সেন্টিমিটার"})</Label>
                       <Input
                         id="width"
                         type="number"
@@ -167,7 +239,7 @@ export default function PondCalculator() {
 
                 {shape === "square" && (
                   <div className="space-y-2">
-                    <Label htmlFor="side">বাহুর দৈর্ঘ্য (মিটার)</Label>
+                    <Label htmlFor="side">বাহুর দৈর্ঘ্য ({inputUnit === "meter" ? "মিটার" : inputUnit === "feet" ? "ফুট" : "সেন্টিমিটার"})</Label>
                     <Input
                       id="side"
                       type="number"
@@ -182,7 +254,7 @@ export default function PondCalculator() {
 
                 {shape === "circle" && (
                   <div className="space-y-2">
-                    <Label htmlFor="radius">ব্যাসার্ধ (মিটার)</Label>
+                    <Label htmlFor="radius">ব্যাসার্ধ ({inputUnit === "meter" ? "মিটার" : inputUnit === "feet" ? "ফুট" : "সেন্টিমিটার"})</Label>
                     <Input
                       id="radius"
                       type="number"
@@ -198,7 +270,7 @@ export default function PondCalculator() {
                 {shape === "trapezoid" && (
                   <>
                     <div className="space-y-2">
-                      <Label htmlFor="topLength">উপরের বাহুর দৈর্ঘ্য (মিটার)</Label>
+                      <Label htmlFor="topLength">উপরের বাহুর দৈর্ঘ্য ({inputUnit === "meter" ? "মিটার" : inputUnit === "feet" ? "ফুট" : "সেন্টিমিটার"})</Label>
                       <Input
                         id="topLength"
                         type="number"
@@ -210,7 +282,7 @@ export default function PondCalculator() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="bottomLength">নিচের বাহুর দৈর্ঘ্য (মিটার)</Label>
+                      <Label htmlFor="bottomLength">নিচের বাহুর দৈর্ঘ্য ({inputUnit === "meter" ? "মিটার" : inputUnit === "feet" ? "ফুট" : "সেন্টিমিটার"})</Label>
                       <Input
                         id="bottomLength"
                         type="number"
@@ -222,7 +294,7 @@ export default function PondCalculator() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="trapHeight">উচ্চতা (মিটার)</Label>
+                      <Label htmlFor="trapHeight">উচ্চতা ({inputUnit === "meter" ? "মিটার" : inputUnit === "feet" ? "ফুট" : "সেন্টিমিটার"})</Label>
                       <Input
                         id="trapHeight"
                         type="number"
@@ -238,7 +310,7 @@ export default function PondCalculator() {
 
                 {/* Common depth input */}
                 <div className="space-y-2">
-                  <Label htmlFor="depth">পানির গভীরতা (মিটার)</Label>
+                  <Label htmlFor="depth">পানির গভীরতা ({inputUnit === "meter" ? "মিটার" : inputUnit === "feet" ? "ফুট" : "সেন্টিমিটার"})</Label>
                   <Input
                     id="depth"
                     type="number"
@@ -284,8 +356,11 @@ export default function PondCalculator() {
                   <div className="bg-gradient-card rounded-lg p-4 space-y-1">
                     <p className="text-sm text-muted-foreground">পুকুরের ক্ষেত্রফল</p>
                     <p className="text-3xl font-bold text-foreground">
-                      {results.area.toFixed(2)}
-                      <span className="text-lg ml-1 text-muted-foreground">বর্গ মিটার</span>
+                      {convertArea(results.area).value.toFixed(2)}
+                      <span className="text-lg ml-1 text-muted-foreground">{convertArea(results.area).unit}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      ({results.area.toFixed(2)} বর্গ মিটার)
                     </p>
                   </div>
                   <div className="bg-gradient-card rounded-lg p-4 space-y-1">
