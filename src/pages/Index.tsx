@@ -75,7 +75,7 @@ const modules = [
     description: "খামারের সকল তথ্য একসাথে রিপোর্ট আকারে দেখুন",
     icon: FileText,
     path: "/reports",
-    isActive: false,
+    isActive: true,
   },
 ];
 

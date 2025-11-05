@@ -16,16 +16,19 @@ const FertilizerCalculator = () => {
   const [result, setResult] = useState<any>(null);
 
   const calculateFertilizer = () => {
-    const area = parseFloat(pondArea);
-    const depth = parseFloat(waterDepth);
+    const areaInShotak = parseFloat(pondArea);
+    const depthInFeet = parseFloat(waterDepth);
 
-    if (!area || !depth || area <= 0 || depth <= 0) {
+    if (!areaInShotak || !depthInFeet || areaInShotak <= 0 || depthInFeet <= 0) {
       return;
     }
 
-    const volume = area * depth;
+    // Convert feet to meters for volume calculation
+    const depthInMeters = depthInFeet * 0.3048;
+    const areaInSqMeters = areaInShotak * 40.47;
+    const volume = areaInSqMeters * depthInMeters;
 
-    // Fertilizer doses based on pond type (kg/decimal)
+    // Fertilizer doses based on pond type (kg/decimal or shotak)
     const doses: any = {
       new: {
         urea: 0.1,
@@ -41,25 +44,35 @@ const FertilizerCalculator = () => {
       },
     };
 
-    const areaInDecimal = area / 40.47; // Convert square meters to decimal
+    // Since 1 shotak = 1 decimal, we can use the area directly
     const selectedDose = doses[pondType as keyof typeof doses];
 
     const fertilizers = {
-      urea: (selectedDose.urea * areaInDecimal).toFixed(2),
-      tsp: (selectedDose.tsp * areaInDecimal).toFixed(2),
-      lime: (selectedDose.lime * areaInDecimal).toFixed(2),
-      cowdung: (selectedDose.cowdung * areaInDecimal).toFixed(2),
+      urea: (selectedDose.urea * areaInShotak).toFixed(2),
+      tsp: (selectedDose.tsp * areaInShotak).toFixed(2),
+      lime: (selectedDose.lime * areaInShotak).toFixed(2),
+      cowdung: (selectedDose.cowdung * areaInShotak).toFixed(2),
     };
 
     const applicationSchedule = pondType === "new" 
       ? "পুকুর প্রস্তুতির সময় একবার প্রয়োগ করুন"
       : "প্রতি ১৫ দিন পর পর প্রয়োগ করুন";
 
-    setResult({
+    const applicationData = {
       fertilizers,
       schedule: applicationSchedule,
       pondType: pondType === "new" ? "নতুন পুকুর" : "নিয়মিত রক্ষণাবেক্ষণ",
-    });
+      date: new Date().toISOString(),
+      area: areaInShotak,
+      depth: depthInFeet,
+    };
+
+    // Save to localStorage for reports
+    const savedReports = JSON.parse(localStorage.getItem("fertilizerReports") || "[]");
+    savedReports.push(applicationData);
+    localStorage.setItem("fertilizerReports", JSON.stringify(savedReports));
+
+    setResult(applicationData);
   };
 
   return (
@@ -91,23 +104,23 @@ const FertilizerCalculator = () => {
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="pondArea">পুকুরের জায়গা (বর্গমিটার)</Label>
+                  <Label htmlFor="pondArea">পুকুরের আয়তন (শতক)</Label>
                   <Input
                     id="pondArea"
                     type="number"
-                    placeholder="যেমন: 1000"
+                    placeholder="যেমন: ২৫"
                     value={pondArea}
                     onChange={(e) => setPondArea(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="waterDepth">পানির গভীরতা (মিটার)</Label>
+                  <Label htmlFor="waterDepth">পানির গভীরতা (ফুট)</Label>
                   <Input
                     id="waterDepth"
                     type="number"
                     step="0.1"
-                    placeholder="যেমন: 1.5"
+                    placeholder="যেমন: ৫"
                     value={waterDepth}
                     onChange={(e) => setWaterDepth(e.target.value)}
                   />
