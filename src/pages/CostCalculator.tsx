@@ -29,13 +29,14 @@ const CostCalculator = () => {
   // পোনা ক্রয়
   const [fingerlings, setFingerlings] = useState({
     quantity: "",
-    pricePerPiece: "",
+    unit: "piece", // piece or kg
+    pricePerUnit: "",
   });
 
   // খাদ্য খরচ
   const [feedCost, setFeedCost] = useState({
-    totalFeed: "",
-    pricePerKg: "",
+    numberOfBags: "",
+    pricePerBag: "",
   });
 
   // ঔষধ ও চিকিৎসা
@@ -91,8 +92,8 @@ const CostCalculator = () => {
       (parseFloat(pondPreparation.labor) || 0) +
       (parseFloat(pondPreparation.pondDigging) || 0);
     
-    const fingerlingsCost = (parseFloat(fingerlings.quantity) || 0) * (parseFloat(fingerlings.pricePerPiece) || 0);
-    const feedTotal = (parseFloat(feedCost.totalFeed) || 0) * (parseFloat(feedCost.pricePerKg) || 0);
+    const fingerlingsCost = (parseFloat(fingerlings.quantity) || 0) * (parseFloat(fingerlings.pricePerUnit) || 0);
+    const feedTotal = (parseFloat(feedCost.numberOfBags) || 0) * (parseFloat(feedCost.pricePerBag) || 0);
     
     const medicineCostTotal = 
       (parseFloat(medicineCost.disinfectant) || 0) +
@@ -165,13 +166,13 @@ const CostCalculator = () => {
 
     // পোনা খরচ
     const fingerlingsQuantity = parseFloat(fingerlings.quantity) || 0;
-    const fingerlingsPrice = parseFloat(fingerlings.pricePerPiece) || 0;
+    const fingerlingsPrice = parseFloat(fingerlings.pricePerUnit) || 0;
     const totalFingerlingseCost = fingerlingsQuantity * fingerlingsPrice;
 
     // খাদ্য খরচ
-    const totalFeed = parseFloat(feedCost.totalFeed) || 0;
-    const feedPrice = parseFloat(feedCost.pricePerKg) || 0;
-    const totalFeedCost = totalFeed * feedPrice;
+    const numberOfBags = parseFloat(feedCost.numberOfBags) || 0;
+    const pricePerBag = parseFloat(feedCost.pricePerBag) || 0;
+    const totalFeedCost = numberOfBags * pricePerBag;
 
     // ঔষধ খরচ
     const medicineCosts: CostItem[] = [
@@ -416,9 +417,9 @@ const CostCalculator = () => {
                   {selectedExpenseCategory === "fingerlings" && (
                     <div className="space-y-4">
                       <h3 className="font-semibold text-lg">পোনা ক্রয় খরচ</h3>
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="grid md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="fingerlingsQty">পোনার সংখ্যা</Label>
+                          <Label htmlFor="fingerlingsQty">পরিমাণ</Label>
                           <Input
                             id="fingerlingsQty"
                             type="number"
@@ -428,20 +429,37 @@ const CostCalculator = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="fingerlingsPrice">প্রতি পোনার দাম (টাকা)</Label>
+                          <Label htmlFor="fingerlingsUnit">একক</Label>
+                          <Select value={fingerlings.unit} onValueChange={(val) => setFingerlings({...fingerlings, unit: val})}>
+                            <SelectTrigger id="fingerlingsUnit">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="piece">সংখ্যা</SelectItem>
+                              <SelectItem value="kg">কেজি</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="fingerlingsPrice">
+                            প্রতি {fingerlings.unit === "kg" ? "কেজি" : "পিস"} দাম (টাকা)
+                          </Label>
                           <Input
                             id="fingerlingsPrice"
                             type="number"
                             placeholder="যেমন: 2.5"
-                            value={fingerlings.pricePerPiece}
-                            onChange={(e) => setFingerlings({...fingerlings, pricePerPiece: e.target.value})}
+                            value={fingerlings.pricePerUnit}
+                            onChange={(e) => setFingerlings({...fingerlings, pricePerUnit: e.target.value})}
                           />
                         </div>
                       </div>
-                      {fingerlings.quantity && fingerlings.pricePerPiece && (
-                        <Alert>
-                          <AlertDescription>
-                            মোট পোনা খরচ: <strong>৳{(parseFloat(fingerlings.quantity) * parseFloat(fingerlings.pricePerPiece)).toFixed(2)}</strong>
+                      {fingerlings.quantity && fingerlings.pricePerUnit && (
+                        <Alert className="bg-green-50 border-green-200">
+                          <AlertDescription className="text-green-800">
+                            <div className="flex items-center justify-between">
+                              <span>মোট পোনা খরচ:</span>
+                              <strong className="text-xl">৳{(parseFloat(fingerlings.quantity) * parseFloat(fingerlings.pricePerUnit)).toLocaleString('bn-BD')}</strong>
+                            </div>
                           </AlertDescription>
                         </Alert>
                       )}
@@ -454,30 +472,33 @@ const CostCalculator = () => {
                       <h3 className="font-semibold text-lg">খাদ্য খরচ</h3>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="totalFeed">মোট খাদ্য (কেজি)</Label>
+                          <Label htmlFor="numberOfBags">বস্তার সংখ্যা</Label>
                           <Input
-                            id="totalFeed"
+                            id="numberOfBags"
                             type="number"
-                            placeholder="যেমন: 2000"
-                            value={feedCost.totalFeed}
-                            onChange={(e) => setFeedCost({...feedCost, totalFeed: e.target.value})}
+                            placeholder="যেমন: 40"
+                            value={feedCost.numberOfBags}
+                            onChange={(e) => setFeedCost({...feedCost, numberOfBags: e.target.value})}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="feedPrice">প্রতি কেজি খাদ্যের দাম (টাকা)</Label>
+                          <Label htmlFor="pricePerBag">প্রতি বস্তার দাম (টাকা)</Label>
                           <Input
-                            id="feedPrice"
+                            id="pricePerBag"
                             type="number"
-                            placeholder="যেমন: 55"
-                            value={feedCost.pricePerKg}
-                            onChange={(e) => setFeedCost({...feedCost, pricePerKg: e.target.value})}
+                            placeholder="যেমন: 2750"
+                            value={feedCost.pricePerBag}
+                            onChange={(e) => setFeedCost({...feedCost, pricePerBag: e.target.value})}
                           />
                         </div>
                       </div>
-                      {feedCost.totalFeed && feedCost.pricePerKg && (
-                        <Alert>
-                          <AlertDescription>
-                            মোট খাদ্য খরচ: <strong>৳{(parseFloat(feedCost.totalFeed) * parseFloat(feedCost.pricePerKg)).toFixed(2)}</strong>
+                      {feedCost.numberOfBags && feedCost.pricePerBag && (
+                        <Alert className="bg-green-50 border-green-200">
+                          <AlertDescription className="text-green-800">
+                            <div className="flex items-center justify-between">
+                              <span>মোট খাদ্য খরচ:</span>
+                              <strong className="text-xl">৳{(parseFloat(feedCost.numberOfBags) * parseFloat(feedCost.pricePerBag)).toLocaleString('bn-BD')}</strong>
+                            </div>
                           </AlertDescription>
                         </Alert>
                       )}
