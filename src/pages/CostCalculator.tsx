@@ -31,6 +31,7 @@ const CostCalculator = () => {
     quantity: "",
     unit: "piece", // piece or kg
     pricePerUnit: "",
+    fishSpecies: "", // fish species
   });
 
   // খাদ্য খরচ
@@ -72,6 +73,7 @@ const CostCalculator = () => {
   const [income, setIncome] = useState({
     fishSalesWeight: "",
     fishPricePerKg: "",
+    fishSpecies: "", // fish species
     oldNetSales: "",
     pondLease: "",
     byProducts: "",
@@ -453,6 +455,32 @@ const CostCalculator = () => {
                           />
                         </div>
                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fingerlingsSpecies">মাছের প্রজাতি</Label>
+                        <Select value={fingerlings.fishSpecies} onValueChange={(val) => setFingerlings({...fingerlings, fishSpecies: val})}>
+                          <SelectTrigger id="fingerlingsSpecies">
+                            <SelectValue placeholder="মাছের প্রজাতি নির্বাচন করুন..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="রুই">রুই</SelectItem>
+                            <SelectItem value="কাতলা">কাতলা</SelectItem>
+                            <SelectItem value="মৃগেল">মৃগেল</SelectItem>
+                            <SelectItem value="সিলভার কার্প">সিলভার কার্প</SelectItem>
+                            <SelectItem value="গ্রাস কার্প">গ্রাস কার্প</SelectItem>
+                            <SelectItem value="কালবাউস">কালবাউস</SelectItem>
+                            <SelectItem value="তেলাপিয়া">তেলাপিয়া</SelectItem>
+                            <SelectItem value="পাঙ্গাস">পাঙ্গাস</SelectItem>
+                            <SelectItem value="শিং">শিং</SelectItem>
+                            <SelectItem value="মাগুর">মাগুর</SelectItem>
+                            <SelectItem value="কৈ">কৈ</SelectItem>
+                            <SelectItem value="পাবদা">পাবদা</SelectItem>
+                            <SelectItem value="গুলশা">গুলশা</SelectItem>
+                            <SelectItem value="টেংরা">টেংরা</SelectItem>
+                            <SelectItem value="বোয়াল">বোয়াল</SelectItem>
+                            <SelectItem value="অন্যান্য">অন্যান্য</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       {fingerlings.quantity && fingerlings.pricePerUnit && (
                         <Alert className="bg-green-50 border-green-200">
                           <AlertDescription className="text-green-800">
@@ -712,6 +740,32 @@ const CostCalculator = () => {
                   {selectedIncomeCategory === "fishSales" && (
                     <div className="space-y-4">
                       <h3 className="font-semibold text-lg">মাছ বিক্রয়</h3>
+                      <div className="space-y-2">
+                        <Label htmlFor="fishSalesSpecies">মাছের প্রজাতি</Label>
+                        <Select value={income.fishSpecies} onValueChange={(val) => setIncome({...income, fishSpecies: val})}>
+                          <SelectTrigger id="fishSalesSpecies">
+                            <SelectValue placeholder="মাছের প্রজাতি নির্বাচন করুন..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="রুই">রুই</SelectItem>
+                            <SelectItem value="কাতলা">কাতলা</SelectItem>
+                            <SelectItem value="মৃগেল">মৃগেল</SelectItem>
+                            <SelectItem value="সিলভার কার্প">সিলভার কার্প</SelectItem>
+                            <SelectItem value="গ্রাস কার্প">গ্রাস কার্প</SelectItem>
+                            <SelectItem value="কালবাউস">কালবাউস</SelectItem>
+                            <SelectItem value="তেলাপিয়া">তেলাপিয়া</SelectItem>
+                            <SelectItem value="পাঙ্গাস">পাঙ্গাস</SelectItem>
+                            <SelectItem value="শিং">শিং</SelectItem>
+                            <SelectItem value="মাগুর">মাগুর</SelectItem>
+                            <SelectItem value="কৈ">কৈ</SelectItem>
+                            <SelectItem value="পাবদা">পাবদা</SelectItem>
+                            <SelectItem value="গুলশা">গুলশা</SelectItem>
+                            <SelectItem value="টেংরা">টেংরা</SelectItem>
+                            <SelectItem value="বোয়াল">বোয়াল</SelectItem>
+                            <SelectItem value="অন্যান্য">অন্যান্য</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="fishSalesWeight">মোট ওজন (কেজি)</Label>
