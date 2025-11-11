@@ -1,18 +1,22 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator, Droplets, Ruler } from "lucide-react";
+import { Calculator, Droplets, Ruler, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { useFarming } from "@/contexts/FarmingContext";
 
 type PondShape = "rectangle" | "square" | "circle" | "trapezoid";
 type InputUnit = "meter" | "feet" | "centimeter";
 type OutputUnit = "shotak" | "katha" | "bigha" | "acre" | "hectare";
 
 export default function PondCalculator() {
+  const navigate = useNavigate();
+  const { setPondData } = useFarming();
   const [shape, setShape] = useState<PondShape>("rectangle");
   const [inputUnit, setInputUnit] = useState<InputUnit>("meter");
   const [outputUnit, setOutputUnit] = useState<OutputUnit>("shotak");
@@ -60,9 +64,6 @@ export default function PondCalculator() {
   };
 
   const calculatePond = () => {
-    console.log("Calculate button clicked!");
-    console.log("Shape:", shape, "Depth:", depth, "Length:", length, "Width:", width, "Radius:", radius);
-    
     let area = 0;
     const depthNum = parseFloat(depth);
 
@@ -118,7 +119,28 @@ export default function PondCalculator() {
 
     const volume = area * depthInMeters;
     setResults({ area, volume });
+    
+    // Save to context
+    setPondData({
+      area,
+      volume,
+      depth: depthInMeters,
+      shape,
+      unit: inputUnit,
+    });
+    
     toast.success("গণনা সম্পন্ন হয়েছে!");
+  };
+
+  const saveAndContinue = () => {
+    if (!results) {
+      toast.error("প্রথমে গণনা করুন");
+      return;
+    }
+    toast.success("পুকুরের তথ্য সংরক্ষিত হয়েছে! পরবর্তী মডিউলে যাচ্ছেন...");
+    setTimeout(() => {
+      navigate("/fish-stocking");
+    }, 1000);
   };
 
   const resetForm = () => {
@@ -383,6 +405,17 @@ export default function PondCalculator() {
                     <li>• মোট পানির পরিমাণ: <span className="font-semibold">{(results.volume * 1000).toFixed(0)} লিটার</span></li>
                     <li>• এই আয়তন পরবর্তী মডিউলগুলিতে ব্যবহার করা হবে</li>
                   </ul>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    onClick={saveAndContinue}
+                    size="lg"
+                    className="bg-gradient-primary hover:opacity-90"
+                  >
+                    সংরক্ষণ করুন এবং পরবর্তী মডিউলে যান
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>

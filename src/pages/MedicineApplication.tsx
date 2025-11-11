@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pill } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Pill, CheckCircle2, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
+import { useFarming } from "@/contexts/FarmingContext";
 
 export default function MedicineApplication() {
+  const navigate = useNavigate();
+  const { pondData } = useFarming();
   const [waterVolume, setWaterVolume] = useState("");
   const [medicineType, setMedicineType] = useState("");
   const [biomass, setBiomass] = useState("");
@@ -17,6 +23,14 @@ export default function MedicineApplication() {
     frequency: string;
     duration: string;
   } | null>(null);
+
+  // Auto-load pond data
+  useEffect(() => {
+    if (pondData && pondData.volume) {
+      setWaterVolume(pondData.volume.toFixed(2));
+      toast.success("পুকুরের তথ্য স্বয়ংক্রিয়ভাবে যুক্ত হয়েছে!");
+    }
+  }, [pondData]);
 
   const medicines = [
     { 
@@ -129,6 +143,14 @@ export default function MedicineApplication() {
               <CardDescription>পুকুরের আয়তন অনুযায়ী সঠিক মাত্রা নির্ধারণ</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {pondData && (
+                <Alert className="border-primary/50 bg-primary/5">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  <AlertDescription>
+                    <strong>পুকুরের তথ্য যুক্ত হয়েছে:</strong> আয়তন {pondData.volume.toFixed(2)} ঘন মিটার
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="waterVolume">পানির আয়তন (ঘনফুট)</Label>
@@ -199,7 +221,7 @@ export default function MedicineApplication() {
                     </div>
                   </div>
 
-                  <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                   <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                     <h4 className="font-semibold text-yellow-700 dark:text-yellow-400 mb-2">⚠️ সতর্কতা:</h4>
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                       <li>ঔষধ প্রয়োগের আগে অবশ্যই মৎস্য বিশেষজ্ঞের পরামর্শ নিন</li>
@@ -208,6 +230,21 @@ export default function MedicineApplication() {
                       <li>সকালে বা সন্ধ্যায় প্রয়োগ করুন</li>
                       <li>বাজারজাতকরণের আগে প্রত্যাহার সময় (withdrawal period) মেনে চলুন</li>
                     </ul>
+                  </div>
+                  
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        toast.success("পরবর্তী মডিউলে যাচ্ছেন...");
+                        setTimeout(() => navigate("/fertilizer-calculator"), 1000);
+                      }}
+                      size="lg"
+                      className="bg-gradient-primary hover:opacity-90"
+                    >
+                      পরবর্তী মডিউল (সার প্রয়োগ)
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               )}

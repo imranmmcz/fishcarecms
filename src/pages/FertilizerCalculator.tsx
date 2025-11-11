@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,14 +7,33 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { TrendingUp, Info } from "lucide-react";
+import { TrendingUp, Info, CheckCircle2, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
+import { useFarming } from "@/contexts/FarmingContext";
 
 const FertilizerCalculator = () => {
+  const navigate = useNavigate();
+  const { pondData } = useFarming();
   const [pondArea, setPondArea] = useState("");
   const [waterDepth, setWaterDepth] = useState("");
   const [pondType, setPondType] = useState("new");
   const [fertilizerType, setFertilizerType] = useState("urea");
   const [result, setResult] = useState<any>(null);
+
+  // Auto-load pond data
+  useEffect(() => {
+    if (pondData) {
+      // Convert area from square meters to shotak
+      const areaInShotak = pondData.area / 40.47;
+      setPondArea(areaInShotak.toFixed(2));
+      
+      // Convert depth from meters to feet
+      const depthInFeet = pondData.depth / 0.3048;
+      setWaterDepth(depthInFeet.toFixed(2));
+      
+      toast.success("পুকুরের তথ্য স্বয়ংক্রিয়ভাবে যুক্ত হয়েছে!");
+    }
+  }, [pondData]);
 
   const calculateFertilizer = () => {
     const areaInShotak = parseFloat(pondArea);
@@ -102,6 +122,14 @@ const FertilizerCalculator = () => {
               <CardDescription>সঠিক সার প্রয়োগের জন্য তথ্য প্রদান করুন</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {pondData && (
+                <Alert className="border-primary/50 bg-primary/5">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  <AlertDescription>
+                    <strong>পুকুরের তথ্য যুক্ত হয়েছে:</strong> আয়তন {(pondData.area / 40.47).toFixed(2)} শতক, গভীরতা {(pondData.depth / 0.3048).toFixed(2)} ফুট
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="pondArea">পুকুরের আয়তন (শতক)</Label>
@@ -191,6 +219,21 @@ const FertilizerCalculator = () => {
                     <li>গোবর অবশ্যই পচানো অবস্থায় প্রয়োগ করুন</li>
                     <li>সার প্রয়োগের দিন মাছকে খাদ্য দেবেন না</li>
                   </ul>
+                </div>
+                
+                <div className="flex justify-end mt-4">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      toast.success("পরবর্তী মডিউলে যাচ্ছেন...");
+                      setTimeout(() => navigate("/water-quality"), 1000);
+                    }}
+                    size="lg"
+                    className="bg-gradient-primary hover:opacity-90"
+                  >
+                    পরবর্তী মডিউল (পানির গুণমান)
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>

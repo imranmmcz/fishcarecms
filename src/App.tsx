@@ -3,7 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { FarmingProvider } from "@/contexts/FarmingContext";
 import Index from "./pages/Index";
+import Modules from "./pages/Modules";
 import PondCalculator from "./pages/PondCalculator";
 import FishStocking from "./pages/FishStocking";
 import BiomassCalculator from "./pages/BiomassCalculator";
@@ -20,24 +22,27 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/pond-calculator" element={<PondCalculator />} />
-          <Route path="/fish-stocking" element={<FishStocking />} />
-          <Route path="/biomass-calculator" element={<BiomassCalculator />} />
-          <Route path="/feed-management" element={<FeedManagement />} />
-          <Route path="/medicine-application" element={<MedicineApplication />} />
-          <Route path="/fertilizer-calculator" element={<FertilizerCalculator />} />
-          <Route path="/water-quality" element={<WaterQuality />} />
-          <Route path="/cost-calculator" element={<CostCalculator />} />
-          <Route path="/reports" element={<Reports />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <FarmingProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/modules" element={<Modules />} />
+            <Route path="/pond-calculator" element={<PondCalculator />} />
+            <Route path="/fish-stocking" element={<FishStocking />} />
+            <Route path="/biomass-calculator" element={<BiomassCalculator />} />
+            <Route path="/feed-management" element={<FeedManagement />} />
+            <Route path="/medicine-application" element={<MedicineApplication />} />
+            <Route path="/fertilizer-calculator" element={<FertilizerCalculator />} />
+            <Route path="/water-quality" element={<WaterQuality />} />
+            <Route path="/cost-calculator" element={<CostCalculator />} />
+            <Route path="/reports" element={<Reports />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </FarmingProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
