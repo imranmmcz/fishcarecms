@@ -60,6 +60,9 @@ export default function PondCalculator() {
   };
 
   const calculatePond = () => {
+    console.log("Calculate button clicked!");
+    console.log("Shape:", shape, "Depth:", depth, "Length:", length, "Width:", width, "Radius:", radius);
+    
     let area = 0;
     const depthNum = parseFloat(depth);
 
@@ -326,13 +329,15 @@ export default function PondCalculator() {
               {/* Action Buttons */}
               <div className="flex gap-3">
                 <Button 
+                  type="button"
                   onClick={calculatePond} 
-                  className="flex-1 bg-gradient-primary hover:opacity-90"
+                  className="flex-1 bg-gradient-primary hover:opacity-90 cursor-pointer"
                 >
                   <Calculator className="mr-2 h-4 w-4" />
                   গণনা করুন
                 </Button>
                 <Button 
+                  type="button"
                   onClick={resetForm} 
                   variant="outline"
                 >
