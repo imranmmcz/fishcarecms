@@ -6,6 +6,7 @@ import { Link, useLocation } from "react-router-dom";
 const navItems = [
   { path: "/", label: "হোম" },
   { path: "/pond-calculator", label: "পুকুর পরিমাপ" },
+  { path: "/stocking-density", label: "স্টকিং ডেনসিটি" },
   { path: "/modules", label: "সকল মডিউল" },
 ];
 

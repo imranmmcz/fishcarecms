@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Modules from "./pages/Modules";
 import PondCalculator from "./pages/PondCalculator";
 import FishStocking from "./pages/FishStocking";
+import StockingDensity from "./pages/StockingDensity";
 import BiomassCalculator from "./pages/BiomassCalculator";
 import FeedManagement from "./pages/FeedManagement";
 import MedicineApplication from "./pages/MedicineApplication";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/modules" element={<Modules />} />
             <Route path="/pond-calculator" element={<PondCalculator />} />
             <Route path="/fish-stocking" element={<FishStocking />} />
+            <Route path="/stocking-density" element={<StockingDensity />} />
             <Route path="/biomass-calculator" element={<BiomassCalculator />} />
             <Route path="/feed-management" element={<FeedManagement />} />
             <Route path="/medicine-application" element={<MedicineApplication />} />
