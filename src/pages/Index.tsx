@@ -1,7 +1,7 @@
 import { Header } from "@/components/Header";
 import { ModuleCard } from "@/components/ModuleCard";
 import { Button } from "@/components/ui/button";
-import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package } from "lucide-react";
+import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const modules = [
@@ -83,6 +83,14 @@ const modules = [
     description: "খামারের সকল তথ্য একসাথে রিপোর্ট আকারে দেখুন",
     icon: FileText,
     path: "/reports",
+    isActive: true,
+  },
+  {
+    id: 11,
+    title: "ফিস এডভাইস",
+    description: "AI এর মাধ্যমে মাছ চাষ সম্পর্কিত সকল সমস্যার সমাধান পান",
+    icon: MessageSquare,
+    path: "/fish-advice",
     isActive: true,
   },
 ];

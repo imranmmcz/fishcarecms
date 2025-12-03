@@ -7,6 +7,7 @@ const navItems = [
   { path: "/", label: "হোম" },
   { path: "/pond-calculator", label: "পুকুর পরিমাপ" },
   { path: "/stocking-density", label: "স্টকিং ডেনসিটি" },
+  { path: "/fish-advice", label: "ফিস এডভাইস" },
   { path: "/modules", label: "সকল মডিউল" },
 ];
 
