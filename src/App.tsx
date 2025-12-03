@@ -16,6 +16,7 @@ import FertilizerCalculator from "./pages/FertilizerCalculator";
 import WaterQuality from "./pages/WaterQuality";
 import CostCalculator from "./pages/CostCalculator";
 import Reports from "./pages/Reports";
+import FishAdvice from "./pages/FishAdvice";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/water-quality" element={<WaterQuality />} />
             <Route path="/cost-calculator" element={<CostCalculator />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/fish-advice" element={<FishAdvice />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,0 +1,5 @@
+project_id = "pvvbglukaehizykkpaes"
+
+[functions.fish-advice-chat]
+enabled = true
+verify_jwt = false

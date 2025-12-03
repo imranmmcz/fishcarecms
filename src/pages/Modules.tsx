@@ -3,7 +3,7 @@ import { ModuleCard } from "@/components/ModuleCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, ArrowRight, CheckCircle2, Info } from "lucide-react";
+import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, ArrowRight, CheckCircle2, Info, MessageSquare } from "lucide-react";
 import { useFarming } from "@/contexts/FarmingContext";
 import { Link } from "react-router-dom";
 
@@ -87,6 +87,14 @@ const modules = [
     icon: FileText,
     path: "/reports",
     step: 10,
+  },
+  {
+    id: 11,
+    title: "ফিস এডভাইস",
+    description: "AI এর মাধ্যমে মাছ চাষ সম্পর্কিত সকল সমস্যার সমাধান পান",
+    icon: MessageSquare,
+    path: "/fish-advice",
+    step: 11,
   },
 ];
 
