@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Fish } from "lucide-react";
+import { Fish, Info } from "lucide-react";
+import { useFarming } from "@/contexts/FarmingContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function FishStocking() {
+  const { pondData } = useFarming();
   const [pondArea, setPondArea] = useState("");
   const [waterDepth, setWaterDepth] = useState("");
   const [fishType, setFishType] = useState("");
@@ -17,6 +20,19 @@ export default function FishStocking() {
     fingerlingWeight: number;
     totalWeight: number;
   } | null>(null);
+
+  // Auto-load pond data from context and convert units
+  useEffect(() => {
+    if (pondData) {
+      // Convert area from square meters to shotak (1 shotak = 40.47 sq meters)
+      const areaInShotak = pondData.area / 40.47;
+      setPondArea(areaInShotak.toFixed(2));
+      
+      // Convert depth from meters to feet (1 meter = 3.281 feet)
+      const depthInFeet = pondData.depth * 3.281;
+      setWaterDepth(depthInFeet.toFixed(2));
+    }
+  }, [pondData]);
 
   const fishTypes = [
     { value: "rohu", label: "রুই", density: "3-5", weight: "25-50" },
@@ -69,6 +85,15 @@ export default function FishStocking() {
               </div>
             </div>
           </div>
+
+          {pondData && (
+            <Alert className="mb-6 border-primary/30 bg-primary/5">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                পুকুর পরিমাপ থেকে ডাটা অটোমেটিক লোড হয়েছে: <strong>{(pondData.area / 40.47).toFixed(2)} শতক</strong> আয়তন, <strong>{(pondData.depth * 3.281).toFixed(2)} ফুট</strong> গভীরতা
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Card className="shadow-elegant animate-slide-in">
             <CardHeader>
