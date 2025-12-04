@@ -16,6 +16,9 @@ interface IncomeRecord {
   amount: number;
   description: string;
   pondName?: string;
+  fishType?: string;
+  fishWeight?: number;
+  fishPrice?: number;
 }
 
 const incomeCategories = [
@@ -183,9 +186,25 @@ export default function DashboardIncome() {
                     {records.slice().reverse().map((record) => (
                       <TableRow key={record.id}>
                         <TableCell>{record.date}</TableCell>
-                        <TableCell>{record.category}</TableCell>
+                        <TableCell>
+                          {record.category}
+                          {record.fishType && (
+                            <span className="text-xs text-muted-foreground block">
+                              {record.fishType}
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell>{record.pondName || "-"}</TableCell>
-                        <TableCell>{record.description || "-"}</TableCell>
+                        <TableCell>
+                          {record.fishWeight && record.fishPrice ? (
+                            <span className="text-xs">
+                              {record.fishWeight} কেজি @ ৳{record.fishPrice}/কেজি
+                              {record.description && <span className="block">{record.description}</span>}
+                            </span>
+                          ) : (
+                            record.description || "-"
+                          )}
+                        </TableCell>
                         <TableCell className="text-right text-green-600 font-medium">
                           +৳{record.amount.toLocaleString("bn-BD")}
                         </TableCell>

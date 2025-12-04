@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Waves, Edit, Fish } from "lucide-react";
+import { Plus, Trash2, Waves, Edit, Fish, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -15,6 +15,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
+interface IncomeRecord {
+  id: string;
+  date: string;
+  category: string;
+  amount: number;
+  description: string;
+  pondName?: string;
+  fishType?: string;
+  fishWeight?: number;
+  fishPrice?: number;
+}
 
 interface PondRecord {
   id: string;
@@ -46,6 +58,15 @@ export default function DashboardMyPond() {
   const [ponds, setPonds] = useState<PondRecord[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPond, setEditingPond] = useState<PondRecord | null>(null);
+
+  // Sell fish dialog state
+  const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
+  const [sellingPond, setSellingPond] = useState<PondRecord | null>(null);
+  const [sellFishType, setSellFishType] = useState("");
+  const [sellWeight, setSellWeight] = useState("");
+  const [sellPricePerKg, setSellPricePerKg] = useState("");
+  const [sellDate, setSellDate] = useState(new Date().toISOString().split("T")[0]);
+  const [sellBuyer, setSellBuyer] = useState("");
 
   const [name, setName] = useState("");
   const [area, setArea] = useState("");
@@ -149,6 +170,49 @@ export default function DashboardMyPond() {
 
   const getStatusInfo = (statusValue: string) => {
     return statusOptions.find((s) => s.value === statusValue) || statusOptions[0];
+  };
+
+  const handleOpenSellDialog = (pond: PondRecord) => {
+    setSellingPond(pond);
+    setSellFishType(pond.fishTypes[0] || "");
+    setSellWeight("");
+    setSellPricePerKg("");
+    setSellDate(new Date().toISOString().split("T")[0]);
+    setSellBuyer("");
+    setIsSellDialogOpen(true);
+  };
+
+  const handleSellFish = () => {
+    if (!sellingPond || !sellWeight || !sellPricePerKg) {
+      toast.error("ওজন এবং দাম দিন");
+      return;
+    }
+
+    const weight = parseFloat(sellWeight);
+    const pricePerKg = parseFloat(sellPricePerKg);
+    const totalAmount = weight * pricePerKg;
+
+    // Create income record
+    const incomeRecord: IncomeRecord = {
+      id: Date.now().toString(),
+      date: sellDate,
+      category: "মাছ বিক্রয়",
+      amount: totalAmount,
+      description: sellBuyer ? `ক্রেতা: ${sellBuyer}` : `${sellFishType} - ${weight} কেজি @ ৳${pricePerKg}/কেজি`,
+      pondName: sellingPond.name,
+      fishType: sellFishType,
+      fishWeight: weight,
+      fishPrice: pricePerKg,
+    };
+
+    // Save to incomes
+    const savedIncomes = JSON.parse(localStorage.getItem("farmerIncomes") || "[]");
+    const newIncomes = [...savedIncomes, incomeRecord];
+    localStorage.setItem("farmerIncomes", JSON.stringify(newIncomes));
+
+    toast.success(`৳${totalAmount.toLocaleString("bn-BD")} আয় রেকর্ড করা হয়েছে`);
+    setIsSellDialogOpen(false);
+    setSellingPond(null);
   };
 
   return (
@@ -326,12 +390,98 @@ export default function DashboardMyPond() {
                         মজুদের তারিখ: {pond.stockingDate}
                       </p>
                     )}
+                    {pond.status === "active" && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full mt-2 text-green-600 border-green-600 hover:bg-green-50"
+                        onClick={() => handleOpenSellDialog(pond)}
+                      >
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        মাছ বিক্রি করুন
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
             })}
           </div>
         )}
+
+        {/* Sell Fish Dialog */}
+        <Dialog open={isSellDialogOpen} onOpenChange={setIsSellDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-green-600" />
+                মাছ বিক্রি - {sellingPond?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>তারিখ</Label>
+                <Input 
+                  type="date" 
+                  value={sellDate} 
+                  onChange={(e) => setSellDate(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>মাছের প্রজাতি</Label>
+                <Select value={sellFishType} onValueChange={setSellFishType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="প্রজাতি নির্বাচন করুন" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(sellingPond?.fishTypes.length ? sellingPond.fishTypes : fishTypeOptions).map((fish) => (
+                      <SelectItem key={fish} value={fish}>{fish}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>ওজন (কেজি) *</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="০" 
+                    value={sellWeight} 
+                    onChange={(e) => setSellWeight(e.target.value)} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>দাম/কেজি (৳) *</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="০" 
+                    value={sellPricePerKg} 
+                    onChange={(e) => setSellPricePerKg(e.target.value)} 
+                  />
+                </div>
+              </div>
+              {sellWeight && sellPricePerKg && (
+                <div className="bg-green-50 p-3 rounded-lg text-center">
+                  <p className="text-sm text-muted-foreground">মোট আয়</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    ৳{(parseFloat(sellWeight) * parseFloat(sellPricePerKg)).toLocaleString("bn-BD")}
+                  </p>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label>ক্রেতার নাম (ঐচ্ছিক)</Label>
+                <Input 
+                  placeholder="ক্রেতার নাম লিখুন" 
+                  value={sellBuyer} 
+                  onChange={(e) => setSellBuyer(e.target.value)} 
+                />
+              </div>
+              <Button className="w-full bg-green-600 hover:bg-green-700" onClick={handleSellFish}>
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                বিক্রি রেকর্ড করুন
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
