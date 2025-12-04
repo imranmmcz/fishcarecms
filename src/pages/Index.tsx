@@ -1,7 +1,7 @@
 import { Header } from "@/components/Header";
 import { ModuleCard } from "@/components/ModuleCard";
 import { Button } from "@/components/ui/button";
-import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare } from "lucide-react";
+import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const modules = [
@@ -121,9 +121,12 @@ const Index = () => {
                   এখনই শুরু করুন
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="bg-white/10 border-white/20 hover:bg-white/20 text-white">
-                সম্পর্কে জানুন
-              </Button>
+              <Link to="/dashboard">
+                <Button size="lg" variant="outline" className="bg-white/10 border-white/20 hover:bg-white/20 text-white">
+                  <LayoutDashboard className="mr-2 h-5 w-5" />
+                  ড্যাশবোর্ড
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
