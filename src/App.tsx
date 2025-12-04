@@ -17,6 +17,11 @@ import WaterQuality from "./pages/WaterQuality";
 import CostCalculator from "./pages/CostCalculator";
 import Reports from "./pages/Reports";
 import FishAdvice from "./pages/FishAdvice";
+import Dashboard from "./pages/Dashboard";
+import DashboardIncome from "./pages/DashboardIncome";
+import DashboardExpense from "./pages/DashboardExpense";
+import DashboardMyPond from "./pages/DashboardMyPond";
+import DashboardReports from "./pages/DashboardReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +47,11 @@ const App = () => (
             <Route path="/cost-calculator" element={<CostCalculator />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/fish-advice" element={<FishAdvice />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/income" element={<DashboardIncome />} />
+            <Route path="/dashboard/expense" element={<DashboardExpense />} />
+            <Route path="/dashboard/my-pond" element={<DashboardMyPond />} />
+            <Route path="/dashboard/reports" element={<DashboardReports />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
