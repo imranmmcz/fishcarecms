@@ -3,8 +3,10 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, TrendingUp, TrendingDown, Calculator, Calendar } from "lucide-react";
+import { FileText, TrendingUp, TrendingDown, Calculator, Calendar, Printer, Download } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface IncomeRecord {
   id: string;
@@ -80,16 +82,96 @@ export default function DashboardReports() {
     return acc;
   }, {} as Record<string, number>);
 
+  const handlePrintReport = () => {
+    const printContent = `
+      <html>
+        <head>
+          <title>আয়-ব্যয় রিপোর্ট</title>
+          <style>
+            body { font-family: 'Noto Sans Bengali', sans-serif; padding: 20px; }
+            h1 { text-align: center; color: #7c3aed; }
+            .summary { display: flex; justify-content: space-around; margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px; }
+            .summary div { text-align: center; }
+            .income { color: #16a34a; }
+            .expense { color: #dc2626; }
+            .profit { color: ${profit >= 0 ? '#16a34a' : '#dc2626'}; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+            th { background: #f3e8ff; color: #6b21a8; }
+            h2 { margin-top: 30px; color: #374151; }
+          </style>
+        </head>
+        <body>
+          <h1>আয়-ব্যয় রিপোর্ট</h1>
+          <div class="summary">
+            <div><strong>মোট আয়</strong><br/><span class="income">৳${totalIncome.toLocaleString('bn-BD')}</span></div>
+            <div><strong>মোট ব্যয়</strong><br/><span class="expense">৳${totalExpense.toLocaleString('bn-BD')}</span></div>
+            <div><strong>লাভ/ক্ষতি</strong><br/><span class="profit">${profit >= 0 ? '+' : ''}৳${profit.toLocaleString('bn-BD')}</span></div>
+          </div>
+          <h2>সকল লেনদেন</h2>
+          <table>
+            <thead><tr><th>তারিখ</th><th>ধরন</th><th>ক্যাটাগরি</th><th>পুকুর</th><th>পরিমাণ</th></tr></thead>
+            <tbody>
+              ${[
+                ...filteredIncomes.map(i => ({ ...i, type: 'income' })),
+                ...filteredExpenses.map(e => ({ ...e, type: 'expense' }))
+              ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map(item => `<tr><td>${item.date}</td><td>${item.type === 'income' ? 'আয়' : 'ব্যয়'}</td><td>${item.category}</td><td>${item.pondName || '-'}</td><td style="color: ${item.type === 'income' ? '#16a34a' : '#dc2626'}">${item.type === 'income' ? '+' : '-'}৳${item.amount.toLocaleString('bn-BD')}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  const handleDownloadCSV = () => {
+    const allTransactions = [
+      ...filteredIncomes.map(i => ({ ...i, type: 'আয়' })),
+      ...filteredExpenses.map(e => ({ ...e, type: 'ব্যয়' }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const headers = ['তারিখ', 'ধরন', 'ক্যাটাগরি', 'পুকুর', 'বিবরণ', 'পরিমাণ'];
+    const csvContent = [
+      headers.join(','),
+      ...allTransactions.map(t => [t.date, t.type, t.category, t.pondName || '', t.description || '', t.amount].join(','))
+    ].join('\n');
+    
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `আয়_ব্যয়_রিপোর্ট_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV ডাউনলোড হয়েছে');
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-purple-100 rounded-full">
-            <FileText className="h-6 w-6 text-purple-600" />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-purple-100 rounded-full">
+              <FileText className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">রিপোর্ট</h1>
+              <p className="text-muted-foreground">আয়-ব্যয়ের বিস্তারিত রিপোর্ট</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">রিপোর্ট</h1>
-            <p className="text-muted-foreground">আয়-ব্যয়ের বিস্তারিত রিপোর্ট</p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handlePrintReport}>
+              <Printer className="h-4 w-4 mr-2" /> প্রিন্ট
+            </Button>
+            <Button variant="outline" onClick={handleDownloadCSV}>
+              <Download className="h-4 w-4 mr-2" /> CSV ডাউনলোড
+            </Button>
           </div>
         </div>
 
