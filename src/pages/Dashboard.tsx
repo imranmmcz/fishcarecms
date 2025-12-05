@@ -2,6 +2,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Waves, Calculator } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 interface IncomeRecord {
   id: string;
@@ -9,6 +10,7 @@ interface IncomeRecord {
   category: string;
   amount: number;
   description: string;
+  pondName?: string;
 }
 
 interface ExpenseRecord {
@@ -17,6 +19,7 @@ interface ExpenseRecord {
   category: string;
   amount: number;
   description: string;
+  pondName?: string;
 }
 
 interface PondRecord {
@@ -28,10 +31,21 @@ interface PondRecord {
   status: string;
 }
 
+interface PondChartData {
+  name: string;
+  আয়: number;
+  ব্যয়: number;
+  লাভ: number;
+}
+
+const COLORS = ["#10b981", "#ef4444", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899"];
+
 export default function Dashboard() {
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [pondCount, setPondCount] = useState(0);
+  const [pondChartData, setPondChartData] = useState<PondChartData[]>([]);
+  const [categoryData, setCategoryData] = useState<{ name: string; value: number }[]>([]);
 
   useEffect(() => {
     const incomes: IncomeRecord[] = JSON.parse(localStorage.getItem("farmerIncomes") || "[]");
@@ -41,6 +55,31 @@ export default function Dashboard() {
     setTotalIncome(incomes.reduce((sum, item) => sum + item.amount, 0));
     setTotalExpense(expenses.reduce((sum, item) => sum + item.amount, 0));
     setPondCount(ponds.length);
+
+    // Calculate pond-wise data
+    const pondData: PondChartData[] = ponds.map((pond) => {
+      const pondIncome = incomes
+        .filter((i) => i.pondName === pond.name)
+        .reduce((sum, i) => sum + i.amount, 0);
+      const pondExpense = expenses
+        .filter((e) => e.pondName === pond.name)
+        .reduce((sum, e) => sum + e.amount, 0);
+      return {
+        name: pond.name,
+        আয়: pondIncome,
+        ব্যয়: pondExpense,
+        লাভ: pondIncome - pondExpense,
+      };
+    });
+    setPondChartData(pondData);
+
+    // Calculate expense category data
+    const categoryMap: { [key: string]: number } = {};
+    expenses.forEach((e) => {
+      categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
+    });
+    const catData = Object.entries(categoryMap).map(([name, value]) => ({ name, value }));
+    setCategoryData(catData);
   }, []);
 
   const profit = totalIncome - totalExpense;
@@ -100,6 +139,62 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Pond-wise Income vs Expense Chart */}
+          {pondChartData.length > 0 && (
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>পুকুরভিত্তিক আয় ও ব্যয়</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={pondChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip 
+                      formatter={(value: number) => `৳${value.toLocaleString("bn-BD")}`}
+                    />
+                    <Legend />
+                    <Bar dataKey="আয়" fill="#10b981" />
+                    <Bar dataKey="ব্যয়" fill="#ef4444" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Expense Category Pie Chart */}
+          {categoryData.length > 0 && (
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>খরচের ক্যাটাগরি</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {categoryData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => `৳${value.toLocaleString("bn-BD")}`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
