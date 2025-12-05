@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Waves, Edit, Fish, ShoppingCart } from "lucide-react";
+import { Plus, Trash2, Waves, Edit, Fish, ShoppingCart, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -27,6 +27,19 @@ interface IncomeRecord {
   fishWeight?: number;
   fishPrice?: number;
 }
+
+interface ExpenseRecord {
+  id: string;
+  date: string;
+  category: string;
+  amount: number;
+  description: string;
+  pondName?: string;
+}
+
+const expenseCategories = [
+  "খাবার", "ওষুধ", "সার", "চুন", "পোনা ক্রয়", "শ্রমিক", "বিদ্যুৎ", "যন্ত্রপাতি", "অন্যান্য"
+];
 
 interface PondRecord {
   id: string;
@@ -67,6 +80,14 @@ export default function DashboardMyPond() {
   const [sellPricePerKg, setSellPricePerKg] = useState("");
   const [sellDate, setSellDate] = useState(new Date().toISOString().split("T")[0]);
   const [sellBuyer, setSellBuyer] = useState("");
+
+  // Add expense dialog state
+  const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+  const [expensePond, setExpensePond] = useState<PondRecord | null>(null);
+  const [expenseCategory, setExpenseCategory] = useState("খাবার");
+  const [expenseAmount, setExpenseAmount] = useState("");
+  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split("T")[0]);
+  const [expenseDescription, setExpenseDescription] = useState("");
 
   const [name, setName] = useState("");
   const [area, setArea] = useState("");
@@ -213,6 +234,41 @@ export default function DashboardMyPond() {
     toast.success(`৳${totalAmount.toLocaleString("bn-BD")} আয় রেকর্ড করা হয়েছে`);
     setIsSellDialogOpen(false);
     setSellingPond(null);
+  };
+
+  const handleOpenExpenseDialog = (pond: PondRecord) => {
+    setExpensePond(pond);
+    setExpenseCategory("খাবার");
+    setExpenseAmount("");
+    setExpenseDate(new Date().toISOString().split("T")[0]);
+    setExpenseDescription("");
+    setIsExpenseDialogOpen(true);
+  };
+
+  const handleAddExpense = () => {
+    if (!expensePond || !expenseAmount) {
+      toast.error("খরচের পরিমাণ দিন");
+      return;
+    }
+
+    const amount = parseFloat(expenseAmount);
+
+    const expenseRecord: ExpenseRecord = {
+      id: Date.now().toString(),
+      date: expenseDate,
+      category: expenseCategory,
+      amount: amount,
+      description: expenseDescription || `${expensePond.name} - ${expenseCategory}`,
+      pondName: expensePond.name,
+    };
+
+    const savedExpenses = JSON.parse(localStorage.getItem("farmerExpenses") || "[]");
+    const newExpenses = [...savedExpenses, expenseRecord];
+    localStorage.setItem("farmerExpenses", JSON.stringify(newExpenses));
+
+    toast.success(`৳${amount.toLocaleString("bn-BD")} খরচ রেকর্ড করা হয়েছে`);
+    setIsExpenseDialogOpen(false);
+    setExpensePond(null);
   };
 
   return (
@@ -391,15 +447,26 @@ export default function DashboardMyPond() {
                       </p>
                     )}
                     {pond.status === "active" && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-2 text-green-600 border-green-600 hover:bg-green-50"
-                        onClick={() => handleOpenSellDialog(pond)}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        মাছ বিক্রি করুন
-                      </Button>
+                      <div className="flex gap-2 mt-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1 text-green-600 border-green-600 hover:bg-green-50"
+                          onClick={() => handleOpenSellDialog(pond)}
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-1" />
+                          বিক্রি
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1 text-orange-600 border-orange-600 hover:bg-orange-50"
+                          onClick={() => handleOpenExpenseDialog(pond)}
+                        >
+                          <Receipt className="h-4 w-4 mr-1" />
+                          খরচ
+                        </Button>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -478,6 +545,62 @@ export default function DashboardMyPond() {
               <Button className="w-full bg-green-600 hover:bg-green-700" onClick={handleSellFish}>
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 বিক্রি রেকর্ড করুন
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Expense Dialog */}
+        <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-orange-600" />
+                খরচ যোগ করুন - {expensePond?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>তারিখ</Label>
+                <Input 
+                  type="date" 
+                  value={expenseDate} 
+                  onChange={(e) => setExpenseDate(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>খরচের ধরন</Label>
+                <Select value={expenseCategory} onValueChange={setExpenseCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="ধরন নির্বাচন করুন" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {expenseCategories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>পরিমাণ (৳) *</Label>
+                <Input 
+                  type="number" 
+                  placeholder="০" 
+                  value={expenseAmount} 
+                  onChange={(e) => setExpenseAmount(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>বিবরণ (ঐচ্ছিক)</Label>
+                <Input 
+                  placeholder="বিস্তারিত লিখুন" 
+                  value={expenseDescription} 
+                  onChange={(e) => setExpenseDescription(e.target.value)} 
+                />
+              </div>
+              <Button className="w-full bg-orange-600 hover:bg-orange-700" onClick={handleAddExpense}>
+                <Receipt className="h-4 w-4 mr-2" />
+                খরচ রেকর্ড করুন
               </Button>
             </div>
           </DialogContent>
