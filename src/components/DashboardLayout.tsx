@@ -18,7 +18,8 @@ import {
   Waves, 
   FileText,
   Home,
-  Fish
+  Fish,
+  CloudUpload
 } from "lucide-react";
 
 const menuItems = [
@@ -56,6 +57,13 @@ const menuItems = [
     icon: FileText,
     color: "bg-gradient-to-r from-amber-500 to-orange-600",
     iconColor: "text-amber-500"
+  },
+  { 
+    title: "ব্যাকআপ", 
+    url: "/dashboard/backup", 
+    icon: CloudUpload,
+    color: "bg-gradient-to-r from-indigo-500 to-violet-600",
+    iconColor: "text-indigo-500"
   },
 ];
 
