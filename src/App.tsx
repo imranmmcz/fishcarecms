@@ -22,6 +22,7 @@ import DashboardIncome from "./pages/DashboardIncome";
 import DashboardExpense from "./pages/DashboardExpense";
 import DashboardMyPond from "./pages/DashboardMyPond";
 import DashboardReports from "./pages/DashboardReports";
+import DashboardBackup from "./pages/DashboardBackup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/dashboard/expense" element={<DashboardExpense />} />
             <Route path="/dashboard/my-pond" element={<DashboardMyPond />} />
             <Route path="/dashboard/reports" element={<DashboardReports />} />
+            <Route path="/dashboard/backup" element={<DashboardBackup />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
