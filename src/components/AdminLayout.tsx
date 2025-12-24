@@ -19,7 +19,8 @@ import {
   BarChart3,
   Home,
   Shield,
-  Loader2
+  Loader2,
+  User
 } from "lucide-react";
 
 const menuItems = [
@@ -50,6 +51,13 @@ const menuItems = [
     icon: Settings,
     color: "bg-gradient-to-r from-amber-500 to-orange-600",
     iconColor: "text-amber-500"
+  },
+  { 
+    title: "প্রোফাইল", 
+    url: "/admin/profile", 
+    icon: User,
+    color: "bg-gradient-to-r from-pink-500 to-rose-600",
+    iconColor: "text-pink-500"
   },
 ];
 

@@ -29,6 +29,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminSettings from "./pages/AdminSettings";
 import AdminReports from "./pages/AdminReports";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,10 +63,12 @@ const App = () => (
               <Route path="/dashboard/my-pond" element={<DashboardMyPond />} />
               <Route path="/dashboard/reports" element={<DashboardReports />} />
               <Route path="/dashboard/backup" element={<DashboardBackup />} />
+              <Route path="/dashboard/profile" element={<Profile />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/reports" element={<AdminReports />} />
+              <Route path="/admin/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
