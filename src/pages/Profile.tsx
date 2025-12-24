@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { User, Camera, Loader2, Save, Mail, Calendar } from "lucide-react";
+import { User, Camera, Loader2, Save, Mail, Calendar, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function Profile() {
   const { user, isLoading: authLoading, isAdmin } = useAuth();
@@ -23,6 +23,15 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Password change states
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Determine which layout to use based on the route
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -137,6 +146,60 @@ export default function Profile() {
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const handleChangePassword = async () => {
+    // Validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("সব ফিল্ড পূরণ করুন");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("নতুন পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড মিলছে না");
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+
+      // First verify current password by re-authenticating
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user!.email!,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        toast.error("বর্তমান পাসওয়ার্ড সঠিক নয়");
+        return;
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      toast.success("পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!");
+      
+      // Clear form
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      toast.error("পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে");
+      console.error("Error changing password:", error);
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   if (authLoading || loading) {
@@ -283,6 +346,97 @@ export default function Profile() {
                 <>
                   <Save className="h-4 w-4 mr-2" />
                   পরিবর্তন সেভ করুন
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Password Change Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              পাসওয়ার্ড পরিবর্তন
+            </CardTitle>
+            <CardDescription>আপনার অ্যাকাউন্টের পাসওয়ার্ড পরিবর্তন করুন</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">বর্তমান পাসওয়ার্ড</Label>
+              <div className="relative">
+                <Input
+                  id="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="বর্তমান পাসওয়ার্ড লিখুন"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">নতুন পাসওয়ার্ড</Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="নতুন পাসওয়ার্ড লিখুন (কমপক্ষে ৬ অক্ষর)"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">পাসওয়ার্ড নিশ্চিত করুন</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="নতুন পাসওয়ার্ড আবার লিখুন"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <Button 
+              onClick={handleChangePassword} 
+              disabled={changingPassword}
+              variant="outline"
+              className="w-full"
+            >
+              {changingPassword ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  পরিবর্তন হচ্ছে...
+                </>
+              ) : (
+                <>
+                  <Lock className="h-4 w-4 mr-2" />
+                  পাসওয়ার্ড পরিবর্তন করুন
                 </>
               )}
             </Button>
