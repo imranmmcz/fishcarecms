@@ -274,6 +274,16 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+
+          {/* Demo User Info */}
+          <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
+            <p className="text-sm text-slate-300 font-medium mb-2">🎯 ডেমো অ্যাকাউন্ট:</p>
+            <div className="space-y-1 text-sm text-slate-400">
+              <p>ইমেইল: <span className="text-cyan-400 font-mono">demo@fishfarm.com</span></p>
+              <p>পাসওয়ার্ড: <span className="text-cyan-400 font-mono">demo123</span></p>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">* অথবা নতুন অ্যাকাউন্ট তৈরি করুন</p>
+          </div>
         </CardContent>
       </Card>
     </div>
