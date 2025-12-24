@@ -1,7 +1,8 @@
-import { Fish, Menu } from "lucide-react";
+import { Fish, Menu, LogIn, Shield, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { path: "/", label: "হোম" },
@@ -13,6 +14,7 @@ const navItems = [
 
 export const Header = () => {
   const location = useLocation();
+  const { user, isAdmin, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -42,6 +44,33 @@ export const Header = () => {
               {item.label}
             </Link>
           ))}
+          
+          {/* Auth Buttons */}
+          <div className="flex items-center gap-2 ml-4 border-l border-border pl-4">
+            {user ? (
+              <>
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Shield className="h-4 w-4" />
+                      অ্যাডমিন
+                    </Button>
+                  </Link>
+                )}
+                <Button variant="ghost" size="sm" className="gap-2" onClick={signOut}>
+                  <LogOut className="h-4 w-4" />
+                  লগআউট
+                </Button>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button variant="default" size="sm" className="gap-2">
+                  <LogIn className="h-4 w-4" />
+                  লগইন
+                </Button>
+              </Link>
+            )}
+          </div>
         </nav>
 
         {/* Mobile Navigation */}
@@ -66,6 +95,37 @@ export const Header = () => {
                   {item.label}
                 </Link>
               ))}
+              
+              {/* Mobile Auth */}
+              <div className="border-t border-border pt-4 mt-4 space-y-2">
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-2 px-2 py-1 text-sm text-muted-foreground">
+                      <User className="h-4 w-4" />
+                      {user.email}
+                    </div>
+                    {isAdmin && (
+                      <Link to="/admin">
+                        <Button variant="outline" size="sm" className="w-full gap-2">
+                          <Shield className="h-4 w-4" />
+                          অ্যাডমিন প্যানেল
+                        </Button>
+                      </Link>
+                    )}
+                    <Button variant="ghost" size="sm" className="w-full gap-2" onClick={signOut}>
+                      <LogOut className="h-4 w-4" />
+                      লগআউট
+                    </Button>
+                  </>
+                ) : (
+                  <Link to="/auth">
+                    <Button variant="default" size="sm" className="w-full gap-2">
+                      <LogIn className="h-4 w-4" />
+                      লগইন / সাইনআপ
+                    </Button>
+                  </Link>
+                )}
+              </div>
             </nav>
           </SheetContent>
         </Sheet>
