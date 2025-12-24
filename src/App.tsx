@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FarmingProvider } from "@/contexts/FarmingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
 import PondCalculator from "./pages/PondCalculator";
@@ -57,18 +58,18 @@ const App = () => (
               <Route path="/cost-calculator" element={<CostCalculator />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/fish-advice" element={<FishAdvice />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/dashboard/income" element={<DashboardIncome />} />
-              <Route path="/dashboard/expense" element={<DashboardExpense />} />
-              <Route path="/dashboard/my-pond" element={<DashboardMyPond />} />
-              <Route path="/dashboard/reports" element={<DashboardReports />} />
-              <Route path="/dashboard/backup" element={<DashboardBackup />} />
-              <Route path="/dashboard/profile" element={<Profile />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<AdminUsers />} />
-              <Route path="/admin/settings" element={<AdminSettings />} />
-              <Route path="/admin/reports" element={<AdminReports />} />
-              <Route path="/admin/profile" element={<Profile />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard/income" element={<ProtectedRoute><DashboardIncome /></ProtectedRoute>} />
+              <Route path="/dashboard/expense" element={<ProtectedRoute><DashboardExpense /></ProtectedRoute>} />
+              <Route path="/dashboard/my-pond" element={<ProtectedRoute><DashboardMyPond /></ProtectedRoute>} />
+              <Route path="/dashboard/reports" element={<ProtectedRoute><DashboardReports /></ProtectedRoute>} />
+              <Route path="/dashboard/backup" element={<ProtectedRoute><DashboardBackup /></ProtectedRoute>} />
+              <Route path="/dashboard/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
+              <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
+              <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AdminReports /></ProtectedRoute>} />
+              <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><Profile /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
