@@ -19,7 +19,8 @@ import {
   FileText,
   Home,
   Fish,
-  CloudUpload
+  CloudUpload,
+  User
 } from "lucide-react";
 
 const menuItems = [
@@ -64,6 +65,13 @@ const menuItems = [
     icon: CloudUpload,
     color: "bg-gradient-to-r from-indigo-500 to-violet-600",
     iconColor: "text-indigo-500"
+  },
+  { 
+    title: "প্রোফাইল", 
+    url: "/dashboard/profile", 
+    icon: User,
+    color: "bg-gradient-to-r from-pink-500 to-rose-600",
+    iconColor: "text-pink-500"
   },
 ];
 
