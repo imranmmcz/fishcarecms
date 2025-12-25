@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Button3D } from "@/components/ui/button-3d";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Waves, Edit, Fish, ShoppingCart, Receipt } from "lucide-react";
@@ -287,10 +288,10 @@ export default function DashboardMyPond() {
 
           <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button3D variant="primary">
                 <Plus className="h-4 w-4 mr-2" />
                 নতুন পুকুর যোগ করুন
-              </Button>
+              </Button3D>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -373,9 +374,9 @@ export default function DashboardMyPond() {
                   <Input placeholder="অতিরিক্ত তথ্য লিখুন" value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </div>
               </div>
-              <Button className="mt-4 w-full" onClick={handleSubmit}>
+              <Button3D className="mt-4 w-full" onClick={handleSubmit} variant="success">
                 {editingPond ? "আপডেট করুন" : "সংরক্ষণ করুন"}
-              </Button>
+              </Button3D>
             </DialogContent>
           </Dialog>
         </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import { Button3D } from "@/components/ui/button-3d";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -202,14 +202,15 @@ const Auth = () => {
                   </div>
                   {errors.password && <p className="text-sm text-red-400">{errors.password}</p>}
                 </div>
-                <Button
+                <Button3D
                   type="submit"
-                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                  variant="primary"
+                  className="w-full"
                   disabled={isLoading}
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   লগইন করুন
-                </Button>
+                </Button3D>
               </form>
             </TabsContent>
 
@@ -263,14 +264,15 @@ const Auth = () => {
                   />
                   {errors.confirmPassword && <p className="text-sm text-red-400">{errors.confirmPassword}</p>}
                 </div>
-                <Button
+                <Button3D
                   type="submit"
-                  className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
+                  variant="success"
+                  className="w-full"
                   disabled={isLoading}
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   নিবন্ধন করুন
-                </Button>
+                </Button3D>
               </form>
             </TabsContent>
           </Tabs>

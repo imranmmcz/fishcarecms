@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Button3D } from "@/components/ui/button-3d";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
@@ -246,16 +247,18 @@ const FishAdvice = () => {
                     disabled={isLoading}
                     className="flex-1"
                   />
-                  <Button 
+                  <Button3D 
                     onClick={handleSendMessage} 
                     disabled={!inputMessage.trim() || isLoading}
+                    variant="primary"
+                    size="md"
                   >
                     {isLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Send className="h-4 w-4" />
                     )}
-                  </Button>
+                  </Button3D>
                 </div>
               </CardContent>
             </Card>

@@ -1,6 +1,6 @@
 import { Header } from "@/components/Header";
 import { ModuleCard } from "@/components/ModuleCard";
-import { Button } from "@/components/ui/button";
+import { Button3D } from "@/components/ui/button-3d";
 import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -116,16 +116,16 @@ const Index = () => {
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Link to="/pond-calculator">
-                <Button size="lg" variant="secondary" className="shadow-large">
+                <Button3D size="lg" variant="success">
                   <Calculator className="mr-2 h-5 w-5" />
                   এখনই শুরু করুন
-                </Button>
+                </Button3D>
               </Link>
               <Link to="/dashboard">
-                <Button size="lg" variant="outline" className="bg-white/10 border-white/20 hover:bg-white/20 text-white">
+                <Button3D size="lg" variant="purple">
                   <LayoutDashboard className="mr-2 h-5 w-5" />
                   ড্যাশবোর্ড
-                </Button>
+                </Button3D>
               </Link>
             </div>
           </div>
@@ -207,10 +207,10 @@ const Index = () => {
             পুকুরের পরিমাপ থেকে শুরু করে সম্পূর্ণ চক্র সম্পন্ন করুন
           </p>
           <Link to="/pond-calculator">
-            <Button size="lg" variant="secondary" className="shadow-large">
+            <Button3D size="lg" variant="warning">
               <Calculator className="mr-2 h-5 w-5" />
               পুকুর পরিমাপ শুরু করুন
-            </Button>
+            </Button3D>
           </Link>
         </div>
       </section>

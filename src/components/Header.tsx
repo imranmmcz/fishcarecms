@@ -1,5 +1,6 @@
 import { Fish, Menu, LogIn, Shield, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Button3D } from "@/components/ui/button-3d";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -51,23 +52,23 @@ export const Header = () => {
               <>
                 {isAdmin && (
                   <Link to="/admin">
-                    <Button variant="outline" size="sm" className="gap-2">
+                    <Button3D variant="purple" size="sm" className="gap-2">
                       <Shield className="h-4 w-4" />
                       অ্যাডমিন
-                    </Button>
+                    </Button3D>
                   </Link>
                 )}
-                <Button variant="ghost" size="sm" className="gap-2" onClick={signOut}>
+                <Button3D variant="danger" size="sm" className="gap-2" onClick={signOut}>
                   <LogOut className="h-4 w-4" />
                   লগআউট
-                </Button>
+                </Button3D>
               </>
             ) : (
               <Link to="/auth">
-                <Button variant="default" size="sm" className="gap-2">
+                <Button3D variant="primary" size="sm" className="gap-2">
                   <LogIn className="h-4 w-4" />
                   লগইন
-                </Button>
+                </Button3D>
               </Link>
             )}
           </div>
@@ -106,23 +107,23 @@ export const Header = () => {
                     </div>
                     {isAdmin && (
                       <Link to="/admin">
-                        <Button variant="outline" size="sm" className="w-full gap-2">
+                        <Button3D variant="purple" size="sm" className="w-full gap-2">
                           <Shield className="h-4 w-4" />
                           অ্যাডমিন প্যানেল
-                        </Button>
+                        </Button3D>
                       </Link>
                     )}
-                    <Button variant="ghost" size="sm" className="w-full gap-2" onClick={signOut}>
+                    <Button3D variant="danger" size="sm" className="w-full gap-2" onClick={signOut}>
                       <LogOut className="h-4 w-4" />
                       লগআউট
-                    </Button>
+                    </Button3D>
                   </>
                 ) : (
                   <Link to="/auth">
-                    <Button variant="default" size="sm" className="w-full gap-2">
+                    <Button3D variant="primary" size="sm" className="w-full gap-2">
                       <LogIn className="h-4 w-4" />
                       লগইন / সাইনআপ
-                    </Button>
+                    </Button3D>
                   </Link>
                 )}
               </div>

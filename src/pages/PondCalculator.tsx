@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button3D } from "@/components/ui/button-3d";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calculator, Droplets, Ruler, ArrowRight } from "lucide-react";
@@ -350,21 +351,24 @@ export default function PondCalculator() {
 
               {/* Action Buttons */}
               <div className="flex gap-3">
-                <Button 
+                <Button3D 
                   type="button"
                   onClick={calculatePond} 
-                  className="flex-1 bg-gradient-primary hover:opacity-90 cursor-pointer"
+                  variant="primary"
+                  size="lg"
+                  className="flex-1"
                 >
                   <Calculator className="mr-2 h-4 w-4" />
                   গণনা করুন
-                </Button>
-                <Button 
+                </Button3D>
+                <Button3D 
                   type="button"
                   onClick={resetForm} 
-                  variant="outline"
+                  variant="danger"
+                  size="lg"
                 >
                   রিসেট
-                </Button>
+                </Button3D>
               </div>
             </CardContent>
           </Card>
@@ -407,15 +411,15 @@ export default function PondCalculator() {
                   </ul>
                 </div>
                 <div className="flex justify-end">
-                  <Button
+                  <Button3D
                     type="button"
                     onClick={saveAndContinue}
                     size="lg"
-                    className="bg-gradient-primary hover:opacity-90"
+                    variant="success"
                   >
                     সংরক্ষণ করুন এবং পরবর্তী মডিউলে যান
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                  </Button3D>
                 </div>
               </CardContent>
             </Card>
