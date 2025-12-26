@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Button3D } from "@/components/ui/button-3d";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Waves, Edit, Fish, ShoppingCart, Receipt } from "lucide-react";
+import { Plus, Trash2, Waves, Edit, Fish, ShoppingCart, Receipt, Scale, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,24 @@ interface ExpenseRecord {
   amount: number;
   description: string;
   pondName?: string;
+}
+
+interface SamplingFishEntry {
+  fishType: string;
+  sampleCount: number;
+  sampleWeight: number;
+}
+
+interface SamplingRecord {
+  id: string;
+  pondId: string;
+  pondName: string;
+  date: string;
+  fishEntries: SamplingFishEntry[];
+  totalFish: number;
+  totalWeight: number;
+  avgWeight: number;
+  notes: string;
 }
 
 const expenseCategories = [
@@ -90,6 +109,18 @@ export default function DashboardMyPond() {
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split("T")[0]);
   const [expenseDescription, setExpenseDescription] = useState("");
 
+  // Sampling dialog state
+  const [isSamplingDialogOpen, setIsSamplingDialogOpen] = useState(false);
+  const [samplingPond, setSamplingPond] = useState<PondRecord | null>(null);
+  const [samplingDate, setSamplingDate] = useState(new Date().toISOString().split("T")[0]);
+  const [samplingFishEntries, setSamplingFishEntries] = useState<SamplingFishEntry[]>([]);
+  const [samplingNotes, setSamplingNotes] = useState("");
+  const [samplingRecords, setSamplingRecords] = useState<SamplingRecord[]>([]);
+
+  // View sampling history dialog
+  const [isViewSamplingOpen, setIsViewSamplingOpen] = useState(false);
+  const [viewSamplingPond, setViewSamplingPond] = useState<PondRecord | null>(null);
+
   const [name, setName] = useState("");
   const [area, setArea] = useState("");
   const [areaUnit, setAreaUnit] = useState("শতক");
@@ -104,6 +135,8 @@ export default function DashboardMyPond() {
   useEffect(() => {
     const savedPonds = JSON.parse(localStorage.getItem("farmerPonds") || "[]");
     setPonds(savedPonds);
+    const savedSamplings = JSON.parse(localStorage.getItem("farmerSamplings") || "[]");
+    setSamplingRecords(savedSamplings);
   }, []);
 
   const savePonds = (newPonds: PondRecord[]) => {
@@ -270,6 +303,105 @@ export default function DashboardMyPond() {
     toast.success(`৳${amount.toLocaleString("bn-BD")} খরচ রেকর্ড করা হয়েছে`);
     setIsExpenseDialogOpen(false);
     setExpensePond(null);
+  };
+
+  // Sampling functions
+  const handleOpenSamplingDialog = (pond: PondRecord) => {
+    setSamplingPond(pond);
+    setSamplingDate(new Date().toISOString().split("T")[0]);
+    setSamplingNotes("");
+    // Initialize fish entries from pond's fish types
+    const initialEntries: SamplingFishEntry[] = pond.fishTypes.map(fish => ({
+      fishType: fish,
+      sampleCount: 0,
+      sampleWeight: 0
+    }));
+    setSamplingFishEntries(initialEntries.length > 0 ? initialEntries : [{ fishType: "", sampleCount: 0, sampleWeight: 0 }]);
+    setIsSamplingDialogOpen(true);
+  };
+
+  const updateSamplingEntry = (index: number, field: keyof SamplingFishEntry, value: string | number) => {
+    const newEntries = [...samplingFishEntries];
+    if (field === "fishType") {
+      newEntries[index].fishType = value as string;
+    } else {
+      newEntries[index][field] = parseFloat(value as string) || 0;
+    }
+    setSamplingFishEntries(newEntries);
+  };
+
+  const addSamplingEntry = () => {
+    setSamplingFishEntries([...samplingFishEntries, { fishType: "", sampleCount: 0, sampleWeight: 0 }]);
+  };
+
+  const removeSamplingEntry = (index: number) => {
+    if (samplingFishEntries.length > 1) {
+      setSamplingFishEntries(samplingFishEntries.filter((_, i) => i !== index));
+    }
+  };
+
+  const calculateSamplingTotals = () => {
+    const totalSampleFish = samplingFishEntries.reduce((sum, e) => sum + e.sampleCount, 0);
+    const totalSampleWeight = samplingFishEntries.reduce((sum, e) => sum + e.sampleWeight, 0);
+    const avgWeight = totalSampleFish > 0 ? totalSampleWeight / totalSampleFish : 0;
+    
+    // Estimate total weight based on pond's total fish count
+    const totalFish = samplingPond?.fishCount || 0;
+    const estimatedTotalWeight = avgWeight * totalFish;
+    
+    return { totalSampleFish, totalSampleWeight, avgWeight, totalFish, estimatedTotalWeight };
+  };
+
+  const handleSaveSampling = () => {
+    if (!samplingPond) return;
+    
+    const validEntries = samplingFishEntries.filter(e => e.fishType && e.sampleCount > 0);
+    if (validEntries.length === 0) {
+      toast.error("অন্তত একটি মাছের নমুনা তথ্য দিন");
+      return;
+    }
+
+    const { totalSampleFish, totalSampleWeight, avgWeight, totalFish, estimatedTotalWeight } = calculateSamplingTotals();
+
+    const samplingRecord: SamplingRecord = {
+      id: Date.now().toString(),
+      pondId: samplingPond.id,
+      pondName: samplingPond.name,
+      date: samplingDate,
+      fishEntries: validEntries,
+      totalFish: totalFish,
+      totalWeight: estimatedTotalWeight,
+      avgWeight: avgWeight,
+      notes: samplingNotes
+    };
+
+    const newRecords = [...samplingRecords, samplingRecord];
+    setSamplingRecords(newRecords);
+    localStorage.setItem("farmerSamplings", JSON.stringify(newRecords));
+
+    toast.success("নমুনায়ন সংরক্ষণ করা হয়েছে");
+    setIsSamplingDialogOpen(false);
+    setSamplingPond(null);
+  };
+
+  const handleViewSamplingHistory = (pond: PondRecord) => {
+    setViewSamplingPond(pond);
+    setIsViewSamplingOpen(true);
+  };
+
+  const getPondSamplings = (pondId: string) => {
+    return samplingRecords.filter(s => s.pondId === pondId).sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  };
+
+  const deleteSampling = (id: string) => {
+    if (confirm("আপনি কি এই নমুনায়ন রেকর্ড মুছে ফেলতে চান?")) {
+      const newRecords = samplingRecords.filter(s => s.id !== id);
+      setSamplingRecords(newRecords);
+      localStorage.setItem("farmerSamplings", JSON.stringify(newRecords));
+      toast.success("নমুনায়ন রেকর্ড মুছে ফেলা হয়েছে");
+    }
   };
 
   return (
@@ -448,25 +580,47 @@ export default function DashboardMyPond() {
                       </p>
                     )}
                     {pond.status === "active" && (
-                      <div className="flex gap-2 mt-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-green-600 border-green-600 hover:bg-green-50"
-                          onClick={() => handleOpenSellDialog(pond)}
-                        >
-                          <ShoppingCart className="h-4 w-4 mr-1" />
-                          বিক্রি
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-orange-600 border-orange-600 hover:bg-orange-50"
-                          onClick={() => handleOpenExpenseDialog(pond)}
-                        >
-                          <Receipt className="h-4 w-4 mr-1" />
-                          খরচ
-                        </Button>
+                      <div className="space-y-2 mt-2">
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 text-green-600 border-green-600 hover:bg-green-50"
+                            onClick={() => handleOpenSellDialog(pond)}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-1" />
+                            বিক্রি
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 text-orange-600 border-orange-600 hover:bg-orange-50"
+                            onClick={() => handleOpenExpenseDialog(pond)}
+                          >
+                            <Receipt className="h-4 w-4 mr-1" />
+                            খরচ
+                          </Button>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 text-purple-600 border-purple-600 hover:bg-purple-50"
+                            onClick={() => handleOpenSamplingDialog(pond)}
+                          >
+                            <Scale className="h-4 w-4 mr-1" />
+                            নমুনায়ন
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 text-blue-600 border-blue-600 hover:bg-blue-50"
+                            onClick={() => handleViewSamplingHistory(pond)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            ইতিহাস
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </CardContent>
@@ -603,6 +757,199 @@ export default function DashboardMyPond() {
                 <Receipt className="h-4 w-4 mr-2" />
                 খরচ রেকর্ড করুন
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Sampling Dialog */}
+        <Dialog open={isSamplingDialogOpen} onOpenChange={setIsSamplingDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Scale className="h-5 w-5 text-purple-600" />
+                নমুনায়ন - {samplingPond?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>তারিখ</Label>
+                  <Input 
+                    type="date" 
+                    value={samplingDate} 
+                    onChange={(e) => setSamplingDate(e.target.value)} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>পুকুরে মোট মাছ</Label>
+                  <Input 
+                    type="text" 
+                    value={`${samplingPond?.fishCount?.toLocaleString("bn-BD") || "০"} টি`}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>নমুনা তথ্য (মাছের প্রজাতি অনুযায়ী)</Label>
+                {samplingFishEntries.map((entry, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-4">
+                      <Select 
+                        value={entry.fishType} 
+                        onValueChange={(val) => updateSamplingEntry(index, "fishType", val)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="মাছ" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fishTypeOptions.map((fish) => (
+                            <SelectItem key={fish} value={fish}>{fish}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-3">
+                      <Input 
+                        type="number" 
+                        placeholder="সংখ্যা"
+                        value={entry.sampleCount || ""}
+                        onChange={(e) => updateSamplingEntry(index, "sampleCount", e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-4">
+                      <Input 
+                        type="number" 
+                        placeholder="ওজন (গ্রাম)"
+                        value={entry.sampleWeight || ""}
+                        onChange={(e) => updateSamplingEntry(index, "sampleWeight", e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => removeSamplingEntry(index)}
+                        disabled={samplingFishEntries.length <= 1}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={addSamplingEntry}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  আরো যোগ করুন
+                </Button>
+              </div>
+
+              {/* Auto calculated summary */}
+              {(() => {
+                const { totalSampleFish, totalSampleWeight, avgWeight, totalFish, estimatedTotalWeight } = calculateSamplingTotals();
+                return (
+                  <div className="bg-purple-50 dark:bg-purple-950 p-4 rounded-lg space-y-2">
+                    <h4 className="font-semibold text-purple-700 dark:text-purple-300">গণনা ফলাফল</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">নমুনা মাছ:</span>
+                        <p className="font-medium">{totalSampleFish.toLocaleString("bn-BD")} টি</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">নমুনা ওজন:</span>
+                        <p className="font-medium">{totalSampleWeight.toLocaleString("bn-BD")} গ্রাম</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">গড় ওজন/মাছ:</span>
+                        <p className="font-medium text-purple-600">{avgWeight.toFixed(2)} গ্রাম</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">আনুমানিক মোট ওজন:</span>
+                        <p className="font-bold text-lg text-purple-600">
+                          {(estimatedTotalWeight / 1000).toFixed(2)} কেজি
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="space-y-2">
+                <Label>নোট (ঐচ্ছিক)</Label>
+                <Input 
+                  placeholder="অতিরিক্ত তথ্য লিখুন" 
+                  value={samplingNotes} 
+                  onChange={(e) => setSamplingNotes(e.target.value)} 
+                />
+              </div>
+
+              <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={handleSaveSampling}>
+                <Scale className="h-4 w-4 mr-2" />
+                সংরক্ষণ করুন
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* View Sampling History Dialog */}
+        <Dialog open={isViewSamplingOpen} onOpenChange={setIsViewSamplingOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-blue-600" />
+                নমুনায়ন ইতিহাস - {viewSamplingPond?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              {viewSamplingPond && getPondSamplings(viewSamplingPond.id).length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Scale className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>এই পুকুরে কোনো নমুনায়ন রেকর্ড নেই</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>তারিখ</TableHead>
+                      <TableHead>নমুনা</TableHead>
+                      <TableHead>গড় ওজন</TableHead>
+                      <TableHead>মোট মাছ</TableHead>
+                      <TableHead>আনুমানিক ওজন</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {viewSamplingPond && getPondSamplings(viewSamplingPond.id).map((sampling) => (
+                      <TableRow key={sampling.id}>
+                        <TableCell>{sampling.date}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {sampling.fishEntries.map((entry, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs">
+                                {entry.fishType}: {entry.sampleCount}টি
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>{sampling.avgWeight.toFixed(1)} গ্রাম</TableCell>
+                        <TableCell>{sampling.totalFish.toLocaleString("bn-BD")} টি</TableCell>
+                        <TableCell className="font-semibold text-purple-600">
+                          {(sampling.totalWeight / 1000).toFixed(2)} কেজি
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => deleteSampling(sampling.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </div>
           </DialogContent>
         </Dialog>
