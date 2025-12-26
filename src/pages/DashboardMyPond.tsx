@@ -57,6 +57,13 @@ interface SamplingRecord {
   notes: string;
 }
 
+interface FishStockEntry {
+  fishType: string;
+  quantity: number;
+  weightPerFish: number; // গ্রাম
+  pricePerPiece: number; // টাকা/পিস
+}
+
 const expenseCategories = [
   "খাবার", "ওষুধ", "সার", "চুন", "পোনা ক্রয়", "শ্রমিক", "বিদ্যুৎ", "যন্ত্রপাতি", "অন্যান্য"
 ];
@@ -73,6 +80,8 @@ interface PondRecord {
   stockingDate: string;
   status: string;
   notes: string;
+  fishStockEntries?: FishStockEntry[];
+  totalStockingCost?: number;
 }
 
 const fishTypeOptions = [
@@ -131,6 +140,9 @@ export default function DashboardMyPond() {
   const [stockingDate, setStockingDate] = useState("");
   const [status, setStatus] = useState("active");
   const [notes, setNotes] = useState("");
+  const [fishStockEntries, setFishStockEntries] = useState<FishStockEntry[]>([
+    { fishType: "", quantity: 0, weightPerFish: 0, pricePerPiece: 0 }
+  ]);
 
   useEffect(() => {
     const savedPonds = JSON.parse(localStorage.getItem("farmerPonds") || "[]");
@@ -156,6 +168,36 @@ export default function DashboardMyPond() {
     setStatus("active");
     setNotes("");
     setEditingPond(null);
+    setFishStockEntries([{ fishType: "", quantity: 0, weightPerFish: 0, pricePerPiece: 0 }]);
+  };
+
+  // Fish stock entry management
+  const updateFishStockEntry = (index: number, field: keyof FishStockEntry, value: string | number) => {
+    const newEntries = [...fishStockEntries];
+    if (field === "fishType") {
+      newEntries[index].fishType = value as string;
+    } else {
+      newEntries[index][field] = parseFloat(value as string) || 0;
+    }
+    setFishStockEntries(newEntries);
+  };
+
+  const addFishStockEntry = () => {
+    setFishStockEntries([...fishStockEntries, { fishType: "", quantity: 0, weightPerFish: 0, pricePerPiece: 0 }]);
+  };
+
+  const removeFishStockEntry = (index: number) => {
+    if (fishStockEntries.length > 1) {
+      setFishStockEntries(fishStockEntries.filter((_, i) => i !== index));
+    }
+  };
+
+  const calculateStockTotals = () => {
+    const validEntries = fishStockEntries.filter(e => e.fishType && e.quantity > 0);
+    const totalFish = validEntries.reduce((sum, e) => sum + e.quantity, 0);
+    const totalCost = validEntries.reduce((sum, e) => sum + (e.quantity * e.pricePerPiece), 0);
+    const totalWeight = validEntries.reduce((sum, e) => sum + (e.quantity * e.weightPerFish), 0);
+    return { totalFish, totalCost, totalWeight, validEntries };
   };
 
   const handleSubmit = () => {
@@ -164,6 +206,9 @@ export default function DashboardMyPond() {
       return;
     }
 
+    const { totalFish, totalCost, validEntries } = calculateStockTotals();
+    const derivedFishTypes = validEntries.map(e => e.fishType).filter((v, i, a) => a.indexOf(v) === i);
+
     const pondData: PondRecord = {
       id: editingPond?.id || Date.now().toString(),
       name,
@@ -171,20 +216,42 @@ export default function DashboardMyPond() {
       areaUnit,
       depth: parseFloat(depth),
       depthUnit,
-      fishTypes,
-      fishCount: parseInt(fishCount) || 0,
+      fishTypes: derivedFishTypes.length > 0 ? derivedFishTypes : fishTypes,
+      fishCount: totalFish > 0 ? totalFish : (parseInt(fishCount) || 0),
       stockingDate,
       status,
       notes,
+      fishStockEntries: validEntries,
+      totalStockingCost: totalCost,
     };
 
     let newPonds: PondRecord[];
+    const isNewPond = !editingPond;
+    
     if (editingPond) {
       newPonds = ponds.map((p) => (p.id === editingPond.id ? pondData : p));
       toast.success("পুকুর আপডেট করা হয়েছে");
     } else {
       newPonds = [...ponds, pondData];
       toast.success("পুকুর যোগ করা হয়েছে");
+    }
+
+    // Auto-create expense record for fish stocking cost (only for new ponds)
+    if (isNewPond && totalCost > 0 && stockingDate) {
+      const expenseRecord: ExpenseRecord = {
+        id: Date.now().toString(),
+        date: stockingDate,
+        category: "পোনা ক্রয়",
+        amount: totalCost,
+        description: `${name} - পোনা মজুদ (${totalFish} টি)`,
+        pondName: name,
+      };
+      
+      const savedExpenses = JSON.parse(localStorage.getItem("farmerExpenses") || "[]");
+      const newExpenses = [...savedExpenses, expenseRecord];
+      localStorage.setItem("farmerExpenses", JSON.stringify(newExpenses));
+      
+      toast.success(`৳${totalCost.toLocaleString("bn-BD")} পোনা ক্রয় খরচ রেকর্ড করা হয়েছে`);
     }
 
     savePonds(newPonds);
@@ -204,6 +271,12 @@ export default function DashboardMyPond() {
     setStockingDate(pond.stockingDate);
     setStatus(pond.status);
     setNotes(pond.notes);
+    // Load fish stock entries if available
+    if (pond.fishStockEntries && pond.fishStockEntries.length > 0) {
+      setFishStockEntries(pond.fishStockEntries);
+    } else {
+      setFishStockEntries([{ fishType: "", quantity: 0, weightPerFish: 0, pricePerPiece: 0 }]);
+    }
     setIsDialogOpen(true);
   };
 
@@ -479,28 +552,121 @@ export default function DashboardMyPond() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>মাছের সংখ্যা</Label>
-                  <Input type="number" placeholder="০" value={fishCount} onChange={(e) => setFishCount(e.target.value)} />
-                </div>
-                <div className="space-y-2">
                   <Label>মজুদের তারিখ</Label>
                   <Input type="date" value={stockingDate} onChange={(e) => setStockingDate(e.target.value)} />
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label>মাছের প্রজাতি</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {fishTypeOptions.map((fish) => (
-                      <Badge
-                        key={fish}
-                        variant={fishTypes.includes(fish) ? "default" : "outline"}
-                        className="cursor-pointer"
-                        onClick={() => toggleFishType(fish)}
-                      >
-                        {fish}
-                      </Badge>
-                    ))}
+
+                {/* Fish Stocking Details Section */}
+                <div className="space-y-3 md:col-span-2 border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-semibold flex items-center gap-2">
+                      <Fish className="h-5 w-5 text-primary" />
+                      পোনা মজুদের বিস্তারিত
+                    </Label>
                   </div>
+                  
+                  <div className="space-y-3">
+                    {fishStockEntries.map((entry, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-2 items-end bg-muted/50 p-2 rounded-lg">
+                        <div className="col-span-12 md:col-span-3">
+                          <Label className="text-xs">মাছের প্রজাতি</Label>
+                          <Select 
+                            value={entry.fishType} 
+                            onValueChange={(val) => updateFishStockEntry(index, "fishType", val)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="নির্বাচন করুন" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {fishTypeOptions.map((fish) => (
+                                <SelectItem key={fish} value={fish}>{fish}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="col-span-4 md:col-span-2">
+                          <Label className="text-xs">সংখ্যা</Label>
+                          <Input 
+                            type="number" 
+                            placeholder="০"
+                            value={entry.quantity || ""}
+                            onChange={(e) => updateFishStockEntry(index, "quantity", e.target.value)}
+                          />
+                        </div>
+                        <div className="col-span-4 md:col-span-2">
+                          <Label className="text-xs">ওজন/পিস (গ্রাম)</Label>
+                          <Input 
+                            type="number" 
+                            placeholder="০"
+                            value={entry.weightPerFish || ""}
+                            onChange={(e) => updateFishStockEntry(index, "weightPerFish", e.target.value)}
+                          />
+                        </div>
+                        <div className="col-span-4 md:col-span-2">
+                          <Label className="text-xs">দাম/পিস (৳)</Label>
+                          <Input 
+                            type="number" 
+                            placeholder="০"
+                            value={entry.pricePerPiece || ""}
+                            onChange={(e) => updateFishStockEntry(index, "pricePerPiece", e.target.value)}
+                          />
+                        </div>
+                        <div className="col-span-8 md:col-span-2 text-sm">
+                          <Label className="text-xs">মোট</Label>
+                          <p className="font-semibold text-primary py-2">
+                            ৳{(entry.quantity * entry.pricePerPiece).toLocaleString("bn-BD")}
+                          </p>
+                        </div>
+                        <div className="col-span-4 md:col-span-1 flex justify-end">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            type="button"
+                            onClick={() => removeFishStockEntry(index)}
+                            disabled={fishStockEntries.length <= 1}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <Button variant="outline" size="sm" type="button" onClick={addFishStockEntry}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      আরো মাছ যোগ করুন
+                    </Button>
+                  </div>
+
+                  {/* Auto calculated summary */}
+                  {(() => {
+                    const { totalFish, totalCost, totalWeight } = calculateStockTotals();
+                    if (totalFish > 0) {
+                      return (
+                        <div className="bg-green-50 dark:bg-green-950 p-3 rounded-lg mt-3">
+                          <div className="grid grid-cols-3 gap-3 text-sm">
+                            <div className="text-center">
+                              <span className="text-muted-foreground block">মোট মাছ</span>
+                              <p className="font-bold text-lg">{totalFish.toLocaleString("bn-BD")} টি</p>
+                            </div>
+                            <div className="text-center">
+                              <span className="text-muted-foreground block">মোট ওজন</span>
+                              <p className="font-bold text-lg">{(totalWeight / 1000).toFixed(2)} কেজি</p>
+                            </div>
+                            <div className="text-center">
+                              <span className="text-muted-foreground block">মোট খরচ</span>
+                              <p className="font-bold text-lg text-green-600">৳{totalCost.toLocaleString("bn-BD")}</p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground text-center mt-2">
+                            * এই খরচ স্বয়ংক্রিয়ভাবে ব্যয়ের তালিকায় যোগ হবে
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
+
                 <div className="space-y-2 md:col-span-2">
                   <Label>নোট</Label>
                   <Input placeholder="অতিরিক্ত তথ্য লিখুন" value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -560,12 +726,28 @@ export default function DashboardMyPond() {
                       </div>
                     </div>
                     {pond.fishCount > 0 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Fish className="h-4 w-4 text-primary" />
-                        <span>{pond.fishCount.toLocaleString("bn-BD")} টি মাছ</span>
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <Fish className="h-4 w-4 text-primary" />
+                          <span>{pond.fishCount.toLocaleString("bn-BD")} টি মাছ</span>
+                        </div>
+                        {pond.totalStockingCost && pond.totalStockingCost > 0 && (
+                          <span className="text-green-600 font-medium">
+                            ৳{pond.totalStockingCost.toLocaleString("bn-BD")}
+                          </span>
+                        )}
                       </div>
                     )}
-                    {pond.fishTypes.length > 0 && (
+                    {pond.fishStockEntries && pond.fishStockEntries.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {pond.fishStockEntries.map((entry, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {entry.fishType}: {entry.quantity}টি
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    {(!pond.fishStockEntries || pond.fishStockEntries.length === 0) && pond.fishTypes.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {pond.fishTypes.map((fish) => (
                           <Badge key={fish} variant="secondary" className="text-xs">
