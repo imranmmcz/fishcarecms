@@ -1,6 +1,8 @@
 import { Header } from "@/components/Header";
 import { ModuleCard } from "@/components/ModuleCard";
 import { Button3D } from "@/components/ui/button-3d";
+import { ProductSlider } from "@/components/ProductSlider";
+import { FishHealthAdvice } from "@/components/FishHealthAdvice";
 import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -160,6 +162,12 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Product Slider */}
+      <ProductSlider />
+
+      {/* Fish Health Advice */}
+      <FishHealthAdvice />
 
       {/* Benefits Section */}
       <section className="py-16">

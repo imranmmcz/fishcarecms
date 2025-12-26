@@ -7,8 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { path: "/", label: "হোম" },
+  { path: "/shop", label: "শপ" },
   { path: "/pond-calculator", label: "পুকুর পরিমাপ" },
-  { path: "/stocking-density", label: "স্টকিং ডেনসিটি" },
   { path: "/fish-advice", label: "ফিস এডভাইস" },
   { path: "/modules", label: "সকল মডিউল" },
 ];

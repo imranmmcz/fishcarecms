@@ -19,6 +19,7 @@ import WaterQuality from "./pages/WaterQuality";
 import CostCalculator from "./pages/CostCalculator";
 import Reports from "./pages/Reports";
 import FishAdvice from "./pages/FishAdvice";
+import Shop from "./pages/Shop";
 import FisheriesContact from "./pages/FisheriesContact";
 import Dashboard from "./pages/Dashboard";
 import DashboardIncome from "./pages/DashboardIncome";
@@ -47,7 +48,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/modules" element={<Modules />} />
+<Route path="/modules" element={<Modules />} />
+              <Route path="/shop" element={<Shop />} />
               <Route path="/pond-calculator" element={<PondCalculator />} />
               <Route path="/fish-stocking" element={<FishStocking />} />
               <Route path="/stocking-density" element={<StockingDensity />} />
