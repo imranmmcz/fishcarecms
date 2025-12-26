@@ -20,7 +20,8 @@ import {
   Home,
   Shield,
   Loader2,
-  User
+  User,
+  Package
 } from "lucide-react";
 
 const menuItems = [
@@ -30,6 +31,13 @@ const menuItems = [
     icon: LayoutDashboard,
     color: "bg-gradient-to-r from-violet-500 to-purple-600",
     iconColor: "text-violet-500"
+  },
+  { 
+    title: "পণ্য ব্যবস্থাপনা", 
+    url: "/admin/products", 
+    icon: Package,
+    color: "bg-gradient-to-r from-teal-500 to-cyan-600",
+    iconColor: "text-teal-500"
   },
   { 
     title: "ব্যবহারকারী", 
