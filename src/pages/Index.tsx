@@ -3,9 +3,15 @@ import { ModuleCard } from "@/components/ModuleCard";
 import { Button3D } from "@/components/ui/button-3d";
 import { ProductSlider } from "@/components/ProductSlider";
 import { FishHealthAdvice } from "@/components/FishHealthAdvice";
-import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, LayoutDashboard } from "lucide-react";
+import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, LayoutDashboard, FlaskConical, Leaf, BarChart3, Languages } from "lucide-react";
 import { Link } from "react-router-dom";
-
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 const modules = [
   {
     id: 1,
@@ -172,35 +178,56 @@ const Index = () => {
       {/* Benefits Section */}
       <section className="py-16">
         <div className="container">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
               কেন এই সিস্টেম ব্যবহার করবেন?
             </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {[
-                {
-                  title: "বৈজ্ঞানিক পদ্ধতি",
-                  description: "গবেষণা-ভিত্তিক ফর্মুলা এবং আন্তর্জাতিক মান অনুসরণ করে তৈরি",
-                },
-                {
-                  title: "সম্পদের সর্বোত্তম ব্যবহার",
-                  description: "খাদ্য, ঔষধ এবং সারের অপচয় রোধ করে খরচ কমান",
-                },
-                {
-                  title: "উৎপাদনশীলতা বৃদ্ধি",
-                  description: "সঠিক ব্যবস্থাপনায় প্রতি হেক্টরে বেশি মাছ উৎপাদন করুন",
-                },
-                {
-                  title: "সহজ ব্যবহার",
-                  description: "বাংলা ভাষায় সহজবোধ্য ইন্টারফেস এবং স্পষ্ট নির্দেশনা",
-                },
-              ].map((benefit, index) => (
-                <div key={index} className="bg-gradient-card rounded-lg p-6 shadow-soft">
-                  <h3 className="text-xl font-semibold mb-2 text-foreground">{benefit.title}</h3>
-                  <p className="text-muted-foreground">{benefit.description}</p>
-                </div>
-              ))}
-            </div>
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {[
+                  {
+                    icon: FlaskConical,
+                    title: "বৈজ্ঞানিক পদ্ধতি",
+                    description: "গবেষণা-ভিত্তিক ফর্মুলা এবং আন্তর্জাতিক মান অনুসরণ করে তৈরি",
+                  },
+                  {
+                    icon: Leaf,
+                    title: "সম্পদের সর্বোত্তম ব্যবহার",
+                    description: "খাদ্য, ঔষধ এবং সারের অপচয় রোধ করে খরচ কমান",
+                  },
+                  {
+                    icon: BarChart3,
+                    title: "উৎপাদনশীলতা বৃদ্ধি",
+                    description: "সঠিক ব্যবস্থাপনায় প্রতি হেক্টরে বেশি মাছ উৎপাদন করুন",
+                  },
+                  {
+                    icon: Languages,
+                    title: "সহজ ব্যবহার",
+                    description: "বাংলা ভাষায় সহজবোধ্য ইন্টারফেস এবং স্পষ্ট নির্দেশনা",
+                  },
+                ].map((benefit, index) => (
+                  <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                    <div className="bg-gradient-card rounded-xl p-6 shadow-soft h-full border border-border/50 hover:shadow-elegant transition-all duration-300 group">
+                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                        <benefit.icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-semibold mb-2 text-foreground">{benefit.title}</h3>
+                      <p className="text-muted-foreground">{benefit.description}</p>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="flex justify-center gap-2 mt-6">
+                <CarouselPrevious className="static translate-y-0 bg-background hover:bg-primary hover:text-primary-foreground" />
+                <CarouselNext className="static translate-y-0 bg-background hover:bg-primary hover:text-primary-foreground" />
+              </div>
+            </Carousel>
           </div>
         </div>
       </section>
