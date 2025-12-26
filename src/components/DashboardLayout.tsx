@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { useLocation, Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -21,7 +22,8 @@ import {
   Fish,
   CloudUpload,
   User,
-  Settings
+  Settings,
+  Shield
 } from "lucide-react";
 
 const menuItems = [
@@ -89,6 +91,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
+  const { isAdmin } = useAuth();
 
   return (
     <SidebarProvider>
@@ -145,6 +148,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
+
+              {/* Admin Panel Link - Only for Admin Users */}
+              {isAdmin && (
+                <div className="pt-4 border-t border-white/10">
+                  <Link 
+                    to="/admin" 
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-300 hover:bg-violet-500/20 hover:text-white transition-all"
+                  >
+                    <div className="p-2 rounded-lg bg-violet-600/50">
+                      <Shield className="h-5 w-5 text-violet-300" />
+                    </div>
+                    <span className="font-medium">অ্যাডমিন প্যানেল</span>
+                  </Link>
+                </div>
+              )}
 
               {/* Home Link at Bottom */}
               <div className="mt-auto pt-4 border-t border-white/10">
