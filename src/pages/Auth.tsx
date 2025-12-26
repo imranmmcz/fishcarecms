@@ -44,7 +44,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/");
+      navigate("/dashboard");
     }
   }, [user, navigate]);
 
@@ -85,7 +85,7 @@ const Auth = () => {
         title: "সফল",
         description: "লগইন সফল হয়েছে",
       });
-      navigate("/");
+      navigate("/dashboard");
     }
   };
 
@@ -132,9 +132,9 @@ const Auth = () => {
     } else {
       toast({
         title: "সফল",
-        description: "অ্যাকাউন্ট তৈরি হয়েছে। লগইন করুন।",
+        description: "অ্যাকাউন্ট তৈরি হয়েছে।",
       });
-      navigate("/");
+      navigate("/dashboard");
     }
   };
 
