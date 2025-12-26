@@ -1,9 +1,10 @@
-import { Fish, Menu, LogIn, Shield, LogOut, User } from "lucide-react";
+import { Fish, Menu, LogIn, Shield, LogOut, User, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Button3D } from "@/components/ui/button-3d";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { path: "/", label: "হোম" },
@@ -16,6 +17,10 @@ const navItems = [
 export const Header = () => {
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
+
+  // Get user display name from metadata
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'ব্যবহারকারী';
+  const userRole = isAdmin ? 'অ্যাডমিন' : 'ব্যবহারকারী';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -50,6 +55,25 @@ export const Header = () => {
           <div className="flex items-center gap-2 ml-4 border-l border-border pl-4">
             {user ? (
               <>
+                {/* User Info */}
+                <div className="flex items-center gap-2 mr-2">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-foreground">{userName}</span>
+                    <Badge variant={isAdmin ? "default" : "secondary"} className="text-xs">
+                      {userRole}
+                    </Badge>
+                  </div>
+                </div>
+                
+                {/* Dashboard Link */}
+                <Link to="/dashboard">
+                  <Button3D variant="primary" size="sm" className="gap-2">
+                    <LayoutDashboard className="h-4 w-4" />
+                    ড্যাশবোর্ড
+                  </Button3D>
+                </Link>
+                
                 {isAdmin && (
                   <Link to="/admin">
                     <Button3D variant="purple" size="sm" className="gap-2">
@@ -101,10 +125,24 @@ export const Header = () => {
               <div className="border-t border-border pt-4 mt-4 space-y-2">
                 {user ? (
                   <>
-                    <div className="flex items-center gap-2 px-2 py-1 text-sm text-muted-foreground">
-                      <User className="h-4 w-4" />
-                      {user.email}
+                    {/* User Info */}
+                    <div className="flex items-center gap-2 px-2 py-2 bg-muted rounded-lg">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-foreground">{userName}</span>
+                        <Badge variant={isAdmin ? "default" : "secondary"} className="text-xs w-fit mt-1">
+                          {userRole}
+                        </Badge>
+                      </div>
                     </div>
+                    
+                    <Link to="/dashboard">
+                      <Button3D variant="primary" size="sm" className="w-full gap-2">
+                        <LayoutDashboard className="h-4 w-4" />
+                        ড্যাশবোর্ড
+                      </Button3D>
+                    </Link>
+                    
                     {isAdmin && (
                       <Link to="/admin">
                         <Button3D variant="purple" size="sm" className="w-full gap-2">
