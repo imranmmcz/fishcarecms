@@ -20,7 +20,8 @@ import {
   Home,
   Fish,
   CloudUpload,
-  User
+  User,
+  Settings
 } from "lucide-react";
 
 const menuItems = [
@@ -72,6 +73,13 @@ const menuItems = [
     icon: User,
     color: "bg-gradient-to-r from-pink-500 to-rose-600",
     iconColor: "text-pink-500"
+  },
+  { 
+    title: "সেটিংস", 
+    url: "/dashboard/settings", 
+    icon: Settings,
+    color: "bg-gradient-to-r from-slate-500 to-gray-600",
+    iconColor: "text-slate-500"
   },
 ];
 

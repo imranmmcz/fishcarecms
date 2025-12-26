@@ -96,7 +96,7 @@ export const Header = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                    <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
                       <User className="h-4 w-4" />
                       প্রোফাইল
                     </Link>
@@ -189,7 +189,7 @@ export const Header = () => {
                       </Button>
                     </Link>
                     
-                    <Link to="/profile" className="block">
+                    <Link to="/dashboard/profile" className="block">
                       <Button variant="ghost" className="w-full justify-start gap-2">
                         <User className="h-4 w-4" />
                         প্রোফাইল
