@@ -16,8 +16,11 @@ import {
   VolumeX,
   Save,
   Palette,
-  Monitor
+  Monitor,
+  CloudUpload,
+  ChevronRight
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface Settings {
@@ -282,6 +285,34 @@ export default function DashboardSettings() {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Backup Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CloudUpload className="h-5 w-5" />
+              ব্যাকআপ সেটিংস
+            </CardTitle>
+            <CardDescription>আপনার ডেটা ব্যাকআপ ও রিস্টোর করুন</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link 
+              to="/dashboard/backup"
+              className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-indigo-500/10">
+                  <CloudUpload className="h-5 w-5 text-indigo-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">ব্যাকআপ ম্যানেজার</p>
+                  <p className="text-sm text-muted-foreground">ডেটা ব্যাকআপ ও রিস্টোর করুন</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            </Link>
           </CardContent>
         </Card>
 
