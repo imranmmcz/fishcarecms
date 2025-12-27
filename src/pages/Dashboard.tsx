@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -83,6 +84,7 @@ const statusLabels: { [key: string]: { label: string; color: string } } = {
 export default function Dashboard() {
   const { user } = useAuth();
   const [userName, setUserName] = useState("কৃষক");
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [pondCount, setPondCount] = useState(0);
@@ -95,19 +97,24 @@ export default function Dashboard() {
   const [pondIncomes, setPondIncomes] = useState<IncomeRecord[]>([]);
   const [pondExpenses, setPondExpenses] = useState<ExpenseRecord[]>([]);
 
-  // Fetch user profile name
+  // Fetch user profile name and avatar
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!user) return;
       
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, avatar_url")
         .eq("user_id", user.id)
         .maybeSingle();
       
-      if (data && data.full_name) {
-        setUserName(data.full_name);
+      if (data) {
+        if (data.full_name) {
+          setUserName(data.full_name);
+        }
+        if (data.avatar_url) {
+          setUserAvatar(data.avatar_url);
+        }
       }
     };
     
@@ -239,9 +246,17 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">স্বাগতম, {userName}!</h1>
-          <p className="text-muted-foreground mt-1">আপনার মাছ চাষের সারসংক্ষেপ দেখুন</p>
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16 border-2 border-primary/20 shadow-lg">
+            <AvatarImage src={userAvatar || undefined} alt={userName} />
+            <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-xl font-bold">
+              {userName.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">স্বাগতম, {userName}!</h1>
+            <p className="text-muted-foreground mt-1">আপনার মাছ চাষের সারসংক্ষেপ দেখুন</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
