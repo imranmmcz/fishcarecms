@@ -2,6 +2,8 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Waves, Calculator, Fish, ChevronRight, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,6 +81,8 @@ const statusLabels: { [key: string]: { label: string; color: string } } = {
 };
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const [userName, setUserName] = useState("কৃষক");
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [pondCount, setPondCount] = useState(0);
@@ -90,6 +94,25 @@ export default function Dashboard() {
   const [selectedPond, setSelectedPond] = useState<PondSummary | null>(null);
   const [pondIncomes, setPondIncomes] = useState<IncomeRecord[]>([]);
   const [pondExpenses, setPondExpenses] = useState<ExpenseRecord[]>([]);
+
+  // Fetch user profile name
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (data && data.full_name) {
+        setUserName(data.full_name);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   useEffect(() => {
     const incomes: IncomeRecord[] = JSON.parse(localStorage.getItem("farmerIncomes") || "[]");
@@ -217,7 +240,7 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">স্বাগতম, কৃষক!</h1>
+          <h1 className="text-3xl font-bold text-foreground">স্বাগতম, {userName}!</h1>
           <p className="text-muted-foreground mt-1">আপনার মাছ চাষের সারসংক্ষেপ দেখুন</p>
         </div>
 
