@@ -1,6 +1,7 @@
-import { ReactNode } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { ReactNode, useState, useEffect } from "react";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +13,15 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -23,7 +33,9 @@ import {
   CloudUpload,
   User,
   Settings,
-  Shield
+  Shield,
+  LogOut,
+  ChevronDown
 } from "lucide-react";
 
 const menuItems = [
@@ -91,7 +103,34 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
-  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const { isAdmin, user, signOut } = useAuth();
+  const [userName, setUserName] = useState("ব্যবহারকারী");
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (data) {
+        if (data.full_name) setUserName(data.full_name);
+        if (data.avatar_url) setUserAvatar(data.avatar_url);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <SidebarProvider>
@@ -181,12 +220,57 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </Sidebar>
 
         <main className="flex-1 overflow-auto">
-          <div className="p-4 border-b bg-card flex items-center gap-4">
-            <SidebarTrigger className="text-foreground" />
-            <div className="h-6 w-px bg-border" />
-            <span className="text-sm text-muted-foreground">
-              {menuItems.find(item => item.url === location.pathname)?.title || 'ড্যাশবোর্ড'}
-            </span>
+          <div className="p-4 border-b bg-card flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="text-foreground" />
+              <div className="h-6 w-px bg-border" />
+              <span className="text-sm text-muted-foreground">
+                {menuItems.find(item => item.url === location.pathname)?.title || 'ড্যাশবোর্ড'}
+              </span>
+            </div>
+            
+            {/* Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors outline-none">
+                <Avatar className="h-8 w-8 border border-border">
+                  <AvatarImage src={userAvatar || undefined} alt={userName} />
+                  <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-sm font-medium">
+                    {userName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium text-foreground hidden sm:inline">{userName}</span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium text-foreground">{userName}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/dashboard/profile" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>প্রোফাইল</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/dashboard/settings" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    <span>সেটিংস</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>লগ আউট</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="p-6">
             {children}
