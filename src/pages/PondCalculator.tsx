@@ -11,6 +11,12 @@ import { Calculator, Droplets, Ruler, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useFarming } from "@/contexts/FarmingContext";
 
+// Pond shape images
+import pondRectangle from "@/assets/pond-rectangle.png";
+import pondSquare from "@/assets/pond-square.png";
+import pondCircle from "@/assets/pond-circle.png";
+import pondTrapezoid from "@/assets/pond-trapezoid.png";
+
 type PondShape = "rectangle" | "square" | "circle" | "trapezoid";
 type InputUnit = "meter" | "feet" | "centimeter";
 type OutputUnit = "shotak" | "katha" | "bigha" | "acre" | "hectare";
@@ -224,10 +230,30 @@ export default function PondCalculator() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="rectangle">আয়তাকার (Rectangle)</SelectItem>
-                    <SelectItem value="square">বর্গাকার (Square)</SelectItem>
-                    <SelectItem value="circle">বৃত্তাকার (Circle)</SelectItem>
-                    <SelectItem value="trapezoid">ট্র্যাপিজয়েড (Trapezoid)</SelectItem>
+                    <SelectItem value="rectangle">
+                      <div className="flex items-center gap-3">
+                        <img src={pondRectangle} alt="আয়তাকার" className="w-8 h-8 rounded object-cover" />
+                        <span>আয়তাকার (Rectangle)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="square">
+                      <div className="flex items-center gap-3">
+                        <img src={pondSquare} alt="বর্গাকার" className="w-8 h-8 rounded object-cover" />
+                        <span>বর্গাকার (Square)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="circle">
+                      <div className="flex items-center gap-3">
+                        <img src={pondCircle} alt="বৃত্তাকার" className="w-8 h-8 rounded object-cover" />
+                        <span>বৃত্তাকার (Circle)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="trapezoid">
+                      <div className="flex items-center gap-3">
+                        <img src={pondTrapezoid} alt="ট্র্যাপিজয়েড" className="w-8 h-8 rounded object-cover" />
+                        <span>ট্র্যাপিজয়েড (Trapezoid)</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
