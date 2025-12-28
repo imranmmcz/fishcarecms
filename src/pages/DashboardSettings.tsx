@@ -4,12 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { 
   Sun, 
   Moon, 
   Bell, 
-  BellOff, 
   Mail, 
   Smartphone, 
   Volume2, 
@@ -18,10 +18,14 @@ import {
   Palette,
   Monitor,
   CloudUpload,
-  ChevronRight
+  ChevronRight,
+  Globe,
+  DollarSign
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useLanguage, Language } from "@/contexts/LanguageContext";
+import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
 
 interface Settings {
   theme: "light" | "dark" | "system";
@@ -50,6 +54,8 @@ const defaultSettings: Settings = {
 export default function DashboardSettings() {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [saving, setSaving] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
+  const { currency, setCurrency, currencyInfo } = useCurrency();
 
   useEffect(() => {
     // Load settings from localStorage
@@ -93,13 +99,23 @@ export default function DashboardSettings() {
     }));
   };
 
+  const handleLanguageChange = (lang: Language) => {
+    setLanguage(lang);
+    toast.success(t.settingsSaved);
+  };
+
+  const handleCurrencyChange = (curr: CurrencyCode) => {
+    setCurrency(curr);
+    toast.success(t.settingsSaved);
+  };
+
   const handleSave = () => {
     setSaving(true);
     localStorage.setItem("dashboardSettings", JSON.stringify(settings));
     
     setTimeout(() => {
       setSaving(false);
-      toast.success("সেটিংস সফলভাবে সংরক্ষিত হয়েছে!");
+      toast.success(t.settingsSaved);
     }, 500);
   };
 
@@ -107,18 +123,144 @@ export default function DashboardSettings() {
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">সেটিংস</h1>
-          <p className="text-muted-foreground">আপনার ড্যাশবোর্ড কাস্টমাইজ করুন</p>
+          <h1 className="text-2xl font-bold text-foreground">{t.settings}</h1>
+          <p className="text-muted-foreground">
+            {language === "bn" ? "আপনার ড্যাশবোর্ড কাস্টমাইজ করুন" : "Customize your dashboard"}
+          </p>
         </div>
+
+        {/* Language Settings */}
+        <Card className="border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              {t.languageSettings}
+            </CardTitle>
+            <CardDescription>
+              {language === "bn" 
+                ? "ওয়েবসাইটের ভাষা নির্বাচন করুন"
+                : "Select the website language"
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div
+                onClick={() => handleLanguageChange("bn")}
+                className={`cursor-pointer rounded-lg border-2 p-4 transition-all hover:border-primary/50 ${
+                  language === "bn" 
+                    ? "border-primary bg-primary/5" 
+                    : "border-border"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                    language === "bn" ? "border-primary" : "border-muted-foreground"
+                  }`}>
+                    {language === "bn" && (
+                      <div className="h-2 w-2 rounded-full bg-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold">বাংলা</p>
+                    <p className="text-sm text-muted-foreground">Bengali</p>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                onClick={() => handleLanguageChange("en")}
+                className={`cursor-pointer rounded-lg border-2 p-4 transition-all hover:border-primary/50 ${
+                  language === "en" 
+                    ? "border-primary bg-primary/5" 
+                    : "border-border"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                    language === "en" ? "border-primary" : "border-muted-foreground"
+                  }`}>
+                    {language === "en" && (
+                      <div className="h-2 w-2 rounded-full bg-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold">English</p>
+                    <p className="text-sm text-muted-foreground">ইংরেজি</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Currency Settings */}
+        <Card className="border-secondary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-secondary" />
+              {t.currencySettings}
+            </CardTitle>
+            <CardDescription>
+              {language === "bn"
+                ? "মূল্য প্রদর্শনের জন্য মুদ্রা নির্বাচন করুন"
+                : "Select currency for price display"
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Select value={currency} onValueChange={(v) => handleCurrencyChange(v as CurrencyCode)}>
+              <SelectTrigger className="w-full">
+                <SelectValue>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{currencyInfo.symbol}</span>
+                    <span>{language === "bn" ? currencyInfo.nameBn : currencyInfo.name}</span>
+                    <span className="text-muted-foreground">({currencyInfo.code})</span>
+                  </div>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(currencies).map((curr) => (
+                  <SelectItem key={curr.code} value={curr.code}>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold w-6">{curr.symbol}</span>
+                      <span>{language === "bn" ? curr.nameBn : curr.name}</span>
+                      <span className="text-muted-foreground">({curr.code})</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="grid grid-cols-3 gap-3">
+              {Object.values(currencies).slice(0, 6).map((curr) => (
+                <div
+                  key={curr.code}
+                  onClick={() => handleCurrencyChange(curr.code)}
+                  className={`cursor-pointer rounded-lg border-2 p-3 transition-all hover:border-secondary/50 text-center ${
+                    currency === curr.code
+                      ? "border-secondary bg-secondary/5"
+                      : "border-border"
+                  }`}
+                >
+                  <p className="text-xl font-bold">{curr.symbol}</p>
+                  <p className="text-xs text-muted-foreground">{curr.code}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Theme Settings */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Palette className="h-5 w-5" />
-              থিম সেটিংস
+              {t.themeSettings}
             </CardTitle>
-            <CardDescription>আপনার পছন্দ অনুযায়ী থিম নির্বাচন করুন</CardDescription>
+            <CardDescription>
+              {language === "bn" ? "আপনার পছন্দ অনুযায়ী থিম নির্বাচন করুন" : "Select your preferred theme"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <RadioGroup
@@ -133,7 +275,7 @@ export default function DashboardSettings() {
                   className="flex flex-col items-center justify-between rounded-lg border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
                 >
                   <Sun className="h-6 w-6 mb-2 text-yellow-500" />
-                  <span className="text-sm font-medium">লাইট</span>
+                  <span className="text-sm font-medium">{t.lightTheme}</span>
                 </Label>
               </div>
               <div>
@@ -143,7 +285,7 @@ export default function DashboardSettings() {
                   className="flex flex-col items-center justify-between rounded-lg border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
                 >
                   <Moon className="h-6 w-6 mb-2 text-blue-500" />
-                  <span className="text-sm font-medium">ডার্ক</span>
+                  <span className="text-sm font-medium">{t.darkTheme}</span>
                 </Label>
               </div>
               <div>
@@ -153,7 +295,7 @@ export default function DashboardSettings() {
                   className="flex flex-col items-center justify-between rounded-lg border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
                 >
                   <Monitor className="h-6 w-6 mb-2 text-gray-500" />
-                  <span className="text-sm font-medium">সিস্টেম</span>
+                  <span className="text-sm font-medium">{t.systemTheme}</span>
                 </Label>
               </div>
             </RadioGroup>
@@ -165,14 +307,18 @@ export default function DashboardSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              নোটিফিকেশন সেটিংস
+              {t.notificationSettings}
             </CardTitle>
-            <CardDescription>কোন নোটিফিকেশন পেতে চান তা নির্বাচন করুন</CardDescription>
+            <CardDescription>
+              {language === "bn" ? "কোন নোটিফিকেশন পেতে চান তা নির্বাচন করুন" : "Choose which notifications to receive"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Notification Channels */}
             <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground">নোটিফিকেশন চ্যানেল</h4>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                {language === "bn" ? "নোটিফিকেশন চ্যানেল" : "Notification Channels"}
+              </h4>
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -180,8 +326,10 @@ export default function DashboardSettings() {
                     <Mail className="h-5 w-5 text-blue-500" />
                   </div>
                   <div>
-                    <Label htmlFor="email-notif" className="text-base">ইমেইল নোটিফিকেশন</Label>
-                    <p className="text-sm text-muted-foreground">গুরুত্বপূর্ণ আপডেট ইমেইলে পান</p>
+                    <Label htmlFor="email-notif" className="text-base">{t.emailNotifications}</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "bn" ? "গুরুত্বপূর্ণ আপডেট ইমেইলে পান" : "Receive important updates via email"}
+                    </p>
                   </div>
                 </div>
                 <Switch
@@ -197,8 +345,10 @@ export default function DashboardSettings() {
                     <Smartphone className="h-5 w-5 text-green-500" />
                   </div>
                   <div>
-                    <Label htmlFor="push-notif" className="text-base">পুশ নোটিফিকেশন</Label>
-                    <p className="text-sm text-muted-foreground">ব্রাউজার নোটিফিকেশন পান</p>
+                    <Label htmlFor="push-notif" className="text-base">{t.pushNotifications}</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "bn" ? "ব্রাউজার নোটিফিকেশন পান" : "Receive browser notifications"}
+                    </p>
                   </div>
                 </div>
                 <Switch
@@ -218,8 +368,12 @@ export default function DashboardSettings() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="sound-notif" className="text-base">সাউন্ড নোটিফিকেশন</Label>
-                    <p className="text-sm text-muted-foreground">নোটিফিকেশনের সাথে শব্দ বাজুক</p>
+                    <Label htmlFor="sound-notif" className="text-base">
+                      {language === "bn" ? "সাউন্ড নোটিফিকেশন" : "Sound Notifications"}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "bn" ? "নোটিফিকেশনের সাথে শব্দ বাজুক" : "Play sound with notifications"}
+                    </p>
                   </div>
                 </div>
                 <Switch
@@ -232,7 +386,9 @@ export default function DashboardSettings() {
 
             {/* Alert Types */}
             <div className="space-y-4 pt-4 border-t">
-              <h4 className="text-sm font-medium text-muted-foreground">অ্যালার্ট টাইপ</h4>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                {language === "bn" ? "অ্যালার্ট টাইপ" : "Alert Types"}
+              </h4>
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -240,8 +396,12 @@ export default function DashboardSettings() {
                     <Bell className="h-5 w-5 text-emerald-500" />
                   </div>
                   <div>
-                    <Label htmlFor="income-alert" className="text-base">আয় অ্যালার্ট</Label>
-                    <p className="text-sm text-muted-foreground">নতুন আয় যোগ হলে জানান</p>
+                    <Label htmlFor="income-alert" className="text-base">
+                      {language === "bn" ? "আয় অ্যালার্ট" : "Income Alerts"}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "bn" ? "নতুন আয় যোগ হলে জানান" : "Get notified on new income"}
+                    </p>
                   </div>
                 </div>
                 <Switch
@@ -257,8 +417,12 @@ export default function DashboardSettings() {
                     <Bell className="h-5 w-5 text-rose-500" />
                   </div>
                   <div>
-                    <Label htmlFor="expense-alert" className="text-base">ব্যয় অ্যালার্ট</Label>
-                    <p className="text-sm text-muted-foreground">নতুন ব্যয় যোগ হলে জানান</p>
+                    <Label htmlFor="expense-alert" className="text-base">
+                      {language === "bn" ? "ব্যয় অ্যালার্ট" : "Expense Alerts"}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "bn" ? "নতুন ব্যয় যোগ হলে জানান" : "Get notified on new expenses"}
+                    </p>
                   </div>
                 </div>
                 <Switch
@@ -274,8 +438,12 @@ export default function DashboardSettings() {
                     <Bell className="h-5 w-5 text-amber-500" />
                   </div>
                   <div>
-                    <Label htmlFor="report-reminder" className="text-base">রিপোর্ট রিমাইন্ডার</Label>
-                    <p className="text-sm text-muted-foreground">সাপ্তাহিক রিপোর্ট রিমাইন্ডার</p>
+                    <Label htmlFor="report-reminder" className="text-base">
+                      {language === "bn" ? "রিপোর্ট রিমাইন্ডার" : "Report Reminders"}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "bn" ? "সাপ্তাহিক রিপোর্ট রিমাইন্ডার" : "Weekly report reminders"}
+                    </p>
                   </div>
                 </div>
                 <Switch
@@ -293,9 +461,11 @@ export default function DashboardSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CloudUpload className="h-5 w-5" />
-              ব্যাকআপ সেটিংস
+              {language === "bn" ? "ব্যাকআপ সেটিংস" : "Backup Settings"}
             </CardTitle>
-            <CardDescription>আপনার ডেটা ব্যাকআপ ও রিস্টোর করুন</CardDescription>
+            <CardDescription>
+              {language === "bn" ? "আপনার ডেটা ব্যাকআপ ও রিস্টোর করুন" : "Backup and restore your data"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Link 
@@ -307,8 +477,12 @@ export default function DashboardSettings() {
                   <CloudUpload className="h-5 w-5 text-indigo-500" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">ব্যাকআপ ম্যানেজার</p>
-                  <p className="text-sm text-muted-foreground">ডেটা ব্যাকআপ ও রিস্টোর করুন</p>
+                  <p className="font-medium text-foreground">
+                    {language === "bn" ? "ব্যাকআপ ম্যানেজার" : "Backup Manager"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {language === "bn" ? "ডেটা ব্যাকআপ ও রিস্টোর করুন" : "Backup and restore data"}
+                  </p>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -319,11 +493,11 @@ export default function DashboardSettings() {
         {/* Save Button */}
         <Button onClick={handleSave} disabled={saving} className="w-full" size="lg">
           {saving ? (
-            <>সংরক্ষণ হচ্ছে...</>
+            <>{language === "bn" ? "সংরক্ষণ হচ্ছে..." : "Saving..."}</>
           ) : (
             <>
               <Save className="h-4 w-4 mr-2" />
-              সেটিংস সংরক্ষণ করুন
+              {t.save}
             </>
           )}
         </Button>
