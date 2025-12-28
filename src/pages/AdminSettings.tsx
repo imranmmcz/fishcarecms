@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, Palette } from "lucide-react";
+import { useLanguage, Language } from "@/contexts/LanguageContext";
+import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
 
 interface SystemSetting {
   id: string;
@@ -19,6 +22,8 @@ interface SystemSetting {
 
 const AdminSettings = () => {
   const { toast } = useToast();
+  const { language, setLanguage, t } = useLanguage();
+  const { currency, setCurrency, currencyInfo } = useCurrency();
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -49,8 +54,8 @@ const AdminSettings = () => {
     } catch (error) {
       console.error("Error fetching settings:", error);
       toast({
-        title: "ত্রুটি",
-        description: "সেটিংস লোড করতে সমস্যা হয়েছে",
+        title: t.error,
+        description: t.settingsError,
         variant: "destructive",
       });
     } finally {
@@ -78,14 +83,14 @@ const AdminSettings = () => {
       }
 
       toast({
-        title: "সফল",
-        description: "সেটিংস সংরক্ষণ করা হয়েছে",
+        title: t.success,
+        description: t.settingsSaved,
       });
     } catch (error) {
       console.error("Error saving settings:", error);
       toast({
-        title: "ত্রুটি",
-        description: "সেটিংস সংরক্ষণ করতে সমস্যা হয়েছে",
+        title: t.error,
+        description: t.settingsError,
         variant: "destructive",
       });
     } finally {
@@ -93,12 +98,28 @@ const AdminSettings = () => {
     }
   };
 
+  const handleLanguageChange = (lang: Language) => {
+    setLanguage(lang);
+    toast({
+      title: t.success,
+      description: t.settingsSaved,
+    });
+  };
+
+  const handleCurrencyChange = (curr: CurrencyCode) => {
+    setCurrency(curr);
+    toast({
+      title: t.success,
+      description: t.settingsSaved,
+    });
+  };
+
   const getSettingLabel = (key: string): string => {
     const labels: Record<string, string> = {
-      app_name: "অ্যাপ্লিকেশনের নাম",
-      maintenance_mode: "মেইনটেনেন্স মোড",
-      max_ponds_per_user: "সর্বোচ্চ পুকুর সংখ্যা",
-      backup_frequency: "ব্যাকআপ ফ্রিকোয়েন্সি",
+      app_name: t.appName,
+      maintenance_mode: t.maintenanceMode,
+      max_ponds_per_user: t.maxPonds,
+      backup_frequency: t.backupFrequency,
     };
     return labels[key] || key;
   };
@@ -118,7 +139,7 @@ const AdminSettings = () => {
               }
             />
             <Label htmlFor={setting.setting_key}>
-              {value === "true" ? "সক্রিয়" : "নিষ্ক্রিয়"}
+              {value === "true" ? t.active : t.inactive}
             </Label>
           </div>
         );
@@ -133,9 +154,9 @@ const AdminSettings = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="daily">দৈনিক</SelectItem>
-              <SelectItem value="weekly">সাপ্তাহিক</SelectItem>
-              <SelectItem value="monthly">মাসিক</SelectItem>
+              <SelectItem value="daily">{t.daily}</SelectItem>
+              <SelectItem value="weekly">{t.weekly}</SelectItem>
+              <SelectItem value="monthly">{t.monthly}</SelectItem>
             </SelectContent>
           </Select>
         );
@@ -166,13 +187,13 @@ const AdminSettings = () => {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">সিস্টেম সেটিংস</h1>
-            <p className="text-muted-foreground">অ্যাপ্লিকেশন কনফিগারেশন পরিচালনা করুন</p>
+            <h1 className="text-2xl font-bold text-foreground">{t.systemSettings}</h1>
+            <p className="text-muted-foreground">{t.advancedSettings}</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={fetchSettings} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-              রিফ্রেশ
+              {t.refresh}
             </Button>
             <Button onClick={saveSettings} disabled={isSaving}>
               {isSaving ? (
@@ -180,72 +201,255 @@ const AdminSettings = () => {
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              সংরক্ষণ করুন
+              {t.save}
             </Button>
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {settings.map((setting) => (
-              <Card key={setting.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Settings className="h-5 w-5 text-amber-500" />
-                    {getSettingLabel(setting.setting_key)}
-                  </CardTitle>
-                  {setting.description && (
-                    <CardDescription>{setting.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>{renderSettingInput(setting)}</CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        <Tabs defaultValue="language" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+            <TabsTrigger value="language" className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              {language === "bn" ? "ভাষা" : "Language"}
+            </TabsTrigger>
+            <TabsTrigger value="currency" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              {language === "bn" ? "মুদ্রা" : "Currency"}
+            </TabsTrigger>
+            <TabsTrigger value="general" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              {language === "bn" ? "সাধারণ" : "General"}
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Additional Settings Section */}
-        <Card className="border-amber-500/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5 text-amber-500" />
-              অতিরিক্ত কনফিগারেশন
-            </CardTitle>
-            <CardDescription>অ্যাডভান্সড সেটিংস</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>ডিফল্ট ভাষা</Label>
-                <Select defaultValue="bn">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="bn">বাংলা</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
-                  </SelectContent>
-                </Select>
+          {/* Language Settings Tab */}
+          <TabsContent value="language" className="space-y-6 mt-6">
+            <Card className="border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  {t.languageSettings}
+                </CardTitle>
+                <CardDescription>
+                  {language === "bn" 
+                    ? "ওয়েবসাইটের প্রাথমিক ভাষা নির্বাচন করুন। সমস্ত লেবেল, বাটন, নোটিফিকেশন এবং রিপোর্ট স্বয়ংক্রিয়ভাবে অনুবাদ হবে।"
+                    : "Select the primary language for the website. All labels, buttons, notifications, and reports will be dynamically translated."
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">{t.primaryLanguage}</Label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div
+                      onClick={() => handleLanguageChange("bn")}
+                      className={`cursor-pointer rounded-lg border-2 p-4 transition-all hover:border-primary/50 ${
+                        language === "bn" 
+                          ? "border-primary bg-primary/5" 
+                          : "border-border"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                          language === "bn" ? "border-primary" : "border-muted-foreground"
+                        }`}>
+                          {language === "bn" && (
+                            <div className="h-2 w-2 rounded-full bg-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold">বাংলা</p>
+                          <p className="text-sm text-muted-foreground">Bengali / Bangla</p>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        সমগ্র ওয়েবসাইট বাংলায় প্রদর্শিত হবে
+                      </p>
+                    </div>
+
+                    <div
+                      onClick={() => handleLanguageChange("en")}
+                      className={`cursor-pointer rounded-lg border-2 p-4 transition-all hover:border-primary/50 ${
+                        language === "en" 
+                          ? "border-primary bg-primary/5" 
+                          : "border-border"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                          language === "en" ? "border-primary" : "border-muted-foreground"
+                        }`}>
+                          {language === "en" && (
+                            <div className="h-2 w-2 rounded-full bg-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold">English</p>
+                          <p className="text-sm text-muted-foreground">ইংরেজি</p>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Entire website will be displayed in English
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-muted/50 p-4">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>{language === "bn" ? "নোট:" : "Note:"}</strong>{" "}
+                    {language === "bn"
+                      ? "ভাষা পরিবর্তন করলে সমস্ত পৃষ্ঠায় অবিলম্বে প্রযোজ্য হবে। ব্যবহারকারীর তৈরি করা বিষয়বস্তু (যেমন রিপোর্ট, নোট) অনুবাদ হবে না।"
+                      : "Language changes will apply immediately across all pages. User-generated content (like reports, notes) will not be translated."
+                    }
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Currency Settings Tab */}
+          <TabsContent value="currency" className="space-y-6 mt-6">
+            <Card className="border-secondary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-secondary" />
+                  {t.currencySettings}
+                </CardTitle>
+                <CardDescription>
+                  {language === "bn"
+                    ? "দেশের মুদ্রা নির্বাচন করুন। ওয়েবসাইটে ব্যবহৃত সমস্ত মুদ্রা নির্বাচিত মুদ্রায় রূপান্তরিত হবে।"
+                    : "Select country currency. All currencies used on the website will be converted to the selected currency immediately."
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">{t.defaultCurrency}</Label>
+                  <Select value={currency} onValueChange={(v) => handleCurrencyChange(v as CurrencyCode)}>
+                    <SelectTrigger className="w-full md:w-[300px]">
+                      <SelectValue>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{currencyInfo.symbol}</span>
+                          <span>{language === "bn" ? currencyInfo.nameBn : currencyInfo.name}</span>
+                          <span className="text-muted-foreground">({currencyInfo.code})</span>
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(currencies).map((curr) => (
+                        <SelectItem key={curr.code} value={curr.code}>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold w-6">{curr.symbol}</span>
+                            <span>{language === "bn" ? curr.nameBn : curr.name}</span>
+                            <span className="text-muted-foreground">({curr.code})</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  {Object.values(currencies).slice(0, 6).map((curr) => (
+                    <div
+                      key={curr.code}
+                      onClick={() => handleCurrencyChange(curr.code)}
+                      className={`cursor-pointer rounded-lg border-2 p-4 transition-all hover:border-secondary/50 ${
+                        currency === curr.code
+                          ? "border-secondary bg-secondary/5"
+                          : "border-border"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-2xl font-bold">{curr.symbol}</p>
+                          <p className="text-sm font-medium">{curr.code}</p>
+                        </div>
+                        <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                          currency === curr.code ? "border-secondary" : "border-muted-foreground"
+                        }`}>
+                          {currency === curr.code && (
+                            <div className="h-2 w-2 rounded-full bg-secondary" />
+                          )}
+                        </div>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {language === "bn" ? curr.nameBn : curr.name}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-lg bg-muted/50 p-4">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>{language === "bn" ? "নোট:" : "Note:"}</strong>{" "}
+                    {language === "bn"
+                      ? "মুদ্রা রূপান্তর বর্তমান বিনিময় হারের উপর ভিত্তি করে। প্রকৃত মূল্য সামান্য ভিন্ন হতে পারে।"
+                      : "Currency conversion is based on approximate exchange rates. Actual prices may vary slightly."
+                    }
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* General Settings Tab */}
+          <TabsContent value="general" className="space-y-6 mt-6">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-              <div className="space-y-2">
-                <Label>টাইমজোন</Label>
-                <Select defaultValue="asia/dhaka">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="asia/dhaka">Asia/Dhaka (GMT+6)</SelectItem>
-                    <SelectItem value="utc">UTC</SelectItem>
-                  </SelectContent>
-                </Select>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2">
+                {settings.map((setting) => (
+                  <Card key={setting.id}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Settings className="h-5 w-5 text-accent" />
+                        {getSettingLabel(setting.setting_key)}
+                      </CardTitle>
+                      {setting.description && (
+                        <CardDescription>{setting.description}</CardDescription>
+                      )}
+                    </CardHeader>
+                    <CardContent>{renderSettingInput(setting)}</CardContent>
+                  </Card>
+                ))}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            )}
+
+            {/* Timezone Settings */}
+            <Card className="border-accent/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-accent" />
+                  {t.additionalConfig}
+                </CardTitle>
+                <CardDescription>{t.advancedSettings}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>{t.timezone}</Label>
+                    <Select defaultValue="asia/dhaka">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="asia/dhaka">Asia/Dhaka (GMT+6)</SelectItem>
+                        <SelectItem value="utc">UTC</SelectItem>
+                        <SelectItem value="asia/kolkata">Asia/Kolkata (GMT+5:30)</SelectItem>
+                        <SelectItem value="europe/london">Europe/London (GMT)</SelectItem>
+                        <SelectItem value="america/new_york">America/New_York (GMT-5)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );
