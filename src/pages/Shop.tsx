@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { ProductCard } from "@/components/ProductCard";
 import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { fishProducts as staticProducts, productCategories } from "@/data/fishProductData";
 import { ShoppingBag, Loader2, Search, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ const Shop = () => {
   const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, 5000]);
   const searchRef = useRef<HTMLDivElement>(null);
   const { products: dbProducts, isLoading } = useProducts();
+  const { t, language } = useLanguage();
 
   // Combine database products with static products
   const allProducts = useMemo(() => [
@@ -35,7 +37,7 @@ const Shop = () => {
       originalPrice: p.discount_percentage > 0 ? p.price : undefined,
       image: p.image_url || "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=400&fit=crop",
       category: p.category as "medicine" | "food" | "accessories",
-      categoryLabel: p.category === "medicine" ? "ঔষধ" : p.category === "food" ? "খাবার" : "সরঞ্জাম",
+      categoryLabel: p.category === "medicine" ? (language === "bn" ? "ঔষধ" : "Medicine") : p.category === "food" ? (language === "bn" ? "খাবার" : "Food") : (language === "bn" ? "সরঞ্জাম" : "Accessories"),
       featured: false,
       externalLink: p.external_link || "https://fishcare.com.bd",
       company: "FishCare BD",
@@ -44,7 +46,7 @@ const Shop = () => {
       ...p,
       company: "FishCare BD",
     })),
-  ], [dbProducts]);
+  ], [dbProducts, language]);
 
   // Calculate max price for slider
   const maxPrice = useMemo(() => {
@@ -70,11 +72,15 @@ const Shop = () => {
     const query = searchQuery.toLowerCase();
     const results: { type: string; value: string; label: string }[] = [];
     
+    const productLabel = language === "bn" ? "পণ্য" : "Product";
+    const categoryLabel = language === "bn" ? "ক্যাটাগরি" : "Category";
+    const companyLabel = language === "bn" ? "কোম্পানি" : "Company";
+
     // Product name matches
     allProducts.forEach((p) => {
       if (p.name.toLowerCase().includes(query) || p.nameEn.toLowerCase().includes(query)) {
         if (!results.find((r) => r.value === p.name)) {
-          results.push({ type: "পণ্য", value: p.name, label: p.name });
+          results.push({ type: productLabel, value: p.name, label: p.name });
         }
       }
     });
@@ -83,7 +89,7 @@ const Shop = () => {
     productCategories.forEach((cat) => {
       if (cat.label.toLowerCase().includes(query) && cat.value !== "all") {
         if (!results.find((r) => r.value === cat.value)) {
-          results.push({ type: "ক্যাটাগরি", value: cat.value, label: cat.label });
+          results.push({ type: categoryLabel, value: cat.value, label: cat.label });
         }
       }
     });
@@ -93,13 +99,13 @@ const Shop = () => {
     companies.forEach((company) => {
       if (company.toLowerCase().includes(query)) {
         if (!results.find((r) => r.value === company)) {
-          results.push({ type: "কোম্পানি", value: company, label: company });
+          results.push({ type: companyLabel, value: company, label: company });
         }
       }
     });
 
     return results.slice(0, 8);
-  }, [searchQuery, allProducts]);
+  }, [searchQuery, allProducts, language]);
 
   // Filter products based on all criteria
   const filteredProducts = useMemo(() => {
@@ -133,7 +139,8 @@ const Shop = () => {
   }, [allProducts, activeCategory, appliedPriceRange, searchQuery]);
 
   const handleSuggestionClick = (suggestion: { type: string; value: string; label: string }) => {
-    if (suggestion.type === "ক্যাটাগরি") {
+    const categoryLabel = language === "bn" ? "ক্যাটাগরি" : "Category";
+    if (suggestion.type === categoryLabel) {
       setActiveCategory(suggestion.value);
       setSearchQuery("");
     } else {
@@ -158,6 +165,9 @@ const Shop = () => {
     setAppliedPriceRange([0, maxPrice]);
   };
 
+  const filterLabel = language === "bn" ? "ফিল্টার" : "Filter";
+  const resetLabel = language === "bn" ? "রিসেট" : "Reset";
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -166,8 +176,8 @@ const Shop = () => {
       <section className="bg-gradient-hero py-12 text-white">
         <div className="container text-center">
           <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-80" />
-          <h1 className="text-3xl md:text-4xl font-bold">পণ্য সমূহ</h1>
-          <p className="text-white/80 mt-2">মাছ চাষের জন্য প্রয়োজনীয় সব পণ্য</p>
+          <h1 className="text-3xl md:text-4xl font-bold">{t.products}</h1>
+          <p className="text-white/80 mt-2">{t.productsForFishing}</p>
         </div>
       </section>
 
@@ -180,7 +190,7 @@ const Shop = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="পণ্যের নাম, ক্যাটাগরি বা কোম্পানি খুঁজুন..."
+                placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -223,12 +233,12 @@ const Shop = () => {
             <SheetTrigger asChild>
               <Button variant="outline" className="h-12 px-6 rounded-xl border-2 md:hidden">
                 <SlidersHorizontal className="h-5 w-5 mr-2" />
-                ফিল্টার
+                {filterLabel}
               </Button>
             </SheetTrigger>
             <SheetContent side="bottom" className="h-auto rounded-t-3xl">
               <SheetHeader>
-                <SheetTitle>প্রাইস ফিল্টার</SheetTitle>
+                <SheetTitle>{t.priceFilter}</SheetTitle>
               </SheetHeader>
               <div className="py-6 space-y-6">
                 <div>
@@ -246,10 +256,10 @@ const Shop = () => {
                 </div>
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={resetFilters} className="flex-1">
-                    রিসেট
+                    {resetLabel}
                   </Button>
                   <Button onClick={applyPriceFilter} className="flex-1">
-                    প্রয়োগ করুন
+                    {t.applyFilter}
                   </Button>
                 </div>
               </div>
@@ -260,7 +270,7 @@ const Shop = () => {
           <div className="hidden md:flex items-center gap-4 bg-card border-2 rounded-xl px-4 py-2">
             <SlidersHorizontal className="h-5 w-5 text-muted-foreground" />
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground whitespace-nowrap">মূল্য:</span>
+              <span className="text-sm text-muted-foreground whitespace-nowrap">{t.price}:</span>
               <span className="font-medium whitespace-nowrap">৳{priceRange[0]} - ৳{priceRange[1]}</span>
             </div>
             <Slider
@@ -295,13 +305,13 @@ const Shop = () => {
 
         {/* Results Count */}
         <div className="mb-6 text-center text-muted-foreground">
-          {filteredProducts.length} টি পণ্য পাওয়া গেছে
+          {filteredProducts.length} {t.productsFound}
           {(searchQuery || activeCategory !== "all" || appliedPriceRange[0] > 0 || appliedPriceRange[1] < maxPrice) && (
             <button
               onClick={resetFilters}
               className="ml-3 text-primary hover:underline font-medium"
             >
-              সব ফিল্টার মুছুন
+              {t.resetFilters}
             </button>
           )}
         </div>
@@ -326,12 +336,12 @@ const Shop = () => {
         {!isLoading && filteredProducts.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-bold mb-2">কোন পণ্য পাওয়া যায়নি</h3>
+            <h3 className="text-xl font-bold mb-2">{t.noProductFound}</h3>
             <p className="text-muted-foreground mb-4">
-              অন্য কীওয়ার্ড দিয়ে খুঁজুন অথবা ফিল্টার পরিবর্তন করুন
+              {language === "bn" ? "অন্য কীওয়ার্ড দিয়ে খুঁজুন অথবা ফিল্টার পরিবর্তন করুন" : "Try a different keyword or change filters"}
             </p>
             <Button variant="outline" onClick={resetFilters}>
-              সব ফিল্টার মুছুন
+              {t.resetFilters}
             </Button>
           </div>
         )}

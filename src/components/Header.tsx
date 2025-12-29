@@ -12,24 +12,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-const navItems = [
-  { path: "/", label: "হোম" },
-  { path: "/shop", label: "শপ" },
-  { path: "/pond-calculator", label: "পুকুর পরিমাপ" },
-  { path: "/fish-advice", label: "ফিস এডভাইস" },
-  { path: "/modules", label: "সকল মডিউল" },
-];
 
 export const Header = () => {
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
+  const { t, language } = useLanguage();
+
+  const navItems = [
+    { path: "/", label: t.home },
+    { path: "/shop", label: t.shop },
+    { path: "/pond-calculator", label: t.pondMeasurement },
+    { path: "/fish-advice", label: t.fishAdvice },
+    { path: "/modules", label: t.allModules },
+  ];
 
   // Get user display name from metadata
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'ব্যবহারকারী';
-  const userRole = isAdmin ? 'অ্যাডমিন' : 'ব্যবহারকারী';
+  const defaultUserName = language === "bn" ? "ব্যবহারকারী" : "User";
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || defaultUserName;
+  const userRole = isAdmin ? (language === "bn" ? "অ্যাডমিন" : "Admin") : (language === "bn" ? "ব্যবহারকারী" : "User");
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
@@ -40,8 +43,8 @@ export const Header = () => {
             <Fish className="h-6 w-6 text-primary-foreground" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-foreground">মৎস্য ব্যবস্থাপনা</span>
-            <span className="text-xs text-muted-foreground">বৈজ্ঞানিক মাছ চাষ</span>
+            <span className="text-lg font-bold text-foreground">{t.appTitle}</span>
+            <span className="text-xs text-muted-foreground">{t.appSubtitle}</span>
           </div>
         </Link>
 
@@ -92,19 +95,19 @@ export const Header = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
                       <LayoutDashboard className="h-4 w-4" />
-                      ড্যাশবোর্ড
+                      {t.dashboard}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
                       <User className="h-4 w-4" />
-                      প্রোফাইল
+                      {t.profile}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard/settings" className="flex items-center gap-2 cursor-pointer">
                       <Settings className="h-4 w-4" />
-                      সেটিংস
+                      {t.settings}
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin && (
@@ -113,7 +116,7 @@ export const Header = () => {
                       <DropdownMenuItem asChild>
                         <Link to="/admin" className="flex items-center gap-2 cursor-pointer text-primary">
                           <Shield className="h-4 w-4" />
-                          অ্যাডমিন প্যানেল
+                          {t.adminPanel}
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -124,7 +127,7 @@ export const Header = () => {
                     className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
                   >
                     <LogOut className="h-4 w-4" />
-                    লগআউট
+                    {t.logout}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -132,7 +135,7 @@ export const Header = () => {
               <Link to="/auth">
                 <Button3D variant="primary" size="sm" className="gap-2">
                   <LogIn className="h-4 w-4" />
-                  লগইন
+                  {t.login}
                 </Button3D>
               </Link>
             )}
@@ -185,21 +188,21 @@ export const Header = () => {
                     <Link to="/dashboard" className="block">
                       <Button variant="ghost" className="w-full justify-start gap-2">
                         <LayoutDashboard className="h-4 w-4" />
-                        ড্যাশবোর্ড
+                        {t.dashboard}
                       </Button>
                     </Link>
                     
                     <Link to="/dashboard/profile" className="block">
                       <Button variant="ghost" className="w-full justify-start gap-2">
                         <User className="h-4 w-4" />
-                        প্রোফাইল
+                        {t.profile}
                       </Button>
                     </Link>
                     
                     <Link to="/dashboard/settings" className="block">
                       <Button variant="ghost" className="w-full justify-start gap-2">
                         <Settings className="h-4 w-4" />
-                        সেটিংস
+                        {t.settings}
                       </Button>
                     </Link>
                     
@@ -207,7 +210,7 @@ export const Header = () => {
                       <Link to="/admin" className="block">
                         <Button variant="ghost" className="w-full justify-start gap-2 text-primary">
                           <Shield className="h-4 w-4" />
-                          অ্যাডমিন প্যানেল
+                          {t.adminPanel}
                         </Button>
                       </Link>
                     )}
@@ -218,14 +221,14 @@ export const Header = () => {
                       onClick={signOut}
                     >
                       <LogOut className="h-4 w-4" />
-                      লগআউট
+                      {t.logout}
                     </Button>
                   </>
                 ) : (
                   <Link to="/auth">
                     <Button3D variant="primary" size="sm" className="w-full gap-2">
                       <LogIn className="h-4 w-4" />
-                      লগইন / সাইনআপ
+                      {t.loginSignup}
                     </Button3D>
                   </Link>
                 )}
