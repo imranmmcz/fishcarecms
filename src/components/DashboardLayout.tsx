@@ -1,6 +1,7 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -38,65 +39,6 @@ import {
   ChevronDown
 } from "lucide-react";
 
-const menuItems = [
-  { 
-    title: "ড্যাশবোর্ড", 
-    url: "/dashboard", 
-    icon: LayoutDashboard,
-    color: "bg-gradient-to-r from-purple-500 to-purple-600",
-    iconColor: "text-purple-500"
-  },
-  { 
-    title: "আয়", 
-    url: "/dashboard/income", 
-    icon: TrendingUp,
-    color: "bg-gradient-to-r from-emerald-500 to-green-600",
-    iconColor: "text-emerald-500"
-  },
-  { 
-    title: "ব্যয়", 
-    url: "/dashboard/expense", 
-    icon: TrendingDown,
-    color: "bg-gradient-to-r from-rose-500 to-red-600",
-    iconColor: "text-rose-500"
-  },
-  { 
-    title: "আমার পুকুর", 
-    url: "/dashboard/my-pond", 
-    icon: Waves,
-    color: "bg-gradient-to-r from-blue-500 to-cyan-600",
-    iconColor: "text-blue-500"
-  },
-  { 
-    title: "রিপোর্ট", 
-    url: "/dashboard/reports", 
-    icon: FileText,
-    color: "bg-gradient-to-r from-amber-500 to-orange-600",
-    iconColor: "text-amber-500"
-  },
-  { 
-    title: "ব্যাকআপ", 
-    url: "/dashboard/backup", 
-    icon: CloudUpload,
-    color: "bg-gradient-to-r from-indigo-500 to-violet-600",
-    iconColor: "text-indigo-500"
-  },
-  { 
-    title: "প্রোফাইল", 
-    url: "/dashboard/profile", 
-    icon: User,
-    color: "bg-gradient-to-r from-pink-500 to-rose-600",
-    iconColor: "text-pink-500"
-  },
-  { 
-    title: "সেটিংস", 
-    url: "/dashboard/settings", 
-    icon: Settings,
-    color: "bg-gradient-to-r from-slate-500 to-gray-600",
-    iconColor: "text-slate-500"
-  },
-];
-
 interface DashboardLayoutProps {
   children: ReactNode;
 }
@@ -105,8 +47,68 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin, user, signOut } = useAuth();
-  const [userName, setUserName] = useState("ব্যবহারকারী");
+  const { t, language } = useLanguage();
+  const [userName, setUserName] = useState("");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
+
+  const menuItems = [
+    { 
+      title: t.dashboard, 
+      url: "/dashboard", 
+      icon: LayoutDashboard,
+      color: "bg-gradient-to-r from-purple-500 to-purple-600",
+      iconColor: "text-purple-500"
+    },
+    { 
+      title: t.income, 
+      url: "/dashboard/income", 
+      icon: TrendingUp,
+      color: "bg-gradient-to-r from-emerald-500 to-green-600",
+      iconColor: "text-emerald-500"
+    },
+    { 
+      title: t.expense, 
+      url: "/dashboard/expense", 
+      icon: TrendingDown,
+      color: "bg-gradient-to-r from-rose-500 to-red-600",
+      iconColor: "text-rose-500"
+    },
+    { 
+      title: t.myPond, 
+      url: "/dashboard/my-pond", 
+      icon: Waves,
+      color: "bg-gradient-to-r from-blue-500 to-cyan-600",
+      iconColor: "text-blue-500"
+    },
+    { 
+      title: t.reports, 
+      url: "/dashboard/reports", 
+      icon: FileText,
+      color: "bg-gradient-to-r from-amber-500 to-orange-600",
+      iconColor: "text-amber-500"
+    },
+    { 
+      title: t.backup, 
+      url: "/dashboard/backup", 
+      icon: CloudUpload,
+      color: "bg-gradient-to-r from-indigo-500 to-violet-600",
+      iconColor: "text-indigo-500"
+    },
+    { 
+      title: t.profile, 
+      url: "/dashboard/profile", 
+      icon: User,
+      color: "bg-gradient-to-r from-pink-500 to-rose-600",
+      iconColor: "text-pink-500"
+    },
+    { 
+      title: t.settings, 
+      url: "/dashboard/settings", 
+      icon: Settings,
+      color: "bg-gradient-to-r from-slate-500 to-gray-600",
+      iconColor: "text-slate-500"
+    },
+  ];
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -144,8 +146,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Fish className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="font-bold text-white text-lg">মাছ চাষ</h1>
-                  <p className="text-xs text-slate-400">কৃষক ড্যাশবোর্ড</p>
+                  <h1 className="font-bold text-white text-lg">{language === "bn" ? "মাছ চাষ" : "Fish Farming"}</h1>
+                  <p className="text-xs text-slate-400">{language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard"}</p>
                 </div>
               </div>
             </div>
@@ -198,7 +200,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="p-2 rounded-lg bg-violet-600/50">
                       <Shield className="h-5 w-5 text-violet-300" />
                     </div>
-                    <span className="font-medium">অ্যাডমিন প্যানেল</span>
+                    <span className="font-medium">{t.adminPanel}</span>
                   </Link>
                 </div>
               )}
@@ -212,7 +214,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <div className="p-2 rounded-lg bg-slate-700/50">
                     <Home className="h-5 w-5" />
                   </div>
-                  <span className="font-medium">হোম পেজে ফিরুন</span>
+                  <span className="font-medium">{language === "bn" ? "হোম পেজে ফিরুন" : "Back to Home"}</span>
                 </Link>
               </div>
             </SidebarContent>
@@ -235,16 +237,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Avatar className="h-8 w-8 border border-border">
                   <AvatarImage src={userAvatar || undefined} alt={userName} />
                   <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-sm font-medium">
-                    {userName.charAt(0).toUpperCase()}
+                    {userName.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium text-foreground hidden sm:inline">{userName}</span>
+                <span className="text-sm font-medium text-foreground hidden sm:inline">{userName || (language === "bn" ? "ব্যবহারকারী" : "User")}</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium text-foreground">{userName}</p>
+                    <p className="text-sm font-medium text-foreground">{userName || (language === "bn" ? "ব্যবহারকারী" : "User")}</p>
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
@@ -252,13 +254,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DropdownMenuItem asChild className="cursor-pointer">
                   <Link to="/dashboard/profile" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    <span>প্রোফাইল</span>
+                    <span>{t.profile}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="cursor-pointer">
                   <Link to="/dashboard/settings" className="flex items-center gap-2">
                     <Settings className="h-4 w-4" />
-                    <span>সেটিংস</span>
+                    <span>{t.settings}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -267,7 +269,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  <span>লগ আউট</span>
+                  <span>{t.logout}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
