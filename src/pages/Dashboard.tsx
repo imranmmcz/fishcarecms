@@ -22,6 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface IncomeRecord {
   id: string;
@@ -67,23 +69,18 @@ interface PondSummary {
 
 interface PondChartData {
   name: string;
-  আয়: number;
-  ব্যয়: number;
-  লাভ: number;
+  income: number;
+  expense: number;
+  profit: number;
 }
 
 const COLORS = ["#10b981", "#ef4444", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899"];
 
-const statusLabels: { [key: string]: { label: string; color: string } } = {
-  active: { label: "চলমান", color: "bg-green-500" },
-  harvested: { label: "আহরণ সম্পন্ন", color: "bg-blue-500" },
-  preparation: { label: "প্রস্তুতি", color: "bg-yellow-500" },
-  empty: { label: "খালি", color: "bg-gray-500" },
-};
-
 export default function Dashboard() {
   const { user } = useAuth();
-  const [userName, setUserName] = useState("কৃষক");
+  const { t, language } = useLanguage();
+  const { formatPrice } = useCurrency();
+  const [userName, setUserName] = useState("");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
@@ -146,9 +143,9 @@ export default function Dashboard() {
         .reduce((sum, e) => sum + e.amount, 0);
       return {
         name: pond.name,
-        আয়: pondIncome,
-        ব্যয়: pondExpense,
-        লাভ: pondIncome - pondExpense,
+        income: pondIncome,
+        expense: pondExpense,
+        profit: pondIncome - pondExpense,
       };
     });
     setPondChartData(pondData);
@@ -195,30 +192,40 @@ export default function Dashboard() {
 
   const profit = totalIncome - totalExpense;
 
+  const getStatusLabel = (status: string) => {
+    const labels: { [key: string]: { label: string; color: string } } = {
+      active: { label: t.active, color: "bg-green-500" },
+      harvested: { label: t.harvestComplete, color: "bg-blue-500" },
+      preparation: { label: t.preparation, color: "bg-yellow-500" },
+      empty: { label: t.empty, color: "bg-gray-500" },
+    };
+    return labels[status] || labels.active;
+  };
+
   const stats = [
     {
-      title: "মোট আয়",
-      value: `৳${totalIncome.toLocaleString("bn-BD")}`,
+      title: t.totalIncome,
+      value: formatPrice(totalIncome),
       icon: TrendingUp,
       color: "text-green-600",
       bgColor: "bg-green-100",
     },
     {
-      title: "মোট ব্যয়",
-      value: `৳${totalExpense.toLocaleString("bn-BD")}`,
+      title: t.totalExpense,
+      value: formatPrice(totalExpense),
       icon: TrendingDown,
       color: "text-red-600",
       bgColor: "bg-red-100",
     },
     {
-      title: "লাভ/ক্ষতি",
-      value: `৳${profit.toLocaleString("bn-BD")}`,
+      title: t.profitLoss,
+      value: formatPrice(profit),
       icon: Calculator,
       color: profit >= 0 ? "text-green-600" : "text-red-600",
       bgColor: profit >= 0 ? "bg-green-100" : "bg-red-100",
     },
     {
-      title: "পুকুর সংখ্যা",
+      title: t.pondCount,
       value: pondCount.toString(),
       icon: Waves,
       color: "text-blue-600",
@@ -228,15 +235,15 @@ export default function Dashboard() {
 
   const pondStats = [
     {
-      title: "মোট আয়তন",
-      value: `${totalArea.toLocaleString("bn-BD")} শতক`,
+      title: t.totalArea,
+      value: `${totalArea.toLocaleString(language === "bn" ? "bn-BD" : "en-US")} ${t.decimal}`,
       icon: Waves,
       color: "text-cyan-600",
       bgColor: "bg-cyan-100",
     },
     {
-      title: "মোট মাছ",
-      value: `${totalFishCount.toLocaleString("bn-BD")} টি`,
+      title: t.totalFish,
+      value: `${totalFishCount.toLocaleString(language === "bn" ? "bn-BD" : "en-US")} ${language === "bn" ? "টি" : "pcs"}`,
       icon: Fish,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
@@ -250,12 +257,12 @@ export default function Dashboard() {
           <Avatar className="h-16 w-16 border-2 border-primary/20 shadow-lg">
             <AvatarImage src={userAvatar || undefined} alt={userName} />
             <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-xl font-bold">
-              {userName.charAt(0).toUpperCase()}
+              {userName.charAt(0).toUpperCase() || "F"}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">স্বাগতম, {userName}!</h1>
-            <p className="text-muted-foreground mt-1">আপনার মাছ চাষের সারসংক্ষেপ দেখুন</p>
+            <h1 className="text-3xl font-bold text-foreground">{t.welcome}, {userName || (language === "bn" ? "কৃষক" : "Farmer")}!</h1>
+            <p className="text-muted-foreground mt-1">{t.viewSummary}</p>
           </div>
         </div>
 
@@ -282,7 +289,7 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Waves className="h-5 w-5 text-blue-500" />
-              পুকুরের সারসংক্ষেপ
+              {t.pondSummary}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -305,19 +312,19 @@ export default function Dashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>পুকুরের নাম</TableHead>
-                      <TableHead>আয়তন</TableHead>
-                      <TableHead>মাছ</TableHead>
-                      <TableHead>আয়</TableHead>
-                      <TableHead>ব্যয়</TableHead>
-                      <TableHead>লাভ/ক্ষতি</TableHead>
-                      <TableHead>স্ট্যাটাস</TableHead>
-                      <TableHead className="text-right">অ্যাকশন</TableHead>
+                      <TableHead>{t.pondName}</TableHead>
+                      <TableHead>{t.area}</TableHead>
+                      <TableHead>{language === "bn" ? "মাছ" : "Fish"}</TableHead>
+                      <TableHead>{t.income}</TableHead>
+                      <TableHead>{t.expense}</TableHead>
+                      <TableHead>{t.profitLoss}</TableHead>
+                      <TableHead>{t.status}</TableHead>
+                      <TableHead className="text-right">{t.action}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {pondSummaries.map((pond) => {
-                      const statusInfo = statusLabels[pond.status] || statusLabels.active;
+                      const statusInfo = getStatusLabel(pond.status);
                       return (
                         <TableRow key={pond.name}>
                           <TableCell className="font-medium">
@@ -327,15 +334,15 @@ export default function Dashboard() {
                             </div>
                           </TableCell>
                           <TableCell>{pond.area} {pond.areaUnit}</TableCell>
-                          <TableCell>{pond.fishCount.toLocaleString("bn-BD")} টি</TableCell>
+                          <TableCell>{pond.fishCount.toLocaleString(language === "bn" ? "bn-BD" : "en-US")} {language === "bn" ? "টি" : "pcs"}</TableCell>
                           <TableCell className="text-green-600 font-medium">
-                            ৳{pond.income.toLocaleString("bn-BD")}
+                            {formatPrice(pond.income)}
                           </TableCell>
                           <TableCell className="text-red-600 font-medium">
-                            ৳{pond.expense.toLocaleString("bn-BD")}
+                            {formatPrice(pond.expense)}
                           </TableCell>
                           <TableCell className={pond.profit >= 0 ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
-                            ৳{pond.profit.toLocaleString("bn-BD")}
+                            {formatPrice(pond.profit)}
                           </TableCell>
                           <TableCell>
                             <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
@@ -347,7 +354,7 @@ export default function Dashboard() {
                               onClick={() => handleViewPondDetails(pond)}
                             >
                               <Eye className="h-4 w-4 mr-1" />
-                              বিস্তারিত
+                              {t.details}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -357,7 +364,7 @@ export default function Dashboard() {
                 </Table>
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-8">কোনো পুকুর যোগ করা হয়নি</p>
+              <p className="text-center text-muted-foreground py-8">{t.noPondAdded}</p>
             )}
           </CardContent>
         </Card>
@@ -367,7 +374,7 @@ export default function Dashboard() {
           {pondChartData.length > 0 && (
             <Card className="shadow-elegant">
               <CardHeader>
-                <CardTitle>পুকুরভিত্তিক আয় ও ব্যয়</CardTitle>
+                <CardTitle>{language === "bn" ? "পুকুরভিত্তিক আয় ও ব্যয়" : "Pond-wise Income & Expense"}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -376,11 +383,11 @@ export default function Dashboard() {
                     <XAxis dataKey="name" fontSize={12} />
                     <YAxis fontSize={12} />
                     <Tooltip 
-                      formatter={(value: number) => `৳${value.toLocaleString("bn-BD")}`}
+                      formatter={(value: number) => formatPrice(value)}
                     />
                     <Legend />
-                    <Bar dataKey="আয়" fill="#10b981" />
-                    <Bar dataKey="ব্যয়" fill="#ef4444" />
+                    <Bar dataKey="income" name={t.income} fill="#10b981" />
+                    <Bar dataKey="expense" name={t.expense} fill="#ef4444" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -391,7 +398,7 @@ export default function Dashboard() {
           {categoryData.length > 0 && (
             <Card className="shadow-elegant">
               <CardHeader>
-                <CardTitle>খরচের ক্যাটাগরি</CardTitle>
+                <CardTitle>{language === "bn" ? "খরচের ক্যাটাগরি" : "Expense Category"}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -410,7 +417,7 @@ export default function Dashboard() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => `৳${value.toLocaleString("bn-BD")}`} />
+                    <Tooltip formatter={(value: number) => formatPrice(value)} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -421,7 +428,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="shadow-elegant">
             <CardHeader>
-              <CardTitle>সাম্প্রতিক আয়</CardTitle>
+              <CardTitle>{t.recentIncome}</CardTitle>
             </CardHeader>
             <CardContent>
               <RecentList type="income" />
@@ -430,7 +437,7 @@ export default function Dashboard() {
 
           <Card className="shadow-elegant">
             <CardHeader>
-              <CardTitle>সাম্প্রতিক ব্যয়</CardTitle>
+              <CardTitle>{t.recentExpense}</CardTitle>
             </CardHeader>
             <CardContent>
               <RecentList type="expense" />
@@ -445,7 +452,7 @@ export default function Dashboard() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Waves className="h-5 w-5 text-blue-500" />
-              {selectedPond?.name} - বিস্তারিত তথ্য
+              {selectedPond?.name} - {language === "bn" ? "বিস্তারিত তথ্য" : "Details"}
             </DialogTitle>
           </DialogHeader>
           
@@ -454,35 +461,35 @@ export default function Dashboard() {
               {/* Pond Info Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">আয়তন</p>
+                  <p className="text-sm text-muted-foreground">{t.area}</p>
                   <p className="font-bold text-blue-600">{selectedPond.area} {selectedPond.areaUnit}</p>
                 </div>
                 <div className="p-3 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">মাছ</p>
-                  <p className="font-bold text-purple-600">{selectedPond.fishCount.toLocaleString("bn-BD")} টি</p>
+                  <p className="text-sm text-muted-foreground">{language === "bn" ? "মাছ" : "Fish"}</p>
+                  <p className="font-bold text-purple-600">{selectedPond.fishCount.toLocaleString(language === "bn" ? "bn-BD" : "en-US")} {language === "bn" ? "টি" : "pcs"}</p>
                 </div>
                 <div className="p-3 bg-green-50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">মোট আয়</p>
-                  <p className="font-bold text-green-600">৳{selectedPond.income.toLocaleString("bn-BD")}</p>
+                  <p className="text-sm text-muted-foreground">{t.totalIncome}</p>
+                  <p className="font-bold text-green-600">{formatPrice(selectedPond.income)}</p>
                 </div>
                 <div className="p-3 bg-red-50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">মোট ব্যয়</p>
-                  <p className="font-bold text-red-600">৳{selectedPond.expense.toLocaleString("bn-BD")}</p>
+                  <p className="text-sm text-muted-foreground">{t.totalExpense}</p>
+                  <p className="font-bold text-red-600">{formatPrice(selectedPond.expense)}</p>
                 </div>
               </div>
 
               <div className={`p-4 rounded-lg ${selectedPond.profit >= 0 ? "bg-green-100" : "bg-red-100"}`}>
                 <p className="text-center">
-                  <span className="text-muted-foreground">নিট লাভ/ক্ষতি: </span>
+                  <span className="text-muted-foreground">{language === "bn" ? "নিট লাভ/ক্ষতি:" : "Net Profit/Loss:"} </span>
                   <span className={`text-2xl font-bold ${selectedPond.profit >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    ৳{selectedPond.profit.toLocaleString("bn-BD")}
+                    {formatPrice(selectedPond.profit)}
                   </span>
                 </p>
               </div>
 
               {selectedPond.fishTypes.length > 0 && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">মাছের প্রজাতি:</p>
+                  <p className="text-sm text-muted-foreground mb-2">{language === "bn" ? "মাছের প্রজাতি:" : "Fish Species:"}</p>
                   <div className="flex flex-wrap gap-2">
                     {selectedPond.fishTypes.map((fish) => (
                       <Badge key={fish} variant="secondary">{fish}</Badge>
@@ -495,7 +502,7 @@ export default function Dashboard() {
               <div>
                 <h4 className="font-semibold text-green-600 mb-3 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  আয়ের রেকর্ড ({pondIncomes.length} টি)
+                  {language === "bn" ? `আয়ের রেকর্ড (${pondIncomes.length} টি)` : `Income Records (${pondIncomes.length})`}
                 </h4>
                 {pondIncomes.length > 0 ? (
                   <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -505,12 +512,12 @@ export default function Dashboard() {
                           <p className="font-medium">{income.category}</p>
                           <p className="text-sm text-muted-foreground">{income.date} - {income.description}</p>
                         </div>
-                        <p className="font-bold text-green-600">+৳{income.amount.toLocaleString("bn-BD")}</p>
+                        <p className="font-bold text-green-600">+{formatPrice(income.amount)}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-center py-4">কোনো আয়ের রেকর্ড নেই</p>
+                  <p className="text-muted-foreground text-center py-4">{language === "bn" ? "কোনো আয়ের রেকর্ড নেই" : "No income records"}</p>
                 )}
               </div>
 
@@ -518,7 +525,7 @@ export default function Dashboard() {
               <div>
                 <h4 className="font-semibold text-red-600 mb-3 flex items-center gap-2">
                   <TrendingDown className="h-4 w-4" />
-                  ব্যয়ের রেকর্ড ({pondExpenses.length} টি)
+                  {language === "bn" ? `ব্যয়ের রেকর্ড (${pondExpenses.length} টি)` : `Expense Records (${pondExpenses.length})`}
                 </h4>
                 {pondExpenses.length > 0 ? (
                   <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -528,12 +535,12 @@ export default function Dashboard() {
                           <p className="font-medium">{expense.category}</p>
                           <p className="text-sm text-muted-foreground">{expense.date} - {expense.description}</p>
                         </div>
-                        <p className="font-bold text-red-600">-৳{expense.amount.toLocaleString("bn-BD")}</p>
+                        <p className="font-bold text-red-600">-{formatPrice(expense.amount)}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-center py-4">কোনো ব্যয়ের রেকর্ড নেই</p>
+                  <p className="text-muted-foreground text-center py-4">{language === "bn" ? "কোনো ব্যয়ের রেকর্ড নেই" : "No expense records"}</p>
                 )}
               </div>
             </div>
@@ -546,6 +553,8 @@ export default function Dashboard() {
 
 function RecentList({ type }: { type: "income" | "expense" }) {
   const [items, setItems] = useState<(IncomeRecord | ExpenseRecord)[]>([]);
+  const { language } = useLanguage();
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     const key = type === "income" ? "farmerIncomes" : "farmerExpenses";
@@ -554,7 +563,7 @@ function RecentList({ type }: { type: "income" | "expense" }) {
   }, [type]);
 
   if (items.length === 0) {
-    return <p className="text-muted-foreground text-center py-4">কোনো রেকর্ড নেই</p>;
+    return <p className="text-muted-foreground text-center py-4">{language === "bn" ? "কোনো রেকর্ড নেই" : "No records"}</p>;
   }
 
   return (
@@ -566,7 +575,7 @@ function RecentList({ type }: { type: "income" | "expense" }) {
             <p className="text-sm text-muted-foreground">{item.date}</p>
           </div>
           <p className={`font-bold ${type === "income" ? "text-green-600" : "text-red-600"}`}>
-            {type === "income" ? "+" : "-"}৳{item.amount.toLocaleString("bn-BD")}
+            {type === "income" ? "+" : "-"}{formatPrice(item.amount)}
           </p>
         </div>
       ))}
