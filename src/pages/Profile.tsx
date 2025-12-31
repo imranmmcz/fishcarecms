@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { User, Camera, Loader2, Save, Mail, Calendar, Lock, Eye, EyeOff } from "lucide-react";
+import { AddressFields } from "@/components/AddressFields";
 
 export default function Profile() {
   const { user, isLoading: authLoading, isAdmin } = useAuth();
@@ -23,6 +24,13 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Address fields
+  const [mobile, setMobile] = useState("");
+  const [division, setDivision] = useState("");
+  const [district, setDistrict] = useState("");
+  const [upazila, setUpazila] = useState("");
+  const [village, setVillage] = useState("");
   
   // Password change states
   const [currentPassword, setCurrentPassword] = useState("");
@@ -52,7 +60,7 @@ export default function Profile() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url")
+        .select("full_name, avatar_url, mobile, division, district, upazila, village")
         .eq("user_id", user!.id)
         .single();
 
@@ -63,6 +71,11 @@ export default function Profile() {
       if (data) {
         setFullName(data.full_name || "");
         setAvatarUrl(data.avatar_url);
+        setMobile(data.mobile || "");
+        setDivision(data.division || "");
+        setDistrict(data.district || "");
+        setUpazila(data.upazila || "");
+        setVillage(data.village || "");
       }
     } catch (error: any) {
       console.error("Error fetching profile:", error);
@@ -123,7 +136,14 @@ export default function Profile() {
       
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: fullName })
+        .update({ 
+          full_name: fullName,
+          mobile,
+          division,
+          district,
+          upazila,
+          village
+        })
         .eq("user_id", user!.id);
 
       if (error) {
@@ -333,6 +353,22 @@ export default function Profile() {
                 }) : ""}
                 disabled
                 className="bg-muted"
+              />
+            </div>
+
+            {/* Address Fields */}
+            <div className="border-t pt-4 mt-4">
+              <AddressFields
+                mobile={mobile}
+                division={division}
+                district={district}
+                upazila={upazila}
+                village={village}
+                onMobileChange={setMobile}
+                onDivisionChange={setDivision}
+                onDistrictChange={setDistrict}
+                onUpazilaChange={setUpazila}
+                onVillageChange={setVillage}
               />
             </div>
 
