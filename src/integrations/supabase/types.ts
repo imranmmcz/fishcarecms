@@ -57,29 +57,44 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          district: string | null
+          division: string | null
           email: string | null
           full_name: string | null
           id: string
+          mobile: string | null
+          upazila: string | null
           updated_at: string
           user_id: string
+          village: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          district?: string | null
+          division?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          mobile?: string | null
+          upazila?: string | null
           updated_at?: string
           user_id: string
+          village?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          district?: string | null
+          division?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          mobile?: string | null
+          upazila?: string | null
           updated_at?: string
           user_id?: string
+          village?: string | null
         }
         Relationships: []
       }

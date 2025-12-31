@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Fish, Loader2, Eye, EyeOff } from "lucide-react";
+import { AddressFields } from "@/components/AddressFields";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "সঠিক ইমেইল প্রদান করুন" }),
@@ -41,6 +42,13 @@ const Auth = () => {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupFullName, setSignupFullName] = useState("");
+  
+  // Address fields for signup
+  const [mobile, setMobile] = useState("");
+  const [division, setDivision] = useState("");
+  const [district, setDistrict] = useState("");
+  const [upazila, setUpazila] = useState("");
+  const [village, setVillage] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -112,7 +120,13 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-    const { error } = await signUp(signupEmail, signupPassword, signupFullName);
+    const { error } = await signUp(signupEmail, signupPassword, signupFullName, {
+      mobile,
+      division,
+      district,
+      upazila,
+      village
+    });
     setIsLoading(false);
 
     if (error) {
@@ -264,6 +278,23 @@ const Auth = () => {
                   />
                   {errors.confirmPassword && <p className="text-sm text-red-400">{errors.confirmPassword}</p>}
                 </div>
+                
+                {/* Address Fields */}
+                <AddressFields
+                  mobile={mobile}
+                  division={division}
+                  district={district}
+                  upazila={upazila}
+                  village={village}
+                  onMobileChange={setMobile}
+                  onDivisionChange={setDivision}
+                  onDistrictChange={setDistrict}
+                  onUpazilaChange={setUpazila}
+                  onVillageChange={setVillage}
+                  errors={errors}
+                  variant="auth"
+                />
+                
                 <Button3D
                   type="submit"
                   variant="success"
