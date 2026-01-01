@@ -1,5 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
@@ -88,8 +89,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-900 via-purple-900 to-slate-900 relative overflow-hidden">
+        <AnimatedBackground />
+        <div className="relative z-10 text-white">লোড হচ্ছে...</div>
       </div>
     );
   }
@@ -100,8 +102,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <Sidebar className="border-r-0">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-violet-900 via-purple-900 to-slate-900 relative overflow-hidden">
+        <AnimatedBackground />
+        <Sidebar className="border-r-0 relative z-10">
           <div className="h-full bg-gradient-to-b from-violet-950 via-purple-900 to-violet-950">
             {/* Header */}
             <div className="p-5 border-b border-white/10">
@@ -170,15 +173,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </Sidebar>
 
-        <main className="flex-1 overflow-auto">
-          <div className="p-4 border-b bg-card flex items-center gap-4">
+        <main className="flex-1 overflow-auto relative z-10">
+          <div className="p-4 border-b bg-card/80 backdrop-blur-sm flex items-center gap-4">
             <SidebarTrigger className="text-foreground" />
             <div className="h-6 w-px bg-border" />
             <span className="text-sm text-muted-foreground">
               {menuItems.find(item => item.url === location.pathname)?.title || 'অ্যাডমিন ড্যাশবোর্ড'}
             </span>
           </div>
-          <div className="p-6">
+          <div className="p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-65px)] rounded-tl-2xl">
             {children}
           </div>
         </main>
