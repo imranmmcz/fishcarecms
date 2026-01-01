@@ -2,13 +2,21 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+interface AddressData {
+  mobile?: string;
+  division?: string;
+  district?: string;
+  upazila?: string;
+  village?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, addressData?: AddressData) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -81,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, addressData?: AddressData) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -91,6 +99,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          mobile: addressData?.mobile,
+          division: addressData?.division,
+          district: addressData?.district,
+          upazila: addressData?.upazila,
+          village: addressData?.village,
         },
       },
     });
