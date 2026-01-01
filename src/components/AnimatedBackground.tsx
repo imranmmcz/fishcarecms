@@ -95,7 +95,7 @@ export const AnimatedBackground = () => {
               width: `${f.size}px`,
               height: `${f.size}px`,
               color: `hsla(${180 + Math.random() * 40}, 70%, 70%, 0.5)`,
-              transform: f.direction === 'left' ? 'scaleX(-1)' : 'scaleX(1)',
+              transform: f.direction === 'left' ? 'scaleX(1)' : 'scaleX(-1)',
             }}
           />
         </div>
