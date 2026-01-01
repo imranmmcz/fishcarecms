@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { FishLoadingAnimation } from "@/components/FishLoadingAnimation";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -13,11 +13,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   const location = useLocation();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
-      </div>
-    );
+    return <FishLoadingAnimation message="যাচাই করা হচ্ছে..." />;
   }
 
   if (!user) {
