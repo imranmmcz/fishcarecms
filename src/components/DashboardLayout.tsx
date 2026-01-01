@@ -1,5 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -136,8 +137,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <Sidebar className="border-r-0">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 relative overflow-hidden">
+        <AnimatedBackground />
+        <Sidebar className="border-r-0 relative z-10">
           <div className="h-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
             {/* Header */}
             <div className="p-5 border-b border-white/10">
@@ -221,8 +223,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </Sidebar>
 
-        <main className="flex-1 overflow-auto">
-          <div className="p-4 border-b bg-card flex items-center justify-between">
+        <main className="flex-1 overflow-auto relative z-10">
+          <div className="p-4 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="text-foreground" />
               <div className="h-6 w-px bg-border" />
@@ -274,7 +276,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="p-6">
+          <div className="p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-65px)] rounded-tl-2xl">
             {children}
           </div>
         </main>
