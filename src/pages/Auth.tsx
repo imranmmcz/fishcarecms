@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Fish, Loader2, Eye, EyeOff, Home, ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AddressFields } from "@/components/AddressFields";
+import { FishLoadingAnimation } from "@/components/FishLoadingAnimation";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "সঠিক ইমেইল প্রদান করুন" }),
@@ -154,11 +155,7 @@ const Auth = () => {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
-      </div>
-    );
+    return <FishLoadingAnimation message="অপেক্ষা করুন..." />;
   }
 
   return (
