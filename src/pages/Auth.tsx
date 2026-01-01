@@ -12,6 +12,7 @@ import { Fish, Loader2, Eye, EyeOff, Home, ArrowRight, Sparkles } from "lucide-r
 import { Link } from "react-router-dom";
 import { AddressFields } from "@/components/AddressFields";
 import { FishLoadingAnimation } from "@/components/FishLoadingAnimation";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "সঠিক ইমেইল প্রদান করুন" }),
@@ -159,8 +160,9 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 p-4">
-      <Card className="w-full max-w-md border-0 shadow-2xl bg-white/10 backdrop-blur-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 p-4 relative overflow-hidden">
+      <AnimatedBackground />
+      <Card className="w-full max-w-md border-0 shadow-2xl bg-white/10 backdrop-blur-lg relative z-10">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 p-3 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl w-fit shadow-lg shadow-cyan-500/30">
             <Fish className="h-8 w-8 text-white" />
