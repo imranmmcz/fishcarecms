@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Fish, Loader2, Eye, EyeOff } from "lucide-react";
+import { Fish, Loader2, Eye, EyeOff, Home } from "lucide-react";
+import { Link } from "react-router-dom";
 import { AddressFields } from "@/components/AddressFields";
 
 const loginSchema = z.object({
@@ -169,6 +170,13 @@ const Auth = () => {
           </div>
           <CardTitle className="text-2xl font-bold text-white">মাছ চাষ ম্যানেজমেন্ট</CardTitle>
           <CardDescription className="text-slate-300">আপনার অ্যাকাউন্টে প্রবেশ করুন</CardDescription>
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-2 mt-3 text-cyan-300 hover:text-cyan-100 transition-colors text-sm"
+          >
+            <Home className="h-4 w-4" />
+            হোম পেজে যান
+          </Link>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
