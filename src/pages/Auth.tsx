@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Fish, Loader2, Eye, EyeOff, Home } from "lucide-react";
+import { Fish, Loader2, Eye, EyeOff, Home, ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AddressFields } from "@/components/AddressFields";
 
@@ -172,10 +172,13 @@ const Auth = () => {
           <CardDescription className="text-slate-300">আপনার অ্যাকাউন্টে প্রবেশ করুন</CardDescription>
           <Link 
             to="/" 
-            className="inline-flex items-center gap-2 mt-3 text-cyan-300 hover:text-cyan-100 transition-colors text-sm"
+            className="group relative inline-flex items-center gap-3 mt-4 px-5 py-2.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30 border border-cyan-400/30 hover:border-cyan-300/50 rounded-full text-cyan-200 hover:text-white transition-all duration-300 shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/25 hover:scale-105"
           >
-            <Home className="h-4 w-4" />
-            হোম পেজে যান
+            <span className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-400/0 via-cyan-400/10 to-cyan-400/0 opacity-0 group-hover:opacity-100 animate-pulse" />
+            <Sparkles className="h-4 w-4 text-cyan-300 group-hover:text-yellow-300 transition-colors duration-300 animate-pulse" />
+            <Home className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+            <span className="font-medium">হোম পেজে যান</span>
+            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </CardHeader>
         <CardContent>
