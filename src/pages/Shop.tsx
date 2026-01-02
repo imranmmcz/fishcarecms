@@ -4,7 +4,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fishProducts as staticProducts, productCategories } from "@/data/fishProductData";
-import { ShoppingBag, Loader2, Search, X, SlidersHorizontal } from "lucide-react";
+import { ShoppingBag, Loader2, Search, X, SlidersHorizontal, Pill, Utensils, Wrench } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+
+const categoryIcons: Record<string, React.ReactNode> = {
+  medicine: <Pill className="h-5 w-5" />,
+  food: <Utensils className="h-5 w-5" />,
+  accessories: <Wrench className="h-5 w-5" />,
+};
+
+const categoryLabels: Record<string, { bn: string; en: string }> = {
+  medicine: { bn: "ঔষধ", en: "Medicine" },
+  food: { bn: "খাবার", en: "Food" },
+  accessories: { bn: "সরঞ্জাম", en: "Accessories" },
+};
 
 const Shop = () => {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -41,10 +53,12 @@ const Shop = () => {
       featured: false,
       externalLink: p.external_link || "https://fishcare.com.bd",
       company: "FishCare BD",
+      isFromDatabase: true,
     })),
     ...staticProducts.map((p) => ({
       ...p,
       company: "FishCare BD",
+      isFromDatabase: false,
     })),
   ], [dbProducts, language]);
 
@@ -138,9 +152,26 @@ const Shop = () => {
     });
   }, [allProducts, activeCategory, appliedPriceRange, searchQuery]);
 
+  // Group filtered products by category
+  const groupedProducts = useMemo(() => {
+    const groups: Record<string, typeof filteredProducts> = {
+      medicine: [],
+      food: [],
+      accessories: [],
+    };
+
+    filteredProducts.forEach((product) => {
+      if (groups[product.category]) {
+        groups[product.category].push(product);
+      }
+    });
+
+    return groups;
+  }, [filteredProducts]);
+
   const handleSuggestionClick = (suggestion: { type: string; value: string; label: string }) => {
-    const categoryLabel = language === "bn" ? "ক্যাটাগরি" : "Category";
-    if (suggestion.type === categoryLabel) {
+    const categoryLabelText = language === "bn" ? "ক্যাটাগরি" : "Category";
+    if (suggestion.type === categoryLabelText) {
       setActiveCategory(suggestion.value);
       setSearchQuery("");
     } else {
@@ -167,6 +198,9 @@ const Shop = () => {
 
   const filterLabel = language === "bn" ? "ফিল্টার" : "Filter";
   const resetLabel = language === "bn" ? "রিসেট" : "Reset";
+
+  // Check if we should show category-wise view
+  const showCategoryWise = activeCategory === "all" && !searchQuery.trim();
 
   return (
     <div className="min-h-screen bg-background">
@@ -323,13 +357,45 @@ const Shop = () => {
           </div>
         )}
 
-        {/* Products Grid */}
+        {/* Products Display */}
         {!isLoading && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <>
+            {showCategoryWise ? (
+              // Category-wise grouped view
+              <div className="space-y-12">
+                {Object.entries(groupedProducts).map(([category, products]) => {
+                  if (products.length === 0) return null;
+                  
+                  const categoryInfo = categoryLabels[category];
+                  const label = language === "bn" ? categoryInfo.bn : categoryInfo.en;
+                  
+                  return (
+                    <section key={category}>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
+                          {categoryIcons[category]}
+                        </div>
+                        <h2 className="text-2xl font-bold">{label}</h2>
+                        <span className="text-muted-foreground">({products.length})</span>
+                      </div>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {products.map((product) => (
+                          <ProductCard key={product.id} product={product} />
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+            ) : (
+              // Filtered view (non-grouped)
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* Empty State */}

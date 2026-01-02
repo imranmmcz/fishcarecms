@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { useProducts, getDiscountedPrice, Product } from "@/contexts/ProductsContext";
 import { Button3D } from "@/components/ui/button-3d";
@@ -21,7 +21,17 @@ const getCategoryLabel = (value: string) => {
   return categories.find((c) => c.value === value)?.label || value;
 };
 
-const emptyProduct = {
+interface ProductFormData {
+  name: string;
+  description: string;
+  price: number;
+  discount_percentage: number;
+  category: string;
+  image_url: string;
+  external_link: string;
+}
+
+const emptyProduct: ProductFormData = {
   name: "",
   description: "",
   price: 0,
@@ -31,14 +41,135 @@ const emptyProduct = {
   external_link: "https://fishcare.com.bd",
 };
 
+// Moved ProductForm outside of AdminProducts to prevent re-creation on each render
+interface ProductFormProps {
+  formData: ProductFormData;
+  onFormChange: (data: ProductFormData) => void;
+  onSubmit: () => void;
+  submitLabel: string;
+  isSubmitting: boolean;
+}
+
+const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitting }: ProductFormProps) => {
+  const handleChange = useCallback((field: keyof ProductFormData, value: string | number) => {
+    onFormChange({ ...formData, [field]: value });
+  }, [formData, onFormChange]);
+
+  return (
+    <div className="grid gap-4 py-4">
+      <div className="grid gap-2">
+        <Label htmlFor="name">পণ্যের নাম *</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => handleChange("name", e.target.value)}
+          placeholder="পণ্যের নাম লিখুন"
+          autoComplete="off"
+        />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="description">বিবরণ</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => handleChange("description", e.target.value)}
+          placeholder="পণ্যের বিবরণ লিখুন"
+          rows={3}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="price">দাম (টাকা) *</Label>
+          <Input
+            id="price"
+            type="number"
+            value={formData.price}
+            onChange={(e) => handleChange("price", Number(e.target.value))}
+            placeholder="0"
+            min={0}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="discount">ডিসকাউন্ট (%)</Label>
+          <Input
+            id="discount"
+            type="number"
+            value={formData.discount_percentage}
+            onChange={(e) => handleChange("discount_percentage", Number(e.target.value))}
+            placeholder="0"
+            min={0}
+            max={100}
+          />
+        </div>
+      </div>
+      {formData.discount_percentage > 0 && (
+        <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
+          বিক্রয় মূল্য: ৳{getDiscountedPrice(formData.price, formData.discount_percentage)}
+        </div>
+      )}
+      <div className="grid gap-2">
+        <Label htmlFor="category">ক্যাটাগরি</Label>
+        <Select
+          value={formData.category}
+          onValueChange={(value) => handleChange("category", value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="ক্যাটাগরি নির্বাচন করুন" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((cat) => (
+              <SelectItem key={cat.value} value={cat.value}>
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="image">ছবির URL</Label>
+        <Input
+          id="image"
+          value={formData.image_url}
+          onChange={(e) => handleChange("image_url", e.target.value)}
+          placeholder="https://example.com/image.jpg"
+          autoComplete="off"
+        />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="link">বাহ্যিক লিংক</Label>
+        <Input
+          id="link"
+          value={formData.external_link}
+          onChange={(e) => handleChange("external_link", e.target.value)}
+          placeholder="https://fishcare.com.bd/product"
+          autoComplete="off"
+        />
+      </div>
+      <Button3D
+        variant="success"
+        onClick={onSubmit}
+        disabled={isSubmitting || !formData.name || formData.price <= 0}
+        className="mt-2"
+      >
+        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+        {submitLabel}
+      </Button3D>
+    </div>
+  );
+};
+
 const AdminProducts = () => {
   const { products, isLoading, addProduct, updateProduct, deleteProduct } = useProducts();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState(emptyProduct);
+  const [formData, setFormData] = useState<ProductFormData>(emptyProduct);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleFormChange = useCallback((data: ProductFormData) => {
+    setFormData(data);
+  }, []);
 
   const handleAdd = async () => {
     if (!formData.name || formData.price <= 0) {
@@ -112,104 +243,10 @@ const AdminProducts = () => {
     setIsDeleteOpen(true);
   };
 
-  const ProductForm = ({ onSubmit, submitLabel }: { onSubmit: () => void; submitLabel: string }) => (
-    <div className="grid gap-4 py-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">পণ্যের নাম *</Label>
-        <Input
-          id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="পণ্যের নাম লিখুন"
-        />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="description">বিবরণ</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="পণ্যের বিবরণ লিখুন"
-          rows={3}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="price">দাম (টাকা) *</Label>
-          <Input
-            id="price"
-            type="number"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-            placeholder="0"
-            min={0}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="discount">ডিসকাউন্ট (%)</Label>
-          <Input
-            id="discount"
-            type="number"
-            value={formData.discount_percentage}
-            onChange={(e) => setFormData({ ...formData, discount_percentage: Number(e.target.value) })}
-            placeholder="0"
-            min={0}
-            max={100}
-          />
-        </div>
-      </div>
-      {formData.discount_percentage > 0 && (
-        <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
-          বিক্রয় মূল্য: ৳{getDiscountedPrice(formData.price, formData.discount_percentage)}
-        </div>
-      )}
-      <div className="grid gap-2">
-        <Label htmlFor="category">ক্যাটাগরি</Label>
-        <Select
-          value={formData.category}
-          onValueChange={(value) => setFormData({ ...formData, category: value })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="ক্যাটাগরি নির্বাচন করুন" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((cat) => (
-              <SelectItem key={cat.value} value={cat.value}>
-                {cat.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="image">ছবির URL</Label>
-        <Input
-          id="image"
-          value={formData.image_url}
-          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-          placeholder="https://example.com/image.jpg"
-        />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="link">বাহ্যিক লিংক</Label>
-        <Input
-          id="link"
-          value={formData.external_link}
-          onChange={(e) => setFormData({ ...formData, external_link: e.target.value })}
-          placeholder="https://fishcare.com.bd/product"
-        />
-      </div>
-      <Button3D
-        variant="success"
-        onClick={onSubmit}
-        disabled={isSubmitting || !formData.name || formData.price <= 0}
-        className="mt-2"
-      >
-        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-        {submitLabel}
-      </Button3D>
-    </div>
-  );
+  const handleOpenAddDialog = () => {
+    setFormData(emptyProduct);
+    setIsAddOpen(true);
+  };
 
   return (
     <AdminLayout>
@@ -221,7 +258,7 @@ const AdminProducts = () => {
           </div>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
-              <Button3D variant="success" onClick={() => setFormData(emptyProduct)}>
+              <Button3D variant="success" onClick={handleOpenAddDialog}>
                 <Plus className="h-4 w-4" />
                 নতুন পণ্য যোগ করুন
               </Button3D>
@@ -230,7 +267,13 @@ const AdminProducts = () => {
               <DialogHeader>
                 <DialogTitle>নতুন পণ্য যোগ করুন</DialogTitle>
               </DialogHeader>
-              <ProductForm onSubmit={handleAdd} submitLabel="পণ্য যোগ করুন" />
+              <ProductForm
+                formData={formData}
+                onFormChange={handleFormChange}
+                onSubmit={handleAdd}
+                submitLabel="পণ্য যোগ করুন"
+                isSubmitting={isSubmitting}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -329,7 +372,13 @@ const AdminProducts = () => {
             <DialogHeader>
               <DialogTitle>পণ্য সম্পাদনা করুন</DialogTitle>
             </DialogHeader>
-            <ProductForm onSubmit={handleEdit} submitLabel="আপডেট করুন" />
+            <ProductForm
+              formData={formData}
+              onFormChange={handleFormChange}
+              onSubmit={handleEdit}
+              submitLabel="আপডেট করুন"
+              isSubmitting={isSubmitting}
+            />
           </DialogContent>
         </Dialog>
 
