@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Search, Shield, User, Trash2, Loader2 } from "lucide-react";
+import { Users, Search, Shield, User, Trash2, Loader2, MapPin, Filter, X } from "lucide-react";
+import { divisions, districtsByDivision, upazilasByDistrict } from "@/data/bangladeshLocationData";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,11 @@ interface UserProfile {
   user_id: string;
   email: string | null;
   full_name: string | null;
+  mobile: string | null;
+  division: string | null;
+  district: string | null;
+  upazila: string | null;
+  village: string | null;
   created_at: string;
   role?: string;
 }
@@ -35,6 +41,11 @@ const AdminUsers = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  
+  // Location filters
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const [selectedUpazila, setSelectedUpazila] = useState<string>("");
 
   useEffect(() => {
     fetchUsers();
@@ -43,7 +54,7 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      // Fetch profiles
+      // Fetch profiles with all location fields
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
@@ -140,11 +151,63 @@ const AdminUsers = () => {
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      (user.full_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (user.email?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-  );
+  // Get available districts based on selected division
+  const availableDistricts = useMemo(() => {
+    if (!selectedDivision) return [];
+    return districtsByDivision[selectedDivision] || [];
+  }, [selectedDivision]);
+
+  // Get available upazilas based on selected district
+  const availableUpazilas = useMemo(() => {
+    if (!selectedDistrict) return [];
+    return upazilasByDistrict[selectedDistrict] || [];
+  }, [selectedDistrict]);
+
+  // Reset dependent filters when parent changes
+  const handleDivisionChange = (value: string) => {
+    setSelectedDivision(value);
+    setSelectedDistrict("");
+    setSelectedUpazila("");
+  };
+
+  const handleDistrictChange = (value: string) => {
+    setSelectedDistrict(value);
+    setSelectedUpazila("");
+  };
+
+  const clearFilters = () => {
+    setSelectedDivision("");
+    setSelectedDistrict("");
+    setSelectedUpazila("");
+    setSearchTerm("");
+  };
+
+  // Filter users based on all criteria
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      // Search filter
+      const matchesSearch =
+        (user.full_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (user.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (user.mobile?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+
+      // Location filters
+      const matchesDivision = !selectedDivision || user.division === selectedDivision;
+      const matchesDistrict = !selectedDistrict || user.district === selectedDistrict;
+      const matchesUpazila = !selectedUpazila || user.upazila === selectedUpazila;
+
+      return matchesSearch && matchesDivision && matchesDistrict && matchesUpazila;
+    });
+  }, [users, searchTerm, selectedDivision, selectedDistrict, selectedUpazila]);
+
+  // Get unique locations from users for statistics
+  const locationStats = useMemo(() => {
+    const divisionCount = new Set(users.map(u => u.division).filter(Boolean)).size;
+    const districtCount = new Set(users.map(u => u.district).filter(Boolean)).size;
+    return { divisionCount, districtCount };
+  }, [users]);
+
+  const hasActiveFilters = selectedDivision || selectedDistrict || selectedUpazila || searchTerm;
 
   return (
     <AdminLayout>
@@ -152,26 +215,141 @@ const AdminUsers = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">ব্যবহারকারী ব্যবস্থাপনা</h1>
-            <p className="text-muted-foreground">সকল নিবন্ধিত ব্যবহারকারী দেখুন এবং পরিচালনা করুন</p>
-          </div>
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="ব্যবহারকারী খুঁজুন..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+            <p className="text-muted-foreground">
+              সকল নিবন্ধিত ব্যবহারকারী দেখুন এবং পরিচালনা করুন
+              <span className="ml-2 text-xs">
+                ({locationStats.divisionCount} বিভাগ, {locationStats.districtCount} জেলা থেকে)
+              </span>
+            </p>
           </div>
         </div>
 
+        {/* Filters Section */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Filter className="h-5 w-5 text-primary" />
+              ফিল্টার অপশন
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Search Input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="নাম, ইমেইল বা মোবাইল..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Division Filter */}
+              <Select value={selectedDivision} onValueChange={handleDivisionChange}>
+                <SelectTrigger>
+                  <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="বিভাগ নির্বাচন করুন" />
+                </SelectTrigger>
+                <SelectContent>
+                  {divisions.map((division) => (
+                    <SelectItem key={division} value={division}>
+                      {division}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* District Filter */}
+              <Select 
+                value={selectedDistrict} 
+                onValueChange={handleDistrictChange}
+                disabled={!selectedDivision}
+              >
+                <SelectTrigger>
+                  <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder={selectedDivision ? "জেলা নির্বাচন করুন" : "প্রথমে বিভাগ নির্বাচন করুন"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableDistricts.map((district) => (
+                    <SelectItem key={district} value={district}>
+                      {district}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Upazila Filter */}
+              <Select 
+                value={selectedUpazila} 
+                onValueChange={setSelectedUpazila}
+                disabled={!selectedDistrict}
+              >
+                <SelectTrigger>
+                  <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder={selectedDistrict ? "উপজেলা নির্বাচন করুন" : "প্রথমে জেলা নির্বাচন করুন"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableUpazilas.map((upazila) => (
+                    <SelectItem key={upazila} value={upazila}>
+                      {upazila}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Active Filters & Clear Button */}
+            {hasActiveFilters && (
+              <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t">
+                <span className="text-sm text-muted-foreground">সক্রিয় ফিল্টার:</span>
+                {selectedDivision && (
+                  <Badge variant="secondary" className="gap-1">
+                    {selectedDivision}
+                  </Badge>
+                )}
+                {selectedDistrict && (
+                  <Badge variant="secondary" className="gap-1">
+                    {selectedDistrict}
+                  </Badge>
+                )}
+                {selectedUpazila && (
+                  <Badge variant="secondary" className="gap-1">
+                    {selectedUpazila}
+                  </Badge>
+                )}
+                {searchTerm && (
+                  <Badge variant="secondary" className="gap-1">
+                    "{searchTerm}"
+                  </Badge>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="ml-auto text-destructive hover:text-destructive"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  ফিল্টার মুছুন
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Users List */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5 text-violet-500" />
               ব্যবহারকারী তালিকা
             </CardTitle>
-            <CardDescription>মোট {filteredUsers.length} জন ব্যবহারকারী</CardDescription>
+            <CardDescription>
+              {hasActiveFilters 
+                ? `ফিল্টার করা ${filteredUsers.length} জন ব্যবহারকারী (মোট ${users.length} জন)`
+                : `মোট ${filteredUsers.length} জন ব্যবহারকারী`
+              }
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -185,12 +363,12 @@ const AdminUsers = () => {
                     key={user.id}
                     className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
                         {(user.full_name || user.email || "U")[0].toUpperCase()}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold">{user.full_name || "নাম নেই"}</p>
                           <Badge
                             variant={user.role === "admin" ? "default" : "secondary"}
@@ -204,13 +382,27 @@ const AdminUsers = () => {
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
-                        <p className="text-xs text-muted-foreground">
+                        {user.mobile && (
+                          <p className="text-sm text-muted-foreground">{user.mobile}</p>
+                        )}
+                        {/* Location Info */}
+                        {(user.division || user.district || user.upazila) && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <MapPin className="h-3 w-3 text-primary" />
+                            <p className="text-xs text-primary">
+                              {[user.upazila, user.district, user.division]
+                                .filter(Boolean)
+                                .join(", ")}
+                            </p>
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
                           যোগদান: {new Date(user.created_at).toLocaleDateString("bn-BD")}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Select
                         value={user.role}
                         onValueChange={(value) => updateUserRole(user.user_id, value)}
@@ -254,7 +446,20 @@ const AdminUsers = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-12">কোনো ব্যবহারকারী পাওয়া যায়নি</p>
+              <div className="text-center py-12">
+                <MapPin className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground">
+                  {hasActiveFilters 
+                    ? "এই ফিল্টারে কোনো ব্যবহারকারী পাওয়া যায়নি"
+                    : "কোনো ব্যবহারকারী পাওয়া যায়নি"
+                  }
+                </p>
+                {hasActiveFilters && (
+                  <Button variant="link" onClick={clearFilters} className="mt-2">
+                    ফিল্টার মুছুন
+                  </Button>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
