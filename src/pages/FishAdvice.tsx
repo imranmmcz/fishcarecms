@@ -8,9 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Send, Bot, User, MessageSquare, HelpCircle, Loader2 } from "lucide-react";
+import { Search, Send, Bot, User, MessageSquare, HelpCircle, Loader2, Stethoscope } from "lucide-react";
 import { fishFaqData, faqCategories } from "@/data/fishFaqData";
 import { useToast } from "@/hooks/use-toast";
+import { VisualDiagnosisGuide } from "@/components/VisualDiagnosisGuide";
 
 interface Message {
   role: "user" | "assistant";
@@ -154,8 +155,12 @@ const FishAdvice = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="chat" className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+        <Tabs defaultValue="diagnosis" className="w-full">
+          <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3 mb-6">
+            <TabsTrigger value="diagnosis" className="flex items-center gap-2">
+              <Stethoscope className="h-4 w-4" />
+              রোগ শনাক্ত
+            </TabsTrigger>
             <TabsTrigger value="chat" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               AI পরামর্শ
@@ -165,6 +170,11 @@ const FishAdvice = () => {
               সাধারণ প্রশ্ন
             </TabsTrigger>
           </TabsList>
+
+          {/* Visual Diagnosis Tab */}
+          <TabsContent value="diagnosis">
+            <VisualDiagnosisGuide />
+          </TabsContent>
 
           {/* AI Chat Tab */}
           <TabsContent value="chat">
