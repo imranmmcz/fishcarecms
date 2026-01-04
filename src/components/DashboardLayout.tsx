@@ -140,9 +140,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="min-h-screen flex w-full bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 relative overflow-hidden">
         <AnimatedBackground />
         <Sidebar collapsible="icon" className="border-r-0 relative z-10">
-          <div className="h-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+          <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
             {/* Header */}
-            <div className="p-3 sm:p-5 border-b border-white/10">
+            <div className="p-3 sm:p-5 border-b border-white/10 shrink-0">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-2 sm:p-2.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30">
                   <Fish className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
@@ -154,7 +154,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
             </div>
 
-            <SidebarContent className="px-2 sm:px-3 py-3 sm:py-4 flex flex-col h-[calc(100%-80px)]">
+            <SidebarContent className="px-2 sm:px-3 py-3 sm:py-4 flex flex-col flex-1 overflow-y-auto">
               <SidebarGroup className="flex-1">
                 <SidebarGroupContent>
                   <SidebarMenu className="space-y-1 sm:space-y-2">
