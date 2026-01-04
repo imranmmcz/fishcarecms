@@ -119,8 +119,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </div>
             </div>
 
-            <SidebarContent className="px-2 sm:px-3 py-3 sm:py-4">
-              <SidebarGroup>
+            <SidebarContent className="px-2 sm:px-3 py-3 sm:py-4 flex flex-col h-[calc(100%-80px)]">
+              <SidebarGroup className="flex-1">
                 <SidebarGroupContent>
                   <SidebarMenu className="space-y-1 sm:space-y-2">
                     {menuItems.map((item) => {
@@ -158,7 +158,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </SidebarGroup>
 
               {/* Home Link at Bottom */}
-              <div className="mt-auto pt-3 sm:pt-4 border-t border-white/10">
+              <div className="pt-3 sm:pt-4 border-t border-white/10 mt-auto">
                 <Link 
                   to="/" 
                   className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all"
