@@ -101,37 +101,37 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-violet-900 via-purple-900 to-slate-900 relative overflow-hidden">
         <AnimatedBackground />
-        <Sidebar className="border-r-0 relative z-10">
+        <Sidebar collapsible="icon" className="border-r-0 relative z-10">
           <div className="h-full bg-gradient-to-b from-violet-950 via-purple-900 to-violet-950">
             {/* Header */}
-            <div className="p-5 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl shadow-lg shadow-violet-500/30">
-                  <Shield className="h-6 w-6 text-white" />
+            <div className="p-3 sm:p-5 border-b border-white/10">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-2 sm:p-2.5 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl shadow-lg shadow-violet-500/30">
+                  <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
-                <div>
-                  <h1 className="font-bold text-white text-lg">অ্যাডমিন</h1>
-                  <p className="text-xs text-violet-300">ম্যানেজমেন্ট প্যানেল</p>
+                <div className="group-data-[collapsible=icon]:hidden">
+                  <h1 className="font-bold text-white text-base sm:text-lg">অ্যাডমিন</h1>
+                  <p className="text-[10px] sm:text-xs text-violet-300">ম্যানেজমেন্ট প্যানেল</p>
                 </div>
               </div>
             </div>
 
-            <SidebarContent className="px-3 py-4">
+            <SidebarContent className="px-2 sm:px-3 py-3 sm:py-4">
               <SidebarGroup>
                 <SidebarGroupContent>
-                  <SidebarMenu className="space-y-2">
+                  <SidebarMenu className="space-y-1 sm:space-y-2">
                     {menuItems.map((item) => {
                       const isActive = location.pathname === item.url;
                       return (
                         <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild isActive={isActive}>
+                          <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
                             <Link 
                               to={item.url} 
                               className={`
-                                flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+                                flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-xl transition-all duration-300
                                 ${isActive 
                                   ? `${item.color} text-white shadow-lg` 
                                   : 'text-violet-200 hover:bg-white/10 hover:text-white'
@@ -139,15 +139,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                               `}
                             >
                               <div className={`
-                                p-2 rounded-lg transition-all
+                                p-1.5 sm:p-2 rounded-lg transition-all shrink-0
                                 ${isActive 
                                   ? 'bg-white/20' 
                                   : `bg-violet-800/50`
                                 }
                               `}>
-                                <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : item.iconColor}`} />
+                                <item.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${isActive ? 'text-white' : item.iconColor}`} />
                               </div>
-                              <span className="font-medium">{item.title}</span>
+                              <span className="font-medium text-sm sm:text-base group-data-[collapsible=icon]:hidden">{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -158,15 +158,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </SidebarGroup>
 
               {/* Home Link at Bottom */}
-              <div className="mt-auto pt-4 border-t border-white/10">
+              <div className="mt-auto pt-3 sm:pt-4 border-t border-white/10">
                 <Link 
                   to="/" 
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all"
+                  className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all"
                 >
-                  <div className="p-2 rounded-lg bg-violet-800/50">
-                    <Home className="h-5 w-5" />
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-violet-800/50 shrink-0">
+                    <Home className="h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
-                  <span className="font-medium">হোম পেজে ফিরুন</span>
+                  <span className="font-medium text-sm sm:text-base group-data-[collapsible=icon]:hidden">হোম পেজে ফিরুন</span>
                 </Link>
               </div>
             </SidebarContent>
