@@ -136,37 +136,37 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 relative overflow-hidden">
         <AnimatedBackground />
-        <Sidebar className="border-r-0 relative z-10">
+        <Sidebar collapsible="icon" className="border-r-0 relative z-10">
           <div className="h-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
             {/* Header */}
-            <div className="p-5 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30">
-                  <Fish className="h-6 w-6 text-white" />
+            <div className="p-3 sm:p-5 border-b border-white/10">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-2 sm:p-2.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30">
+                  <Fish className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
-                <div>
-                  <h1 className="font-bold text-white text-lg">{language === "bn" ? "মাছ চাষ" : "Fish Farming"}</h1>
-                  <p className="text-xs text-slate-400">{language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard"}</p>
+                <div className="group-data-[collapsible=icon]:hidden">
+                  <h1 className="font-bold text-white text-base sm:text-lg">{language === "bn" ? "মাছ চাষ" : "Fish Farming"}</h1>
+                  <p className="text-[10px] sm:text-xs text-slate-400">{language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard"}</p>
                 </div>
               </div>
             </div>
 
-            <SidebarContent className="px-3 py-4">
+            <SidebarContent className="px-2 sm:px-3 py-3 sm:py-4">
               <SidebarGroup>
                 <SidebarGroupContent>
-                  <SidebarMenu className="space-y-2">
+                  <SidebarMenu className="space-y-1 sm:space-y-2">
                     {menuItems.map((item) => {
                       const isActive = location.pathname === item.url;
                       return (
                         <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild isActive={isActive}>
+                          <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
                             <Link 
                               to={item.url} 
                               className={`
-                                flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+                                flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-xl transition-all duration-300
                                 ${isActive 
                                   ? `${item.color} text-white shadow-lg` 
                                   : 'text-slate-300 hover:bg-white/10 hover:text-white'
@@ -174,15 +174,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                               `}
                             >
                               <div className={`
-                                p-2 rounded-lg transition-all
+                                p-1.5 sm:p-2 rounded-lg transition-all shrink-0
                                 ${isActive 
                                   ? 'bg-white/20' 
                                   : `bg-slate-700/50`
                                 }
                               `}>
-                                <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : item.iconColor}`} />
+                                <item.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${isActive ? 'text-white' : item.iconColor}`} />
                               </div>
-                              <span className="font-medium">{item.title}</span>
+                              <span className="font-medium text-sm sm:text-base group-data-[collapsible=icon]:hidden">{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -194,29 +194,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
               {/* Admin Panel Link - Only for Admin Users */}
               {isAdmin && (
-                <div className="pt-4 border-t border-white/10">
+                <div className="pt-3 sm:pt-4 border-t border-white/10">
                   <Link 
                     to="/admin" 
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-300 hover:bg-violet-500/20 hover:text-white transition-all"
+                    className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-xl text-violet-300 hover:bg-violet-500/20 hover:text-white transition-all"
                   >
-                    <div className="p-2 rounded-lg bg-violet-600/50">
-                      <Shield className="h-5 w-5 text-violet-300" />
+                    <div className="p-1.5 sm:p-2 rounded-lg bg-violet-600/50 shrink-0">
+                      <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-violet-300" />
                     </div>
-                    <span className="font-medium">{t.adminPanel}</span>
+                    <span className="font-medium text-sm sm:text-base group-data-[collapsible=icon]:hidden">{t.adminPanel}</span>
                   </Link>
                 </div>
               )}
 
               {/* Home Link at Bottom */}
-              <div className="mt-auto pt-4 border-t border-white/10">
+              <div className="mt-auto pt-3 sm:pt-4 border-t border-white/10">
                 <Link 
                   to="/" 
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all"
+                  className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all"
                 >
-                  <div className="p-2 rounded-lg bg-slate-700/50">
-                    <Home className="h-5 w-5" />
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-slate-700/50 shrink-0">
+                    <Home className="h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
-                  <span className="font-medium">{language === "bn" ? "হোম পেজে ফিরুন" : "Back to Home"}</span>
+                  <span className="font-medium text-sm sm:text-base group-data-[collapsible=icon]:hidden">{language === "bn" ? "হোম পেজে ফিরুন" : "Back to Home"}</span>
                 </Link>
               </div>
             </SidebarContent>
