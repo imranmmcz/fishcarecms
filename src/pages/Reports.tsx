@@ -11,7 +11,8 @@ interface FertilizerReport {
     urea: string;
     tsp: string;
     lime: string;
-    cowdung: string;
+    oilcake?: string;
+    cowdung?: string; // Legacy support
   };
   schedule: string;
   pondType: string;
@@ -119,8 +120,8 @@ const Reports = () => {
                         <div className="text-lg font-bold text-foreground">{report.fertilizers.lime} কেজি</div>
                       </div>
                       <div className="bg-muted rounded-lg p-3">
-                        <div className="text-sm text-muted-foreground">গোবর</div>
-                        <div className="text-lg font-bold text-foreground">{report.fertilizers.cowdung} কেজি</div>
+                        <div className="text-sm text-muted-foreground">খৈল</div>
+                        <div className="text-lg font-bold text-foreground">{report.fertilizers.oilcake || report.fertilizers.cowdung || '0'} কেজি</div>
                       </div>
                     </div>
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">

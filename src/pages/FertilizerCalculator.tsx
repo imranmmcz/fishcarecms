@@ -54,13 +54,13 @@ const FertilizerCalculator = () => {
         urea: 0.1,
         tsp: 0.15,
         lime: 0.5,
-        cowdung: 5,
+        oilcake: 2,
       },
       regular: {
         urea: 0.05,
         tsp: 0.08,
         lime: 0.3,
-        cowdung: 3,
+        oilcake: 1,
       },
     };
 
@@ -71,7 +71,7 @@ const FertilizerCalculator = () => {
       urea: (selectedDose.urea * areaInShotak).toFixed(2),
       tsp: (selectedDose.tsp * areaInShotak).toFixed(2),
       lime: (selectedDose.lime * areaInShotak).toFixed(2),
-      cowdung: (selectedDose.cowdung * areaInShotak).toFixed(2),
+      oilcake: (selectedDose.oilcake * areaInShotak).toFixed(2),
     };
 
     const applicationSchedule = pondType === "new" 
@@ -199,8 +199,8 @@ const FertilizerCalculator = () => {
                   </div>
 
                   <div className="bg-background rounded-lg p-4 space-y-2">
-                    <div className="text-sm text-muted-foreground">গোবর</div>
-                    <div className="text-2xl font-bold text-foreground">{result.fertilizers.cowdung} কেজি</div>
+                    <div className="text-sm text-muted-foreground">খৈল</div>
+                    <div className="text-2xl font-bold text-foreground">{result.fertilizers.oilcake} কেজি</div>
                   </div>
                 </div>
 
@@ -216,7 +216,7 @@ const FertilizerCalculator = () => {
                   <ul className="list-disc list-inside space-y-1">
                     <li>চুন প্রয়োগের ৩-৪ দিন পর অন্যান্য সার প্রয়োগ করুন</li>
                     <li>রৌদ্রজ্জ্বল দিনে সকাল ১০টা থেকে দুপুর ২টার মধ্যে সার প্রয়োগ করুন</li>
-                    <li>গোবর অবশ্যই পচানো অবস্থায় প্রয়োগ করুন</li>
+                    <li>খৈল পানিতে ভিজিয়ে ৪৮ ঘণ্টা রেখে তারপর প্রয়োগ করুন</li>
                     <li>সার প্রয়োগের দিন মাছকে খাদ্য দেবেন না</li>
                   </ul>
                 </div>
