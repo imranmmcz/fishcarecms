@@ -21,7 +21,7 @@ const CostCalculator = () => {
     lime: "",
     urea: "",
     tsp: "",
-    cowdung: "",
+    oilcake: "",
     labor: "",
     pondDigging: "",
   });
@@ -90,7 +90,7 @@ const CostCalculator = () => {
       (parseFloat(pondPreparation.lime) || 0) +
       (parseFloat(pondPreparation.urea) || 0) +
       (parseFloat(pondPreparation.tsp) || 0) +
-      (parseFloat(pondPreparation.cowdung) || 0) +
+      (parseFloat(pondPreparation.oilcake) || 0) +
       (parseFloat(pondPreparation.labor) || 0) +
       (parseFloat(pondPreparation.pondDigging) || 0);
     
@@ -160,7 +160,7 @@ const CostCalculator = () => {
       { name: "চুন", amount: parseFloat(pondPreparation.lime) || 0 },
       { name: "ইউরিয়া", amount: parseFloat(pondPreparation.urea) || 0 },
       { name: "টিএসপি", amount: parseFloat(pondPreparation.tsp) || 0 },
-      { name: "গোবর", amount: parseFloat(pondPreparation.cowdung) || 0 },
+      { name: "খৈল", amount: parseFloat(pondPreparation.oilcake) || 0 },
       { name: "শ্রমিক", amount: parseFloat(pondPreparation.labor) || 0 },
       { name: "পুকুর খনন/মেরামত", amount: parseFloat(pondPreparation.pondDigging) || 0 },
     ];
@@ -382,13 +382,13 @@ const CostCalculator = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="cowdung">গোবর (টাকা)</Label>
+                          <Label htmlFor="oilcake">খৈল (টাকা)</Label>
                           <Input
-                            id="cowdung"
+                            id="oilcake"
                             type="number"
                             placeholder="0"
-                            value={pondPreparation.cowdung}
-                            onChange={(e) => setPondPreparation({...pondPreparation, cowdung: e.target.value})}
+                            value={pondPreparation.oilcake}
+                            onChange={(e) => setPondPreparation({...pondPreparation, oilcake: e.target.value})}
                           />
                         </div>
                         <div className="space-y-2">
@@ -837,7 +837,7 @@ const CostCalculator = () => {
                     <div className="space-y-4">
                       <h3 className="font-semibold text-lg">উপজাত বিক্রয়</h3>
                       <div className="space-y-2">
-                        <Label htmlFor="byProducts">উপজাত বিক্রয় (কাদা, গোবর ইত্যাদি) (টাকা)</Label>
+                        <Label htmlFor="byProducts">উপজাত বিক্রয় (কাদা ইত্যাদি) (টাকা)</Label>
                         <Input
                           id="byProducts"
                           type="number"
