@@ -55,12 +55,14 @@ const FertilizerCalculator = () => {
         tsp: 0.15,
         lime: 0.5,
         oilcake: 2,
+        mop: 0.05,
       },
       regular: {
         urea: 0.05,
         tsp: 0.08,
         lime: 0.3,
         oilcake: 1,
+        mop: 0.03,
       },
     };
 
@@ -72,6 +74,7 @@ const FertilizerCalculator = () => {
       tsp: (selectedDose.tsp * areaInShotak).toFixed(2),
       lime: (selectedDose.lime * areaInShotak).toFixed(2),
       oilcake: (selectedDose.oilcake * areaInShotak).toFixed(2),
+      mop: (selectedDose.mop * areaInShotak).toFixed(2),
     };
 
     const applicationSchedule = pondType === "new" 
@@ -201,6 +204,11 @@ const FertilizerCalculator = () => {
                   <div className="bg-background rounded-lg p-4 space-y-2">
                     <div className="text-sm text-muted-foreground">খৈল</div>
                     <div className="text-2xl font-bold text-foreground">{result.fertilizers.oilcake} কেজি</div>
+                  </div>
+
+                  <div className="bg-background rounded-lg p-4 space-y-2">
+                    <div className="text-sm text-muted-foreground">MOP (পটাশ)</div>
+                    <div className="text-2xl font-bold text-foreground">{result.fertilizers.mop} কেজি</div>
                   </div>
                 </div>
 
