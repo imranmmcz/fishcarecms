@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import Footer from "@/components/Footer";
 import { ModuleCard } from "@/components/ModuleCard";
 import { Button3D } from "@/components/ui/button-3d";
 import { ProductSlider } from "@/components/ProductSlider";
@@ -253,6 +254,9 @@ const Index = () => {
           </Link>
         </div>
       </section>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
