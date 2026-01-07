@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Fish, Phone, Mail, MapPin, Facebook, Youtube, MessageCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-
+import { UnderwaterEffect } from "@/components/UnderwaterEffect";
 const Footer = () => {
   const { t, language } = useLanguage();
 
@@ -21,8 +21,11 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-card border-t border-border">
-      <div className="container mx-auto px-4 py-12">
+    <footer className="bg-gradient-to-b from-cyan-900/30 via-teal-800/25 to-primary/20 border-t border-border relative overflow-hidden">
+      {/* Underwater Animation */}
+      <UnderwaterEffect bubbleCount={18} fishCount={6} />
+      
+      <div className="container mx-auto px-4 py-12 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Column 1: Logo & Company Details */}
           <div className="space-y-4">
