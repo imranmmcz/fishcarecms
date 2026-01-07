@@ -15,7 +15,7 @@ const Footer = () => {
   ];
 
   const socialLinks = [
-    { name: "Facebook", icon: Facebook, url: "https://facebook.com/fishcare" },
+    { name: "Facebook", icon: Facebook, url: "https://www.facebook.com/fishcare.com.bd" },
     { name: "YouTube", icon: Youtube, url: "https://youtube.com/fishcare" },
     { name: "WhatsApp", icon: MessageCircle, url: "https://wa.me/8801978865277" },
   ];
