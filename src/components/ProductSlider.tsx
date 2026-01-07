@@ -4,7 +4,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Button3D } from "@/components/ui/button-3d";
 import { fishProducts } from "@/data/fishProductData";
 import { Link } from "react-router-dom";
-
+import { UnderwaterEffect } from "@/components/UnderwaterEffect";
 export const ProductSlider = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -40,8 +40,11 @@ export const ProductSlider = () => {
   };
 
   return (
-    <section className="py-16 bg-gradient-to-b from-muted/30 to-background">
-      <div className="container">
+    <section className="py-16 bg-gradient-to-b from-cyan-900/20 via-teal-800/15 to-primary/10 relative overflow-hidden">
+      {/* Underwater Animation */}
+      <UnderwaterEffect bubbleCount={15} fishCount={5} />
+      
+      <div className="container relative z-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
           <div className="space-y-2">
