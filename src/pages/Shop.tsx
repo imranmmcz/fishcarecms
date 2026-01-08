@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
+import Footer from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -412,6 +413,7 @@ const Shop = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
