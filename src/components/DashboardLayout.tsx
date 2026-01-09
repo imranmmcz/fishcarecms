@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   LayoutDashboard, 
@@ -37,7 +38,9 @@ import {
   Settings,
   Shield,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Menu,
+  X
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -51,6 +54,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { t, language } = useLanguage();
   const [userName, setUserName] = useState("");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const menuItems = [
     { 
@@ -135,34 +139,60 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     navigate("/");
   };
 
+  // Menu item component for reusability
+  const MenuItemLink = ({ item, onClick }: { item: typeof menuItems[0]; onClick?: () => void }) => {
+    const isActive = location.pathname === item.url;
+    return (
+      <Link 
+        to={item.url} 
+        onClick={onClick}
+        className={`
+          flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+          ${isActive 
+            ? `${item.color} text-white shadow-lg` 
+            : 'text-slate-300 hover:bg-white/10 hover:text-white'
+          }
+        `}
+      >
+        <div className={`
+          p-2 rounded-lg transition-all shrink-0
+          ${isActive 
+            ? 'bg-white/20' 
+            : 'bg-slate-700/50'
+          }
+        `}>
+          <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : item.iconColor}`} />
+        </div>
+        <span className="font-medium">{item.title}</span>
+      </Link>
+    );
+  };
+
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 relative overflow-hidden">
         <AnimatedBackground />
         
-        {/* Desktop Sidebar - Hidden on mobile */}
-        <Sidebar 
-          collapsible="icon" 
-          className="border-r-0 relative z-10 hidden md:flex"
-        >
+        {/* Desktop Sidebar */}
+        <Sidebar collapsible="icon" className="border-r-0 relative z-10 hidden md:flex">
           <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
             {/* Header */}
-            <div className="p-3 sm:p-5 border-b border-white/10 shrink-0">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-2 sm:p-2.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30">
-                  <Fish className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            <div className="p-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30">
+                  <Fish className="h-6 w-6 text-white" />
                 </div>
                 <div className="group-data-[collapsible=icon]:hidden">
-                  <h1 className="font-bold text-white text-base sm:text-lg">{language === "bn" ? "মাছ চাষ" : "Fish Farming"}</h1>
-                  <p className="text-[10px] sm:text-xs text-slate-400">{language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard"}</p>
+                  <h1 className="font-bold text-white text-lg">{language === "bn" ? "মাছ চাষ" : "Fish Farming"}</h1>
+                  <p className="text-xs text-slate-400">{language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard"}</p>
                 </div>
               </div>
             </div>
 
-            <SidebarContent className="px-2 sm:px-3 py-3 sm:py-4">
+            <SidebarContent className="px-3 py-4">
               <SidebarGroup>
                 <SidebarGroupContent>
-                  <SidebarMenu className="space-y-1 sm:space-y-2">
+                  <SidebarMenu className="space-y-2">
                     {menuItems.map((item) => {
                       const isActive = location.pathname === item.url;
                       return (
@@ -171,7 +201,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             <Link 
                               to={item.url} 
                               className={`
-                                flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-xl transition-all duration-300
+                                flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
                                 ${isActive 
                                   ? `${item.color} text-white shadow-lg` 
                                   : 'text-slate-300 hover:bg-white/10 hover:text-white'
@@ -179,15 +209,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                               `}
                             >
                               <div className={`
-                                p-1.5 sm:p-2 rounded-lg transition-all shrink-0
+                                p-2 rounded-lg transition-all shrink-0
                                 ${isActive 
                                   ? 'bg-white/20' 
                                   : `bg-slate-700/50`
                                 }
                               `}>
-                                <item.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${isActive ? 'text-white' : item.iconColor}`} />
+                                <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : item.iconColor}`} />
                               </div>
-                              <span className="font-medium text-sm sm:text-base group-data-[collapsible=icon]:hidden">{item.title}</span>
+                              <span className="font-medium group-data-[collapsible=icon]:hidden">{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -199,48 +229,113 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
               {/* Admin Panel Link - Only for Admin Users */}
               {isAdmin && (
-                <div className="pt-3 sm:pt-4 border-t border-white/10">
+                <div className="pt-4 border-t border-white/10">
                   <Link 
                     to="/admin" 
-                    className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-xl text-violet-300 hover:bg-violet-500/20 hover:text-white transition-all"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-300 hover:bg-violet-500/20 hover:text-white transition-all"
                   >
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-violet-600/50 shrink-0">
-                      <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-violet-300" />
+                    <div className="p-2 rounded-lg bg-violet-600/50 shrink-0">
+                      <Shield className="h-5 w-5 text-violet-300" />
                     </div>
-                    <span className="font-medium text-sm sm:text-base group-data-[collapsible=icon]:hidden">{t.adminPanel}</span>
+                    <span className="font-medium group-data-[collapsible=icon]:hidden">{t.adminPanel}</span>
                   </Link>
                 </div>
               )}
 
               {/* Home Link at Bottom */}
-              <div className="pt-3 sm:pt-4 border-t border-white/10">
+              <div className="pt-4 border-t border-white/10">
                 <Link 
                   to="/" 
-                  className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all"
                 >
-                  <div className="p-1.5 sm:p-2 rounded-lg bg-slate-700/50 shrink-0">
-                    <Home className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <div className="p-2 rounded-lg bg-slate-700/50 shrink-0">
+                    <Home className="h-5 w-5" />
                   </div>
-                  <span className="font-medium text-sm sm:text-base group-data-[collapsible=icon]:hidden">{language === "bn" ? "হোম পেজে ফিরুন" : "Back to Home"}</span>
+                  <span className="font-medium group-data-[collapsible=icon]:hidden">{language === "bn" ? "হোম পেজে ফিরুন" : "Back to Home"}</span>
                 </Link>
               </div>
             </SidebarContent>
           </div>
         </Sidebar>
 
-        {/* Mobile Slide-out Menu */}
-        <MobileDrawerMenu 
-          menuItems={menuItems}
-          isAdmin={isAdmin}
-          language={language}
-          t={t}
-        />
-
         <main className="flex-1 overflow-auto relative z-10">
           <div className="p-3 md:p-4 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between sticky top-0 z-20">
             <div className="flex items-center gap-2 md:gap-4">
               {/* Mobile Menu Trigger */}
-              <MobileMenuTrigger />
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild className="md:hidden">
+                  <button className="p-2 rounded-lg hover:bg-accent transition-colors">
+                    <Menu className="h-5 w-5 text-foreground" />
+                  </button>
+                </SheetTrigger>
+                <SheetContent 
+                  side="left" 
+                  className="w-[280px] p-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r-0"
+                >
+                  {/* Mobile Menu Header */}
+                  <div className="p-4 border-b border-white/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30">
+                          <Fish className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <h1 className="font-bold text-white text-lg">{language === "bn" ? "মাছ চাষ" : "Fish Farming"}</h1>
+                          <p className="text-xs text-slate-400">{language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard"}</p>
+                        </div>
+                      </div>
+                      <SheetClose asChild>
+                        <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                          <X className="h-5 w-5 text-slate-400" />
+                        </button>
+                      </SheetClose>
+                    </div>
+                  </div>
+
+                  {/* Mobile Menu Items */}
+                  <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-180px)]">
+                    <div className="space-y-1.5">
+                      {menuItems.map((item) => (
+                        <MenuItemLink 
+                          key={item.title} 
+                          item={item} 
+                          onClick={() => setMobileMenuOpen(false)}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Admin Panel Link */}
+                    {isAdmin && (
+                      <div className="pt-4 mt-4 border-t border-white/10">
+                        <Link 
+                          to="/admin" 
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-300 hover:bg-violet-500/20 hover:text-white transition-all"
+                        >
+                          <div className="p-2 rounded-lg bg-violet-600/50 shrink-0">
+                            <Shield className="h-5 w-5 text-violet-300" />
+                          </div>
+                          <span className="font-medium">{t.adminPanel}</span>
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Home Link */}
+                    <div className="pt-4 mt-4 border-t border-white/10">
+                      <Link 
+                        to="/" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all"
+                      >
+                        <div className="p-2 rounded-lg bg-slate-700/50 shrink-0">
+                          <Home className="h-5 w-5" />
+                        </div>
+                        <span className="font-medium">{language === "bn" ? "হোম পেজে ফিরুন" : "Back to Home"}</span>
+                      </Link>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
               
               {/* Desktop Sidebar Trigger */}
               <SidebarTrigger className="text-foreground hidden md:flex" />
@@ -300,138 +395,5 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </main>
       </div>
     </SidebarProvider>
-  );
-}
-
-// Mobile Menu Context
-import { createContext, useContext } from "react";
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-import { Menu, X } from "lucide-react";
-
-const MobileMenuContext = createContext<{
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-} | null>(null);
-
-function MobileMenuTrigger() {
-  return (
-    <SheetTrigger asChild className="md:hidden">
-      <button className="p-2 rounded-lg hover:bg-accent transition-colors">
-        <Menu className="h-5 w-5 text-foreground" />
-      </button>
-    </SheetTrigger>
-  );
-}
-
-interface MobileDrawerMenuProps {
-  menuItems: Array<{
-    title: string;
-    url: string;
-    icon: React.ComponentType<{ className?: string }>;
-    color: string;
-    iconColor: string;
-  }>;
-  isAdmin: boolean;
-  language: string;
-  t: any;
-}
-
-function MobileDrawerMenu({ menuItems, isAdmin, language, t }: MobileDrawerMenuProps) {
-  const location = useLocation();
-  
-  return (
-    <Sheet>
-      <MobileMenuTrigger />
-      <SheetContent 
-        side="left" 
-        className="w-[280px] p-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r-0 md:hidden"
-      >
-        {/* Header */}
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30">
-                <Fish className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="font-bold text-white text-lg">{language === "bn" ? "মাছ চাষ" : "Fish Farming"}</h1>
-                <p className="text-xs text-slate-400">{language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard"}</p>
-              </div>
-            </div>
-            <SheetClose asChild>
-              <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                <X className="h-5 w-5 text-slate-400" />
-              </button>
-            </SheetClose>
-          </div>
-        </div>
-
-        {/* Menu Items */}
-        <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-180px)]">
-          <div className="space-y-1.5">
-            {menuItems.map((item) => {
-              const isActive = location.pathname === item.url;
-              return (
-                <SheetClose asChild key={item.title}>
-                  <Link 
-                    to={item.url} 
-                    className={`
-                      flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
-                      ${isActive 
-                        ? `${item.color} text-white shadow-lg` 
-                        : 'text-slate-300 hover:bg-white/10 hover:text-white'
-                      }
-                    `}
-                  >
-                    <div className={`
-                      p-2 rounded-lg transition-all shrink-0
-                      ${isActive 
-                        ? 'bg-white/20' 
-                        : 'bg-slate-700/50'
-                      }
-                    `}>
-                      <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : item.iconColor}`} />
-                    </div>
-                    <span className="font-medium">{item.title}</span>
-                  </Link>
-                </SheetClose>
-              );
-            })}
-          </div>
-
-          {/* Admin Panel Link */}
-          {isAdmin && (
-            <div className="pt-4 mt-4 border-t border-white/10">
-              <SheetClose asChild>
-                <Link 
-                  to="/admin" 
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-300 hover:bg-violet-500/20 hover:text-white transition-all"
-                >
-                  <div className="p-2 rounded-lg bg-violet-600/50 shrink-0">
-                    <Shield className="h-5 w-5 text-violet-300" />
-                  </div>
-                  <span className="font-medium">{t.adminPanel}</span>
-                </Link>
-              </SheetClose>
-            </div>
-          )}
-
-          {/* Home Link */}
-          <div className="pt-4 mt-4 border-t border-white/10">
-            <SheetClose asChild>
-              <Link 
-                to="/" 
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all"
-              >
-                <div className="p-2 rounded-lg bg-slate-700/50 shrink-0">
-                  <Home className="h-5 w-5" />
-                </div>
-                <span className="font-medium">{language === "bn" ? "হোম পেজে ফিরুন" : "Back to Home"}</span>
-              </Link>
-            </SheetClose>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
   );
 }
