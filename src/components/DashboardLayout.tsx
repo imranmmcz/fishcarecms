@@ -136,10 +136,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 relative overflow-hidden">
         <AnimatedBackground />
-        <Sidebar collapsible="icon" className="border-r-0 relative z-10">
+        
+        {/* Desktop Sidebar - Hidden on mobile */}
+        <Sidebar 
+          collapsible="icon" 
+          className="border-r-0 relative z-10 hidden md:flex"
+        >
           <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
             {/* Header */}
             <div className="p-3 sm:p-5 border-b border-white/10 shrink-0">
@@ -223,27 +228,40 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </Sidebar>
 
+        {/* Mobile Slide-out Menu */}
+        <MobileDrawerMenu 
+          menuItems={menuItems}
+          isAdmin={isAdmin}
+          language={language}
+          t={t}
+        />
+
         <main className="flex-1 overflow-auto relative z-10">
-          <div className="p-4 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="text-foreground" />
-              <div className="h-6 w-px bg-border" />
-              <span className="text-sm text-muted-foreground">
+          <div className="p-3 md:p-4 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between sticky top-0 z-20">
+            <div className="flex items-center gap-2 md:gap-4">
+              {/* Mobile Menu Trigger */}
+              <MobileMenuTrigger />
+              
+              {/* Desktop Sidebar Trigger */}
+              <SidebarTrigger className="text-foreground hidden md:flex" />
+              
+              <div className="h-6 w-px bg-border hidden md:block" />
+              <span className="text-xs md:text-sm text-muted-foreground line-clamp-1">
                 {menuItems.find(item => item.url === location.pathname)?.title || 'ড্যাশবোর্ড'}
               </span>
             </div>
             
             {/* Profile Dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors outline-none">
-                <Avatar className="h-8 w-8 border border-border">
+              <DropdownMenuTrigger className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg hover:bg-accent transition-colors outline-none">
+                <Avatar className="h-7 w-7 md:h-8 md:w-8 border border-border">
                   <AvatarImage src={userAvatar || undefined} alt={userName} />
-                  <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-sm font-medium">
+                  <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-xs md:text-sm font-medium">
                     {userName.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium text-foreground hidden sm:inline">{userName || (language === "bn" ? "ব্যবহারকারী" : "User")}</span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs md:text-sm font-medium text-foreground hidden sm:inline max-w-24 truncate">{userName || (language === "bn" ? "ব্যবহারকারী" : "User")}</span>
+                <ChevronDown className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
                 <DropdownMenuLabel className="font-normal">
@@ -276,11 +294,144 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-65px)] rounded-tl-2xl">
+          <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-57px)] md:min-h-[calc(100vh-65px)] md:rounded-tl-2xl">
             {children}
           </div>
         </main>
       </div>
     </SidebarProvider>
+  );
+}
+
+// Mobile Menu Context
+import { createContext, useContext } from "react";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Menu, X } from "lucide-react";
+
+const MobileMenuContext = createContext<{
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+} | null>(null);
+
+function MobileMenuTrigger() {
+  return (
+    <SheetTrigger asChild className="md:hidden">
+      <button className="p-2 rounded-lg hover:bg-accent transition-colors">
+        <Menu className="h-5 w-5 text-foreground" />
+      </button>
+    </SheetTrigger>
+  );
+}
+
+interface MobileDrawerMenuProps {
+  menuItems: Array<{
+    title: string;
+    url: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    iconColor: string;
+  }>;
+  isAdmin: boolean;
+  language: string;
+  t: any;
+}
+
+function MobileDrawerMenu({ menuItems, isAdmin, language, t }: MobileDrawerMenuProps) {
+  const location = useLocation();
+  
+  return (
+    <Sheet>
+      <MobileMenuTrigger />
+      <SheetContent 
+        side="left" 
+        className="w-[280px] p-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r-0 md:hidden"
+      >
+        {/* Header */}
+        <div className="p-4 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30">
+                <Fish className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="font-bold text-white text-lg">{language === "bn" ? "মাছ চাষ" : "Fish Farming"}</h1>
+                <p className="text-xs text-slate-400">{language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard"}</p>
+              </div>
+            </div>
+            <SheetClose asChild>
+              <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                <X className="h-5 w-5 text-slate-400" />
+              </button>
+            </SheetClose>
+          </div>
+        </div>
+
+        {/* Menu Items */}
+        <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-180px)]">
+          <div className="space-y-1.5">
+            {menuItems.map((item) => {
+              const isActive = location.pathname === item.url;
+              return (
+                <SheetClose asChild key={item.title}>
+                  <Link 
+                    to={item.url} 
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+                      ${isActive 
+                        ? `${item.color} text-white shadow-lg` 
+                        : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      }
+                    `}
+                  >
+                    <div className={`
+                      p-2 rounded-lg transition-all shrink-0
+                      ${isActive 
+                        ? 'bg-white/20' 
+                        : 'bg-slate-700/50'
+                      }
+                    `}>
+                      <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : item.iconColor}`} />
+                    </div>
+                    <span className="font-medium">{item.title}</span>
+                  </Link>
+                </SheetClose>
+              );
+            })}
+          </div>
+
+          {/* Admin Panel Link */}
+          {isAdmin && (
+            <div className="pt-4 mt-4 border-t border-white/10">
+              <SheetClose asChild>
+                <Link 
+                  to="/admin" 
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-300 hover:bg-violet-500/20 hover:text-white transition-all"
+                >
+                  <div className="p-2 rounded-lg bg-violet-600/50 shrink-0">
+                    <Shield className="h-5 w-5 text-violet-300" />
+                  </div>
+                  <span className="font-medium">{t.adminPanel}</span>
+                </Link>
+              </SheetClose>
+            </div>
+          )}
+
+          {/* Home Link */}
+          <div className="pt-4 mt-4 border-t border-white/10">
+            <SheetClose asChild>
+              <Link 
+                to="/" 
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all"
+              >
+                <div className="p-2 rounded-lg bg-slate-700/50 shrink-0">
+                  <Home className="h-5 w-5" />
+                </div>
+                <span className="font-medium">{language === "bn" ? "হোম পেজে ফিরুন" : "Back to Home"}</span>
+              </Link>
+            </SheetClose>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
