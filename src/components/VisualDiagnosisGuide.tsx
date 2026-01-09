@@ -215,10 +215,10 @@ export const VisualDiagnosisGuide = () => {
             onClick={() => setSelectedDisease(null)}
           >
             <Card 
-              className="w-full sm:max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden rounded-t-2xl sm:rounded-xl"
+              className="w-full sm:max-w-3xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-xl flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              <ScrollArea className="max-h-[95vh] sm:max-h-[90vh]">
+              <ScrollArea className="h-[90vh] sm:h-[85vh] overflow-y-auto">
                 <div className="relative">
                   {/* Header Image */}
                   <div className="relative h-40 sm:h-48 md:h-64">
