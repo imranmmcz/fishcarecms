@@ -40,6 +40,15 @@ export const AdSettingsProvider = ({ children }: { children: ReactNode }) => {
         console.error('Error fetching ad settings:', error);
       } else {
         setAdSettings(data);
+        
+        // Dynamically update AdSense script if client ID is set
+        if (data?.ad_client_id) {
+          const scriptEl = document.getElementById('adsense-script');
+          if (scriptEl) {
+            scriptEl.setAttribute('src', `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${data.ad_client_id}`);
+            scriptEl.setAttribute('crossorigin', 'anonymous');
+          }
+        }
       }
     } catch (err) {
       console.error('Error:', err);
