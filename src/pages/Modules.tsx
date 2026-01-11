@@ -4,6 +4,7 @@ import { ModuleCard } from "@/components/ModuleCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import AdUnit from "@/components/AdUnit";
 import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, ArrowRight, CheckCircle2, Info, MessageSquare } from "lucide-react";
 import { useFarming } from "@/contexts/FarmingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -107,6 +108,10 @@ const Modules = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Header Ad */}
+      <AdUnit position="header" className="py-2 container" />
+      
       <main className="container py-8 animate-fade-in">
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Header Section */}
@@ -210,15 +215,23 @@ const Modules = () => {
 
           {/* Modules Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {modules.map((module) => (
-              <ModuleCard
-                key={module.id}
-                title={module.title}
-                description={module.description}
-                icon={module.icon}
-                path={module.path}
-                isActive={true}
-              />
+            {modules.map((module, index) => (
+              <>
+                <ModuleCard
+                  key={module.id}
+                  title={module.title}
+                  description={module.description}
+                  icon={module.icon}
+                  path={module.path}
+                  isActive={true}
+                />
+                {/* Show ad after every 6th module */}
+                {(index + 1) % 6 === 0 && index < modules.length - 1 && (
+                  <div className="md:col-span-2 lg:col-span-3">
+                    <AdUnit position="between-modules" className="py-2" />
+                  </div>
+                )}
+              </>
             ))}
           </div>
 
@@ -239,6 +252,10 @@ const Modules = () => {
           </Card>
         </div>
       </main>
+      
+      {/* Footer Ad */}
+      <AdUnit position="footer" className="py-4 container" />
+      
       <Footer />
     </div>
   );

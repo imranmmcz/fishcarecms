@@ -4,6 +4,7 @@ import { ModuleCard } from "@/components/ModuleCard";
 import { Button3D } from "@/components/ui/button-3d";
 import { ProductSlider } from "@/components/ProductSlider";
 import { FishHealthAdvice } from "@/components/FishHealthAdvice";
+import AdUnit from "@/components/AdUnit";
 import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, LayoutDashboard, FlaskConical, Leaf, BarChart3, Languages } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -14,7 +15,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-
 const Index = () => {
   const { t } = useLanguage();
 
@@ -136,6 +136,9 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
+      {/* Header Ad */}
+      <AdUnit position="header" className="py-2 container" />
+
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero py-20 text-white">
         <div className="container relative z-10">
@@ -195,8 +198,14 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Between Modules Ad */}
+      <AdUnit position="between-modules" className="py-4 container" />
+
       {/* Product Slider */}
       <ProductSlider />
+
+      {/* In-Article Ad */}
+      <AdUnit position="in-article" className="py-4 container" />
 
       {/* Fish Health Advice */}
       <FishHealthAdvice />
@@ -254,6 +263,9 @@ const Index = () => {
           </Link>
         </div>
       </section>
+
+      {/* Footer Ad */}
+      <AdUnit position="footer" className="py-4 container" />
 
       {/* Footer */}
       <Footer />
