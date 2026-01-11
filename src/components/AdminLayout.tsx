@@ -22,7 +22,8 @@ import {
   Shield,
   Loader2,
   User,
-  Package
+  Package,
+  Megaphone
 } from "lucide-react";
 
 const menuItems = [
@@ -53,6 +54,13 @@ const menuItems = [
     icon: BarChart3,
     color: "bg-gradient-to-r from-emerald-500 to-green-600",
     iconColor: "text-emerald-500"
+  },
+  { 
+    title: "বিজ্ঞাপন", 
+    url: "/admin/ads", 
+    icon: Megaphone,
+    color: "bg-gradient-to-r from-rose-500 to-pink-600",
+    iconColor: "text-rose-500"
   },
   { 
     title: "সেটিংস", 

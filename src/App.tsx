@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProductsProvider } from "@/contexts/ProductsContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { AdSettingsProvider } from "@/contexts/AdSettingsContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
@@ -37,6 +38,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminSettings from "./pages/AdminSettings";
 import AdminReports from "./pages/AdminReports";
 import AdminProducts from "./pages/AdminProducts";
+import AdminAds from "./pages/AdminAds";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -49,9 +51,10 @@ const App = () => (
         <AuthProvider>
           <ProductsProvider>
             <FarmingProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
+              <AdSettingsProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
                 <BrowserRouter>
                   <Routes>
                     <Route path="/" element={<Index />} />
@@ -84,17 +87,19 @@ const App = () => (
                     <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
                     <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
                     <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AdminReports /></ProtectedRoute>} />
+                    <Route path="/admin/ads" element={<ProtectedRoute requireAdmin><AdminAds /></ProtectedRoute>} />
                     <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><Profile /></ProtectedRoute>} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </BrowserRouter>
               </TooltipProvider>
-            </FarmingProvider>
-          </ProductsProvider>
-        </AuthProvider>
-      </CurrencyProvider>
-    </LanguageProvider>
-  </QueryClientProvider>
+            </AdSettingsProvider>
+          </FarmingProvider>
+        </ProductsProvider>
+      </AuthProvider>
+    </CurrencyProvider>
+  </LanguageProvider>
+</QueryClientProvider>
 );
 
 export default App;

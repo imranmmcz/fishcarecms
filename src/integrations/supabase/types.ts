@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_settings: {
+        Row: {
+          ad_client_id: string | null
+          between_modules_ad_enabled: boolean | null
+          between_modules_ad_slot: string | null
+          created_at: string
+          footer_ad_enabled: boolean | null
+          footer_ad_slot: string | null
+          header_ad_enabled: boolean | null
+          header_ad_slot: string | null
+          id: string
+          in_article_ad_enabled: boolean | null
+          in_article_ad_slot: string | null
+          sidebar_ad_enabled: boolean | null
+          sidebar_ad_slot: string | null
+          updated_at: string
+        }
+        Insert: {
+          ad_client_id?: string | null
+          between_modules_ad_enabled?: boolean | null
+          between_modules_ad_slot?: string | null
+          created_at?: string
+          footer_ad_enabled?: boolean | null
+          footer_ad_slot?: string | null
+          header_ad_enabled?: boolean | null
+          header_ad_slot?: string | null
+          id?: string
+          in_article_ad_enabled?: boolean | null
+          in_article_ad_slot?: string | null
+          sidebar_ad_enabled?: boolean | null
+          sidebar_ad_slot?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ad_client_id?: string | null
+          between_modules_ad_enabled?: boolean | null
+          between_modules_ad_slot?: string | null
+          created_at?: string
+          footer_ad_enabled?: boolean | null
+          footer_ad_slot?: string | null
+          header_ad_enabled?: boolean | null
+          header_ad_slot?: string | null
+          id?: string
+          in_article_ad_enabled?: boolean | null
+          in_article_ad_slot?: string | null
+          sidebar_ad_enabled?: boolean | null
+          sidebar_ad_slot?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string
