@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Scale } from "lucide-react";
+import AdUnit from "@/components/AdUnit";
 
 export default function BiomassCalculator() {
   const [sampleFish, setSampleFish] = useState("");
@@ -38,6 +39,11 @@ export default function BiomassCalculator() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
+      
+      {/* Header Ad */}
+      <div className="container mx-auto px-4 py-4">
+        <AdUnit position="header" className="mb-4" />
+      </div>
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -173,6 +179,11 @@ export default function BiomassCalculator() {
               </div>
             </CardContent>
           </Card>
+          
+          {/* Footer Ad */}
+          <div className="mt-8">
+            <AdUnit position="footer" />
+          </div>
         </div>
       </main>
       <Footer />
