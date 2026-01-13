@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import AdUnit from "@/components/AdUnit";
 
 interface IncomeRecord {
   id: string;
@@ -443,6 +444,11 @@ export default function Dashboard() {
               <RecentList type="expense" />
             </CardContent>
           </Card>
+        </div>
+        
+        {/* In-Article Ad */}
+        <div className="mt-6">
+          <AdUnit position="in-article" />
         </div>
       </div>
 

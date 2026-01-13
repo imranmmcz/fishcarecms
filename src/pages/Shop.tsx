@@ -16,6 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import AdUnit from "@/components/AdUnit";
 
 const categoryIcons: Record<string, React.ReactNode> = {
   medicine: <Pill className="h-5 w-5" />,
@@ -206,6 +207,11 @@ const Shop = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Header Ad */}
+      <div className="container mx-auto px-4 py-4">
+        <AdUnit position="header" className="mb-4" />
+      </div>
       
       {/* Hero */}
       <section className="bg-gradient-hero py-12 text-white">
@@ -412,6 +418,11 @@ const Shop = () => {
             </Button>
           </div>
         )}
+        
+        {/* Footer Ad */}
+        <div className="mt-8">
+          <AdUnit position="footer" />
+        </div>
       </div>
       <Footer />
     </div>
