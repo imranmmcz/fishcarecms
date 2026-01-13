@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Droplets, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import AdUnit from "@/components/AdUnit";
 
 const WaterQuality = () => {
   const [temperature, setTemperature] = useState("");
@@ -152,6 +153,11 @@ const WaterQuality = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
+      {/* Header Ad */}
+      <div className="container mx-auto px-4 py-4">
+        <AdUnit position="header" className="mb-4" />
+      </div>
+      
       <div className="container py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="text-center space-y-2">
@@ -287,6 +293,11 @@ const WaterQuality = () => {
               </CardContent>
             </Card>
           )}
+          
+          {/* Footer Ad */}
+          <div className="mt-8">
+            <AdUnit position="footer" />
+          </div>
         </div>
       </div>
       <Footer />

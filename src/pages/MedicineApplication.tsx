@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Pill, CheckCircle2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useFarming } from "@/contexts/FarmingContext";
+import AdUnit from "@/components/AdUnit";
 
 export default function MedicineApplication() {
   const navigate = useNavigate();
@@ -123,6 +124,11 @@ export default function MedicineApplication() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
+      
+      {/* Header Ad */}
+      <div className="container mx-auto px-4 py-4">
+        <AdUnit position="header" className="mb-4" />
+      </div>
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -280,6 +286,11 @@ export default function MedicineApplication() {
               </div>
             </CardContent>
           </Card>
+          
+          {/* Footer Ad */}
+          <div className="mt-8">
+            <AdUnit position="footer" />
+          </div>
         </div>
       </main>
       <Footer />
