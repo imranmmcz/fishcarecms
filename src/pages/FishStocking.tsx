@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Fish, Info } from "lucide-react";
 import { useFarming } from "@/contexts/FarmingContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import AdUnit from "@/components/AdUnit";
 
 export default function FishStocking() {
   const { pondData } = useFarming();
@@ -72,6 +73,11 @@ export default function FishStocking() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
+      
+      {/* Header Ad */}
+      <div className="container mx-auto px-4 py-4">
+        <AdUnit position="header" className="mb-4" />
+      </div>
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -191,6 +197,11 @@ export default function FishStocking() {
               )}
             </CardContent>
           </Card>
+          
+          {/* Footer Ad */}
+          <div className="mt-8">
+            <AdUnit position="footer" />
+          </div>
         </div>
       </main>
       <Footer />
