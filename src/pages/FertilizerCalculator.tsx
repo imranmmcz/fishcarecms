@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TrendingUp, Info, CheckCircle2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useFarming } from "@/contexts/FarmingContext";
+import AdUnit from "@/components/AdUnit";
 
 const FertilizerCalculator = () => {
   const navigate = useNavigate();
@@ -102,6 +103,11 @@ const FertilizerCalculator = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Header Ad */}
+      <div className="container mx-auto px-4 py-4">
+        <AdUnit position="header" className="mb-4" />
+      </div>
       
       <div className="container py-8">
         <div className="max-w-4xl mx-auto space-y-6">
@@ -247,6 +253,11 @@ const FertilizerCalculator = () => {
               </CardContent>
             </Card>
           )}
+          
+          {/* Footer Ad */}
+          <div className="mt-8">
+            <AdUnit position="footer" />
+          </div>
         </div>
       </div>
       <Footer />
