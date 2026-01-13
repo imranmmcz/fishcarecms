@@ -13,6 +13,7 @@ import { Search, Send, Bot, User, MessageSquare, HelpCircle, Loader2, Stethoscop
 import { fishFaqData, faqCategories } from "@/data/fishFaqData";
 import { useToast } from "@/hooks/use-toast";
 import { VisualDiagnosisGuide } from "@/components/VisualDiagnosisGuide";
+import AdUnit from "@/components/AdUnit";
 
 interface Message {
   role: "user" | "assistant";
@@ -145,6 +146,11 @@ const FishAdvice = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <Header />
+      
+      {/* Header Ad */}
+      <div className="container mx-auto px-4 py-4">
+        <AdUnit position="header" className="mb-4" />
+      </div>
       
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
@@ -350,6 +356,11 @@ const FishAdvice = () => {
             </div>
           </TabsContent>
         </Tabs>
+        
+        {/* Footer Ad */}
+        <div className="mt-8">
+          <AdUnit position="footer" />
+        </div>
       </main>
       <Footer />
     </div>
