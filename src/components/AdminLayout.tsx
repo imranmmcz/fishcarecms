@@ -23,7 +23,8 @@ import {
   Loader2,
   User,
   Package,
-  Megaphone
+  Megaphone,
+  Layout
 } from "lucide-react";
 
 const menuItems = [
@@ -61,6 +62,13 @@ const menuItems = [
     icon: Megaphone,
     color: "bg-gradient-to-r from-rose-500 to-pink-600",
     iconColor: "text-rose-500"
+  },
+  { 
+    title: "পেজ বিল্ডার", 
+    url: "/admin/page-builder", 
+    icon: Layout,
+    color: "bg-gradient-to-r from-indigo-500 to-blue-600",
+    iconColor: "text-indigo-500"
   },
   { 
     title: "সেটিংস", 
