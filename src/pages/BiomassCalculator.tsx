@@ -1,14 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Scale } from "lucide-react";
+import { Scale, ArrowRight } from "lucide-react";
 import AdUnit from "@/components/AdUnit";
+import { toast } from "sonner";
 
 export default function BiomassCalculator() {
+  const navigate = useNavigate();
   const [sampleFish, setSampleFish] = useState("");
   const [sampleWeight, setSampleWeight] = useState("");
   const [totalFish, setTotalFish] = useState("");
@@ -133,6 +136,27 @@ export default function BiomassCalculator() {
                       <li>বায়োমাস থেকে দৈনিক খাদ্যের পরিমাণ নির্ধারণ করুন</li>
                       <li>উচ্চ বায়োমাসে পানির গুণমান বেশি পর্যবেক্ষণ করুন</li>
                     </ul>
+                  </div>
+                  
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        // Save biomass data to localStorage
+                        localStorage.setItem("farmingBiomassData", JSON.stringify({
+                          avgWeight: result.avgWeight,
+                          totalBiomass: result.totalBiomass,
+                          biomassPerDecimal: result.biomassPerDecimal,
+                        }));
+                        toast.success("বায়োমাস তথ্য সংরক্ষিত হয়েছে! পরবর্তী মডিউলে যাচ্ছেন...");
+                        setTimeout(() => navigate("/feed-management"), 1000);
+                      }}
+                      size="lg"
+                      className="bg-gradient-primary hover:opacity-90"
+                    >
+                      সংরক্ষণ করুন এবং পরবর্তী মডিউলে যান
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               )}

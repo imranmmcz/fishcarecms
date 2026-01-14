@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Droplets, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { Droplets, AlertTriangle, CheckCircle2, Info, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AdUnit from "@/components/AdUnit";
+import { toast } from "sonner";
 
 const WaterQuality = () => {
+  const navigate = useNavigate();
   const [temperature, setTemperature] = useState("");
   const [ph, setPh] = useState("");
   const [dissolvedOxygen, setDissolvedOxygen] = useState("");
@@ -290,6 +293,30 @@ const WaterQuality = () => {
                     <strong>পরামর্শ:</strong> সকাল ও সন্ধ্যায় নিয়মিত পানির গুণমান পরীক্ষা করুন। হঠাৎ পরিবর্তন দেখলে দ্রুত পদক্ষেপ নিন।
                   </AlertDescription>
                 </Alert>
+                
+                <div className="flex justify-end mt-4">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      // Save water quality data to localStorage
+                      localStorage.setItem("farmingWaterQualityData", JSON.stringify({
+                        temperature: parseFloat(temperature),
+                        ph: parseFloat(ph),
+                        dissolvedOxygen: parseFloat(dissolvedOxygen),
+                        ammonia: ammonia ? parseFloat(ammonia) : null,
+                        transparency: transparency ? parseFloat(transparency) : null,
+                        overallStatus: result.overallStatus,
+                      }));
+                      toast.success("পানির গুণমান তথ্য সংরক্ষিত হয়েছে! পরবর্তী মডিউলে যাচ্ছেন...");
+                      setTimeout(() => navigate("/cost-calculator"), 1000);
+                    }}
+                    size="lg"
+                    className="bg-gradient-primary hover:opacity-90"
+                  >
+                    সংরক্ষণ করুন এবং পরবর্তী মডিউলে যান
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}

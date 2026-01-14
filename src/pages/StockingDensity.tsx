@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Fish, Info } from "lucide-react";
+import { Fish, Info, ArrowRight } from "lucide-react";
 import { useFarming } from "@/contexts/FarmingContext";
 import { fishSpecies, mixedFarmingModels, costRates, FishSpecies } from "@/data/fishData";
 import AdUnit from "@/components/AdUnit";
+import { toast } from "sonner";
 
 interface FishStockDetail {
   name: string;
@@ -63,6 +65,7 @@ interface CostBreakdown {
 }
 
 export default function StockingDensity() {
+  const navigate = useNavigate();
   const { pondData } = useFarming();
   const [pondSize, setPondSize] = useState(pondData?.area.toString() || "");
   const [pondDepth, setPondDepth] = useState(pondData?.depth.toString() || "5");
@@ -601,6 +604,21 @@ export default function StockingDensity() {
                       <li>পানিতে অক্সিজেনের মাত্রা সর্বদা ৫ ppm এর উপরে রাখুন</li>
                       <li>রোগ প্রতিরোধে প্রতি মাসে চুন ও লবণ প্রয়োগ করুন</li>
                     </ul>
+                  </div>
+                  
+                  <div className="flex justify-end mt-6">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        toast.success("পরবর্তী মডিউলে যাচ্ছেন...");
+                        setTimeout(() => navigate("/fish-stocking"), 1000);
+                      }}
+                      size="lg"
+                      className="bg-gradient-primary hover:opacity-90"
+                    >
+                      সংরক্ষণ করুন এবং পরবর্তী মডিউলে যান
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               )}
