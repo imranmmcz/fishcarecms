@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wheat, ArrowRight } from "lucide-react";
+import { Wheat, ArrowRight, RotateCcw } from "lucide-react";
 import AdUnit from "@/components/AdUnit";
 import { toast } from "sonner";
 
@@ -55,6 +55,15 @@ export default function FeedManagement() {
       monthlyFeed,
       fcr
     });
+  };
+
+  const resetForm = () => {
+    setTotalBiomass("");
+    setWaterTemp("");
+    setFeedType("");
+    setProteinContent("");
+    setResult(null);
+    toast.success("ফর্ম রিসেট করা হয়েছে");
   };
 
   return (
@@ -137,9 +146,19 @@ export default function FeedManagement() {
                 </div>
               </div>
 
-              <Button onClick={calculateFeed} className="w-full" size="lg">
-                খাদ্য হিসাব করুন
-              </Button>
+              <div className="flex gap-3">
+                <Button onClick={calculateFeed} className="flex-1" size="lg">
+                  খাদ্য হিসাব করুন
+                </Button>
+                <Button 
+                  onClick={resetForm} 
+                  variant="outline"
+                  size="lg"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  রিসেট
+                </Button>
+              </div>
 
               {result && (
                 <div className="mt-6 p-6 bg-gradient-card border border-primary/20 rounded-lg space-y-4 animate-fade-in">
