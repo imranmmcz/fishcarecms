@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,13 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Fish, Info } from "lucide-react";
+import { Fish, Info, ArrowRight } from "lucide-react";
 import { useFarming } from "@/contexts/FarmingContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import AdUnit from "@/components/AdUnit";
+import { toast } from "sonner";
 
 export default function FishStocking() {
-  const { pondData } = useFarming();
+  const navigate = useNavigate();
+  const { pondData, setFishStockingData } = useFarming();
   const [pondArea, setPondArea] = useState("");
   const [waterDepth, setWaterDepth] = useState("");
   const [fishType, setFishType] = useState("");
@@ -192,6 +195,27 @@ export default function FishStocking() {
                       <li>প্রথম সপ্তাহে নিয়মিত পানির গুণমান পরীক্ষা করুন</li>
                       <li>মিশ্র চাষের ক্ষেত্রে সঠিক অনুপাত বজায় রাখুন</li>
                     </ul>
+                  </div>
+                  
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        // Save fish stocking data to context
+                        setFishStockingData({
+                          totalFish: result.totalFish,
+                          density: parseFloat(stockingDensity),
+                          species: [fishType],
+                        });
+                        toast.success("মাছের তথ্য সংরক্ষিত হয়েছে! পরবর্তী মডিউলে যাচ্ছেন...");
+                        setTimeout(() => navigate("/biomass-calculator"), 1000);
+                      }}
+                      size="lg"
+                      className="bg-gradient-primary hover:opacity-90"
+                    >
+                      সংরক্ষণ করুন এবং পরবর্তী মডিউলে যান
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               )}

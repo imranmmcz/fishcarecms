@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DollarSign, TrendingUp, TrendingDown, Info, CheckCircle2, AlertTriangle, Save } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Info, CheckCircle2, AlertTriangle, Save, ArrowRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdUnit from "@/components/AdUnit";
 
@@ -18,6 +20,7 @@ interface CostItem {
 }
 
 const CostCalculator = () => {
+  const navigate = useNavigate();
   // পুকুর প্রস্তুতি খরচ
   const [pondPreparation, setPondPreparation] = useState({
     lime: "",
@@ -1084,6 +1087,21 @@ const CostCalculator = () => {
                       <li>বাজার দর নিয়মিত জেনে রাখুন এবং সঠিক সময়ে মাছ বিক্রয় করুন</li>
                       <li>অভিজ্ঞ মৎস্য চাষী এবং বিশেষজ্ঞদের পরামর্শ নিন</li>
                     </ul>
+                  </div>
+                  
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        sonnerToast.success("খরচের তথ্য সংরক্ষিত হয়েছে! রিপোর্ট পেজে যাচ্ছেন...");
+                        setTimeout(() => navigate("/reports"), 1000);
+                      }}
+                      size="lg"
+                      className="bg-gradient-primary hover:opacity-90"
+                    >
+                      সংরক্ষণ করুন এবং রিপোর্ট দেখুন
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

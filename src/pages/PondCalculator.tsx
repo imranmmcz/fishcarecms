@@ -148,7 +148,7 @@ export default function PondCalculator() {
     }
     toast.success("পুকুরের তথ্য সংরক্ষিত হয়েছে! পরবর্তী মডিউলে যাচ্ছেন...");
     setTimeout(() => {
-      navigate("/fish-stocking");
+      navigate("/stocking-density");
     }, 1000);
   };
 

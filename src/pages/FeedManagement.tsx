@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wheat } from "lucide-react";
+import { Wheat, ArrowRight } from "lucide-react";
 import AdUnit from "@/components/AdUnit";
+import { toast } from "sonner";
 
 export default function FeedManagement() {
+  const navigate = useNavigate();
   const [totalBiomass, setTotalBiomass] = useState("");
   const [waterTemp, setWaterTemp] = useState("");
   const [feedType, setFeedType] = useState("");
@@ -173,6 +176,27 @@ export default function FeedManagement() {
                       <li>নিয়মিত বায়োমাস মাপুন এবং খাদ্য সামঞ্জস্য করুন</li>
                       <li>সকালে DO কম থাকলে খাদ্য বন্ধ রাখুন</li>
                     </ul>
+                  </div>
+                  
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        // Save feed data to localStorage
+                        localStorage.setItem("farmingFeedData", JSON.stringify({
+                          dailyFeed: result.dailyFeed,
+                          monthlyFeed: result.monthlyFeed,
+                          fcr: result.fcr,
+                        }));
+                        toast.success("খাদ্য তথ্য সংরক্ষিত হয়েছে! পরবর্তী মডিউলে যাচ্ছেন...");
+                        setTimeout(() => navigate("/medicine-application"), 1000);
+                      }}
+                      size="lg"
+                      className="bg-gradient-primary hover:opacity-90"
+                    >
+                      সংরক্ষণ করুন এবং পরবর্তী মডিউলে যান
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               )}
