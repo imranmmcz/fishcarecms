@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Fish, Info, ArrowRight } from "lucide-react";
+import { Fish, Info, ArrowRight, RotateCcw } from "lucide-react";
 import { useFarming } from "@/contexts/FarmingContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import AdUnit from "@/components/AdUnit";
@@ -71,6 +71,15 @@ export default function FishStocking() {
       fingerlingWeight: avgWeight,
       totalWeight
     });
+  };
+
+  const resetForm = () => {
+    setPondArea("");
+    setWaterDepth("");
+    setFishType("");
+    setStockingDensity("");
+    setResult(null);
+    toast.success("ফর্ম রিসেট করা হয়েছে");
   };
 
   return (
@@ -162,9 +171,19 @@ export default function FishStocking() {
                 </div>
               </div>
 
-              <Button onClick={calculateStocking} className="w-full" size="lg">
-                হিসাব করুন
-              </Button>
+              <div className="flex gap-3">
+                <Button onClick={calculateStocking} className="flex-1" size="lg">
+                  হিসাব করুন
+                </Button>
+                <Button 
+                  onClick={resetForm} 
+                  variant="outline"
+                  size="lg"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  রিসেট
+                </Button>
+              </div>
 
               {result && (
                 <div className="mt-6 p-6 bg-gradient-card border border-primary/20 rounded-lg space-y-4 animate-fade-in">

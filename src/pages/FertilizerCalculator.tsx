@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { TrendingUp, Info, CheckCircle2, ArrowRight } from "lucide-react";
+import { TrendingUp, Info, CheckCircle2, ArrowRight, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useFarming } from "@/contexts/FarmingContext";
 import AdUnit from "@/components/AdUnit";
@@ -100,6 +100,15 @@ const FertilizerCalculator = () => {
     setResult(applicationData);
   };
 
+  const resetForm = () => {
+    setPondArea("");
+    setWaterDepth("");
+    setPondType("new");
+    setFertilizerType("urea");
+    setResult(null);
+    toast.success("ফর্ম রিসেট করা হয়েছে");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -178,10 +187,20 @@ const FertilizerCalculator = () => {
                 </div>
               </div>
 
-              <Button onClick={calculateFertilizer} className="w-full" size="lg">
-                <TrendingUp className="mr-2 h-5 w-5" />
-                সার প্রয়োগের হিসাব করুন
-              </Button>
+              <div className="flex gap-3">
+                <Button onClick={calculateFertilizer} className="flex-1" size="lg">
+                  <TrendingUp className="mr-2 h-5 w-5" />
+                  সার প্রয়োগের হিসাব করুন
+                </Button>
+                <Button 
+                  onClick={resetForm} 
+                  variant="outline"
+                  size="lg"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  রিসেট
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

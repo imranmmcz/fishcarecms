@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Fish, Info, ArrowRight } from "lucide-react";
+import { Fish, Info, ArrowRight, RotateCcw } from "lucide-react";
 import { useFarming } from "@/contexts/FarmingContext";
 import { fishSpecies, mixedFarmingModels, costRates, FishSpecies } from "@/data/fishData";
 import AdUnit from "@/components/AdUnit";
@@ -223,6 +223,18 @@ export default function StockingDensity() {
     });
   };
 
+  const resetForm = () => {
+    setPondSize("");
+    setPondDepth("5");
+    setFarmingMethod("");
+    setFarmingIntensity("semiIntensive");
+    setSelectedFish("");
+    setSelectedMixedModel("");
+    setCultureDuration("6");
+    setResult(null);
+    toast.success("ফর্ম রিসেট করা হয়েছে");
+  };
+
   // মাছের ধরন অনুযায়ী গ্রুপ করা
   const groupedFish = fishSpecies.reduce((acc, fish) => {
     if (!acc[fish.category]) {
@@ -387,14 +399,24 @@ export default function StockingDensity() {
                 )}
               </div>
 
-              <Button 
-                onClick={calculateStocking} 
-                className="w-full" 
-                size="lg"
-                disabled={!farmingMethod || (farmingMethod === "single" && !selectedFish) || (farmingMethod === "mixed" && !selectedMixedModel)}
-              >
-                বিস্তারিত হিসাব করুন
-              </Button>
+              <div className="flex gap-3">
+                <Button 
+                  onClick={calculateStocking} 
+                  className="flex-1" 
+                  size="lg"
+                  disabled={!farmingMethod || (farmingMethod === "single" && !selectedFish) || (farmingMethod === "mixed" && !selectedMixedModel)}
+                >
+                  বিস্তারিত হিসাব করুন
+                </Button>
+                <Button 
+                  onClick={resetForm} 
+                  variant="outline"
+                  size="lg"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  রিসেট
+                </Button>
+              </div>
 
               {result && (
                 <div className="mt-8 space-y-6 animate-fade-in">

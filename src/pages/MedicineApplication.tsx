@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Pill, CheckCircle2, ArrowRight } from "lucide-react";
+import { Pill, CheckCircle2, ArrowRight, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useFarming } from "@/contexts/FarmingContext";
 import AdUnit from "@/components/AdUnit";
@@ -121,6 +121,14 @@ export default function MedicineApplication() {
     });
   };
 
+  const resetForm = () => {
+    setWaterVolume("");
+    setMedicineType("");
+    setBiomass("");
+    setResult(null);
+    toast.success("ফর্ম রিসেট করা হয়েছে");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
@@ -198,9 +206,19 @@ export default function MedicineApplication() {
                 </div>
               </div>
 
-              <Button onClick={calculateMedicine} className="w-full" size="lg">
-                মাত্রা হিসাব করুন
-              </Button>
+              <div className="flex gap-3">
+                <Button onClick={calculateMedicine} className="flex-1" size="lg">
+                  মাত্রা হিসাব করুন
+                </Button>
+                <Button 
+                  onClick={resetForm} 
+                  variant="outline"
+                  size="lg"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  রিসেট
+                </Button>
+              </div>
 
               {result && (
                 <div className="mt-6 p-6 bg-gradient-card border border-primary/20 rounded-lg space-y-4 animate-fade-in">

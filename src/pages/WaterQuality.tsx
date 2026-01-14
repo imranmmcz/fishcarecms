@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Droplets, AlertTriangle, CheckCircle2, Info, ArrowRight } from "lucide-react";
+import { Droplets, AlertTriangle, CheckCircle2, Info, ArrowRight, RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AdUnit from "@/components/AdUnit";
 import { toast } from "sonner";
@@ -124,6 +124,16 @@ const WaterQuality = () => {
         ? "পানির গুণমান গ্রহণযোগ্য তবে উন্নতির সুযোগ আছে।"
         : "পানির গুণমান চমৎকার! বর্তমান ব্যবস্থাপনা চালিয়ে যান।",
     });
+  };
+
+  const resetForm = () => {
+    setTemperature("");
+    setPh("");
+    setDissolvedOxygen("");
+    setAmmonia("");
+    setTransparency("");
+    setResult(null);
+    toast.success("ফর্ম রিসেট করা হয়েছে");
   };
 
   const getStatusColor = (status: string) => {
@@ -248,10 +258,20 @@ const WaterQuality = () => {
 
               <div className="text-sm text-muted-foreground">* প্রয়োজনীয় তথ্য</div>
 
-              <Button onClick={analyzeWaterQuality} className="w-full" size="lg">
-                <Droplets className="mr-2 h-5 w-5" />
-                পানির গুণমান বিশ্লেষণ করুন
-              </Button>
+              <div className="flex gap-3">
+                <Button onClick={analyzeWaterQuality} className="flex-1" size="lg">
+                  <Droplets className="mr-2 h-5 w-5" />
+                  পানির গুণমান বিশ্লেষণ করুন
+                </Button>
+                <Button 
+                  onClick={resetForm} 
+                  variant="outline"
+                  size="lg"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  রিসেট
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
