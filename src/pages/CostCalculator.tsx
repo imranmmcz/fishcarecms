@@ -10,6 +10,7 @@ import { DollarSign, TrendingUp, TrendingDown, Info, CheckCircle2, AlertTriangle
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import AdUnit from "@/components/AdUnit";
 
 interface CostItem {
   name: string;
@@ -267,6 +268,11 @@ const CostCalculator = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Header Ad */}
+      <div className="container mx-auto px-4 py-4">
+        <AdUnit position="header" className="mb-4" />
+      </div>
       
       <div className="container py-8">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -1083,6 +1089,11 @@ const CostCalculator = () => {
               </Card>
             </div>
           )}
+        </div>
+        
+        {/* Footer Ad */}
+        <div className="mt-8">
+          <AdUnit position="footer" />
         </div>
       </div>
       <Footer />

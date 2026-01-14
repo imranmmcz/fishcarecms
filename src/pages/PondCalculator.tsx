@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calculator, Droplets, Ruler, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import AdUnit from "@/components/AdUnit";
 import { useFarming } from "@/contexts/FarmingContext";
 
 // Pond shape images
@@ -164,6 +165,12 @@ export default function PondCalculator() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Header Ad */}
+      <div className="container mx-auto px-4 py-4">
+        <AdUnit position="header" className="mb-4" />
+      </div>
+      
       <main className="container py-8 animate-fade-in">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header Section */}
@@ -451,6 +458,11 @@ export default function PondCalculator() {
               </CardContent>
             </Card>
           )}
+        </div>
+        
+        {/* Footer Ad */}
+        <div className="mt-8">
+          <AdUnit position="footer" />
         </div>
       </main>
       <Footer />
