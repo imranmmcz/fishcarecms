@@ -38,6 +38,7 @@ interface TranslationStrings {
   adminPanel: string;
   allModules: string;
   pondMeasurement: string;
+  marketPrice: string;
   
   // App Branding
   appTitle: string;
@@ -260,6 +261,7 @@ const translations: Record<Language, TranslationStrings> = {
     adminPanel: "অ্যাডমিন প্যানেল",
     allModules: "সকল মডিউল",
     pondMeasurement: "পুকুর পরিমাপ",
+    marketPrice: "বাজার দর",
     
     // App Branding
     appTitle: "মৎস্য ব্যবস্থাপনা",
@@ -480,6 +482,7 @@ const translations: Record<Language, TranslationStrings> = {
     adminPanel: "Admin Panel",
     allModules: "All Modules",
     pondMeasurement: "Pond Measurement",
+    marketPrice: "Market Price",
     
     // App Branding
     appTitle: "Fish Management",
