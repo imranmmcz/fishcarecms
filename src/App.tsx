@@ -25,6 +25,7 @@ import Reports from "./pages/Reports";
 import FishAdvice from "./pages/FishAdvice";
 import Shop from "./pages/Shop";
 import FisheriesContact from "./pages/FisheriesContact";
+import MarketPrice from "./pages/MarketPrice";
 import Dashboard from "./pages/Dashboard";
 import DashboardIncome from "./pages/DashboardIncome";
 import DashboardExpense from "./pages/DashboardExpense";
@@ -74,6 +75,7 @@ const App = () => (
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/fish-advice" element={<FishAdvice />} />
                     <Route path="/fisheries-contact" element={<FisheriesContact />} />
+                    <Route path="/market-price" element={<MarketPrice />} />
                     <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                     <Route path="/dashboard/income" element={<ProtectedRoute><DashboardIncome /></ProtectedRoute>} />
                     <Route path="/dashboard/expense" element={<ProtectedRoute><DashboardExpense /></ProtectedRoute>} />
