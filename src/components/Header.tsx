@@ -1,4 +1,4 @@
-import { Fish, Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, ChevronDown } from "lucide-react";
+import { Fish, Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, ChevronDown, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Button3D } from "@/components/ui/button-3d";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -24,6 +24,7 @@ export const Header = () => {
   const navItems = [
     { path: "/", label: t.home },
     { path: "/shop", label: t.shop },
+    { path: "/market-price", label: t.marketPrice },
     { path: "/pond-calculator", label: t.pondMeasurement },
     { path: "/fish-advice", label: t.fishAdvice },
     { path: "/modules", label: t.allModules },
