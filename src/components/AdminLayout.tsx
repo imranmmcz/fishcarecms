@@ -24,7 +24,8 @@ import {
   User,
   Package,
   Megaphone,
-  Layout
+  Layout,
+  TrendingUp
 } from "lucide-react";
 
 const menuItems = [
@@ -41,6 +42,13 @@ const menuItems = [
     icon: Package,
     color: "bg-gradient-to-r from-teal-500 to-cyan-600",
     iconColor: "text-teal-500"
+  },
+  { 
+    title: "বাজার দর", 
+    url: "/admin/market-prices", 
+    icon: TrendingUp,
+    color: "bg-gradient-to-r from-orange-500 to-amber-600",
+    iconColor: "text-orange-500"
   },
   { 
     title: "ব্যবহারকারী", 
