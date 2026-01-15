@@ -41,9 +41,6 @@ const Footer = () => {
                 : "Complete digital solution for fish farmers. Pond management, feed calculation, disease diagnosis and much more."
               }
             </p>
-            <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} FishCare. All rights reserved.
-            </p>
           </div>
 
           {/* Column 2: Quick Links */}
