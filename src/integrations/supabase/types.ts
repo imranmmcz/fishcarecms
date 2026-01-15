@@ -65,6 +65,54 @@ export type Database = {
         }
         Relationships: []
       }
+      market_prices: {
+        Row: {
+          created_at: string
+          district: string
+          division: string
+          fish_name: string
+          fish_name_bn: string
+          id: string
+          market_name: string | null
+          max_price: number | null
+          min_price: number | null
+          price_date: string
+          price_per_kg: number
+          upazila: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          district: string
+          division: string
+          fish_name: string
+          fish_name_bn: string
+          id?: string
+          market_name?: string | null
+          max_price?: number | null
+          min_price?: number | null
+          price_date?: string
+          price_per_kg: number
+          upazila: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          district?: string
+          division?: string
+          fish_name?: string
+          fish_name_bn?: string
+          id?: string
+          market_name?: string | null
+          max_price?: number | null
+          min_price?: number | null
+          price_date?: string
+          price_per_kg?: number
+          upazila?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       page_content: {
         Row: {
           content: Json
