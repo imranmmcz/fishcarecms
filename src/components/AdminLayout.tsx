@@ -25,7 +25,8 @@ import {
   Package,
   Megaphone,
   Layout,
-  TrendingUp
+  TrendingUp,
+  Database
 } from "lucide-react";
 
 const menuItems = [
@@ -84,6 +85,13 @@ const menuItems = [
     icon: Settings,
     color: "bg-gradient-to-r from-amber-500 to-orange-600",
     iconColor: "text-amber-500"
+  },
+  { 
+    title: "ডাটাবেজ এক্সপোর্ট", 
+    url: "/admin/database-export", 
+    icon: Database,
+    color: "bg-gradient-to-r from-cyan-500 to-teal-600",
+    iconColor: "text-cyan-500"
   },
   { 
     title: "প্রোফাইল", 
