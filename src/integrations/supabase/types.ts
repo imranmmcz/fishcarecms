@@ -283,6 +283,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_tables: {
+        Args: never
+        Returns: {
+          label: string
+          label_bn: string
+          name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
