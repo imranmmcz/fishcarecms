@@ -45,6 +45,7 @@ import AdminMarketPrices from "./pages/AdminMarketPrices";
 import AdminDatabaseExport from "./pages/AdminDatabaseExport";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import Install from "./pages/Install";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +98,7 @@ const App = () => (
                     <Route path="/admin/market-prices" element={<ProtectedRoute requireAdmin><AdminMarketPrices /></ProtectedRoute>} />
                     <Route path="/admin/database-export" element={<ProtectedRoute requireAdmin><AdminDatabaseExport /></ProtectedRoute>} />
                     <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><Profile /></ProtectedRoute>} />
+                    <Route path="/install" element={<Install />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </BrowserRouter>
