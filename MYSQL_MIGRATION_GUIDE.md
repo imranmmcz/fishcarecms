@@ -1,63 +1,127 @@
-# MySQL মাইগ্রেশন গাইড
+# MySQL Migration Guide - FishCare Pro
 
-এই গাইডটি Lovable Cloud (Supabase) থেকে Hostinger MySQL-এ মাইগ্রেশনের জন্য।
+## ✅ স্ট্যাটাস: সম্পন্ন (Completed)
 
-## 📋 মাইগ্রেশন পদক্ষেপ
+এই অ্যাপ্লিকেশনটি এখন **Hostinger MySQL Database**-এ সংযুক্ত এবং `https://blog.fishcare.com.bd/api` থেকে ডাটা পরিচালনা করছে।
 
-### ধাপ ১: Backend সেটআপ (Hostinger)
+---
 
-1. `hostinger-backend/` ফোল্ডার Hostinger-এ আপলোড করুন
-2. phpMyAdmin-এ `database/schema.sql` ইম্পোর্ট করুন
-3. `.env` ফাইল কনফিগার করুন
-4. `npm install && npm start` চালান
+## 🔗 সংযোগ তথ্য
 
-### ধাপ ২: Frontend কনফিগারেশন
-
-#### ২.১ Environment Variable সেট করুন
-
-`.env` ফাইলে যোগ করুন:
+### Database Configuration (Hostinger)
 ```env
-VITE_API_URL=https://your-hostinger-domain.com/api
+DB_HOST=mysql.hostinger.com
+DB_PORT=3306
+DB_NAME=u109046763_cal
+DB_USER=u109046763_cal
+DB_PASSWORD=I1912.gp
+JWT_SECRET=fishcare-bd-secret-key-2025
+PORT=3000
+FRONTEND_URL=https://fishcal.lovable.app
 ```
 
-#### ২.২ App.tsx আপডেট করুন
-
-**বর্তমান (Supabase):**
-```tsx
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProductsProvider } from "@/contexts/ProductsContext";
+### API Base URL
+```
+https://blog.fishcare.com.bd/api
 ```
 
-**নতুন (MySQL):**
+---
+
+## 📁 ফাইল সুইচিং গাইড
+
+### MySQL Contexts (বর্তমানে ব্যবহৃত)
+| ফাইল | বিবরণ |
+|------|--------|
+| `src/contexts/AuthContextMySQL.tsx` | Authentication (Login/Signup) |
+| `src/contexts/ProductsContextMySQL.tsx` | Products CRUD |
+| `src/contexts/AdSettingsContextMySQL.tsx` | Ad Settings |
+| `src/contexts/MarketPricesContextMySQL.tsx` | Market Prices |
+| `src/lib/api-client.ts` | API Client |
+
+### App.tsx Configuration (বর্তমান)
 ```tsx
+// MySQL Backend Contexts - Hostinger MySQL Database
 import { AuthProvider } from "@/contexts/AuthContextMySQL";
 import { ProductsProvider } from "@/contexts/ProductsContextMySQL";
+import { AdSettingsProvider } from "@/contexts/AdSettingsContextMySQL";
 ```
 
-#### ২.৩ Supabase Imports পরিবর্তন করুন
+---
 
-প্রতিটি পেজে যেখানে Supabase ব্যবহার হয়েছে, সেখানে API Client ব্যবহার করুন:
+## 🌐 API Endpoints
 
-**বর্তমান:**
-```tsx
-import { supabase } from "@/integrations/supabase/client";
+### Authentication
+| Method | Endpoint | বিবরণ |
+|--------|----------|--------|
+| POST | `/api/auth/signup` | নতুন ব্যবহারকারী নিবন্ধন |
+| POST | `/api/auth/signin` | লগইন |
+| GET | `/api/auth/me` | বর্তমান ব্যবহারকারী |
+| PUT | `/api/auth/password` | পাসওয়ার্ড পরিবর্তন |
+| POST | `/api/auth/signout` | লগআউট |
 
-// Data fetch
-const { data, error } = await supabase
-  .from('products')
-  .select('*');
+### Products
+| Method | Endpoint | বিবরণ |
+|--------|----------|--------|
+| GET | `/api/products` | পণ্য তালিকা |
+| GET | `/api/products/:id` | একটি পণ্য |
+| POST | `/api/products` | পণ্য যোগ (Admin) |
+| PUT | `/api/products/:id` | পণ্য আপডেট (Admin) |
+| DELETE | `/api/products/:id` | পণ্য মুছুন (Admin) |
+
+### Market Prices
+| Method | Endpoint | বিবরণ |
+|--------|----------|--------|
+| GET | `/api/market-prices` | বাজার দর তালিকা |
+| POST | `/api/market-prices` | বাজার দর যোগ (Admin) |
+| PUT | `/api/market-prices/:id` | বাজার দর আপডেট (Admin) |
+| DELETE | `/api/market-prices/:id` | বাজার দর মুছুন (Admin) |
+
+### Ad Settings
+| Method | Endpoint | বিবরণ |
+|--------|----------|--------|
+| GET | `/api/ad-settings` | বিজ্ঞাপন সেটিংস |
+| PUT | `/api/ad-settings` | বিজ্ঞাপন সেটিংস আপডেট (Admin) |
+
+### Page Content
+| Method | Endpoint | বিবরণ |
+|--------|----------|--------|
+| GET | `/api/page-content` | পেজ কন্টেন্ট তালিকা |
+| GET | `/api/page-content/section/:key` | নির্দিষ্ট সেকশন |
+| POST | `/api/page-content` | কন্টেন্ট যোগ (Admin) |
+| PUT | `/api/page-content/:id` | কন্টেন্ট আপডেট (Admin) |
+
+### Users (Admin Only)
+| Method | Endpoint | বিবরণ |
+|--------|----------|--------|
+| GET | `/api/users` | ব্যবহারকারী তালিকা |
+| PUT | `/api/users/:id` | ব্যবহারকারী আপডেট |
+| PATCH | `/api/users/:id/role` | ভূমিকা পরিবর্তন |
+| DELETE | `/api/users/:id` | ব্যবহারকারী মুছুন |
+
+---
+
+## 🔐 Default Admin Credentials
+```
+Email: admin@fishcare.com
+Password: admin123
 ```
 
-**নতুন:**
-```tsx
-import { apiClient } from "@/lib/api-client";
+⚠️ **গুরুত্বপূর্ণ**: প্রোডাকশনে এই পাসওয়ার্ড পরিবর্তন করুন!
 
-// Data fetch
-const response = await apiClient.getProducts();
-if (response.data) {
-  // use response.data.products
-}
-```
+---
+
+## 📊 Database Tables
+
+| Table | বিবরণ |
+|-------|--------|
+| `users` | ব্যবহারকারী এবং অ্যাডমিন |
+| `products` | পণ্য তালিকা |
+| `market_prices` | মাছের বাজার দর |
+| `ad_settings` | বিজ্ঞাপন সেটিংস |
+| `page_content` | পেজ কন্টেন্ট |
+| `system_settings` | সিস্টেম সেটিংস |
+
+---
 
 ## 🔄 API ম্যাপিং
 
@@ -72,38 +136,22 @@ if (response.data) {
 | `supabase.from('products').update()` | `apiClient.updateProduct()` |
 | `supabase.from('products').delete()` | `apiClient.deleteProduct()` |
 | `supabase.from('market_prices').select()` | `apiClient.getMarketPrices()` |
-| `supabase.from('profiles').select()` | `apiClient.getUsers()` |
+| `supabase.from('ad_settings').select()` | `apiClient.getAdSettings()` |
 
-## 📁 ফাইল পরিবর্তন তালিকা
+---
 
-### আপডেট করতে হবে এমন ফাইল:
+## 🔄 Supabase-এ ফেরত যেতে
 
-| ফাইল | পরিবর্তন |
-|------|---------|
-| `src/App.tsx` | AuthProvider, ProductsProvider import পরিবর্তন |
-| `src/pages/Auth.tsx` | useAuth hook ব্যবহার (ইতিমধ্যে compatible) |
-| `src/pages/Profile.tsx` | Profile update logic |
-| `src/pages/MarketPrice.tsx` | apiClient.getMarketPrices() ব্যবহার |
-| `src/pages/AdminUsers.tsx` | apiClient.getUsers() ব্যবহার |
-| `src/pages/AdminProducts.tsx` | useProducts hook (compatible) |
-| `src/pages/AdminMarketPrices.tsx` | apiClient methods ব্যবহার |
-| `src/pages/AdminSettings.tsx` | apiClient.getSettings() ব্যবহার |
-| `src/pages/AdminAds.tsx` | apiClient.getAdSettings() ব্যবহার |
+যদি Supabase-এ ফিরে যেতে চান, App.tsx-এ এই পরিবর্তন করুন:
 
-### নতুন ফাইল (ইতিমধ্যে তৈরি):
+```tsx
+// Supabase Contexts
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProductsProvider } from "@/contexts/ProductsContext";
+import { AdSettingsProvider } from "@/contexts/AdSettingsContext";
+```
 
-- `src/lib/api-client.ts` - MySQL API Client
-- `src/contexts/AuthContextMySQL.tsx` - MySQL Auth Context
-- `src/contexts/ProductsContextMySQL.tsx` - MySQL Products Context
-
-## 🔐 Authentication পার্থক্য
-
-| বৈশিষ্ট্য | Supabase | MySQL Backend |
-|---------|----------|---------------|
-| Token Storage | Supabase manages | localStorage ('auth_token') |
-| Session | Session object | JWT token |
-| Auto Refresh | Built-in | Manual (token expiry) |
-| Email Confirm | Optional | Not implemented |
+---
 
 ## ⚠️ গুরুত্বপূর্ণ নোট
 
@@ -115,30 +163,46 @@ if (response.data) {
 
 4. **RLS Policies**: MySQL-এ RLS নেই। Backend middleware দিয়ে authorization handle করা হয়েছে।
 
-## 🚀 Quick Switch
+---
 
-সম্পূর্ণ switch করতে শুধু এই লাইনগুলো পরিবর্তন করুন:
+## 🛠️ Troubleshooting
 
-```tsx
-// src/App.tsx
+### সংযোগ সমস্যা
+```bash
+# API Health Check
+curl https://blog.fishcare.com.bd/api/health
 
-// FROM (Supabase):
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProductsProvider } from "@/contexts/ProductsContext";
-
-// TO (MySQL):
-import { AuthProvider } from "@/contexts/AuthContextMySQL";
-import { ProductsProvider } from "@/contexts/ProductsContextMySQL";
+# Expected Response
+{"status":"ok","timestamp":"2025-..."}
 ```
 
-এবং `.env` এ API URL সেট করুন:
+### CORS সমস্যা
+Backend `.env`-এ FRONTEND_URL সঠিকভাবে সেট করুন:
 ```env
-VITE_API_URL=https://your-api-domain.com/api
+FRONTEND_URL=https://fishcal.lovable.app
 ```
+
+### Database সংযোগ সমস্যা
+Hostinger phpMyAdmin-এ গিয়ে নিশ্চিত করুন:
+1. Database `u109046763_cal` আছে
+2. `schema.sql` ইম্পোর্ট করা হয়েছে
+3. Tables তৈরি হয়েছে
+
+---
+
+## ✅ সফলতার চেকলিস্ট
+
+- [x] Backend Hostinger-এ ডেপ্লয় করা হয়েছে
+- [x] MySQL Database সংযুক্ত
+- [x] API endpoints কাজ করছে
+- [x] Frontend MySQL contexts-এ সুইচ করা হয়েছে
+- [x] GitHub auto-deploy সক্রিয়
+
+---
 
 ## 📞 সাপোর্ট
 
 কোনো সমস্যা হলে:
 1. Browser Console চেক করুন
 2. Network tab-এ API calls দেখুন
-3. Backend logs চেক করুন
+3. Backend logs চেক করুন (`pm2 logs` বা Hostinger Terminal)
