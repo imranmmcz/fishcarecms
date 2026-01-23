@@ -1,0 +1,18 @@
+# Enable Rewrite Engine
+RewriteEngine On
+
+# Proxy all /api requests to Node.js server
+RewriteCond %{REQUEST_URI} ^/api(.*)$
+RewriteRule ^api(.*)$ http://127.0.0.1:3000/api$1 [P,L]
+
+# Handle CORS preflight requests
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "https://fishcal.lovable.app"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header always set Access-Control-Allow-Credentials "true"
+</IfModule>
+
+# Handle OPTIONS requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]

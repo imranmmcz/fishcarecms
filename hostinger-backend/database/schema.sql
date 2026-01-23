@@ -1,7 +1,21 @@
+-- =====================================================
 -- FishCare Pro MySQL Database Schema
--- Run this SQL in your Hostinger phpMyAdmin to create the database structure
+-- Database: u109046763_cal
+-- Host: mysql.hostinger.com
+-- Run this SQL in Hostinger phpMyAdmin
+-- =====================================================
 
--- Create users table
+-- Drop existing tables if needed (uncomment if fresh install)
+-- DROP TABLE IF EXISTS page_content;
+-- DROP TABLE IF EXISTS ad_settings;
+-- DROP TABLE IF EXISTS system_settings;
+-- DROP TABLE IF EXISTS market_prices;
+-- DROP TABLE IF EXISTS products;
+-- DROP TABLE IF EXISTS users;
+
+-- =====================================================
+-- 1. Users Table
+-- =====================================================
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -22,7 +36,9 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_district (district)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create products table
+-- =====================================================
+-- 2. Products Table
+-- =====================================================
 CREATE TABLE IF NOT EXISTS products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -37,7 +53,9 @@ CREATE TABLE IF NOT EXISTS products (
     INDEX idx_category (category)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create market_prices table
+-- =====================================================
+-- 3. Market Prices Table
+-- =====================================================
 CREATE TABLE IF NOT EXISTS market_prices (
     id INT AUTO_INCREMENT PRIMARY KEY,
     fish_name VARCHAR(255) NOT NULL,
@@ -59,7 +77,9 @@ CREATE TABLE IF NOT EXISTS market_prices (
     INDEX idx_price_date (price_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create system_settings table
+-- =====================================================
+-- 4. System Settings Table
+-- =====================================================
 CREATE TABLE IF NOT EXISTS system_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     setting_key VARCHAR(100) NOT NULL UNIQUE,
@@ -71,7 +91,9 @@ CREATE TABLE IF NOT EXISTS system_settings (
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create ad_settings table
+-- =====================================================
+-- 5. Ad Settings Table
+-- =====================================================
 CREATE TABLE IF NOT EXISTS ad_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ad_client_id VARCHAR(255),
@@ -89,7 +111,9 @@ CREATE TABLE IF NOT EXISTS ad_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create page_content table
+-- =====================================================
+-- 6. Page Content Table
+-- =====================================================
 CREATE TABLE IF NOT EXISTS page_content (
     id INT AUTO_INCREMENT PRIMARY KEY,
     section_key VARCHAR(100) NOT NULL UNIQUE,
@@ -104,6 +128,30 @@ CREATE TABLE IF NOT EXISTS page_content (
     INDEX idx_display_order (display_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =====================================================
+-- 7. User Profiles Table (for additional user data)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS profiles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE,
+    full_name VARCHAR(255),
+    email VARCHAR(255),
+    mobile VARCHAR(20),
+    division VARCHAR(100),
+    district VARCHAR(100),
+    upazila VARCHAR(100),
+    village VARCHAR(255),
+    avatar_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- DEFAULT DATA INSERTS
+-- =====================================================
+
 -- Insert default admin user (password: admin123)
 -- Password hash for 'admin123' using bcrypt
 INSERT INTO users (email, password, full_name, role) 
@@ -117,8 +165,39 @@ ON DUPLICATE KEY UPDATE id = id;
 
 -- Insert default system settings
 INSERT INTO system_settings (setting_key, setting_value, description) VALUES
-('site_name', 'FishCare Pro', 'Website name'),
-('default_language', 'bn', 'Default language'),
-('default_currency', 'BDT', 'Default currency'),
-('maintenance_mode', 'false', 'Maintenance mode status')
+('site_name', 'FishCare Pro', 'ওয়েবসাইটের নাম'),
+('default_language', 'bn', 'ডিফল্ট ভাষা'),
+('default_currency', 'BDT', 'ডিফল্ট মুদ্রা'),
+('maintenance_mode', 'false', 'মেইনটেনেন্স মোড স্ট্যাটাস'),
+('contact_email', 'info@fishcare.com.bd', 'যোগাযোগ ইমেইল'),
+('contact_phone', '+880 1XXX-XXXXXX', 'যোগাযোগ ফোন'),
+('facebook_url', 'https://facebook.com/fishcarebd', 'ফেসবুক পেজ'),
+('youtube_url', 'https://youtube.com/fishcarebd', 'ইউটিউব চ্যানেল')
 ON DUPLICATE KEY UPDATE setting_key = setting_key;
+
+-- Insert sample market prices for testing
+INSERT INTO market_prices (fish_name, fish_name_bn, price_per_kg, min_price, max_price, division, district, upazila, market_name, price_date) VALUES
+('Rohu', 'রুই', 280.00, 250.00, 320.00, 'Dhaka', 'Dhaka', 'Dhanmondi', 'Karwan Bazar', CURDATE()),
+('Catla', 'কাতলা', 320.00, 290.00, 350.00, 'Dhaka', 'Dhaka', 'Dhanmondi', 'Karwan Bazar', CURDATE()),
+('Tilapia', 'তেলাপিয়া', 180.00, 160.00, 200.00, 'Dhaka', 'Dhaka', 'Mirpur', 'Mirpur Mach Bazar', CURDATE()),
+('Pangasius', 'পাঙ্গাশ', 150.00, 130.00, 170.00, 'Chittagong', 'Chittagong', 'Pahartali', 'Riazuddin Bazar', CURDATE()),
+('Silver Carp', 'সিলভার কার্প', 200.00, 180.00, 220.00, 'Rajshahi', 'Rajshahi', 'Boalia', 'Shaheb Bazar', CURDATE())
+ON DUPLICATE KEY UPDATE fish_name = fish_name;
+
+-- Insert sample products for testing
+INSERT INTO products (name, description, price, discount_percentage, category, image_url, external_link) VALUES
+('Aqua Medicine Pro', 'মাছের রোগ প্রতিরোধক ঔষধ', 450.00, 10.00, 'medicine', 'https://via.placeholder.com/300x200', 'https://fishcare.com.bd'),
+('Fish Feed Premium', 'উচ্চ প্রোটিন মাছের খাবার', 850.00, 5.00, 'feed', 'https://via.placeholder.com/300x200', 'https://fishcare.com.bd'),
+('Water Testing Kit', 'পানির গুণমান পরীক্ষার কিট', 1200.00, 15.00, 'equipment', 'https://via.placeholder.com/300x200', 'https://fishcare.com.bd'),
+('Aerator Pump', 'পুকুরে অক্সিজেন সরবরাহ যন্ত্র', 3500.00, 8.00, 'equipment', 'https://via.placeholder.com/300x200', 'https://fishcare.com.bd'),
+('Fish Net Large', 'বড় মাছ ধরার জাল', 650.00, 0.00, 'equipment', 'https://via.placeholder.com/300x200', 'https://fishcare.com.bd')
+ON DUPLICATE KEY UPDATE name = name;
+
+-- =====================================================
+-- VERIFY INSTALLATION
+-- =====================================================
+-- Run these queries to verify tables were created:
+-- SHOW TABLES;
+-- SELECT COUNT(*) FROM users;
+-- SELECT COUNT(*) FROM products;
+-- SELECT COUNT(*) FROM market_prices;
