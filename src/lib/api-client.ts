@@ -269,6 +269,43 @@ class ApiClient {
   async deletePageContent(id: string) {
     return this.request(`/page-content/${id}`, { method: 'DELETE' });
   }
+
+  // Orders endpoints
+  async getOrders(params?: { status?: string; limit?: number; offset?: number }) {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) queryParams.append(key, String(value));
+      });
+    }
+    return this.request<{ orders: Order[]; total: number }>(`/orders?${queryParams}`);
+  }
+
+  async getOrder(id: string) {
+    return this.request<{ order: Order }>(`/orders/${id}`);
+  }
+
+  async createOrder(data: CreateOrderData) {
+    return this.request<{ order: Order; message: string }>('/orders', {
+      method: 'POST',
+      body: data as unknown as Record<string, unknown>,
+    });
+  }
+
+  async cancelOrder(id: string) {
+    return this.request<{ message: string }>(`/orders/${id}/cancel`, { method: 'POST' });
+  }
+
+  async updateOrderStatus(id: string, status: string, note?: string) {
+    return this.request<{ order: Order }>(`/orders/${id}/status`, {
+      method: 'PATCH',
+      body: { status, note },
+    });
+  }
+
+  async getOrderStats() {
+    return this.request<OrderStats>('/orders/stats/summary');
+  }
 }
 
 // Types
@@ -349,6 +386,66 @@ export interface PageContent {
   display_order: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface OrderItem {
+  id: number;
+  order_id: number;
+  product_id: number;
+  product_name: string;
+  product_image: string | null;
+  quantity: number;
+  unit_price: number;
+  discount_percentage: number;
+  total_price: number;
+}
+
+export interface Order {
+  id: number;
+  order_number: string;
+  user_id: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  payment_method: string;
+  subtotal: number;
+  shipping_cost: number;
+  discount_amount: number;
+  total_amount: number;
+  shipping_name: string;
+  shipping_mobile: string;
+  shipping_division: string | null;
+  shipping_district: string | null;
+  shipping_upazila: string | null;
+  shipping_address: string | null;
+  customer_note: string | null;
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  items?: OrderItem[];
+  customer_name?: string;
+  customer_email?: string;
+}
+
+export interface CreateOrderData {
+  items: { product_id: number; quantity: number }[];
+  shipping_name: string;
+  shipping_mobile: string;
+  shipping_division?: string;
+  shipping_district?: string;
+  shipping_upazila?: string;
+  shipping_address?: string;
+  payment_method?: string;
+  customer_note?: string;
+}
+
+export interface OrderStats {
+  status_summary: { status: string; count: number; total_amount: number }[];
+  today: { count: number; total_amount: number };
+  this_month: { count: number; total_amount: number };
+  recent_orders: Order[];
+  low_stock_products: { id: number; name: string; stock_quantity: number; stock_status: string }[];
 }
 
 // Export singleton instance
