@@ -405,8 +405,10 @@ const AdminOrders = () => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">{language === "bn" ? "পেমেন্ট" : "Payment"}</p>
-                      <Badge variant={selectedOrder.payment_status === 'paid' ? 'default' : 'secondary'}>
-                        {selectedOrder.payment_status}
+                      <Badge variant={selectedOrder.payment_status === 'paid' ? 'default' : selectedOrder.payment_status === 'verification_pending' ? 'outline' : 'secondary'}>
+                        {selectedOrder.payment_status === 'verification_pending' 
+                          ? (language === "bn" ? "ভেরিফাই পেন্ডিং" : "Verify Pending")
+                          : selectedOrder.payment_status}
                       </Badge>
                     </div>
                     <div>
@@ -414,6 +416,106 @@ const AdminOrders = () => {
                       <p className="text-sm">{new Date(selectedOrder.created_at).toLocaleString()}</p>
                     </div>
                   </div>
+
+                  {/* Payment Details for bKash/Nagad */}
+                  {(selectedOrder.payment_method === 'bkash' || selectedOrder.payment_method === 'nagad') && (
+                    <>
+                      <Separator />
+                      <div className={`p-4 rounded-lg border ${
+                        selectedOrder.payment_method === 'bkash' 
+                          ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800'
+                          : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
+                      }`}>
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <div className={`h-6 w-6 rounded flex items-center justify-center text-white text-xs font-bold ${
+                            selectedOrder.payment_method === 'bkash' ? 'bg-pink-500' : 'bg-orange-500'
+                          }`}>
+                            {selectedOrder.payment_method === 'bkash' ? 'bK' : 'N'}
+                          </div>
+                          {selectedOrder.payment_method === 'bkash' ? 'bKash' : 'Nagad'} {language === "bn" ? "পেমেন্ট তথ্য" : "Payment Details"}
+                        </h4>
+                        <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">{language === "bn" ? "ট্রানজেকশন আইডি" : "Transaction ID"}</p>
+                            <p className="font-mono font-bold">{selectedOrder.payment_trx_id || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">{language === "bn" ? "প্রেরকের নম্বর" : "Sender Number"}</p>
+                            <p className="font-mono font-bold">{selectedOrder.payment_sender_number || '-'}</p>
+                          </div>
+                        </div>
+                        
+                        {selectedOrder.payment_status === 'verification_pending' && (
+                          <div className="mt-4 flex gap-2">
+                            <Button 
+                              size="sm" 
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={async () => {
+                                setIsUpdating(true);
+                                try {
+                                  const response = await apiClient.updateOrderStatus(
+                                    String(selectedOrder.id), 
+                                    'processing', 
+                                    `পেমেন্ট ভেরিফাইড - ${selectedOrder.payment_method} TrxID: ${selectedOrder.payment_trx_id}`
+                                  );
+                                  if (!response.error) {
+                                    // Also update payment status to paid
+                                    await fetch(`${import.meta.env.VITE_API_URL || 'https://blog.fishcare.com.bd/api'}/orders/${selectedOrder.id}/payment`, {
+                                      method: 'PATCH',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                                      },
+                                      body: JSON.stringify({ payment_status: 'paid' })
+                                    });
+                                    toast.success(language === "bn" ? "পেমেন্ট ভেরিফাইড হয়েছে" : "Payment verified");
+                                    fetchData();
+                                    setIsDetailsOpen(false);
+                                  }
+                                } catch (error) {
+                                  toast.error(language === "bn" ? "সমস্যা হয়েছে" : "Failed to verify");
+                                } finally {
+                                  setIsUpdating(false);
+                                }
+                              }}
+                              disabled={isUpdating}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              {language === "bn" ? "পেমেন্ট ভেরিফাই করুন" : "Verify Payment"}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={async () => {
+                                setIsUpdating(true);
+                                try {
+                                  await fetch(`${import.meta.env.VITE_API_URL || 'https://blog.fishcare.com.bd/api'}/orders/${selectedOrder.id}/payment`, {
+                                    method: 'PATCH',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                                    },
+                                    body: JSON.stringify({ payment_status: 'failed' })
+                                  });
+                                  toast.success(language === "bn" ? "পেমেন্ট বাতিল হয়েছে" : "Payment rejected");
+                                  fetchData();
+                                  setIsDetailsOpen(false);
+                                } catch (error) {
+                                  toast.error(language === "bn" ? "সমস্যা হয়েছে" : "Failed");
+                                } finally {
+                                  setIsUpdating(false);
+                                }
+                              }}
+                              disabled={isUpdating}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              {language === "bn" ? "বাতিল করুন" : "Reject"}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
 
                   {selectedOrder.customer_note && (
                     <>

@@ -54,6 +54,9 @@ const Checkout = () => {
     shipping_address: user?.village || "",
     payment_method: "cod",
     customer_note: "",
+    // Manual payment fields
+    payment_trx_id: "",
+    payment_sender_number: "",
   });
 
   const districts = formData.shipping_division 
@@ -65,6 +68,12 @@ const Checkout = () => {
 
   const shippingCost = 0; // Free shipping
   const total = subtotal + shippingCost;
+
+  // Payment account info - Admin panel থেকে configure করা যাবে
+  const paymentAccounts = {
+    bkash: { number: "01711-XXXXXX", type: "Personal" },
+    nagad: { number: "01811-XXXXXX", type: "Personal" },
+  };
 
   const translations = {
     checkout: language === "bn" ? "চেকআউট" : "Checkout",
@@ -80,6 +89,7 @@ const Checkout = () => {
     note: language === "bn" ? "অর্ডার নোট (ঐচ্ছিক)" : "Order Note (Optional)",
     cod: language === "bn" ? "ক্যাশ অন ডেলিভারি" : "Cash on Delivery",
     bkash: language === "bn" ? "বিকাশ" : "bKash",
+    nagad: language === "bn" ? "নগদ" : "Nagad",
     subtotal: language === "bn" ? "সাবটোটাল" : "Subtotal",
     shipping: language === "bn" ? "ডেলিভারি চার্জ" : "Shipping",
     free: language === "bn" ? "ফ্রি" : "Free",
@@ -92,6 +102,11 @@ const Checkout = () => {
     selectDivision: language === "bn" ? "বিভাগ নির্বাচন করুন" : "Select Division",
     selectDistrict: language === "bn" ? "জেলা নির্বাচন করুন" : "Select District",
     selectUpazila: language === "bn" ? "উপজেলা নির্বাচন করুন" : "Select Upazila",
+    trxId: language === "bn" ? "ট্রানজেকশন আইডি (TrxID)" : "Transaction ID (TrxID)",
+    senderNumber: language === "bn" ? "প্রেরকের নম্বর" : "Sender Number",
+    paymentPending: language === "bn" ? "পেমেন্ট ভেরিফিকেশন পেন্ডিং" : "Payment verification pending",
+    sendMoneyTo: language === "bn" ? "টাকা পাঠান এই নম্বরে" : "Send money to",
+    afterPayment: language === "bn" ? "টাকা পাঠানোর পর নিচের তথ্য দিন" : "After sending, provide details below",
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -127,6 +142,13 @@ const Checkout = () => {
     // Validate form
     if (!formData.shipping_name || !formData.shipping_mobile) {
       toast.error(language === "bn" ? "নাম এবং মোবাইল নম্বর প্রয়োজন" : "Name and mobile are required");
+      return;
+    }
+
+    // Validate payment details for bKash/Nagad
+    if ((formData.payment_method === "bkash" || formData.payment_method === "nagad") && 
+        (!formData.payment_trx_id || !formData.payment_sender_number)) {
+      toast.error(language === "bn" ? "ট্রানজেকশন আইডি এবং প্রেরকের নম্বর প্রয়োজন" : "Transaction ID and sender number are required");
       return;
     }
 
@@ -309,13 +331,14 @@ const Checkout = () => {
                     {translations.paymentMethod}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <RadioGroup
                     value={formData.payment_method}
                     onValueChange={(value) => handleInputChange("payment_method", value)}
                     className="space-y-3"
                   >
-                    <div className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors">
+                    {/* Cash on Delivery */}
+                    <div className={`flex items-center space-x-3 border rounded-lg p-4 cursor-pointer transition-colors ${formData.payment_method === 'cod' ? 'border-primary bg-primary/5' : 'hover:border-primary'}`}>
                       <RadioGroupItem value="cod" id="cod" />
                       <Label htmlFor="cod" className="flex-1 cursor-pointer flex items-center gap-3">
                         <Truck className="h-5 w-5 text-primary" />
@@ -327,16 +350,143 @@ const Checkout = () => {
                         </div>
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-3 border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors opacity-50">
-                      <RadioGroupItem value="bkash" id="bkash" disabled />
-                      <Label htmlFor="bkash" className="flex-1 cursor-pointer">
-                        <p className="font-medium">{translations.bkash}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {language === "bn" ? "শীঘ্রই আসছে" : "Coming soon"}
-                        </p>
-                      </Label>
+
+                    {/* bKash Payment */}
+                    <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${formData.payment_method === 'bkash' ? 'border-primary bg-primary/5' : 'hover:border-primary'}`}>
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="bkash" id="bkash" />
+                        <Label htmlFor="bkash" className="flex-1 cursor-pointer flex items-center gap-3">
+                          <div className="h-8 w-8 rounded bg-pink-500 flex items-center justify-center text-white font-bold text-xs">
+                            bK
+                          </div>
+                          <div>
+                            <p className="font-medium">{translations.bkash}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {language === "bn" ? "বিকাশে সেন্ড মানি করুন" : "Send money via bKash"}
+                            </p>
+                          </div>
+                        </Label>
+                      </div>
+                      
+                      {/* bKash Details - Show when selected */}
+                      {formData.payment_method === 'bkash' && (
+                        <div className="mt-4 pl-8 space-y-4">
+                          <div className="p-4 rounded-lg bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800">
+                            <p className="text-sm font-medium text-pink-800 dark:text-pink-200 mb-2">
+                              {translations.sendMoneyTo}:
+                            </p>
+                            <p className="text-lg font-bold text-pink-600 dark:text-pink-400">
+                              {paymentAccounts.bkash.number}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              ({paymentAccounts.bkash.type})
+                            </p>
+                            <p className="text-sm mt-2 text-muted-foreground">
+                              {language === "bn" ? `মোট পরিমাণ: ${formatPrice(total)}` : `Total Amount: ${formatPrice(total)}`}
+                            </p>
+                          </div>
+
+                          <p className="text-sm text-muted-foreground">
+                            {translations.afterPayment}:
+                          </p>
+
+                          <div className="grid sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="bkash_trx">{translations.trxId} *</Label>
+                              <Input
+                                id="bkash_trx"
+                                placeholder="e.g., TRX123ABC456"
+                                value={formData.payment_trx_id}
+                                onChange={(e) => handleInputChange("payment_trx_id", e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="bkash_sender">{translations.senderNumber} *</Label>
+                              <Input
+                                id="bkash_sender"
+                                type="tel"
+                                placeholder="01XXXXXXXXX"
+                                value={formData.payment_sender_number}
+                                onChange={(e) => handleInputChange("payment_sender_number", e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Nagad Payment */}
+                    <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${formData.payment_method === 'nagad' ? 'border-primary bg-primary/5' : 'hover:border-primary'}`}>
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="nagad" id="nagad" />
+                        <Label htmlFor="nagad" className="flex-1 cursor-pointer flex items-center gap-3">
+                          <div className="h-8 w-8 rounded bg-orange-500 flex items-center justify-center text-white font-bold text-xs">
+                            N
+                          </div>
+                          <div>
+                            <p className="font-medium">{translations.nagad}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {language === "bn" ? "নগদে সেন্ড মানি করুন" : "Send money via Nagad"}
+                            </p>
+                          </div>
+                        </Label>
+                      </div>
+                      
+                      {/* Nagad Details - Show when selected */}
+                      {formData.payment_method === 'nagad' && (
+                        <div className="mt-4 pl-8 space-y-4">
+                          <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+                            <p className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">
+                              {translations.sendMoneyTo}:
+                            </p>
+                            <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                              {paymentAccounts.nagad.number}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              ({paymentAccounts.nagad.type})
+                            </p>
+                            <p className="text-sm mt-2 text-muted-foreground">
+                              {language === "bn" ? `মোট পরিমাণ: ${formatPrice(total)}` : `Total Amount: ${formatPrice(total)}`}
+                            </p>
+                          </div>
+
+                          <p className="text-sm text-muted-foreground">
+                            {translations.afterPayment}:
+                          </p>
+
+                          <div className="grid sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="nagad_trx">{translations.trxId} *</Label>
+                              <Input
+                                id="nagad_trx"
+                                placeholder="e.g., NAG123ABC456"
+                                value={formData.payment_trx_id}
+                                onChange={(e) => handleInputChange("payment_trx_id", e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="nagad_sender">{translations.senderNumber} *</Label>
+                              <Input
+                                id="nagad_sender"
+                                type="tel"
+                                placeholder="01XXXXXXXXX"
+                                value={formData.payment_sender_number}
+                                onChange={(e) => handleInputChange("payment_sender_number", e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </RadioGroup>
+
+                  {/* Payment Status Info */}
+                  {(formData.payment_method === 'bkash' || formData.payment_method === 'nagad') && (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 text-sm">
+                      <ShieldCheck className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <p>{translations.paymentPending}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

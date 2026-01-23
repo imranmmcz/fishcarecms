@@ -79,6 +79,11 @@ const DashboardOrders = () => {
     shipping: language === "bn" ? "ডেলিভারি" : "Shipping",
     free: language === "bn" ? "ফ্রি" : "Free",
     confirmCancel: language === "bn" ? "আপনি কি নিশ্চিত এই অর্ডার বাতিল করতে চান?" : "Are you sure you want to cancel this order?",
+    paymentInfo: language === "bn" ? "পেমেন্ট তথ্য" : "Payment Info",
+    paymentMethod: language === "bn" ? "পেমেন্ট পদ্ধতি" : "Payment Method",
+    paymentStatus: language === "bn" ? "পেমেন্ট স্ট্যাটাস" : "Payment Status",
+    trxId: language === "bn" ? "ট্রানজেকশন আইডি" : "Transaction ID",
+    verificationPending: language === "bn" ? "ভেরিফিকেশন পেন্ডিং" : "Verification Pending",
   };
 
   const fetchOrders = async () => {
@@ -267,6 +272,41 @@ const DashboardOrders = () => {
                       .filter(Boolean)
                       .join(", ")}
                   </p>
+                </div>
+
+                <Separator />
+
+                {/* Payment Info */}
+                <div>
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    {translations.paymentInfo}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{translations.paymentMethod}</p>
+                      <p className="font-medium capitalize">
+                        {selectedOrder.payment_method === 'cod' ? (language === "bn" ? "ক্যাশ অন ডেলিভারি" : "Cash on Delivery") : selectedOrder.payment_method}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">{translations.paymentStatus}</p>
+                      <Badge variant={
+                        selectedOrder.payment_status === 'paid' ? 'default' : 
+                        selectedOrder.payment_status === 'verification_pending' ? 'outline' : 
+                        'secondary'
+                      }>
+                        {selectedOrder.payment_status === 'verification_pending' 
+                          ? translations.verificationPending
+                          : selectedOrder.payment_status}
+                      </Badge>
+                    </div>
+                    {selectedOrder.payment_trx_id && (
+                      <div className="col-span-2">
+                        <p className="text-sm text-muted-foreground">{translations.trxId}</p>
+                        <p className="font-mono font-medium">{selectedOrder.payment_trx_id}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <Separator />

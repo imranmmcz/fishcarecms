@@ -167,7 +167,9 @@ router.post('/', authenticateToken, async (req, res) => {
       shipping_upazila,
       shipping_address,
       payment_method = 'cod',
-      customer_note 
+      customer_note,
+      payment_trx_id,
+      payment_sender_number
     } = req.body;
 
     if (!items || items.length === 0) {
@@ -242,16 +244,25 @@ router.post('/', authenticateToken, async (req, res) => {
     const discountAmount = 0;
     const totalAmount = subtotal + shippingCost - discountAmount;
 
+    // Determine payment status based on method
+    // For bKash/Nagad with TrxID, set status as verification_pending
+    let paymentStatus = 'pending';
+    if ((payment_method === 'bkash' || payment_method === 'nagad') && payment_trx_id) {
+      paymentStatus = 'verification_pending';
+    }
+
     // Create order
     const [orderResult] = await connection.execute(
       `INSERT INTO orders (
         order_number, user_id, status, payment_status, payment_method,
+        payment_trx_id, payment_sender_number,
         subtotal, shipping_cost, discount_amount, total_amount,
         shipping_name, shipping_mobile, shipping_division, shipping_district,
         shipping_upazila, shipping_address, customer_note
-      ) VALUES (?, ?, 'pending', 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        orderNumber, req.user.id, payment_method,
+        orderNumber, req.user.id, paymentStatus, payment_method,
+        payment_trx_id || null, payment_sender_number || null,
         subtotal, shippingCost, discountAmount, totalAmount,
         shipping_name, shipping_mobile, shipping_division || null,
         shipping_district || null, shipping_upazila || null,
