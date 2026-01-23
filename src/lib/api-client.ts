@@ -415,8 +415,10 @@ export interface Order {
   order_number: string;
   user_id: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
-  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunded' | 'verification_pending';
   payment_method: string;
+  payment_trx_id: string | null;
+  payment_sender_number: string | null;
   subtotal: number;
   shipping_cost: number;
   discount_amount: number;
@@ -450,6 +452,9 @@ export interface CreateOrderData {
   shipping_address?: string;
   payment_method?: string;
   customer_note?: string;
+  // Manual payment fields (bKash/Nagad)
+  payment_trx_id?: string;
+  payment_sender_number?: string;
 }
 
 export interface OrderStats {

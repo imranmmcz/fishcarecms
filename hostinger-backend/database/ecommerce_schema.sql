@@ -19,8 +19,14 @@ CREATE TABLE IF NOT EXISTS orders (
   order_number VARCHAR(50) NOT NULL UNIQUE,
   user_id INT NOT NULL,
   status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded') DEFAULT 'pending',
-  payment_status ENUM('pending', 'paid', 'failed', 'refunded') DEFAULT 'pending',
+  payment_status ENUM('pending', 'paid', 'failed', 'refunded', 'verification_pending') DEFAULT 'pending',
   payment_method VARCHAR(50) DEFAULT 'cod',
+  
+  -- Manual Payment Info (bKash/Nagad)
+  payment_trx_id VARCHAR(100) DEFAULT NULL,
+  payment_sender_number VARCHAR(20) DEFAULT NULL,
+  payment_verified_at TIMESTAMP NULL,
+  payment_verified_by INT DEFAULT NULL,
   
   -- Pricing
   subtotal DECIMAL(10,2) NOT NULL DEFAULT 0,
@@ -49,9 +55,20 @@ CREATE TABLE IF NOT EXISTS orders (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_user_id (user_id),
   INDEX idx_status (status),
+  INDEX idx_payment_status (payment_status),
   INDEX idx_order_number (order_number),
   INDEX idx_created_at (created_at)
 );
+
+-- Alter existing orders table if it exists (add new payment columns)
+ALTER TABLE orders 
+ADD COLUMN IF NOT EXISTS payment_trx_id VARCHAR(100) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS payment_sender_number VARCHAR(20) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS payment_verified_at TIMESTAMP NULL,
+ADD COLUMN IF NOT EXISTS payment_verified_by INT DEFAULT NULL;
+
+-- Update payment_status enum to include verification_pending
+ALTER TABLE orders MODIFY COLUMN payment_status ENUM('pending', 'paid', 'failed', 'refunded', 'verification_pending') DEFAULT 'pending';
 
 -- 3. Order Items টেবিল
 CREATE TABLE IF NOT EXISTS order_items (
