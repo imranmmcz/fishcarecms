@@ -4,11 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FarmingProvider } from "@/contexts/FarmingContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProductsProvider } from "@/contexts/ProductsContext";
+// MySQL Backend Contexts - Hostinger MySQL Database
+import { AuthProvider } from "@/contexts/AuthContextMySQL";
+import { ProductsProvider } from "@/contexts/ProductsContextMySQL";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
-import { AdSettingsProvider } from "@/contexts/AdSettingsContext";
+import { AdSettingsProvider } from "@/contexts/AdSettingsContextMySQL";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
