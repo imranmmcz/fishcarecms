@@ -1,4 +1,4 @@
-import { Fish, Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, ChevronDown, TrendingUp } from "lucide-react";
+import { Fish, Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, ChevronDown, TrendingUp, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Button3D } from "@/components/ui/button-3d";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContextMySQL";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { CartSheet } from "@/components/CartSheet";
 
 export const Header = () => {
   const location = useLocation();
@@ -65,8 +66,11 @@ export const Header = () => {
             </Link>
           ))}
           
-          {/* Auth Section */}
+          {/* Cart & Auth Section */}
           <div className="flex items-center gap-2 ml-4 border-l border-border pl-4">
+            {/* Cart Button */}
+            <CartSheet />
+            
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

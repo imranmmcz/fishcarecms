@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { divisions, getDistrictsByDivision, getUpazilasByDistrict } from "@/data/bangladeshLocationData";
+import { divisions, districtsByDivision, upazilasByDistrict } from "@/data/bangladeshLocationData";
 import {
   ShoppingBag,
   CreditCard,
@@ -57,10 +57,10 @@ const Checkout = () => {
   });
 
   const districts = formData.shipping_division 
-    ? getDistrictsByDivision(formData.shipping_division) 
+    ? districtsByDivision[formData.shipping_division] || []
     : [];
   const upazilas = formData.shipping_district 
-    ? getUpazilasByDistrict(formData.shipping_district) 
+    ? upazilasByDistrict[formData.shipping_district] || []
     : [];
 
   const shippingCost = 0; // Free shipping
@@ -242,8 +242,8 @@ const Checkout = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {divisions.map((div) => (
-                            <SelectItem key={div.id} value={div.name}>
-                              {div.bn_name}
+                            <SelectItem key={div} value={div}>
+                              {div}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -261,8 +261,8 @@ const Checkout = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {districts.map((dist) => (
-                            <SelectItem key={dist.id} value={dist.name}>
-                              {dist.bn_name}
+                            <SelectItem key={dist} value={dist}>
+                              {dist}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -280,8 +280,8 @@ const Checkout = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {upazilas.map((upa) => (
-                            <SelectItem key={upa.id} value={upa.name}>
-                              {upa.bn_name}
+                            <SelectItem key={upa} value={upa}>
+                              {upa}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -407,7 +407,7 @@ const Checkout = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{translations.shipping}</span>
-                      <span className="text-green-600">{translations.free}</span>
+                      <span className="text-primary">{translations.free}</span>
                     </div>
                   </div>
 
