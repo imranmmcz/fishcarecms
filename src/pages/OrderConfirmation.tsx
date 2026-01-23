@@ -8,7 +8,8 @@ import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { apiClient, Order } from "@/lib/api-client";
+import { apiClient } from "@/lib/api-client";
+import type { Order } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -112,7 +113,7 @@ const OrderConfirmation = () => {
       <div className="container py-8 max-w-4xl">
         {/* Success Message */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 text-green-600 mb-4">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-4">
             <CheckCircle2 className="h-10 w-10" />
           </div>
           <h1 className="text-3xl font-bold mb-2">{translations.orderConfirmed}</h1>
@@ -215,7 +216,7 @@ const OrderConfirmation = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{translations.shipping}</span>
-                <span className="text-green-600">
+                <span className="text-primary">
                   {order.shipping_cost > 0 ? formatPrice(order.shipping_cost) : translations.free}
                 </span>
               </div>

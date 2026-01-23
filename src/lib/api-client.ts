@@ -400,6 +400,16 @@ export interface OrderItem {
   total_price: number;
 }
 
+export interface OrderStatusHistory {
+  id: number;
+  order_id: number;
+  status: string;
+  note: string | null;
+  changed_by: number | null;
+  changed_by_name?: string;
+  created_at: string;
+}
+
 export interface Order {
   id: number;
   order_number: string;
@@ -424,8 +434,10 @@ export interface Order {
   shipped_at: string | null;
   delivered_at: string | null;
   items?: OrderItem[];
+  status_history?: OrderStatusHistory[];
   customer_name?: string;
   customer_email?: string;
+  item_count?: number;
 }
 
 export interface CreateOrderData {
