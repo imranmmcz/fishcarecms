@@ -1,8 +1,8 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
-import { ProductCard } from "@/components/ProductCard";
-import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
+import { ProductCard, DisplayProduct } from "@/components/ProductCard";
+import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContextMySQL";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fishProducts as staticProducts, productCategories } from "@/data/fishProductData";
 import { ShoppingBag, Loader2, Search, X, SlidersHorizontal, Pill, Utensils, Wrench } from "lucide-react";
@@ -41,7 +41,7 @@ const Shop = () => {
   const { t, language } = useLanguage();
 
   // Combine database products with static products
-  const allProducts = useMemo(() => [
+  const allProducts = useMemo((): DisplayProduct[] => [
     ...dbProducts.map((p) => ({
       id: p.id,
       name: p.name,
@@ -49,16 +49,29 @@ const Shop = () => {
       description: p.description || "",
       price: getDiscountedPrice(p.price, p.discount_percentage),
       originalPrice: p.discount_percentage > 0 ? p.price : undefined,
-      image: p.image_url || "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=400&fit=crop",
+      image: p.image_url || undefined,
+      image_url: p.image_url || undefined,
       category: p.category as "medicine" | "food" | "accessories",
       categoryLabel: p.category === "medicine" ? (language === "bn" ? "ঔষধ" : "Medicine") : p.category === "food" ? (language === "bn" ? "খাবার" : "Food") : (language === "bn" ? "সরঞ্জাম" : "Accessories"),
       featured: false,
-      externalLink: p.external_link || "https://fishcare.com.bd",
+      externalLink: p.external_link || undefined,
+      external_link: p.external_link || undefined,
+      discount_percentage: p.discount_percentage,
       company: "FishCare BD",
       isFromDatabase: true,
     })),
     ...staticProducts.map((p) => ({
-      ...p,
+      id: p.id,
+      name: p.name,
+      nameEn: p.nameEn,
+      description: p.description,
+      price: p.price,
+      originalPrice: p.originalPrice,
+      image: p.image,
+      category: p.category as "medicine" | "food" | "accessories",
+      categoryLabel: p.categoryLabel,
+      featured: p.featured,
+      externalLink: p.externalLink,
       company: "FishCare BD",
       isFromDatabase: false,
     })),
@@ -94,7 +107,7 @@ const Shop = () => {
 
     // Product name matches
     allProducts.forEach((p) => {
-      if (p.name.toLowerCase().includes(query) || p.nameEn.toLowerCase().includes(query)) {
+      if (p.name.toLowerCase().includes(query) || (p.nameEn && p.nameEn.toLowerCase().includes(query))) {
         if (!results.find((r) => r.value === p.name)) {
           results.push({ type: productLabel, value: p.name, label: p.name });
         }
@@ -106,16 +119,6 @@ const Shop = () => {
       if (cat.label.toLowerCase().includes(query) && cat.value !== "all") {
         if (!results.find((r) => r.value === cat.value)) {
           results.push({ type: categoryLabel, value: cat.value, label: cat.label });
-        }
-      }
-    });
-
-    // Company matches
-    const companies = [...new Set(allProducts.map((p) => p.company))];
-    companies.forEach((company) => {
-      if (company.toLowerCase().includes(query)) {
-        if (!results.find((r) => r.value === company)) {
-          results.push({ type: companyLabel, value: company, label: company });
         }
       }
     });
@@ -140,12 +143,11 @@ const Shop = () => {
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const matchesName = product.name.toLowerCase().includes(query) || 
-                           product.nameEn.toLowerCase().includes(query);
+                           (product.nameEn && product.nameEn.toLowerCase().includes(query));
         const matchesCategory = product.categoryLabel.toLowerCase().includes(query);
-        const matchesCompany = product.company.toLowerCase().includes(query);
         const matchesDescription = product.description.toLowerCase().includes(query);
         
-        if (!matchesName && !matchesCategory && !matchesCompany && !matchesDescription) {
+        if (!matchesName && !matchesCategory && !matchesDescription) {
           return false;
         }
       }
@@ -387,7 +389,7 @@ const Shop = () => {
                       </div>
                       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {products.map((product) => (
-                          <ProductCard key={product.id} product={product} />
+                          <ProductCard key={`${product.isFromDatabase ? 'db' : 'static'}-${product.id}`} product={product} />
                         ))}
                       </div>
                     </section>
@@ -398,7 +400,7 @@ const Shop = () => {
               // Filtered view (non-grouped)
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard key={`${product.isFromDatabase ? 'db' : 'static'}-${product.id}`} product={product} />
                 ))}
               </div>
             )}

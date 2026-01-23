@@ -1,9 +1,31 @@
-import { ExternalLink, Pill, Utensils, Wrench } from "lucide-react";
+import { ExternalLink, Pill, Utensils, Wrench, ShoppingCart, Plus, Minus, Check } from "lucide-react";
 import { Button3D } from "@/components/ui/button-3d";
-import { FishProduct } from "@/data/fishProductData";
+import { Button } from "@/components/ui/button";
+import { useCart } from "@/contexts/CartContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Product } from "@/lib/api-client";
+
+// Extended product type that can come from database or static data
+export interface DisplayProduct {
+  id: number | string;
+  name: string;
+  nameEn?: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  image?: string;
+  image_url?: string;
+  category: "medicine" | "food" | "accessories";
+  categoryLabel: string;
+  externalLink?: string;
+  external_link?: string;
+  discount_percentage?: number;
+  isFromDatabase?: boolean;
+}
 
 interface ProductCardProps {
-  product: FishProduct;
+  product: DisplayProduct;
 }
 
 // Category-specific icons and colors
@@ -25,19 +47,53 @@ const categoryConfig: Record<string, { icon: React.ReactNode; bgClass: string }>
 // Check if image URL is valid (not a placeholder or empty)
 const isValidImage = (imageUrl: string | undefined): boolean => {
   if (!imageUrl) return false;
-  // Check for common placeholder patterns
   if (imageUrl.includes("placeholder")) return false;
   if (imageUrl.includes("unsplash.com/photo-1544551763-46a013bb70d5")) return false;
   return true;
 };
 
 export const ProductCard = ({ product }: ProductCardProps) => {
+  const { addToCart, isInCart, getItemQuantity, updateQuantity, removeFromCart } = useCart();
+  const { formatPrice } = useCurrency();
+  const { language } = useLanguage();
+  
+  const imageUrl = product.image_url || product.image;
+  const hasValidImage = isValidImage(imageUrl);
+  const config = categoryConfig[product.category] || categoryConfig.medicine;
+  const inCart = product.isFromDatabase && isInCart(Number(product.id));
+  const quantity = product.isFromDatabase ? getItemQuantity(Number(product.id)) : 0;
+  const externalLink = product.external_link || product.externalLink;
+
   const handleOrderClick = () => {
-    window.open(product.externalLink, '_blank', 'noopener,noreferrer');
+    if (externalLink) {
+      window.open(externalLink, '_blank', 'noopener,noreferrer');
+    }
   };
 
-  const hasValidImage = isValidImage(product.image);
-  const config = categoryConfig[product.category] || categoryConfig.medicine;
+  const handleAddToCart = () => {
+    if (product.isFromDatabase) {
+      const dbProduct: Product = {
+        id: Number(product.id),
+        name: product.name,
+        description: product.description || null,
+        price: product.originalPrice || product.price,
+        discount_percentage: product.discount_percentage || 0,
+        category: product.category,
+        image_url: product.image_url || null,
+        external_link: product.external_link || null,
+        created_at: '',
+        updated_at: '',
+      };
+      addToCart(dbProduct, 1);
+    }
+  };
+
+  const translations = {
+    orderNow: language === "bn" ? "এখনই অর্ডার করুন" : "Order Now",
+    addToCart: language === "bn" ? "কার্টে যোগ করুন" : "Add to Cart",
+    inCart: language === "bn" ? "কার্টে আছে" : "In Cart",
+    discount: language === "bn" ? "ছাড়" : "OFF",
+  };
 
   return (
     <div className="group relative bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-elegant transition-all duration-300 border border-border/50">
@@ -45,7 +101,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       <div className="relative aspect-square overflow-hidden bg-muted">
         {hasValidImage ? (
           <img
-            src={product.image}
+            src={imageUrl}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
@@ -63,10 +119,20 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </span>
 
         {/* Discount Badge */}
-        {product.originalPrice && (
+        {(product.originalPrice || (product.discount_percentage && product.discount_percentage > 0)) && (
           <span className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold bg-destructive text-destructive-foreground shadow-md">
-            {Math.round((1 - product.price / product.originalPrice) * 100)}% ছাড়
+            {product.originalPrice 
+              ? `${Math.round((1 - product.price / product.originalPrice) * 100)}%`
+              : `${product.discount_percentage}%`
+            } {translations.discount}
           </span>
+        )}
+
+        {/* In Cart Badge */}
+        {inCart && (
+          <div className="absolute bottom-3 right-3 bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
+            <Check className="h-4 w-4" />
+          </div>
         )}
       </div>
 
@@ -76,7 +142,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <h3 className="text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
             {product.name}
           </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">{product.nameEn}</p>
+          {product.nameEn && (
+            <p className="text-xs text-muted-foreground mt-0.5">{product.nameEn}</p>
+          )}
         </div>
 
         <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
@@ -85,22 +153,64 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
         {/* Price */}
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-primary">৳{product.price}</span>
+          <span className="text-2xl font-bold text-primary">{formatPrice(product.price)}</span>
           {product.originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">৳{product.originalPrice}</span>
+            <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
           )}
         </div>
 
-        {/* Order Button */}
-        <Button3D 
-          variant="success" 
-          size="sm" 
-          className="w-full gap-2"
-          onClick={handleOrderClick}
-        >
-          <ExternalLink className="h-4 w-4" />
-          এখনই অর্ডার করুন
-        </Button3D>
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          {/* Add to Cart / Quantity Controls (for database products) */}
+          {product.isFromDatabase && (
+            <>
+              {inCart ? (
+                <div className="flex items-center justify-between bg-muted rounded-lg p-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => updateQuantity(Number(product.id), quantity - 1)}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="font-bold text-lg">{quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => updateQuantity(Number(product.id), quantity + 1)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button3D 
+                  variant="primary" 
+                  size="sm" 
+                  className="w-full gap-2"
+                  onClick={handleAddToCart}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  {translations.addToCart}
+                </Button3D>
+              )}
+            </>
+          )}
+
+          {/* External Order Button */}
+          {externalLink && (
+            <Button3D 
+              variant="success"
+              size="sm" 
+              className="w-full gap-2"
+              onClick={handleOrderClick}
+            >
+              <ExternalLink className="h-4 w-4" />
+              {translations.orderNow}
+            </Button3D>
+          )}
+        </div>
       </div>
     </div>
   );
