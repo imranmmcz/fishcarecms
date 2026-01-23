@@ -4,7 +4,7 @@
  */
 
 // API Base URL - Hostinger-এ ডেপ্লয় করার পর আপডেট করুন
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://blog.fishcare.com.bd/api';
 
 interface ApiResponse<T = unknown> {
   data?: T;
