@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, Palette } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
 
@@ -18,6 +18,16 @@ interface SystemSetting {
   setting_key: string;
   setting_value: string | null;
   description: string | null;
+}
+
+interface PaymentSettingsState {
+  payment_bkash_number: string;
+  payment_bkash_type: string;
+  payment_bkash_enabled: string;
+  payment_nagad_number: string;
+  payment_nagad_type: string;
+  payment_nagad_enabled: string;
+  payment_cod_enabled: string;
 }
 
 const AdminSettings = () => {
@@ -207,7 +217,7 @@ const AdminSettings = () => {
         </div>
 
         <Tabs defaultValue="language" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
             <TabsTrigger value="language" className="flex items-center gap-2">
               <Globe className="h-4 w-4" />
               {language === "bn" ? "ভাষা" : "Language"}
@@ -215,6 +225,10 @@ const AdminSettings = () => {
             <TabsTrigger value="currency" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               {language === "bn" ? "মুদ্রা" : "Currency"}
+            </TabsTrigger>
+            <TabsTrigger value="payment" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              {language === "bn" ? "পেমেন্ট" : "Payment"}
             </TabsTrigger>
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -394,6 +408,158 @@ const AdminSettings = () => {
             </Card>
           </TabsContent>
 
+          {/* Payment Settings Tab */}
+          <TabsContent value="payment" className="space-y-6 mt-6">
+            <Card className="border-pink-500/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded bg-pink-500 flex items-center justify-center text-white font-bold text-xs">
+                    bK
+                  </div>
+                  {language === "bn" ? "বিকাশ সেটিংস" : "bKash Settings"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "bn" 
+                    ? "বিকাশ পেমেন্ট অপশন কনফিগার করুন"
+                    : "Configure bKash payment option"
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="bkash_enabled">{language === "bn" ? "বিকাশ সক্রিয়" : "bKash Enabled"}</Label>
+                  <Switch
+                    id="bkash_enabled"
+                    checked={localSettings.payment_bkash_enabled !== "false"}
+                    onCheckedChange={(checked) =>
+                      handleSettingChange("payment_bkash_enabled", checked.toString())
+                    }
+                  />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{language === "bn" ? "বিকাশ নম্বর" : "bKash Number"}</Label>
+                    <Input
+                      value={localSettings.payment_bkash_number || ""}
+                      onChange={(e) => handleSettingChange("payment_bkash_number", e.target.value)}
+                      placeholder="01711-XXXXXX"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{language === "bn" ? "একাউন্ট টাইপ" : "Account Type"}</Label>
+                    <Select
+                      value={localSettings.payment_bkash_type || "Personal"}
+                      onValueChange={(v) => handleSettingChange("payment_bkash_type", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Personal">Personal</SelectItem>
+                        <SelectItem value="Merchant">Merchant</SelectItem>
+                        <SelectItem value="Agent">Agent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-orange-500/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded bg-orange-500 flex items-center justify-center text-white font-bold text-xs">
+                    N
+                  </div>
+                  {language === "bn" ? "নগদ সেটিংস" : "Nagad Settings"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "bn" 
+                    ? "নগদ পেমেন্ট অপশন কনফিগার করুন"
+                    : "Configure Nagad payment option"
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="nagad_enabled">{language === "bn" ? "নগদ সক্রিয়" : "Nagad Enabled"}</Label>
+                  <Switch
+                    id="nagad_enabled"
+                    checked={localSettings.payment_nagad_enabled !== "false"}
+                    onCheckedChange={(checked) =>
+                      handleSettingChange("payment_nagad_enabled", checked.toString())
+                    }
+                  />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{language === "bn" ? "নগদ নম্বর" : "Nagad Number"}</Label>
+                    <Input
+                      value={localSettings.payment_nagad_number || ""}
+                      onChange={(e) => handleSettingChange("payment_nagad_number", e.target.value)}
+                      placeholder="01811-XXXXXX"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{language === "bn" ? "একাউন্ট টাইপ" : "Account Type"}</Label>
+                    <Select
+                      value={localSettings.payment_nagad_type || "Personal"}
+                      onValueChange={(v) => handleSettingChange("payment_nagad_type", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Personal">Personal</SelectItem>
+                        <SelectItem value="Merchant">Merchant</SelectItem>
+                        <SelectItem value="Agent">Agent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-green-500/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded bg-green-500 flex items-center justify-center text-white font-bold text-xs">
+                    COD
+                  </div>
+                  {language === "bn" ? "ক্যাশ অন ডেলিভারি" : "Cash on Delivery"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "bn" 
+                    ? "পণ্য হাতে পেয়ে পেমেন্ট করার অপশন"
+                    : "Pay when product is delivered"
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="cod_enabled">{language === "bn" ? "COD সক্রিয়" : "COD Enabled"}</Label>
+                  <Switch
+                    id="cod_enabled"
+                    checked={localSettings.payment_cod_enabled !== "false"}
+                    onCheckedChange={(checked) =>
+                      handleSettingChange("payment_cod_enabled", checked.toString())
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="rounded-lg bg-muted/50 p-4">
+              <p className="text-sm text-muted-foreground">
+                <strong>{language === "bn" ? "নোট:" : "Note:"}</strong>{" "}
+                {language === "bn"
+                  ? "পেমেন্ট সেটিংস পরিবর্তন করলে চেকআউট পেজে অবিলম্বে প্রযোজ্য হবে। সেভ করতে ভুলবেন না।"
+                  : "Payment settings changes will apply immediately on checkout page. Don't forget to save."
+                }
+              </p>
+            </div>
+          </TabsContent>
+
           {/* General Settings Tab */}
           <TabsContent value="general" className="space-y-6 mt-6">
             {isLoading ? (
@@ -402,7 +568,9 @@ const AdminSettings = () => {
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2">
-                {settings.map((setting) => (
+                {settings
+                  .filter(s => !s.setting_key.startsWith("payment_"))
+                  .map((setting) => (
                   <Card key={setting.id}>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-lg">
@@ -423,7 +591,7 @@ const AdminSettings = () => {
             <Card className="border-accent/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5 text-accent" />
+                  <Settings className="h-5 w-5 text-accent" />
                   {t.additionalConfig}
                 </CardTitle>
                 <CardDescription>{t.advancedSettings}</CardDescription>
