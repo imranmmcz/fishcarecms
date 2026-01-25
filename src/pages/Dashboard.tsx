@@ -2,8 +2,8 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Waves, Calculator, Fish, ChevronRight, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContextMySQL";
+// User data is now directly available from AuthContextMySQL user object
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -95,28 +95,12 @@ export default function Dashboard() {
   const [pondIncomes, setPondIncomes] = useState<IncomeRecord[]>([]);
   const [pondExpenses, setPondExpenses] = useState<ExpenseRecord[]>([]);
 
-  // Fetch user profile name and avatar
+  // Use user data directly from MySQL context instead of fetching from Supabase
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user) return;
-      
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name, avatar_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      if (data) {
-        if (data.full_name) {
-          setUserName(data.full_name);
-        }
-        if (data.avatar_url) {
-          setUserAvatar(data.avatar_url);
-        }
-      }
-    };
-    
-    fetchUserProfile();
+    if (user) {
+      setUserName(user.full_name || user.email?.split('@')[0] || '');
+      setUserAvatar(user.avatar_url || null);
+    }
   }, [user]);
 
   useEffect(() => {
