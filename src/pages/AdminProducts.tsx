@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
-import { useProducts, getDiscountedPrice, Product } from "@/contexts/ProductsContext";
+import { useProducts, getDiscountedPrice, Product } from "@/contexts/ProductsContextMySQL";
 import { Button3D } from "@/components/ui/button-3d";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -197,7 +197,7 @@ const AdminProducts = () => {
       return;
     }
     setIsSubmitting(true);
-    const success = await updateProduct(selectedProduct.id, {
+    const success = await updateProduct(String(selectedProduct.id), {
       name: formData.name,
       description: formData.description || null,
       price: formData.price,
@@ -216,7 +216,7 @@ const AdminProducts = () => {
   const handleDelete = async () => {
     if (!selectedProduct) return;
     setIsSubmitting(true);
-    const success = await deleteProduct(selectedProduct.id);
+    const success = await deleteProduct(String(selectedProduct.id));
     setIsSubmitting(false);
     if (success) {
       setIsDeleteOpen(false);

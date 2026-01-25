@@ -4,8 +4,11 @@
  */
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { apiClient, Product } from "@/lib/api-client";
+import { apiClient, Product as ProductType } from "@/lib/api-client";
 import { toast } from "sonner";
+
+// Re-export Product type for consumers
+export type Product = ProductType;
 
 interface ProductsContextType {
   products: Product[];

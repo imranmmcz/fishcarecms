@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContextMySQL";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +13,7 @@ import { User, Camera, Loader2, Save, Mail, Calendar, Lock, Eye, EyeOff } from "
 import { AddressFields } from "@/components/AddressFields";
 
 export default function Profile() {
-  const { user, isLoading: authLoading, isAdmin } = useAuth();
+  const { user, isLoading: authLoading, isAdmin, updateProfile, updatePassword, refreshUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,106 +51,46 @@ export default function Profile() {
     }
 
     if (user) {
-      fetchProfile();
+      // Load profile data from user object (MySQL backend)
+      setFullName(user.full_name || "");
+      setAvatarUrl(user.avatar_url || null);
+      setMobile(user.mobile || "");
+      setDivision(user.division || "");
+      setDistrict(user.district || "");
+      setUpazila(user.upazila || "");
+      setVillage(user.village || "");
+      setLoading(false);
     }
   }, [user, authLoading, navigate]);
 
-  const fetchProfile = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name, avatar_url, mobile, division, district, upazila, village")
-        .eq("user_id", user!.id)
-        .single();
-
-      if (error && error.code !== "PGRST116") {
-        throw error;
-      }
-
-      if (data) {
-        setFullName(data.full_name || "");
-        setAvatarUrl(data.avatar_url);
-        setMobile(data.mobile || "");
-        setDivision(data.division || "");
-        setDistrict(data.district || "");
-        setUpazila(data.upazila || "");
-        setVillage(data.village || "");
-      }
-    } catch (error: any) {
-      console.error("Error fetching profile:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setUploading(true);
-      
-      if (!event.target.files || event.target.files.length === 0) {
-        return;
-      }
-
-      const file = event.target.files[0];
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${user!.id}/${Math.random()}.${fileExt}`;
-
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
-
-      // Update profile with new avatar URL
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ avatar_url: publicUrl })
-        .eq("user_id", user!.id);
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      setAvatarUrl(publicUrl);
-      toast.success("প্রোফাইল ছবি আপলোড হয়েছে!");
-    } catch (error: any) {
-      toast.error("ছবি আপলোড করতে সমস্যা হয়েছে");
-      console.error("Error uploading avatar:", error);
-    } finally {
-      setUploading(false);
-    }
+    // Note: Avatar upload requires backend file upload endpoint
+    // For now, show a message that this feature needs backend support
+    toast.info("অ্যাভাটার আপলোড বৈশিষ্ট্য শীঘ্রই আসছে!");
+    setUploading(false);
   };
 
   const handleSaveProfile = async () => {
     try {
       setSaving(true);
       
-      const { error } = await supabase
-        .from("profiles")
-        .update({ 
-          full_name: fullName,
-          mobile,
-          division,
-          district,
-          upazila,
-          village
-        })
-        .eq("user_id", user!.id);
+      const { error } = await updateProfile({
+        full_name: fullName,
+        mobile,
+        division,
+        district,
+        upazila,
+        village
+      });
 
       if (error) {
         throw error;
       }
 
+      // Refresh user data to get updated values
+      await refreshUser();
       toast.success("প্রোফাইল সফলভাবে আপডেট হয়েছে!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("প্রোফাইল আপডেট করতে সমস্যা হয়েছে");
       console.error("Error updating profile:", error);
     } finally {
@@ -188,24 +127,15 @@ export default function Profile() {
     try {
       setChangingPassword(true);
 
-      // First verify current password by re-authenticating
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user!.email!,
-        password: currentPassword,
-      });
+      const { error } = await updatePassword(currentPassword, newPassword);
 
-      if (signInError) {
-        toast.error("বর্তমান পাসওয়ার্ড সঠিক নয়");
+      if (error) {
+        if (error.message.includes("incorrect") || error.message.includes("Invalid")) {
+          toast.error("বর্তমান পাসওয়ার্ড সঠিক নয়");
+        } else {
+          throw error;
+        }
         return;
-      }
-
-      // Update password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (updateError) {
-        throw updateError;
       }
 
       toast.success("পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!");
@@ -214,7 +144,7 @@ export default function Profile() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে");
       console.error("Error changing password:", error);
     } finally {

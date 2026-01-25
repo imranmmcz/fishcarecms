@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContextMySQL";
 import {
   Sidebar,
   SidebarContent,

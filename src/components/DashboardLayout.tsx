@@ -1,9 +1,9 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContextMySQL";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
+// User data is now directly available from AuthContextMySQL user object
 import {
   Sidebar,
   SidebarContent,
@@ -115,23 +115,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     },
   ];
 
+  // Use user data directly from MySQL context instead of fetching from Supabase
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user) return;
-      
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, avatar_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      if (data) {
-        if (data.full_name) setUserName(data.full_name);
-        if (data.avatar_url) setUserAvatar(data.avatar_url);
-      }
-    };
-    
-    fetchUserProfile();
+    if (user) {
+      setUserName(user.full_name || user.email?.split('@')[0] || '');
+      setUserAvatar(user.avatar_url || null);
+    }
   }, [user]);
 
   const handleLogout = async () => {
