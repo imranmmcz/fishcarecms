@@ -42,6 +42,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
+import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
   pending: { color: "bg-yellow-500", icon: <Clock className="h-4 w-4" />, label: { bn: "পেন্ডিং", en: "Pending" } },
@@ -310,6 +311,14 @@ const DashboardOrders = () => {
                 </div>
 
                 <Separator />
+
+                {/* Shipment Tracking */}
+                {(selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered' || selectedOrder.courier_name || selectedOrder.tracking_number) && (
+                  <>
+                    <ShipmentTrackingDisplay order={selectedOrder} />
+                    <Separator />
+                  </>
+                )}
 
                 {/* Items */}
                 <div>

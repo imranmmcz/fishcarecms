@@ -24,6 +24,7 @@ import {
   ShoppingBag,
   ArrowRight,
 } from "lucide-react";
+import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
 
 const statusConfig: Record<string, { color: string; label: { bn: string; en: string } }> = {
   pending: { color: "bg-yellow-500", label: { bn: "পেন্ডিং", en: "Pending" } },
@@ -170,6 +171,13 @@ const OrderConfirmation = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Shipment Tracking - Show when available */}
+        {(order.status === 'shipped' || order.status === 'delivered' || order.courier_name || order.tracking_number) && (
+          <div className="mb-8">
+            <ShipmentTrackingDisplay order={order} />
+          </div>
+        )}
 
         {/* Order Items */}
         <Card className="mb-8">

@@ -303,6 +303,22 @@ class ApiClient {
     });
   }
 
+  async updateOrderShipping(id: string, data: {
+    courier_name?: string;
+    tracking_number?: string;
+    tracking_url?: string;
+    estimated_delivery?: string;
+  }) {
+    return this.request<{ order: Order }>(`/orders/${id}/shipping`, {
+      method: 'PATCH',
+      body: data,
+    });
+  }
+
+  async getCourierServices() {
+    return this.request<{ couriers: CourierService[] }>('/orders/couriers', { requiresAuth: true });
+  }
+
   async getOrderStats() {
     return this.request<OrderStats>('/orders/stats/summary');
   }
@@ -435,11 +451,25 @@ export interface Order {
   updated_at: string;
   shipped_at: string | null;
   delivered_at: string | null;
+  // Shipment Tracking fields
+  courier_name: string | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  estimated_delivery: string | null;
   items?: OrderItem[];
   status_history?: OrderStatusHistory[];
   customer_name?: string;
   customer_email?: string;
   item_count?: number;
+}
+
+export interface CourierService {
+  id: number;
+  name: string;
+  name_bn: string | null;
+  tracking_url_template: string | null;
+  is_active: boolean;
+  display_order: number;
 }
 
 export interface CreateOrderData {

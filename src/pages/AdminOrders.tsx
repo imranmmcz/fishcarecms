@@ -57,7 +57,10 @@ import {
   Search,
   RefreshCw,
   AlertTriangle,
+  ExternalLink,
 } from "lucide-react";
+import { ShipmentTrackingForm } from "@/components/ShipmentTrackingForm";
+import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
   pending: { color: "bg-yellow-500", icon: <Clock className="h-4 w-4" />, label: { bn: "পেন্ডিং", en: "Pending" } },
@@ -360,9 +363,10 @@ const AdminOrders = () => {
 
             {selectedOrder && (
               <Tabs defaultValue="details" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="details">{language === "bn" ? "বিস্তারিত" : "Details"}</TabsTrigger>
                   <TabsTrigger value="items">{translations.items}</TabsTrigger>
+                  <TabsTrigger value="tracking">{language === "bn" ? "ট্র্যাকিং" : "Tracking"}</TabsTrigger>
                   <TabsTrigger value="status">{translations.updateStatus}</TabsTrigger>
                 </TabsList>
 
@@ -574,6 +578,26 @@ const AdminOrders = () => {
                       <span className="text-primary">{formatPrice(selectedOrder.total_amount)}</span>
                     </div>
                   </div>
+                </TabsContent>
+
+                {/* Tracking Tab */}
+                <TabsContent value="tracking" className="space-y-4 mt-4">
+                  {/* Current Tracking Info */}
+                  {(selectedOrder.courier_name || selectedOrder.tracking_number) && (
+                    <>
+                      <ShipmentTrackingDisplay order={selectedOrder} />
+                      <Separator />
+                    </>
+                  )}
+                  
+                  {/* Tracking Form */}
+                  <ShipmentTrackingForm 
+                    order={selectedOrder} 
+                    onSuccess={() => {
+                      handleViewDetails(selectedOrder.id);
+                      fetchData();
+                    }} 
+                  />
                 </TabsContent>
 
                 <TabsContent value="status" className="space-y-4 mt-4">
