@@ -25,6 +25,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
+import { InvoiceDownloadButton } from "@/components/InvoiceDownloadButton";
 
 const statusConfig: Record<string, { color: string; label: { bn: string; en: string } }> = {
   pending: { color: "bg-yellow-500", label: { bn: "পেন্ডিং", en: "Pending" } },
@@ -239,6 +240,7 @@ const OrderConfirmation = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <InvoiceDownloadButton order={order} variant="outline" size="default" />
           <Button variant="outline" asChild>
             <Link to="/shop">{translations.continueShopping}</Link>
           </Button>
