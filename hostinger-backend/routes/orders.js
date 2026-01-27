@@ -487,6 +487,88 @@ router.post('/:id/cancel', authenticateToken, async (req, res) => {
   }
 });
 
+// Get courier services list
+router.get('/couriers', authenticateToken, async (req, res) => {
+  try {
+    const [couriers] = await db.execute(
+      'SELECT * FROM courier_services WHERE is_active = 1 ORDER BY display_order ASC'
+    );
+    res.json({ couriers });
+  } catch (error) {
+    console.error('Get couriers error:', error);
+    // Return default couriers if table doesn't exist
+    res.json({
+      couriers: [
+        { id: 1, name: 'Sundarban Courier', name_bn: 'সুন্দরবন কুরিয়ার', tracking_url_template: null },
+        { id: 2, name: 'SA Paribahan', name_bn: 'এসএ পরিবহন', tracking_url_template: null },
+        { id: 3, name: 'Pathao Courier', name_bn: 'পাঠাও কুরিয়ার', tracking_url_template: null },
+        { id: 4, name: 'RedX', name_bn: 'রেডএক্স', tracking_url_template: null },
+        { id: 5, name: 'Steadfast', name_bn: 'স্টেডফাস্ট', tracking_url_template: null },
+        { id: 6, name: 'eCourier', name_bn: 'ইকুরিয়ার', tracking_url_template: null },
+        { id: 7, name: 'Paperfly', name_bn: 'পেপারফ্লাই', tracking_url_template: null },
+        { id: 8, name: 'Other', name_bn: 'অন্যান্য', tracking_url_template: null }
+      ]
+    });
+  }
+});
+
+// Update shipment/tracking info (Admin only)
+router.patch('/:id/shipping', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { courier_name, tracking_number, tracking_url, estimated_delivery } = req.body;
+
+    // Build update query dynamically
+    const updates = [];
+    const params = [];
+    
+    if (courier_name !== undefined) {
+      updates.push('courier_name = ?');
+      params.push(courier_name || null);
+    }
+    if (tracking_number !== undefined) {
+      updates.push('tracking_number = ?');
+      params.push(tracking_number || null);
+    }
+    if (tracking_url !== undefined) {
+      updates.push('tracking_url = ?');
+      params.push(tracking_url || null);
+    }
+    if (estimated_delivery !== undefined) {
+      updates.push('estimated_delivery = ?');
+      params.push(estimated_delivery || null);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No shipping data provided' });
+    }
+    
+    updates.push('updated_at = NOW()');
+    params.push(id);
+
+    await db.execute(
+      `UPDATE orders SET ${updates.join(', ')} WHERE id = ?`,
+      params
+    );
+
+    // Add status history note for tracking update
+    if (tracking_number) {
+      await db.execute(
+        `INSERT INTO order_status_history (order_id, status, note, changed_by)
+         VALUES (?, (SELECT status FROM orders WHERE id = ?), ?, ?)`,
+        [id, id, `ট্র্যাকিং নম্বর যোগ করা হয়েছে: ${tracking_number}`, req.user.id]
+      );
+    }
+
+    const [updatedOrder] = await db.execute('SELECT * FROM orders WHERE id = ?', [id]);
+
+    res.json({ order: updatedOrder[0] });
+  } catch (error) {
+    console.error('Update shipping info error:', error);
+    res.status(500).json({ error: 'Failed to update shipping info' });
+  }
+});
+
 // Get order statistics (Admin only)
 router.get('/stats/summary', authenticateToken, requireAdmin, async (req, res) => {
   try {
