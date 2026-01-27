@@ -61,6 +61,7 @@ import {
 } from "lucide-react";
 import { ShipmentTrackingForm } from "@/components/ShipmentTrackingForm";
 import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
+import { InvoiceDownloadButton } from "@/components/InvoiceDownloadButton";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
   pending: { color: "bg-yellow-500", icon: <Clock className="h-4 w-4" />, label: { bn: "পেন্ডিং", en: "Pending" } },
@@ -578,6 +579,9 @@ const AdminOrders = () => {
                       <span className="text-primary">{formatPrice(selectedOrder.total_amount)}</span>
                     </div>
                   </div>
+                  
+                  {/* Invoice Download */}
+                  <InvoiceDownloadButton order={selectedOrder} variant="default" className="w-full" />
                 </TabsContent>
 
                 {/* Tracking Tab */}

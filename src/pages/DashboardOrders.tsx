@@ -43,6 +43,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
+import { InvoiceDownloadButton } from "@/components/InvoiceDownloadButton";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
   pending: { color: "bg-yellow-500", icon: <Clock className="h-4 w-4" />, label: { bn: "পেন্ডিং", en: "Pending" } },
@@ -368,22 +369,28 @@ const DashboardOrders = () => {
                   </div>
                 </div>
 
-                {/* Cancel Button */}
-                {selectedOrder.status === 'pending' && (
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => handleCancelOrder(selectedOrder.id)}
-                    disabled={isCancelling}
-                  >
-                    {isCancelling ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <XCircle className="h-4 w-4 mr-2" />
-                    )}
-                    {translations.cancelOrder}
-                  </Button>
-                )}
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  {/* Invoice Download */}
+                  <InvoiceDownloadButton order={selectedOrder} className="flex-1" />
+                  
+                  {/* Cancel Button */}
+                  {selectedOrder.status === 'pending' && (
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() => handleCancelOrder(selectedOrder.id)}
+                      disabled={isCancelling}
+                    >
+                      {isCancelling ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mr-2" />
+                      )}
+                      {translations.cancelOrder}
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </DialogContent>
