@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
+import SmtpSettingsTab from "@/components/SmtpSettingsTab";
 
 interface SystemSetting {
   id: string;
@@ -217,7 +218,7 @@ const AdminSettings = () => {
         </div>
 
         <Tabs defaultValue="language" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[600px]">
             <TabsTrigger value="language" className="flex items-center gap-2">
               <Globe className="h-4 w-4" />
               {language === "bn" ? "ভাষা" : "Language"}
@@ -229,6 +230,10 @@ const AdminSettings = () => {
             <TabsTrigger value="payment" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               {language === "bn" ? "পেমেন্ট" : "Payment"}
+            </TabsTrigger>
+            <TabsTrigger value="email" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              {language === "bn" ? "ইমেইল" : "Email"}
             </TabsTrigger>
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -558,6 +563,11 @@ const AdminSettings = () => {
                 }
               </p>
             </div>
+          </TabsContent>
+
+          {/* Email/SMTP Settings Tab */}
+          <TabsContent value="email" className="space-y-6 mt-6">
+            <SmtpSettingsTab />
           </TabsContent>
 
           {/* General Settings Tab */}

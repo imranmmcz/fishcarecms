@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, Truck, ExternalLink, Calendar } from "lucide-react";
+import { sendShippingNotificationEmail } from "@/lib/emailService";
 
 interface ShipmentTrackingFormProps {
   order: Order;
@@ -111,6 +112,25 @@ export const ShipmentTrackingForm = ({ order, onSuccess }: ShipmentTrackingFormP
       if (response.error) {
         toast.error(response.error);
         return;
+      }
+      
+      // Send shipping notification email if tracking number is provided
+      if (trackingNumber && order.customer_email) {
+        sendShippingNotificationEmail(
+          order.customer_email,
+          order.customer_name || order.shipping_name,
+          order.order_number,
+          trackingNumber,
+          courierName,
+          trackingUrl,
+          estimatedDelivery
+        ).then(result => {
+          if (result.success) {
+            console.log("Shipping notification email sent successfully");
+          } else {
+            console.log("Email not sent:", result.message);
+          }
+        });
       }
       
       toast.success(translations.success);

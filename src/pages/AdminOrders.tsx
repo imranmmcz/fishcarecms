@@ -62,6 +62,7 @@ import {
 import { ShipmentTrackingForm } from "@/components/ShipmentTrackingForm";
 import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
 import { InvoiceDownloadButton } from "@/components/InvoiceDownloadButton";
+import { sendOrderStatusEmail, sendShippingNotificationEmail } from "@/lib/emailService";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
   pending: { color: "bg-yellow-500", icon: <Clock className="h-4 w-4" />, label: { bn: "পেন্ডিং", en: "Pending" } },
@@ -156,6 +157,23 @@ const AdminOrders = () => {
         toast.error(response.error);
         return;
       }
+      
+      // Send email notification for status update
+      if (selectedOrder.customer_email) {
+        sendOrderStatusEmail(
+          selectedOrder.customer_email,
+          selectedOrder.customer_name || selectedOrder.shipping_name,
+          selectedOrder.order_number,
+          newStatus
+        ).then(result => {
+          if (result.success) {
+            console.log("Status update email sent successfully");
+          } else {
+            console.log("Email not sent:", result.message);
+          }
+        });
+      }
+      
       toast.success(language === "bn" ? "স্ট্যাটাস আপডেট হয়েছে" : "Status updated");
       fetchData();
       setIsDetailsOpen(false);
