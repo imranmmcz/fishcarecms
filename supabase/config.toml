@@ -3,3 +3,7 @@ project_id = "pvvbglukaehizykkpaes"
 [functions.fish-advice-chat]
 enabled = true
 verify_jwt = false
+
+[functions.send-order-email]
+enabled = true
+verify_jwt = false
