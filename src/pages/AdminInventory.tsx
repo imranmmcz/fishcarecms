@@ -39,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import PurchaseOrders from "@/components/PurchaseOrders";
 import {
   Building2,
   Tag,
@@ -918,21 +919,16 @@ const AdminInventory = () => {
 
           {/* Purchases Tab */}
           <TabsContent value="purchases" className="space-y-4 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
-                  {language === "bn" ? "ক্রয় অর্ডার" : "Purchase Orders"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-center py-8">
-                  {language === "bn"
-                    ? "ক্রয় অর্ডার ম্যানেজমেন্ট শীঘ্রই আসছে..."
-                    : "Purchase order management coming soon..."}
-                </p>
-              </CardContent>
-            </Card>
+            <PurchaseOrders 
+              companies={companies}
+              products={products.map(p => ({
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                unit: p.unit,
+              }))}
+              onRefresh={fetchData}
+            />
           </TabsContent>
         </Tabs>
       </div>
