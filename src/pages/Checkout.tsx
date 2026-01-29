@@ -12,6 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePaymentSettings } from "@/hooks/usePaymentSettings";
 import { apiClient } from "@/lib/api-client";
+import { sendOrderConfirmationEmail } from "@/lib/emailService";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,10 +167,37 @@ const Checkout = () => {
         return;
       }
 
+      const order = response.data?.order;
+      
+      // Send order confirmation email (fire and forget)
+      if (order && user?.email) {
+        const emailItems = items.map(item => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price * (1 - (item.product.discount_percentage || 0) / 100),
+        }));
+        
+        sendOrderConfirmationEmail(
+          user.email,
+          formData.shipping_name || user.full_name || "Customer",
+          order.order_number,
+          emailItems,
+          order.total_amount
+        ).then(result => {
+          if (result.success) {
+            console.log("Order confirmation email sent successfully");
+          } else {
+            console.warn("Failed to send order confirmation email:", result.message);
+          }
+        }).catch(err => {
+          console.warn("Error sending order confirmation email:", err);
+        });
+      }
+
       // Success
       clearCart();
       toast.success(language === "bn" ? "অর্ডার সফল হয়েছে!" : "Order placed successfully!");
-      navigate(`/order-confirmation/${response.data?.order?.order_number}`);
+      navigate(`/order-confirmation/${order?.order_number}`);
     } catch (error) {
       console.error("Order error:", error);
       toast.error(language === "bn" ? "অর্ডার করতে সমস্যা হয়েছে" : "Failed to place order");
