@@ -13,6 +13,7 @@ import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
 import SmtpSettingsTab from "@/components/SmtpSettingsTab";
+import EmailLogsViewer from "@/components/EmailLogsViewer";
 
 interface SystemSetting {
   id: string;
@@ -568,6 +569,7 @@ const AdminSettings = () => {
           {/* Email/SMTP Settings Tab */}
           <TabsContent value="email" className="space-y-6 mt-6">
             <SmtpSettingsTab />
+            <EmailLogsViewer />
           </TabsContent>
 
           {/* General Settings Tab */}
