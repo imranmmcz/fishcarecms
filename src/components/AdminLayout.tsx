@@ -26,7 +26,9 @@ import {
   Megaphone,
   Layout,
   TrendingUp,
-  Database
+  Database,
+  ShoppingCart,
+  Warehouse
 } from "lucide-react";
 
 const menuItems = [
@@ -50,6 +52,20 @@ const menuItems = [
     icon: TrendingUp,
     color: "bg-gradient-to-r from-orange-500 to-amber-600",
     iconColor: "text-orange-500"
+  },
+  { 
+    title: "অর্ডার ম্যানেজমেন্ট", 
+    url: "/admin/orders", 
+    icon: ShoppingCart,
+    color: "bg-gradient-to-r from-green-500 to-emerald-600",
+    iconColor: "text-green-500"
+  },
+  { 
+    title: "ইনভেন্টরি", 
+    url: "/admin/inventory", 
+    icon: Warehouse,
+    color: "bg-gradient-to-r from-sky-500 to-blue-600",
+    iconColor: "text-sky-500"
   },
   { 
     title: "ব্যবহারকারী", 
