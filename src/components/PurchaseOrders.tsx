@@ -49,7 +49,9 @@ import {
   Clock,
   XCircle,
   Truck,
+  FileDown,
 } from "lucide-react";
+import { generatePurchaseOrderPDF, type PurchaseOrderData } from "@/lib/generatePurchaseOrderPDF";
 
 // Types
 interface Company {
@@ -159,6 +161,7 @@ const PurchaseOrders = ({ companies, products, onRefresh }: PurchaseOrdersProps)
     cancelOrder: language === "bn" ? "অর্ডার বাতিল" : "Cancel Order",
     orderDetails: language === "bn" ? "অর্ডার বিবরণ" : "Order Details",
     receivedDate: language === "bn" ? "প্রাপ্তির তারিখ" : "Received Date",
+    downloadInvoice: language === "bn" ? "ইনভয়েস ডাউনলোড" : "Download Invoice",
   };
 
   const fetchOrders = async () => {
@@ -427,6 +430,69 @@ const PurchaseOrders = ({ companies, products, onRefresh }: PurchaseOrdersProps)
     return new Date(dateStr).toLocaleDateString(language === "bn" ? "bn-BD" : "en-US");
   };
 
+  const handleDownloadInvoice = async (order: PurchaseOrder) => {
+    try {
+      // Get company details
+      const company = companies.find(c => c.id === order.company_id);
+      
+      // Fetch items if not already loaded
+      let orderItems = order.items;
+      if (!orderItems || orderItems.length === 0) {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/purchase_order_items?purchase_order_id=eq.${order.id}`,
+          {
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${accessToken || supabaseKey}`,
+            },
+          }
+        );
+
+        if (res.ok) {
+          const items = await res.json();
+          orderItems = items.map((item: PurchaseOrderItem) => ({
+            ...item,
+            product_name: products.find((p) => p.id === item.product_id)?.name || "-",
+          }));
+        }
+      }
+
+      const pdfData: PurchaseOrderData = {
+        order_number: order.order_number,
+        company_name: company ? (language === "bn" && company.name_bn ? company.name_bn : company.name) : order.company_name,
+        status: order.status,
+        order_date: order.order_date,
+        expected_date: order.expected_date,
+        received_date: order.received_date,
+        subtotal: order.subtotal,
+        tax_amount: order.tax_amount,
+        shipping_cost: order.shipping_cost,
+        total_amount: order.total_amount,
+        notes: order.notes,
+        items: orderItems || [],
+      };
+
+      generatePurchaseOrderPDF(pdfData, { language });
+
+      toast({
+        title: language === "bn" ? "সফল" : "Success",
+        description: language === "bn" ? "ইনভয়েস ডাউনলোড হয়েছে" : "Invoice downloaded",
+      });
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      toast({
+        title: language === "bn" ? "ত্রুটি" : "Error",
+        description: language === "bn" ? "ইনভয়েস ডাউনলোডে সমস্যা হয়েছে" : "Failed to download invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
   const { subtotal, total } = calculateTotals();
 
   return (
@@ -493,8 +559,17 @@ const PurchaseOrders = ({ companies, products, onRefresh }: PurchaseOrdersProps)
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewOrder(order)}
+                            title={translations.view}
                           >
                             <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDownloadInvoice(order)}
+                            title={translations.downloadInvoice}
+                          >
+                            <FileDown className="h-4 w-4 text-primary" />
                           </Button>
                           {order.status === "pending" && (
                             <Button
@@ -837,6 +912,17 @@ const PurchaseOrders = ({ companies, products, onRefresh }: PurchaseOrdersProps)
                   </div>
                 </>
               )}
+
+              {/* Download Invoice Button */}
+              <div className="pt-4">
+                <Button 
+                  onClick={() => handleDownloadInvoice(selectedOrder)}
+                  className="w-full"
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  {translations.downloadInvoice}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
