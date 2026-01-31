@@ -40,6 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import PurchaseOrders from "@/components/PurchaseOrders";
+import { StockHistory } from "@/components/StockHistory";
 import {
   Building2,
   Tag,
@@ -513,10 +514,14 @@ const AdminInventory = () => {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[600px]">
             <TabsTrigger value="stock" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               {translations.stock}
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              {language === "bn" ? "হিস্ট্রি" : "History"}
             </TabsTrigger>
             <TabsTrigger value="companies" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
@@ -604,6 +609,11 @@ const AdminInventory = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Stock History Tab */}
+          <TabsContent value="history" className="mt-6">
+            <StockHistory />
           </TabsContent>
 
           {/* Companies Tab */}
