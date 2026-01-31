@@ -50,6 +50,8 @@ import {
   XCircle,
   Truck,
   FileDown,
+  Mail,
+  Send,
 } from "lucide-react";
 import { generatePurchaseOrderPDF, type PurchaseOrderData } from "@/lib/generatePurchaseOrderPDF";
 
@@ -58,6 +60,8 @@ interface Company {
   id: string;
   name: string;
   name_bn: string | null;
+  email?: string | null;
+  phone?: string | null;
 }
 
 interface Product {
@@ -114,6 +118,7 @@ const PurchaseOrders = ({ companies, products, onRefresh }: PurchaseOrdersProps)
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState<string | null>(null);
   const [orderDialog, setOrderDialog] = useState(false);
   const [viewDialog, setViewDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
@@ -162,6 +167,11 @@ const PurchaseOrders = ({ companies, products, onRefresh }: PurchaseOrdersProps)
     orderDetails: language === "bn" ? "অর্ডার বিবরণ" : "Order Details",
     receivedDate: language === "bn" ? "প্রাপ্তির তারিখ" : "Received Date",
     downloadInvoice: language === "bn" ? "ইনভয়েস ডাউনলোড" : "Download Invoice",
+    sendToSupplier: language === "bn" ? "সাপ্লায়ারে পাঠান" : "Send to Supplier",
+    emailSent: language === "bn" ? "ইমেইল পাঠানো হয়েছে" : "Email sent successfully",
+    emailError: language === "bn" ? "ইমেইল পাঠাতে সমস্যা হয়েছে" : "Failed to send email",
+    noSupplierEmail: language === "bn" ? "সাপ্লায়ারের ইমেইল নেই" : "No supplier email found",
+    sending: language === "bn" ? "পাঠানো হচ্ছে..." : "Sending...",
   };
 
   const fetchOrders = async () => {
@@ -493,6 +503,104 @@ const PurchaseOrders = ({ companies, products, onRefresh }: PurchaseOrdersProps)
     }
   };
 
+  const handleSendEmailToSupplier = async (order: PurchaseOrder) => {
+    // Get company/supplier details
+    const company = companies.find(c => c.id === order.company_id);
+    
+    if (!company?.email) {
+      toast({
+        title: language === "bn" ? "ত্রুটি" : "Error",
+        description: translations.noSupplierEmail,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingEmail(order.id);
+
+    try {
+      // Fetch items if not already loaded
+      let orderItems = order.items;
+      if (!orderItems || orderItems.length === 0) {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/purchase_order_items?purchase_order_id=eq.${order.id}`,
+          {
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${accessToken || supabaseKey}`,
+            },
+          }
+        );
+
+        if (res.ok) {
+          const items = await res.json();
+          orderItems = items.map((item: PurchaseOrderItem) => ({
+            ...item,
+            product_name: products.find((p) => p.id === item.product_id)?.name || "-",
+          }));
+        }
+      }
+
+      // Prepare email data
+      const emailData = {
+        purchase_order_id: order.id,
+        supplier_email: company.email,
+        supplier_name: language === "bn" && company.name_bn ? company.name_bn : company.name,
+        order_number: order.order_number,
+        order_date: new Date(order.order_date).toLocaleDateString("bn-BD"),
+        expected_date: order.expected_date 
+          ? new Date(order.expected_date).toLocaleDateString("bn-BD") 
+          : null,
+        items: (orderItems || []).map(item => ({
+          product_name: item.product_name || "-",
+          quantity: item.quantity,
+          unit_cost: item.unit_cost,
+          total_cost: item.total_cost,
+        })),
+        subtotal: order.subtotal,
+        tax_amount: order.tax_amount,
+        shipping_cost: order.shipping_cost,
+        total_amount: order.total_amount,
+        notes: order.notes,
+        company_info: {
+          name: "FishCare BD",
+          email: "support@fishcare.com.bd",
+          phone: "+880 1234-567890",
+        },
+      };
+
+      // Send email via edge function
+      const { data, error } = await supabase.functions.invoke("send-purchase-order-email", {
+        body: emailData,
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: language === "bn" ? "সফল" : "Success",
+          description: translations.emailSent,
+        });
+      } else {
+        throw new Error(data?.message || translations.emailError);
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast({
+        title: language === "bn" ? "ত্রুটি" : "Error",
+        description: error instanceof Error ? error.message : translations.emailError,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmail(null);
+    }
+  };
+
   const { subtotal, total } = calculateTotals();
 
   return (
@@ -570,6 +678,19 @@ const PurchaseOrders = ({ companies, products, onRefresh }: PurchaseOrdersProps)
                             title={translations.downloadInvoice}
                           >
                             <FileDown className="h-4 w-4 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSendEmailToSupplier(order)}
+                            disabled={isSendingEmail === order.id}
+                            title={translations.sendToSupplier}
+                          >
+                            {isSendingEmail === order.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Mail className="h-4 w-4 text-violet-500" />
+                            )}
                           </Button>
                           {order.status === "pending" && (
                             <Button
