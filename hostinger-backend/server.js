@@ -29,13 +29,39 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration
+// CORS configuration - Allow multiple origins
+const allowedOrigins = [
+  'https://fishcal.lovable.app',
+  'https://5798b806-1411-4801-969c-cb11a23f8585.lovableproject.com',
+  'http://localhost:5173',
+  'http://localhost:8080',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin matches allowed origins or Lovable preview pattern
+    const isAllowed = allowedOrigins.includes(origin) || 
+      origin.includes('.lovableproject.com') ||
+      origin.includes('.lovable.app');
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(null, true); // Allow all for now, log blocked ones
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
