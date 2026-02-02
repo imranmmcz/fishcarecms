@@ -322,6 +322,42 @@ class ApiClient {
   async getOrderStats() {
     return this.request<OrderStats>('/orders/stats/summary');
   }
+
+  // Reviews endpoints
+  async getProductReviews(productId: string, params?: { limit?: number; offset?: number; sort?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) queryParams.append(key, String(value));
+      });
+    }
+    return this.request<ProductReviewsResponse>(`/reviews/product/${productId}?${queryParams}`, { requiresAuth: false });
+  }
+
+  async createReview(data: { product_id: number; rating: number; title?: string; review_text?: string }) {
+    return this.request<{ review: ProductReview }>('/reviews', {
+      method: 'POST',
+      body: data as unknown as Record<string, unknown>,
+    });
+  }
+
+  async updateReview(id: string, data: { rating?: number; title?: string; review_text?: string }) {
+    return this.request<{ review: ProductReview }>(`/reviews/${id}`, {
+      method: 'PUT',
+      body: data as unknown as Record<string, unknown>,
+    });
+  }
+
+  async deleteReview(id: string) {
+    return this.request(`/reviews/${id}`, { method: 'DELETE' });
+  }
+
+  async markReviewHelpful(id: string, isHelpful: boolean) {
+    return this.request(`/reviews/${id}/helpful`, {
+      method: 'POST',
+      body: { is_helpful: isHelpful },
+    });
+  }
 }
 
 // Types
@@ -501,6 +537,40 @@ export interface OrderStats {
   this_month: { count: number; total_amount: number };
   recent_orders: Order[];
   low_stock_products: { id: number; name: string; stock_quantity: number; stock_status: string }[];
+}
+
+export interface ProductReview {
+  id: number;
+  product_id: number;
+  user_id: number;
+  rating: number;
+  title: string | null;
+  review_text: string | null;
+  is_verified_purchase: boolean;
+  helpful_count: number;
+  created_at: string;
+  user_name: string | null;
+  user_avatar: string | null;
+}
+
+export interface ReviewStats {
+  total_reviews: number;
+  average_rating: number;
+  rating_breakdown: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+}
+
+export interface ProductReviewsResponse {
+  reviews: ProductReview[];
+  stats: ReviewStats;
+  user_review: ProductReview | null;
+  limit: number;
+  offset: number;
 }
 
 // Export singleton instance

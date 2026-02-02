@@ -13,6 +13,7 @@ const settingsRoutes = require('./routes/settings');
 const adSettingsRoutes = require('./routes/adSettings');
 const pageContentRoutes = require('./routes/pageContent');
 const orderRoutes = require('./routes/orders');
+const reviewRoutes = require('./routes/reviews');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,6 +53,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/ad-settings', adSettingsRoutes);
 app.use('/api/page-content', pageContentRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

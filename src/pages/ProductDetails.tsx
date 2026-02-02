@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, ReviewStats } from "@/lib/api-client";
 import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContextMySQL";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import AdUnit from "@/components/AdUnit";
+import { StarRating } from "@/components/StarRating";
+import { ProductReviews } from "@/components/ProductReviews";
 import { 
   ArrowLeft, 
   ShoppingCart, 
@@ -478,6 +480,16 @@ const ProductDetails = () => {
             </Card>
           </div>
         </div>
+
+        {/* Reviews Section */}
+        {product && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold mb-6">
+              {language === "bn" ? "রিভিউ ও রেটিং" : "Reviews & Ratings"}
+            </h2>
+            <ProductReviews productId={product.id} />
+          </div>
+        )}
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
