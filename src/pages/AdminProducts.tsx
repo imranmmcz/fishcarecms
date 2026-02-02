@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { useProducts, getDiscountedPrice, Product } from "@/contexts/ProductsContextMySQL";
+import { supabase } from "@/integrations/supabase/client";
 import { Button3D } from "@/components/ui/button-3d";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Package, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const categories = [
   { value: "medicine", label: "ঔষধ" },
@@ -17,9 +21,38 @@ const categories = [
   { value: "accessories", label: "সরঞ্জাম" },
 ];
 
+const units = [
+  { value: "pcs", label: "পিস" },
+  { value: "kg", label: "কেজি" },
+  { value: "g", label: "গ্রাম" },
+  { value: "ltr", label: "লিটার" },
+  { value: "ml", label: "মিলি" },
+  { value: "pack", label: "প্যাক" },
+  { value: "box", label: "বক্স" },
+  { value: "bottle", label: "বোতল" },
+  { value: "bag", label: "ব্যাগ" },
+];
+
 const getCategoryLabel = (value: string) => {
   return categories.find((c) => c.value === value)?.label || value;
 };
+
+const getUnitLabel = (value: string) => {
+  return units.find((u) => u.value === value)?.label || value;
+};
+
+interface Company {
+  id: string;
+  name: string;
+  name_bn: string | null;
+}
+
+interface Brand {
+  id: string;
+  name: string;
+  name_bn: string | null;
+  company_id: string | null;
+}
 
 interface ProductFormData {
   name: string;
@@ -29,6 +62,12 @@ interface ProductFormData {
   category: string;
   image_url: string;
   external_link: string;
+  stock_quantity: number;
+  sku: string;
+  unit: string;
+  reorder_level: number;
+  company_id: string;
+  brand_id: string;
 }
 
 const emptyProduct: ProductFormData = {
@@ -39,6 +78,12 @@ const emptyProduct: ProductFormData = {
   category: "medicine",
   image_url: "",
   external_link: "https://fishcare.com.bd",
+  stock_quantity: 0,
+  sku: "",
+  unit: "pcs",
+  reorder_level: 10,
+  company_id: "",
+  brand_id: "",
 };
 
 // Moved ProductForm outside of AdminProducts to prevent re-creation on each render
@@ -48,15 +93,28 @@ interface ProductFormProps {
   onSubmit: () => void;
   submitLabel: string;
   isSubmitting: boolean;
+  companies: Company[];
+  brands: Brand[];
 }
 
-const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitting }: ProductFormProps) => {
+const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitting, companies, brands }: ProductFormProps) => {
   const handleChange = useCallback((field: keyof ProductFormData, value: string | number) => {
     onFormChange({ ...formData, [field]: value });
   }, [formData, onFormChange]);
 
+  // Filter brands by selected company
+  const filteredBrands = formData.company_id 
+    ? brands.filter(b => b.company_id === formData.company_id)
+    : brands;
+
   return (
     <div className="grid gap-4 py-4">
+      {/* Basic Info Section */}
+      <div className="space-y-1">
+        <h4 className="font-semibold text-sm text-muted-foreground">মৌলিক তথ্য</h4>
+        <Separator />
+      </div>
+      
       <div className="grid gap-2">
         <Label htmlFor="name">পণ্যের নাম *</Label>
         <Input
@@ -67,16 +125,55 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
           autoComplete="off"
         />
       </div>
+      
       <div className="grid gap-2">
         <Label htmlFor="description">বিবরণ</Label>
         <Textarea
           id="description"
           value={formData.description}
           onChange={(e) => handleChange("description", e.target.value)}
-          placeholder="পণ্যের বিবরণ লিখুন"
-          rows={3}
+          placeholder="পণ্যের বিস্তারিত বিবরণ লিখুন..."
+          rows={4}
         />
       </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="category">ক্যাটাগরি *</Label>
+          <Select
+            value={formData.category}
+            onValueChange={(value) => handleChange("category", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="ক্যাটাগরি নির্বাচন করুন" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat.value} value={cat.value}>
+                  {cat.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="sku">স্কু (SKU)</Label>
+          <Input
+            id="sku"
+            value={formData.sku}
+            onChange={(e) => handleChange("sku", e.target.value)}
+            placeholder="PRD-001"
+            autoComplete="off"
+          />
+        </div>
+      </div>
+
+      {/* Pricing Section */}
+      <div className="space-y-1 mt-2">
+        <h4 className="font-semibold text-sm text-muted-foreground">মূল্য ও ডিসকাউন্ট</h4>
+        <Separator />
+      </div>
+      
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label htmlFor="price">দাম (টাকা) *</Label>
@@ -102,29 +199,133 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
           />
         </div>
       </div>
+      
       {formData.discount_percentage > 0 && (
-        <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
-          বিক্রয় মূল্য: ৳{getDiscountedPrice(formData.price, formData.discount_percentage)}
+        <div className="text-sm bg-primary/10 text-primary p-3 rounded-lg flex items-center gap-2">
+          <span>বিক্রয় মূল্য:</span>
+          <span className="font-bold text-lg">৳{getDiscountedPrice(formData.price, formData.discount_percentage)}</span>
+          <span className="text-xs">({formData.discount_percentage}% ছাড়)</span>
         </div>
       )}
-      <div className="grid gap-2">
-        <Label htmlFor="category">ক্যাটাগরি</Label>
-        <Select
-          value={formData.category}
-          onValueChange={(value) => handleChange("category", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="ক্যাটাগরি নির্বাচন করুন" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((cat) => (
-              <SelectItem key={cat.value} value={cat.value}>
-                {cat.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+      {/* Inventory Section */}
+      <div className="space-y-1 mt-2">
+        <h4 className="font-semibold text-sm text-muted-foreground">ইনভেন্টরি</h4>
+        <Separator />
       </div>
+      
+      <div className="grid grid-cols-3 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="stock">স্টক পরিমাণ</Label>
+          <Input
+            id="stock"
+            type="number"
+            value={formData.stock_quantity}
+            onChange={(e) => handleChange("stock_quantity", Number(e.target.value))}
+            placeholder="0"
+            min={0}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="unit">একক</Label>
+          <Select
+            value={formData.unit}
+            onValueChange={(value) => handleChange("unit", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="একক নির্বাচন করুন" />
+            </SelectTrigger>
+            <SelectContent>
+              {units.map((unit) => (
+                <SelectItem key={unit.value} value={unit.value}>
+                  {unit.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="reorder">রিঅর্ডার লেভেল</Label>
+          <Input
+            id="reorder"
+            type="number"
+            value={formData.reorder_level}
+            onChange={(e) => handleChange("reorder_level", Number(e.target.value))}
+            placeholder="10"
+            min={0}
+          />
+        </div>
+      </div>
+      
+      {formData.stock_quantity <= formData.reorder_level && formData.stock_quantity > 0 && (
+        <div className="text-sm bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400 p-3 rounded-lg flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4" />
+          স্টক রিঅর্ডার লেভেলে বা নিচে আছে!
+        </div>
+      )}
+
+      {/* Company & Brand Section */}
+      <div className="space-y-1 mt-2">
+        <h4 className="font-semibold text-sm text-muted-foreground">কোম্পানি ও ব্র্যান্ড</h4>
+        <Separator />
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="company">কোম্পানি/সাপ্লায়ার</Label>
+          <Select
+            value={formData.company_id}
+            onValueChange={(value) => {
+              handleChange("company_id", value);
+              // Reset brand if company changes
+              if (formData.brand_id) {
+                const brand = brands.find(b => b.id === formData.brand_id);
+                if (brand && brand.company_id !== value) {
+                  handleChange("brand_id", "");
+                }
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="কোম্পানি নির্বাচন করুন" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">কোনোটি নয়</SelectItem>
+              {companies.map((company) => (
+                <SelectItem key={company.id} value={company.id}>
+                  {company.name_bn || company.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="brand">ব্র্যান্ড</Label>
+          <Select
+            value={formData.brand_id}
+            onValueChange={(value) => handleChange("brand_id", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="ব্র্যান্ড নির্বাচন করুন" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">কোনোটি নয়</SelectItem>
+              {filteredBrands.map((brand) => (
+                <SelectItem key={brand.id} value={brand.id}>
+                  {brand.name_bn || brand.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Media Section */}
+      <div className="space-y-1 mt-2">
+        <h4 className="font-semibold text-sm text-muted-foreground">মিডিয়া ও লিংক</h4>
+        <Separator />
+      </div>
+      
       <div className="grid gap-2">
         <Label htmlFor="image">ছবির URL</Label>
         <Input
@@ -134,7 +335,18 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
           placeholder="https://example.com/image.jpg"
           autoComplete="off"
         />
+        {formData.image_url && (
+          <div className="mt-2">
+            <img 
+              src={formData.image_url} 
+              alt="Preview" 
+              className="w-20 h-20 object-cover rounded-lg border"
+              onError={(e) => (e.currentTarget.style.display = 'none')}
+            />
+          </div>
+        )}
       </div>
+      
       <div className="grid gap-2">
         <Label htmlFor="link">বাহ্যিক লিংক</Label>
         <Input
@@ -145,11 +357,12 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
           autoComplete="off"
         />
       </div>
+      
       <Button3D
         variant="success"
         onClick={onSubmit}
         disabled={isSubmitting || !formData.name || formData.price <= 0}
-        className="mt-2"
+        className="mt-4"
       >
         {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
         {submitLabel}
@@ -166,6 +379,26 @@ const AdminProducts = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(emptyProduct);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+
+  // Fetch companies and brands
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [companiesRes, brandsRes] = await Promise.all([
+          supabase.from("companies").select("id, name, name_bn").eq("is_active", true).order("name"),
+          supabase.from("brands").select("id, name, name_bn, company_id").eq("is_active", true).order("name"),
+        ]);
+        
+        if (companiesRes.data) setCompanies(companiesRes.data);
+        if (brandsRes.data) setBrands(brandsRes.data);
+      } catch (error) {
+        console.error("Error fetching companies/brands:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleFormChange = useCallback((data: ProductFormData) => {
     setFormData(data);
@@ -184,6 +417,12 @@ const AdminProducts = () => {
       category: formData.category,
       image_url: formData.image_url || null,
       external_link: formData.external_link || null,
+      stock_quantity: formData.stock_quantity,
+      sku: formData.sku || null,
+      unit: formData.unit || "pcs",
+      reorder_level: formData.reorder_level,
+      company_id: formData.company_id ? Number(formData.company_id) : null,
+      brand_id: formData.brand_id ? Number(formData.brand_id) : null,
     });
     setIsSubmitting(false);
     if (success) {
@@ -205,6 +444,12 @@ const AdminProducts = () => {
       category: formData.category,
       image_url: formData.image_url || null,
       external_link: formData.external_link || null,
+      stock_quantity: formData.stock_quantity,
+      sku: formData.sku || null,
+      unit: formData.unit || "pcs",
+      reorder_level: formData.reorder_level,
+      company_id: formData.company_id ? Number(formData.company_id) : null,
+      brand_id: formData.brand_id ? Number(formData.brand_id) : null,
     });
     setIsSubmitting(false);
     if (success) {
@@ -234,6 +479,12 @@ const AdminProducts = () => {
       category: product.category,
       image_url: product.image_url || "",
       external_link: product.external_link || "",
+      stock_quantity: product.stock_quantity || 0,
+      sku: product.sku || "",
+      unit: product.unit || "pcs",
+      reorder_level: product.reorder_level || 10,
+      company_id: product.company_id ? String(product.company_id) : "",
+      brand_id: product.brand_id ? String(product.brand_id) : "",
     });
     setIsEditOpen(true);
   };
@@ -247,6 +498,10 @@ const AdminProducts = () => {
     setFormData(emptyProduct);
     setIsAddOpen(true);
   };
+
+  // Calculate stats
+  const lowStockProducts = products.filter(p => (p.stock_quantity || 0) <= (p.reorder_level || 10) && (p.stock_quantity || 0) > 0);
+  const outOfStockProducts = products.filter(p => (p.stock_quantity || 0) === 0);
 
   return (
     <AdminLayout>
@@ -263,7 +518,7 @@ const AdminProducts = () => {
                 নতুন পণ্য যোগ করুন
               </Button3D>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>নতুন পণ্য যোগ করুন</DialogTitle>
               </DialogHeader>
@@ -273,9 +528,41 @@ const AdminProducts = () => {
                 onSubmit={handleAdd}
                 submitLabel="পণ্য যোগ করুন"
                 isSubmitting={isSubmitting}
+                companies={companies}
+                brands={brands}
               />
             </DialogContent>
           </Dialog>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold">{products.length}</div>
+              <div className="text-sm text-muted-foreground">মোট পণ্য</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-primary">
+                {products.reduce((sum, p) => sum + (p.stock_quantity || 0), 0)}
+              </div>
+              <div className="text-sm text-muted-foreground">মোট স্টক</div>
+            </CardContent>
+          </Card>
+          <Card className={lowStockProducts.length > 0 ? "border-amber-500" : ""}>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-amber-600">{lowStockProducts.length}</div>
+              <div className="text-sm text-muted-foreground">কম স্টক</div>
+            </CardContent>
+          </Card>
+          <Card className={outOfStockProducts.length > 0 ? "border-destructive" : ""}>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-destructive">{outOfStockProducts.length}</div>
+              <div className="text-sm text-muted-foreground">স্টক শেষ</div>
+            </CardContent>
+          </Card>
         </div>
 
         <Card>
@@ -302,63 +589,89 @@ const AdminProducts = () => {
                       <TableHead className="w-16">ছবি</TableHead>
                       <TableHead>পণ্যের নাম</TableHead>
                       <TableHead>ক্যাটাগরি</TableHead>
+                      <TableHead className="text-center">স্টক</TableHead>
                       <TableHead className="text-right">মূল দাম</TableHead>
-                      <TableHead className="text-right">ডিসকাউন্ট</TableHead>
                       <TableHead className="text-right">বিক্রয় দাম</TableHead>
                       <TableHead className="text-center">অ্যাকশন</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {products.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell>
-                          {product.image_url ? (
-                            <img
-                              src={product.image_url}
-                              alt={product.name}
-                              className="w-12 h-12 object-cover rounded-lg"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                              <Package className="h-5 w-5 text-muted-foreground" />
+                    {products.map((product) => {
+                      const stock = product.stock_quantity || 0;
+                      const reorder = product.reorder_level || 10;
+                      const isLowStock = stock <= reorder && stock > 0;
+                      const isOutOfStock = stock === 0;
+                      
+                      return (
+                        <TableRow key={product.id}>
+                          <TableCell>
+                            {product.image_url ? (
+                              <img
+                                src={product.image_url}
+                                alt={product.name}
+                                className="w-12 h-12 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                                <Package className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium">{product.name}</div>
+                            {product.sku && (
+                              <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{getCategoryLabel(product.category)}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {isOutOfStock ? (
+                              <Badge variant="destructive">স্টক শেষ</Badge>
+                            ) : isLowStock ? (
+                              <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
+                                {stock} {getUnitLabel(product.unit || "pcs")}
+                              </Badge>
+                            ) : (
+                              <span className="font-medium">{stock} {getUnitLabel(product.unit || "pcs")}</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">৳{product.price}</TableCell>
+                          <TableCell className="text-right font-bold text-primary">
+                            ৳{getDiscountedPrice(product.price, product.discount_percentage)}
+                            {product.discount_percentage > 0 && (
+                              <span className="ml-1 text-xs font-normal text-muted-foreground">
+                                ({product.discount_percentage}%)
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-1">
+                              <Link to={`/product/${product.id}`} target="_blank">
+                                <Button3D variant="primary" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button3D>
+                              </Link>
+                              <Button3D
+                                variant="primary"
+                                size="sm"
+                                onClick={() => openEditDialog(product)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button3D>
+                              <Button3D
+                                variant="danger"
+                                size="sm"
+                                onClick={() => openDeleteDialog(product)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button3D>
                             </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{getCategoryLabel(product.category)}</TableCell>
-                        <TableCell className="text-right">৳{product.price}</TableCell>
-                        <TableCell className="text-right">
-                          {product.discount_percentage > 0 ? (
-                            <span className="text-emerald-600 font-medium">
-                              {product.discount_percentage}%
-                            </span>
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right font-bold text-primary">
-                          ৳{getDiscountedPrice(product.price, product.discount_percentage)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-2">
-                            <Button3D
-                              variant="primary"
-                              size="sm"
-                              onClick={() => openEditDialog(product)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button3D>
-                            <Button3D
-                              variant="danger"
-                              size="sm"
-                              onClick={() => openDeleteDialog(product)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button3D>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -368,7 +681,7 @@ const AdminProducts = () => {
 
         {/* Edit Dialog */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>পণ্য সম্পাদনা করুন</DialogTitle>
             </DialogHeader>
@@ -378,6 +691,8 @@ const AdminProducts = () => {
               onSubmit={handleEdit}
               submitLabel="আপডেট করুন"
               isSubmitting={isSubmitting}
+              companies={companies}
+              brands={brands}
             />
           </DialogContent>
         </Dialog>

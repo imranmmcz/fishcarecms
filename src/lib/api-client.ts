@@ -349,6 +349,14 @@ export interface Product {
   category: string;
   image_url: string | null;
   external_link: string | null;
+  stock_quantity?: number;
+  sku?: string | null;
+  unit?: string | null;
+  reorder_level?: number | null;
+  brand_id?: number | null;
+  company_id?: number | null;
+  brand_name?: string;
+  company_name?: string;
   created_at: string;
   updated_at: string;
 }

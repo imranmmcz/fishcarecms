@@ -53,6 +53,7 @@ import AdminInventory from "./pages/AdminInventory";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
+import ProductDetails from "./pages/ProductDetails";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/modules" element={<Modules />} />
                       <Route path="/shop" element={<Shop />} />
+                      <Route path="/product/:id" element={<ProductDetails />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
                       <Route path="/pond-calculator" element={<PondCalculator />} />

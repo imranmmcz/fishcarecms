@@ -77,16 +77,34 @@ router.get('/:id', async (req, res) => {
 // Create product (Admin only)
 router.post('/', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { name, description, price, discount_percentage, category, image_url, external_link } = req.body;
+    const { 
+      name, description, price, discount_percentage, category, 
+      image_url, external_link, stock_quantity, sku, unit, 
+      reorder_level, company_id, brand_id 
+    } = req.body;
 
     if (!name || price === undefined || !category) {
       return res.status(400).json({ error: 'Name, price and category are required' });
     }
 
     const [result] = await db.execute(
-      `INSERT INTO products (name, description, price, discount_percentage, category, image_url, external_link, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [name, description || null, price, discount_percentage || 0, category, image_url || null, external_link || null]
+      `INSERT INTO products (name, description, price, discount_percentage, category, image_url, external_link, stock_quantity, sku, unit, reorder_level, company_id, brand_id, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
+        name, 
+        description || null, 
+        price, 
+        discount_percentage || 0, 
+        category, 
+        image_url || null, 
+        external_link || null,
+        stock_quantity || 0,
+        sku || null,
+        unit || 'pcs',
+        reorder_level || 10,
+        company_id || null,
+        brand_id || null
+      ]
     );
 
     const [newProduct] = await db.execute('SELECT * FROM products WHERE id = ?', [result.insertId]);
@@ -102,7 +120,11 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
 router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, discount_percentage, category, image_url, external_link } = req.body;
+    const { 
+      name, description, price, discount_percentage, category, 
+      image_url, external_link, stock_quantity, sku, unit,
+      reorder_level, company_id, brand_id
+    } = req.body;
 
     const updates = [];
     const params = [];
@@ -134,6 +156,30 @@ router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
     if (external_link !== undefined) {
       updates.push('external_link = ?');
       params.push(external_link);
+    }
+    if (stock_quantity !== undefined) {
+      updates.push('stock_quantity = ?');
+      params.push(stock_quantity);
+    }
+    if (sku !== undefined) {
+      updates.push('sku = ?');
+      params.push(sku);
+    }
+    if (unit !== undefined) {
+      updates.push('unit = ?');
+      params.push(unit);
+    }
+    if (reorder_level !== undefined) {
+      updates.push('reorder_level = ?');
+      params.push(reorder_level);
+    }
+    if (company_id !== undefined) {
+      updates.push('company_id = ?');
+      params.push(company_id);
+    }
+    if (brand_id !== undefined) {
+      updates.push('brand_id = ?');
+      params.push(brand_id);
     }
 
     if (updates.length === 0) {
