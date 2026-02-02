@@ -2,12 +2,19 @@
 RewriteEngine On
 
 # CORS Configuration - Dynamic Origin Support
-# Allows: fishcal.lovable.app, *.lovableproject.com, blog.fishcare.com.bd
+# Allows: fishcal.lovable.app, *.lovableproject.com, blog.fishcare.com.bd, localhost
 <IfModule mod_headers.c>
-    SetEnvIf Origin "^https://(fishcal\.lovable\.app|.*\.lovableproject\.com|blog\.fishcare\.com\.bd)$" ORIGIN_OK=$0
+    # Match Lovable domains dynamically
+    SetEnvIf Origin "^https://([a-z0-9-]+\.)?lovableproject\.com$" ORIGIN_OK=$0
+    SetEnvIf Origin "^https://([a-z0-9-]+\.)?lovable\.app$" ORIGIN_OK=$0
+    SetEnvIf Origin "^https://fishcal\.lovable\.app$" ORIGIN_OK=$0
+    SetEnvIf Origin "^https://blog\.fishcare\.com\.bd$" ORIGIN_OK=$0
+    SetEnvIf Origin "^http://localhost:(5173|8080|3000)$" ORIGIN_OK=$0
+    
+    # Set CORS headers when origin matches
     Header always set Access-Control-Allow-Origin "%{ORIGIN_OK}e" env=ORIGIN_OK
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin"
     Header always set Access-Control-Allow-Credentials "true"
     Header always set Access-Control-Max-Age "86400"
 </IfModule>
