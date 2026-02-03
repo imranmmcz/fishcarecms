@@ -1,5 +1,5 @@
 /**
- * Checkout Page - Order Placement
+ * Checkout Page - Order Placement with Supabase
  */
 
 import { useState } from "react";
@@ -7,11 +7,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/contexts/CartContext";
-import { useAuth } from "@/contexts/AuthContextMySQL";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePaymentSettings } from "@/hooks/usePaymentSettings";
-import { apiClient } from "@/lib/api-client";
+import { useOrders } from "@/hooks/useOrders";
 import { sendOrderConfirmationEmail } from "@/lib/emailService";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -42,19 +42,20 @@ import {
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, subtotal, clearCart } = useCart();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { language } = useLanguage();
   const { formatPrice } = useCurrency();
   const { settings: paymentSettings, isLoading: isLoadingPayment } = usePaymentSettings();
+  const { createOrder } = useOrders();
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    shipping_name: user?.full_name || "",
-    shipping_mobile: user?.mobile || "",
-    shipping_division: user?.division || "",
-    shipping_district: user?.district || "",
-    shipping_upazila: user?.upazila || "",
-    shipping_address: user?.village || "",
+    shipping_name: "",
+    shipping_mobile: "",
+    shipping_division: "",
+    shipping_district: "",
+    shipping_upazila: "",
+    shipping_address: "",
     payment_method: "cod",
     customer_note: "",
     // Manual payment fields
@@ -104,6 +105,7 @@ const Checkout = () => {
     paymentPending: language === "bn" ? "পেমেন্ট ভেরিফিকেশন পেন্ডিং" : "Payment verification pending",
     sendMoneyTo: language === "bn" ? "টাকা পাঠান এই নম্বরে" : "Send money to",
     afterPayment: language === "bn" ? "টাকা পাঠানোর পর নিচের তথ্য দিন" : "After sending, provide details below",
+    guestCheckout: language === "bn" ? "লগইন ছাড়াই অর্ডার করুন" : "Continue as Guest",
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -124,12 +126,6 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!isAuthenticated) {
-      toast.error(translations.loginRequired);
-      navigate("/auth");
-      return;
-    }
 
     if (items.length === 0) {
       toast.error(translations.emptyCart);
@@ -154,21 +150,28 @@ const Checkout = () => {
     try {
       const orderData = {
         items: items.map(item => ({
-          product_id: item.product.id,
+          product_id: String(item.product.id),
           quantity: item.quantity,
         })),
-        ...formData,
+        shipping_name: formData.shipping_name,
+        shipping_mobile: formData.shipping_mobile,
+        shipping_division: formData.shipping_division,
+        shipping_district: formData.shipping_district,
+        shipping_upazila: formData.shipping_upazila,
+        shipping_address: formData.shipping_address,
+        payment_method: formData.payment_method,
+        customer_note: formData.customer_note,
+        payment_trx_id: formData.payment_trx_id,
+        payment_sender_number: formData.payment_sender_number,
       };
 
-      const response = await apiClient.createOrder(orderData);
+      const { order, error } = await createOrder(orderData);
 
-      if (response.error) {
-        toast.error(response.error);
+      if (error) {
+        toast.error(error);
         return;
       }
 
-      const order = response.data?.order;
-      
       // Send order confirmation email (fire and forget)
       if (order && user?.email) {
         const emailItems = items.map(item => ({
@@ -179,7 +182,7 @@ const Checkout = () => {
         
         sendOrderConfirmationEmail(
           user.email,
-          formData.shipping_name || user.full_name || "Customer",
+          formData.shipping_name || "Customer",
           order.order_number,
           emailItems,
           order.total_amount
@@ -402,29 +405,22 @@ const Checkout = () => {
                               <p className="text-sm font-medium text-[hsl(330,60%,30%)] dark:text-[hsl(330,60%,80%)] mb-2">
                                 {translations.sendMoneyTo}:
                               </p>
-                              <p className="text-lg font-bold text-[hsl(330,70%,45%)] dark:text-[hsl(330,70%,65%)]">
-                                {paymentSettings.bkash.number}
+                              <p className="text-xl font-bold text-[hsl(330,70%,40%)] dark:text-[hsl(330,70%,70%)]">
+                                {paymentSettings.bkash.number || "01XXXXXXXXX"}
                               </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                ({paymentSettings.bkash.type})
-                              </p>
-                              <p className="text-sm mt-2 text-muted-foreground">
-                                {language === "bn" ? `মোট পরিমাণ: ${formatPrice(total)}` : `Total Amount: ${formatPrice(total)}`}
+                              <p className="text-xs text-[hsl(330,50%,40%)] dark:text-[hsl(330,50%,70%)] mt-1">
+                                {translations.afterPayment}
                               </p>
                             </div>
-
-                            <p className="text-sm text-muted-foreground">
-                              {translations.afterPayment}:
-                            </p>
 
                             <div className="grid sm:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                 <Label htmlFor="bkash_trx">{translations.trxId} *</Label>
                                 <Input
                                   id="bkash_trx"
-                                  placeholder="e.g., TRX123ABC456"
                                   value={formData.payment_trx_id}
                                   onChange={(e) => handleInputChange("payment_trx_id", e.target.value)}
+                                  placeholder="e.g., ABC123XYZ"
                                 />
                               </div>
                               <div className="space-y-2">
@@ -432,9 +428,9 @@ const Checkout = () => {
                                 <Input
                                   id="bkash_sender"
                                   type="tel"
-                                  placeholder="01XXXXXXXXX"
                                   value={formData.payment_sender_number}
                                   onChange={(e) => handleInputChange("payment_sender_number", e.target.value)}
+                                  placeholder="01XXXXXXXXX"
                                 />
                               </div>
                             </div>
@@ -468,29 +464,22 @@ const Checkout = () => {
                               <p className="text-sm font-medium text-[hsl(25,60%,30%)] dark:text-[hsl(25,60%,80%)] mb-2">
                                 {translations.sendMoneyTo}:
                               </p>
-                              <p className="text-lg font-bold text-[hsl(25,70%,45%)] dark:text-[hsl(25,70%,65%)]">
-                                {paymentSettings.nagad.number}
+                              <p className="text-xl font-bold text-[hsl(25,70%,40%)] dark:text-[hsl(25,70%,70%)]">
+                                {paymentSettings.nagad.number || "01XXXXXXXXX"}
                               </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                ({paymentSettings.nagad.type})
-                              </p>
-                              <p className="text-sm mt-2 text-muted-foreground">
-                                {language === "bn" ? `মোট পরিমাণ: ${formatPrice(total)}` : `Total Amount: ${formatPrice(total)}`}
+                              <p className="text-xs text-[hsl(25,50%,40%)] dark:text-[hsl(25,50%,70%)] mt-1">
+                                {translations.afterPayment}
                               </p>
                             </div>
-
-                            <p className="text-sm text-muted-foreground">
-                              {translations.afterPayment}:
-                            </p>
 
                             <div className="grid sm:grid-cols-2 gap-4">
                               <div className="space-y-2">
                                 <Label htmlFor="nagad_trx">{translations.trxId} *</Label>
                                 <Input
                                   id="nagad_trx"
-                                  placeholder="e.g., NAG123ABC456"
                                   value={formData.payment_trx_id}
                                   onChange={(e) => handleInputChange("payment_trx_id", e.target.value)}
+                                  placeholder="e.g., ABC123XYZ"
                                 />
                               </div>
                               <div className="space-y-2">
@@ -498,9 +487,9 @@ const Checkout = () => {
                                 <Input
                                   id="nagad_sender"
                                   type="tel"
-                                  placeholder="01XXXXXXXXX"
                                   value={formData.payment_sender_number}
                                   onChange={(e) => handleInputChange("payment_sender_number", e.target.value)}
+                                  placeholder="01XXXXXXXXX"
                                 />
                               </div>
                             </div>
@@ -509,14 +498,6 @@ const Checkout = () => {
                       </div>
                     )}
                   </RadioGroup>
-
-                  {/* Payment Status Info */}
-                  {(formData.payment_method === 'bkash' || formData.payment_method === 'nagad') && (
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-[hsl(45,90%,95%)] dark:bg-[hsl(45,50%,15%)] text-[hsl(45,60%,30%)] dark:text-[hsl(45,60%,80%)] text-sm">
-                      <ShieldCheck className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <p>{translations.paymentPending}</p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
@@ -530,7 +511,7 @@ const Checkout = () => {
                       value={formData.customer_note}
                       onChange={(e) => handleInputChange("customer_note", e.target.value)}
                       rows={3}
-                      placeholder={language === "bn" ? "অতিরিক্ত নির্দেশনা লিখুন..." : "Any special instructions..."}
+                      placeholder={language === "bn" ? "বিশেষ কোন নির্দেশনা থাকলে লিখুন..." : "Any special instructions..."}
                     />
                   </div>
                 </CardContent>
@@ -538,33 +519,33 @@ const Checkout = () => {
             </div>
 
             {/* Right Column - Order Summary */}
-            <div>
-              <Card className="sticky top-4">
+            <div className="lg:col-span-1">
+              <Card className="sticky top-20">
                 <CardHeader>
                   <CardTitle>{translations.orderSummary}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Items */}
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {/* Items List */}
+                  <div className="space-y-3">
                     {items.map((item) => {
                       const discountedPrice = item.product.price * (1 - (item.product.discount_percentage || 0) / 100);
                       return (
                         <div key={item.product.id} className="flex gap-3">
-                          <div className="w-12 h-12 rounded bg-muted flex-shrink-0 overflow-hidden">
+                          <div className="w-12 h-12 rounded bg-muted overflow-hidden flex-shrink-0">
                             {item.product.image_url ? (
-                              <img
-                                src={item.product.image_url}
-                                alt={item.product.name}
+                              <img 
+                                src={item.product.image_url} 
+                                alt={item.product.name} 
                                 className="w-full h-full object-cover"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <ShoppingBag className="h-6 w-6 text-muted-foreground" />
+                                <ShoppingBag className="h-5 w-5 text-muted-foreground" />
                               </div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm line-clamp-1">{item.product.name}</p>
+                            <p className="font-medium text-sm truncate">{item.product.name}</p>
                             <p className="text-xs text-muted-foreground">
                               {formatPrice(discountedPrice)} × {item.quantity}
                             </p>
@@ -580,55 +561,47 @@ const Checkout = () => {
                   <Separator />
 
                   {/* Totals */}
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{translations.subtotal}</span>
                       <span>{formatPrice(subtotal)}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{translations.shipping}</span>
-                      <span className="text-primary">{translations.free}</span>
+                      <span className="text-primary font-medium">{translations.free}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>{translations.total}</span>
+                      <span className="text-primary">{formatPrice(total)}</span>
                     </div>
                   </div>
 
-                  <Separator />
+                  {/* Place Order Button */}
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    size="lg"
+                    disabled={isLoading || isLoadingPayment}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {language === "bn" ? "অপেক্ষা করুন..." : "Processing..."}
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="h-4 w-4 mr-2" />
+                        {translations.placeOrder}
+                      </>
+                    )}
+                  </Button>
 
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>{translations.total}</span>
-                    <span className="text-primary">{formatPrice(total)}</span>
-                  </div>
-
-                  {/* Submit Button */}
-                  {isAuthenticated ? (
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      size="lg"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          {language === "bn" ? "প্রসেস হচ্ছে..." : "Processing..."}
-                        </>
-                      ) : (
-                        <>
-                          <ShieldCheck className="h-4 w-4 mr-2" />
-                          {translations.placeOrder}
-                        </>
-                      )}
-                    </Button>
-                  ) : (
-                    <Button asChild className="w-full" size="lg">
-                      <Link to="/auth">{translations.login}</Link>
-                    </Button>
-                  )}
-
+                  {/* Security Note */}
                   <p className="text-xs text-center text-muted-foreground">
                     {language === "bn" 
-                      ? "অর্ডার কনফার্ম করলে আমাদের শর্তাবলী মেনে নেওয়া হবে"
-                      : "By placing order you agree to our terms"
-                    }
+                      ? "আপনার তথ্য সুরক্ষিত এবং এনক্রিপ্টেড" 
+                      : "Your information is secure and encrypted"}
                   </p>
                 </CardContent>
               </Card>
