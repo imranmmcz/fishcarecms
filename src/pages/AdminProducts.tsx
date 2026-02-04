@@ -274,13 +274,14 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
         <div className="grid gap-2">
           <Label htmlFor="company">কোম্পানি/সাপ্লায়ার</Label>
           <Select
-            value={formData.company_id}
+            value={formData.company_id || "none"}
             onValueChange={(value) => {
-              handleChange("company_id", value);
+              const actualValue = value === "none" ? "" : value;
+              handleChange("company_id", actualValue);
               // Reset brand if company changes
               if (formData.brand_id) {
                 const brand = brands.find(b => b.id === formData.brand_id);
-                if (brand && brand.company_id !== value) {
+                if (brand && brand.company_id !== actualValue) {
                   handleChange("brand_id", "");
                 }
               }
@@ -290,7 +291,7 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
               <SelectValue placeholder="কোম্পানি নির্বাচন করুন" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">কোনোটি নয়</SelectItem>
+              <SelectItem value="none">কোনোটি নয়</SelectItem>
               {companies.map((company) => (
                 <SelectItem key={company.id} value={company.id}>
                   {company.name_bn || company.name}
@@ -302,14 +303,14 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
         <div className="grid gap-2">
           <Label htmlFor="brand">ব্র্যান্ড</Label>
           <Select
-            value={formData.brand_id}
-            onValueChange={(value) => handleChange("brand_id", value)}
+            value={formData.brand_id || "none"}
+            onValueChange={(value) => handleChange("brand_id", value === "none" ? "" : value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="ব্র্যান্ড নির্বাচন করুন" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">কোনোটি নয়</SelectItem>
+              <SelectItem value="none">কোনোটি নয়</SelectItem>
               {filteredBrands.map((brand) => (
                 <SelectItem key={brand.id} value={brand.id}>
                   {brand.name_bn || brand.name}
