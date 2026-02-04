@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
-import { useProducts, getDiscountedPrice, Product } from "@/contexts/ProductsContextMySQL";
+import { useProducts, getDiscountedPrice, Product } from "@/contexts/ProductsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button3D } from "@/components/ui/button-3d";
 import { Input } from "@/components/ui/input";
@@ -421,8 +421,8 @@ const AdminProducts = () => {
       sku: formData.sku || null,
       unit: formData.unit || "pcs",
       reorder_level: formData.reorder_level,
-      company_id: formData.company_id ? Number(formData.company_id) : null,
-      brand_id: formData.brand_id ? Number(formData.brand_id) : null,
+      company_id: formData.company_id || null,
+      brand_id: formData.brand_id || null,
     });
     setIsSubmitting(false);
     if (success) {
@@ -448,8 +448,8 @@ const AdminProducts = () => {
       sku: formData.sku || null,
       unit: formData.unit || "pcs",
       reorder_level: formData.reorder_level,
-      company_id: formData.company_id ? Number(formData.company_id) : null,
-      brand_id: formData.brand_id ? Number(formData.brand_id) : null,
+      company_id: formData.company_id || null,
+      brand_id: formData.brand_id || null,
     });
     setIsSubmitting(false);
     if (success) {

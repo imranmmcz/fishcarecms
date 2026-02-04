@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Product } from "@/lib/api-client";
+import { Product } from "@/contexts/ProductsContext";
 
 // Extended product type that can come from database or static data
 export interface DisplayProduct {
@@ -61,8 +61,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const imageUrl = product.image_url || product.image;
   const hasValidImage = isValidImage(imageUrl);
   const config = categoryConfig[product.category] || categoryConfig.medicine;
-  const inCart = product.isFromDatabase && isInCart(Number(product.id));
-  const quantity = product.isFromDatabase ? getItemQuantity(Number(product.id)) : 0;
+  const inCart = product.isFromDatabase && isInCart(String(product.id));
+  const quantity = product.isFromDatabase ? getItemQuantity(String(product.id)) : 0;
   const externalLink = product.external_link || product.externalLink;
 
   const handleOrderClick = () => {
@@ -74,7 +74,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const handleAddToCart = () => {
     if (product.isFromDatabase) {
       const dbProduct: Product = {
-        id: Number(product.id),
+        id: String(product.id),
         name: product.name,
         description: product.description || null,
         price: product.originalPrice || product.price,
@@ -82,6 +82,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         category: product.category,
         image_url: product.image_url || null,
         external_link: product.external_link || null,
+        stock_quantity: 0,
+        sku: null,
+        unit: null,
+        reorder_level: null,
+        company_id: null,
+        brand_id: null,
         created_at: '',
         updated_at: '',
       };
@@ -186,7 +192,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                     variant="outline"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => updateQuantity(Number(product.id), quantity - 1)}
+                    onClick={() => updateQuantity(String(product.id), quantity - 1)}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
@@ -195,7 +201,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                     variant="outline"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => updateQuantity(Number(product.id), quantity + 1)}
+                    onClick={() => updateQuantity(String(product.id), quantity + 1)}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>

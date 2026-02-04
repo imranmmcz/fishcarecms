@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ProductCard, DisplayProduct } from "@/components/ProductCard";
-import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContextMySQL";
+import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fishProducts as staticProducts, productCategories } from "@/data/fishProductData";
 import { ShoppingBag, Loader2, Search, X, SlidersHorizontal, Pill, Utensils, Wrench } from "lucide-react";
