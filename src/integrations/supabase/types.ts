@@ -712,6 +712,48 @@ export type Database = {
           },
         ]
       }
+      smtp_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          smtp_from_email: string
+          smtp_from_name: string
+          smtp_host: string
+          smtp_password: string
+          smtp_port: number
+          smtp_secure: boolean
+          smtp_user: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          smtp_from_email?: string
+          smtp_from_name?: string
+          smtp_host?: string
+          smtp_password?: string
+          smtp_port?: number
+          smtp_secure?: boolean
+          smtp_user?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          smtp_from_email?: string
+          smtp_from_name?: string
+          smtp_host?: string
+          smtp_password?: string
+          smtp_port?: number
+          smtp_secure?: boolean
+          smtp_user?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stock_adjustments: {
         Row: {
           adjustment_type: string
