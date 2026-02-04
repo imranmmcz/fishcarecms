@@ -826,14 +826,14 @@ const AdminInventory = () => {
                     <div className="space-y-2">
                       <Label>{translations.companies}</Label>
                       <Select
-                        value={brandForm.company_id}
-                        onValueChange={(v) => setBrandForm({ ...brandForm, company_id: v })}
+                        value={brandForm.company_id || "none"}
+                        onValueChange={(v) => setBrandForm({ ...brandForm, company_id: v === "none" ? "" : v })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder={translations.selectCompany} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">-</SelectItem>
+                          <SelectItem value="none">-</SelectItem>
                           {companies.map((c) => (
                             <SelectItem key={c.id} value={c.id}>
                               {language === "bn" && c.name_bn ? c.name_bn : c.name}
