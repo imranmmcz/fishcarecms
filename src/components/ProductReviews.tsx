@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContextMySQL";
+import { useAuth } from "@/contexts/AuthContext";
 import { apiClient, ProductReview, ReviewStats } from "@/lib/api-client";
 import { StarRating } from "./StarRating";
 import { ReviewForm } from "./ReviewForm";

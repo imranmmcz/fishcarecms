@@ -2,8 +2,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Waves, Calculator, Fish, ChevronRight, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContextMySQL";
-// User data is now directly available from AuthContextMySQL user object
+import { useAuth } from "@/contexts/AuthContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -78,7 +77,7 @@ interface PondChartData {
 const COLORS = ["#10b981", "#ef4444", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899"];
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { t, language } = useLanguage();
   const { formatPrice } = useCurrency();
   const [userName, setUserName] = useState("");
@@ -95,13 +94,16 @@ export default function Dashboard() {
   const [pondIncomes, setPondIncomes] = useState<IncomeRecord[]>([]);
   const [pondExpenses, setPondExpenses] = useState<ExpenseRecord[]>([]);
 
-  // Use user data directly from MySQL context instead of fetching from Supabase
+  // Use profile data from Supabase context
   useEffect(() => {
-    if (user) {
-      setUserName(user.full_name || user.email?.split('@')[0] || '');
-      setUserAvatar(user.avatar_url || null);
+    if (profile) {
+      setUserName(profile.full_name || user?.email?.split('@')[0] || '');
+      setUserAvatar(profile.avatar_url || null);
+    } else if (user) {
+      setUserName(user.user_metadata?.full_name || user.email?.split('@')[0] || '');
+      setUserAvatar(null);
     }
-  }, [user]);
+  }, [user, profile]);
 
   useEffect(() => {
     const incomes: IncomeRecord[] = JSON.parse(localStorage.getItem("farmerIncomes") || "[]");
