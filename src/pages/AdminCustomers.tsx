@@ -1,0 +1,336 @@
+import { useState, useEffect } from "react";
+import { AdminLayout } from "@/components/AdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Search, Users, ShoppingCart, Phone, Mail, MapPin, Eye } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface Customer {
+  customer_name: string;
+  customer_email: string | null;
+  customer_phone: string;
+  division: string | null;
+  district: string | null;
+  upazila: string | null;
+  shipping_address: string;
+  total_orders: number;
+  total_spent: number;
+  last_order_date: string;
+}
+
+interface CustomerOrder {
+  id: string;
+  order_number: string;
+  total_amount: number;
+  status: string;
+  payment_status: string;
+  created_at: string;
+}
+
+export default function AdminCustomers() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerOrders, setCustomerOrders] = useState<CustomerOrder[]>([]);
+  const [isOrdersDialogOpen, setIsOrdersDialogOpen] = useState(false);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get unique customers from orders with aggregated data
+      const { data, error } = await supabase
+        .from('orders')
+        .select('customer_name, customer_email, customer_phone, division, district, upazila, shipping_address, total_amount, created_at')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Aggregate customers by phone number (unique identifier)
+      const customerMap = new Map<string, Customer>();
+      
+      data?.forEach(order => {
+        const key = order.customer_phone;
+        if (customerMap.has(key)) {
+          const existing = customerMap.get(key)!;
+          existing.total_orders += 1;
+          existing.total_spent += order.total_amount;
+          if (new Date(order.created_at) > new Date(existing.last_order_date)) {
+            existing.last_order_date = order.created_at;
+          }
+        } else {
+          customerMap.set(key, {
+            customer_name: order.customer_name,
+            customer_email: order.customer_email,
+            customer_phone: order.customer_phone,
+            division: order.division,
+            district: order.district,
+            upazila: order.upazila,
+            shipping_address: order.shipping_address,
+            total_orders: 1,
+            total_spent: order.total_amount,
+            last_order_date: order.created_at
+          });
+        }
+      });
+
+      setCustomers(Array.from(customerMap.values()));
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      toast.error('কাস্টমার লোড করতে সমস্যা হয়েছে');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchCustomerOrders = async (phone: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, order_number, total_amount, status, payment_status, created_at')
+        .eq('customer_phone', phone)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCustomerOrders(data || []);
+    } catch (error) {
+      console.error('Error fetching customer orders:', error);
+      toast.error('অর্ডার লোড করতে সমস্যা হয়েছে');
+    }
+  };
+
+  const handleViewCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    fetchCustomerOrders(customer.customer_phone);
+    setIsOrdersDialogOpen(true);
+  };
+
+  const filteredCustomers = customers.filter(customer =>
+    customer.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.customer_phone.includes(searchTerm) ||
+    (customer.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const getStatusBadge = (status: string) => {
+    const statusColors: Record<string, string> = {
+      pending: "bg-yellow-100 text-yellow-800",
+      processing: "bg-blue-100 text-blue-800",
+      shipped: "bg-purple-100 text-purple-800",
+      delivered: "bg-green-100 text-green-800",
+      cancelled: "bg-red-100 text-red-800"
+    };
+    const statusLabels: Record<string, string> = {
+      pending: "অপেক্ষমান",
+      processing: "প্রসেসিং",
+      shipped: "শিপড",
+      delivered: "ডেলিভারড",
+      cancelled: "বাতিল"
+    };
+    return (
+      <Badge className={statusColors[status] || "bg-gray-100 text-gray-800"}>
+        {statusLabels[status] || status}
+      </Badge>
+    );
+  };
+
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">কাস্টমার ম্যানেজমেন্ট</h1>
+            <p className="text-muted-foreground">অর্ডারকারী কাস্টমারদের তালিকা</p>
+          </div>
+          <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
+            <Users className="h-5 w-5 text-primary" />
+            <span className="font-semibold text-primary">{customers.length} জন কাস্টমার</span>
+          </div>
+        </div>
+
+        {/* Search */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="নাম, ফোন বা ইমেইল দিয়ে খুঁজুন..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Customers Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              কাস্টমার তালিকা
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8">লোড হচ্ছে...</div>
+            ) : filteredCustomers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                কোনো কাস্টমার পাওয়া যায়নি
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>নাম</TableHead>
+                      <TableHead>ফোন</TableHead>
+                      <TableHead>ইমেইল</TableHead>
+                      <TableHead>ঠিকানা</TableHead>
+                      <TableHead className="text-center">মোট অর্ডার</TableHead>
+                      <TableHead className="text-right">মোট খরচ</TableHead>
+                      <TableHead>শেষ অর্ডার</TableHead>
+                      <TableHead className="text-center">অ্যাকশন</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCustomers.map((customer, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{customer.customer_name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Phone className="h-3 w-3 text-muted-foreground" />
+                            {customer.customer_phone}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {customer.customer_email ? (
+                            <div className="flex items-center gap-1">
+                              <Mail className="h-3 w-3 text-muted-foreground" />
+                              {customer.customer_email}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 max-w-[200px] truncate">
+                            <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+                            {[customer.upazila, customer.district, customer.division].filter(Boolean).join(', ') || customer.shipping_address}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="secondary">{customer.total_orders}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          ৳{customer.total_spent.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(customer.last_order_date).toLocaleDateString('bn-BD')}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewCustomer(customer)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Customer Orders Dialog */}
+        <Dialog open={isOrdersDialogOpen} onOpenChange={setIsOrdersDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                {selectedCustomer?.customer_name} - অর্ডার হিস্ট্রি
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedCustomer && (
+              <div className="space-y-4">
+                {/* Customer Info */}
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">ফোন:</span>{" "}
+                        <span className="font-medium">{selectedCustomer.customer_phone}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">ইমেইল:</span>{" "}
+                        <span className="font-medium">{selectedCustomer.customer_email || '-'}</span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">ঠিকানা:</span>{" "}
+                        <span className="font-medium">{selectedCustomer.shipping_address}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Orders List */}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>অর্ডার নম্বর</TableHead>
+                      <TableHead>তারিখ</TableHead>
+                      <TableHead className="text-right">মূল্য</TableHead>
+                      <TableHead>স্ট্যাটাস</TableHead>
+                      <TableHead>পেমেন্ট</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customerOrders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-mono text-sm">{order.order_number}</TableCell>
+                        <TableCell>{new Date(order.created_at).toLocaleDateString('bn-BD')}</TableCell>
+                        <TableCell className="text-right">৳{order.total_amount.toLocaleString()}</TableCell>
+                        <TableCell>{getStatusBadge(order.status)}</TableCell>
+                        <TableCell>
+                          <Badge variant={order.payment_status === 'paid' ? 'default' : 'secondary'}>
+                            {order.payment_status === 'paid' ? 'পেইড' : 'অপেক্ষমান'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </AdminLayout>
+  );
+}
