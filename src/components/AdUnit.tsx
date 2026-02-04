@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useAdSettings } from '@/contexts/AdSettingsContextMySQL';
+import { useAdSettings } from '@/contexts/AdSettingsContext';
 
 interface AdUnitProps {
   position: 'header' | 'sidebar' | 'footer' | 'in-article' | 'between-modules';
