@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContextMySQL";
+import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { User, Camera, Loader2, Save, Mail, Calendar, Lock, Eye, EyeOff } from "
 import { AddressFields } from "@/components/AddressFields";
 
 export default function Profile() {
-  const { user, isLoading: authLoading, isAdmin, updateProfile, updatePassword, refreshUser } = useAuth();
+  const { user, profile, isLoading: authLoading, isAdmin, updateProfile, updatePassword, refreshUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,18 +50,22 @@ export default function Profile() {
       return;
     }
 
-    if (user) {
-      // Load profile data from user object (MySQL backend)
-      setFullName(user.full_name || "");
-      setAvatarUrl(user.avatar_url || null);
-      setMobile(user.mobile || "");
-      setDivision(user.division || "");
-      setDistrict(user.district || "");
-      setUpazila(user.upazila || "");
-      setVillage(user.village || "");
+    if (profile) {
+      // Load profile data from Supabase profile
+      setFullName(profile.full_name || "");
+      setAvatarUrl(profile.avatar_url || null);
+      setMobile(profile.mobile || "");
+      setDivision(profile.division || "");
+      setDistrict(profile.district || "");
+      setUpazila(profile.upazila || "");
+      setVillage(profile.village || "");
+      setLoading(false);
+    } else if (user) {
+      // Fallback to user metadata if profile not loaded yet
+      setFullName(user.user_metadata?.full_name || "");
       setLoading(false);
     }
-  }, [user, authLoading, navigate]);
+  }, [user, profile, authLoading, navigate]);
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     // Note: Avatar upload requires backend file upload endpoint
@@ -74,7 +78,7 @@ export default function Profile() {
     try {
       setSaving(true);
       
-      const { error } = await updateProfile({
+      const success = await updateProfile({
         full_name: fullName,
         mobile,
         division,
@@ -83,8 +87,8 @@ export default function Profile() {
         village
       });
 
-      if (error) {
-        throw error;
+      if (!success) {
+        throw new Error("Failed to update profile");
       }
 
       // Refresh user data to get updated values

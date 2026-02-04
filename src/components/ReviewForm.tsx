@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContextMySQL";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { apiClient } from "@/lib/api-client";
 import { StarRating } from "./StarRating";

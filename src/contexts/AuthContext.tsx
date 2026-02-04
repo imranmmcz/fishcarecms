@@ -10,23 +10,62 @@ interface AddressData {
   village?: string;
 }
 
+interface UserProfile {
+  id: string;
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  mobile: string | null;
+  division: string | null;
+  district: string | null;
+  upazila: string | null;
+  village: string | null;
+  avatar_url: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
+  profile: UserProfile | null;
   session: Session | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, addressData?: AddressData) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<{ error: Error | null }>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return null;
+      }
+
+      return data as UserProfile;
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      return null;
+    }
+  };
 
   const checkAdminRole = async (userId: string) => {
     try {
@@ -56,25 +95,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         setIsLoading(false);
 
-        // Defer admin check with setTimeout to prevent deadlock
+        // Defer profile and admin check with setTimeout to prevent deadlock
         if (session?.user) {
-          setTimeout(() => {
-            checkAdminRole(session.user.id).then(setIsAdmin);
+          setTimeout(async () => {
+            const [profileData, adminStatus] = await Promise.all([
+              fetchProfile(session.user.id),
+              checkAdminRole(session.user.id),
+            ]);
+            setProfile(profileData);
+            setIsAdmin(adminStatus);
           }, 0);
         } else {
+          setProfile(null);
           setIsAdmin(false);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
 
       if (session?.user) {
-        checkAdminRole(session.user.id).then(setIsAdmin);
+        const [profileData, adminStatus] = await Promise.all([
+          fetchProfile(session.user.id),
+          checkAdminRole(session.user.id),
+        ]);
+        setProfile(profileData);
+        setIsAdmin(adminStatus);
       }
     });
 
@@ -112,19 +162,74 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setProfile(null);
     setIsAdmin(false);
+  };
+
+  const updateProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: data.full_name,
+          mobile: data.mobile,
+          division: data.division,
+          district: data.district,
+          upazila: data.upazila,
+          village: data.village,
+          avatar_url: data.avatar_url,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      // Refresh profile
+      const updatedProfile = await fetchProfile(user.id);
+      setProfile(updatedProfile);
+      return true;
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      return false;
+    }
+  };
+
+  const updatePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      // Supabase doesn't require current password verification for logged-in users
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      return { error: error as Error | null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const refreshUser = async () => {
+    if (user) {
+      const profileData = await fetchProfile(user.id);
+      setProfile(profileData);
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        profile,
         session,
         isLoading,
         isAdmin,
+        isAuthenticated: !!user,
         signIn,
         signUp,
         signOut,
+        updateProfile,
+        updatePassword,
+        refreshUser,
       }}
     >
       {children}
