@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
-import { apiClient, ReviewStats } from "@/lib/api-client";
-import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContextMySQL";
+import { supabase } from "@/integrations/supabase/client";
+import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -37,17 +37,17 @@ import {
 import { toast } from "sonner";
 
 interface ProductDetails {
-  id: number;
+  id: string;
   name: string;
   description: string | null;
   price: number;
-  discount_percentage: number;
+  discount_percentage: number | null;
   category: string;
   image_url: string | null;
   external_link: string | null;
   stock_quantity?: number;
-  sku?: string;
-  unit?: string;
+  sku?: string | null;
+  unit?: string | null;
   brand_name?: string;
   company_name?: string;
   created_at: string;
@@ -90,9 +90,15 @@ const ProductDetails = () => {
       
       setIsLoading(true);
       try {
-        const response = await apiClient.getProduct(id);
-        if (response.data?.product) {
-          setProduct(response.data.product as ProductDetails);
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setProduct(data as ProductDetails);
         }
       } catch (error) {
         console.error("Error fetching product:", error);
@@ -122,6 +128,12 @@ const ProductDetails = () => {
       category: product.category,
       image_url: product.image_url,
       external_link: product.external_link,
+      stock_quantity: product.stock_quantity || 0,
+      sku: product.sku || null,
+      unit: product.unit || null,
+      reorder_level: null,
+      company_id: null,
+      brand_id: null,
       created_at: product.created_at,
       updated_at: product.updated_at,
     }, quantity);

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { apiClient } from "@/lib/api-client";
+import { useReviews } from "@/hooks/useReviews";
 import { StarRating } from "./StarRating";
 import { Button3D } from "@/components/ui/button-3d";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,97 +13,103 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
 interface ReviewFormProps {
-  productId: number;
+  productId: string;
   existingReview?: {
-    id: number;
+    id: string;
     rating: number;
     title: string | null;
-    review_text: string | null;
+    comment: string | null;
   } | null;
   onReviewSubmitted: () => void;
   onCancel?: () => void;
 }
 
 export const ReviewForm = ({ productId, existingReview, onReviewSubmitted, onCancel }: ReviewFormProps) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { language } = useLanguage();
+  const { createReview, updateReview } = useReviews(productId);
+  
   const [rating, setRating] = useState(existingReview?.rating || 0);
   const [title, setTitle] = useState(existingReview?.title || "");
-  const [reviewText, setReviewText] = useState(existingReview?.review_text || "");
+  const [reviewText, setReviewText] = useState(existingReview?.comment || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const isEditing = !!existingReview;
 
   const translations = {
     writeReview: language === "bn" ? "রিভিউ লিখুন" : "Write a Review",
     editReview: language === "bn" ? "রিভিউ সম্পাদনা করুন" : "Edit Review",
     rating: language === "bn" ? "রেটিং" : "Rating",
-    title: language === "bn" ? "শিরোনাম (ঐচ্ছিক)" : "Title (Optional)",
-    titlePlaceholder: language === "bn" ? "আপনার রিভিউয়ের শিরোনাম..." : "Your review title...",
-    review: language === "bn" ? "রিভিউ" : "Review",
-    reviewPlaceholder: language === "bn" ? "আপনার অভিজ্ঞতা শেয়ার করুন..." : "Share your experience...",
-    submit: language === "bn" ? "রিভিউ জমা দিন" : "Submit Review",
+    title: language === "bn" ? "শিরোনাম (ঐচ্ছিক)" : "Title (optional)",
+    titlePlaceholder: language === "bn" ? "সংক্ষেপে আপনার অভিজ্ঞতা" : "Summarize your experience",
+    review: language === "bn" ? "রিভিউ (ঐচ্ছিক)" : "Review (optional)",
+    reviewPlaceholder: language === "bn" ? "আপনার অভিজ্ঞতা বিস্তারিত লিখুন..." : "Share your experience in detail...",
+    submit: language === "bn" ? "জমা দিন" : "Submit",
     update: language === "bn" ? "আপডেট করুন" : "Update",
     cancel: language === "bn" ? "বাতিল" : "Cancel",
-    loginRequired: language === "bn" ? "রিভিউ দিতে লগইন করুন" : "Login to write a review",
-    loginButton: language === "bn" ? "লগইন করুন" : "Login",
-    selectRating: language === "bn" ? "রেটিং নির্বাচন করুন" : "Please select a rating",
-    success: language === "bn" ? "রিভিউ সফলভাবে জমা হয়েছে" : "Review submitted successfully",
-    updateSuccess: language === "bn" ? "রিভিউ আপডেট হয়েছে" : "Review updated successfully",
-    error: language === "bn" ? "রিভিউ জমা দিতে সমস্যা হয়েছে" : "Failed to submit review",
+    loginRequired: language === "bn" ? "রিভিউ দিতে লগইন করুন" : "Please login to write a review",
+    ratingRequired: language === "bn" ? "রেটিং দিন" : "Please provide a rating",
+    success: language === "bn" ? "রিভিউ সফলভাবে জমা হয়েছে!" : "Review submitted successfully!",
+    updateSuccess: language === "bn" ? "রিভিউ সফলভাবে আপডেট হয়েছে!" : "Review updated successfully!",
+    error: language === "bn" ? "রিভিউ জমা করতে সমস্যা হয়েছে" : "Failed to submit review",
+    login: language === "bn" ? "লগইন করুন" : "Login",
   };
 
+  const isEditing = !!existingReview;
+
   const handleSubmit = async () => {
+    if (!user) {
+      toast.error(translations.loginRequired);
+      return;
+    }
+
     if (rating === 0) {
-      toast.error(translations.selectRating);
+      toast.error(translations.ratingRequired);
       return;
     }
 
     setIsSubmitting(true);
     try {
+      let success: boolean;
+
       if (isEditing && existingReview) {
-        const response = await apiClient.updateReview(String(existingReview.id), {
+        success = await updateReview(existingReview.id, {
           rating,
           title: title || undefined,
-          review_text: reviewText || undefined,
+          comment: reviewText || undefined,
         });
-        if (response.error) {
-          toast.error(response.error);
-        } else {
+        if (success) {
           toast.success(translations.updateSuccess);
-          onReviewSubmitted();
         }
       } else {
-        const response = await apiClient.createReview({
-          product_id: productId,
+        success = await createReview({
           rating,
           title: title || undefined,
-          review_text: reviewText || undefined,
+          comment: reviewText || undefined,
         });
-        if (response.error) {
-          toast.error(response.error);
-        } else {
-          toast.success(translations.success);
+        if (success) {
           setRating(0);
           setTitle("");
           setReviewText("");
-          onReviewSubmitted();
         }
       }
+
+      if (success) {
+        onReviewSubmitted();
+      }
     } catch (error) {
+      console.error("Error submitting review:", error);
       toast.error(translations.error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
+        <CardContent className="py-6 text-center">
           <p className="text-muted-foreground mb-4">{translations.loginRequired}</p>
           <Link to="/auth">
-            <Button3D variant="primary">{translations.loginButton}</Button3D>
+            <Button3D variant="primary">{translations.login}</Button3D>
           </Link>
         </CardContent>
       </Card>
@@ -112,38 +118,37 @@ export const ReviewForm = ({ productId, existingReview, onReviewSubmitted, onCan
 
   return (
     <Card>
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg flex items-center gap-2">
-          {isEditing ? <Edit className="h-5 w-5" /> : null}
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          {isEditing ? <Edit className="h-5 w-5" /> : <Send className="h-5 w-5" />}
           {isEditing ? translations.editReview : translations.writeReview}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Rating */}
-        <div className="space-y-2">
-          <Label>{translations.rating} *</Label>
-          <StarRating
-            rating={rating}
-            size="lg"
-            interactive
-            onRatingChange={setRating}
-          />
+        <div>
+          <Label>{translations.rating}</Label>
+          <div className="mt-2">
+            <StarRating
+              rating={rating}
+              interactive
+              onRatingChange={setRating}
+              size="lg"
+            />
+          </div>
         </div>
 
-        {/* Title */}
-        <div className="space-y-2">
+        <div>
           <Label htmlFor="review-title">{translations.title}</Label>
           <Input
             id="review-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={translations.titlePlaceholder}
-            maxLength={255}
+            className="mt-1"
           />
         </div>
 
-        {/* Review Text */}
-        <div className="space-y-2">
+        <div>
           <Label htmlFor="review-text">{translations.review}</Label>
           <Textarea
             id="review-text"
@@ -151,27 +156,27 @@ export const ReviewForm = ({ productId, existingReview, onReviewSubmitted, onCan
             onChange={(e) => setReviewText(e.target.value)}
             placeholder={translations.reviewPlaceholder}
             rows={4}
+            className="mt-1"
           />
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-2">
           <Button3D
-            variant="success"
+            variant="primary"
             onClick={handleSubmit}
             disabled={isSubmitting || rating === 0}
-            className="flex-1"
+            className="gap-2"
           >
             {isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="h-4 w-4 mr-2" />
+              <Send className="h-4 w-4" />
             )}
             {isEditing ? translations.update : translations.submit}
           </Button3D>
           {onCancel && (
-            <Button3D variant="primary" onClick={onCancel}>
-              <X className="h-4 w-4 mr-2" />
+            <Button3D variant="danger" onClick={onCancel} className="gap-2">
+              <X className="h-4 w-4" />
               {translations.cancel}
             </Button3D>
           )}
@@ -180,5 +185,3 @@ export const ReviewForm = ({ productId, existingReview, onReviewSubmitted, onCan
     </Card>
   );
 };
-
-export default ReviewForm;

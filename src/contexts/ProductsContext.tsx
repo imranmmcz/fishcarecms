@@ -7,10 +7,16 @@ export interface Product {
   name: string;
   description: string | null;
   price: number;
-  discount_percentage: number;
+  discount_percentage: number | null;
   category: string;
   image_url: string | null;
   external_link: string | null;
+  stock_quantity: number;
+  sku: string | null;
+  unit: string | null;
+  reorder_level: number | null;
+  company_id: string | null;
+  brand_id: string | null;
   created_at: string;
   updated_at: string;
 }

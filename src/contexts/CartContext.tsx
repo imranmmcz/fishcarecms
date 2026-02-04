@@ -4,7 +4,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Product } from "@/lib/api-client";
+import { Product } from "@/contexts/ProductsContext";
 import { toast } from "sonner";
 
 export interface CartItem {
@@ -17,11 +17,11 @@ interface CartContextType {
   itemCount: number;
   subtotal: number;
   addToCart: (product: Product, quantity?: number) => void;
-  removeFromCart: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => void;
+  removeFromCart: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  isInCart: (productId: number) => boolean;
-  getItemQuantity: (productId: number) => number;
+  isInCart: (productId: string) => boolean;
+  getItemQuantity: (productId: string) => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -83,7 +83,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = (productId: string) => {
     setItems(prevItems => {
       const item = prevItems.find(i => i.product.id === productId);
       if (item) {
@@ -93,7 +93,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const updateQuantity = (productId: number, quantity: number) => {
+  const updateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
@@ -113,11 +113,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     toast.info('কার্ট খালি করা হয়েছে');
   };
 
-  const isInCart = (productId: number) => {
+  const isInCart = (productId: string) => {
     return items.some(item => item.product.id === productId);
   };
 
-  const getItemQuantity = (productId: number) => {
+  const getItemQuantity = (productId: string) => {
     const item = items.find(i => i.product.id === productId);
     return item?.quantity || 0;
   };
