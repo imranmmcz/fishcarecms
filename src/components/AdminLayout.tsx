@@ -28,7 +28,9 @@ import {
   TrendingUp,
   Database,
   ShoppingCart,
-  Warehouse
+  Warehouse,
+  UserCheck,
+  Building2
 } from "lucide-react";
 
 const menuItems = [
@@ -68,8 +70,22 @@ const menuItems = [
     iconColor: "text-sky-500"
   },
   { 
+    title: "কাস্টমার", 
+    url: "/admin/customers", 
+    icon: UserCheck,
+    color: "bg-gradient-to-r from-lime-500 to-green-600",
+    iconColor: "text-lime-500"
+  },
+  { 
+    title: "সাপ্লায়ার", 
+    url: "/admin/suppliers", 
+    icon: Building2,
+    color: "bg-gradient-to-r from-fuchsia-500 to-pink-600",
+    iconColor: "text-fuchsia-500"
+  },
+  { 
     title: "ব্যবহারকারী", 
-    url: "/admin/users", 
+    url: "/admin/users",
     icon: Users,
     color: "bg-gradient-to-r from-blue-500 to-cyan-600",
     iconColor: "text-blue-500"
