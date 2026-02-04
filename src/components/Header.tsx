@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContextMySQL";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -31,9 +31,9 @@ export const Header = () => {
     { path: "/modules", label: t.allModules },
   ];
 
-  // Get user display name from user object (MySQL backend)
+  // Get user display name from Supabase user metadata
   const defaultUserName = language === "bn" ? "ব্যবহারকারী" : "User";
-  const userName = user?.full_name || user?.email?.split('@')[0] || defaultUserName;
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || defaultUserName;
   const userRole = isAdmin ? (language === "bn" ? "অ্যাডমিন" : "Admin") : (language === "bn" ? "ব্যবহারকারী" : "User");
   const userInitials = userName.slice(0, 2).toUpperCase();
 
