@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { useProducts, getDiscountedPrice, Product } from "@/contexts/ProductsContext";
+import { useCategories, Category } from "@/hooks/useCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { Button3D } from "@/components/ui/button-3d";
 import { Input } from "@/components/ui/input";
@@ -12,14 +13,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle, FolderOpen } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const categories = [
-  { value: "medicine", label: "ঔষধ" },
-  { value: "food", label: "খাবার" },
-  { value: "accessories", label: "সরঞ্জাম" },
-];
+import { CategoryManagement } from "@/components/admin/CategoryManagement";
 
 const units = [
   { value: "pcs", label: "পিস" },
@@ -32,10 +29,6 @@ const units = [
   { value: "bottle", label: "বোতল" },
   { value: "bag", label: "ব্যাগ" },
 ];
-
-const getCategoryLabel = (value: string) => {
-  return categories.find((c) => c.value === value)?.label || value;
-};
 
 const getUnitLabel = (value: string) => {
   return units.find((u) => u.value === value)?.label || value;
@@ -95,9 +88,10 @@ interface ProductFormProps {
   isSubmitting: boolean;
   companies: Company[];
   brands: Brand[];
+  categories: Category[];
 }
 
-const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitting, companies, brands }: ProductFormProps) => {
+const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitting, companies, brands, categories }: ProductFormProps) => {
   const handleChange = useCallback((field: keyof ProductFormData, value: string | number) => {
     onFormChange({ ...formData, [field]: value });
   }, [formData, onFormChange]);
@@ -106,6 +100,11 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
   const filteredBrands = formData.company_id 
     ? brands.filter(b => b.company_id === formData.company_id)
     : brands;
+
+  const getCategoryLabel = (value: string) => {
+    const cat = categories.find((c) => c.name === value || c.slug === value);
+    return cat?.name_bn || value;
+  };
 
   return (
     <div className="grid gap-4 py-4">
@@ -149,8 +148,8 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
             </SelectTrigger>
             <SelectContent>
               {categories.map((cat) => (
-                <SelectItem key={cat.value} value={cat.value}>
-                  {cat.label}
+                <SelectItem key={cat.id} value={cat.name}>
+                  {cat.name_bn}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -374,11 +373,19 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
 
 const AdminProducts = () => {
   const { products, isLoading, addProduct, updateProduct, deleteProduct } = useProducts();
+  const { categories, loading: categoriesLoading } = useCategories();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(emptyProduct);
+  const [activeTab, setActiveTab] = useState("products");
+
+  // Helper function for category label
+  const getCategoryLabel = (value: string) => {
+    const cat = categories.find((c) => c.name === value || c.slug === value);
+    return cat?.name_bn || value;
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -531,155 +538,175 @@ const AdminProducts = () => {
                 isSubmitting={isSubmitting}
                 companies={companies}
                 brands={brands}
+                categories={categories}
               />
             </DialogContent>
           </Dialog>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">{products.length}</div>
-              <div className="text-sm text-muted-foreground">মোট পণ্য</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-primary">
-                {products.reduce((sum, p) => sum + (p.stock_quantity || 0), 0)}
-              </div>
-              <div className="text-sm text-muted-foreground">মোট স্টক</div>
-            </CardContent>
-          </Card>
-          <Card className={lowStockProducts.length > 0 ? "border-amber-500" : ""}>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-amber-600">{lowStockProducts.length}</div>
-              <div className="text-sm text-muted-foreground">কম স্টক</div>
-            </CardContent>
-          </Card>
-          <Card className={outOfStockProducts.length > 0 ? "border-destructive" : ""}>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-destructive">{outOfStockProducts.length}</div>
-              <div className="text-sm text-muted-foreground">স্টক শেষ</div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Tabs for Products and Categories */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="products" className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              পণ্য তালিকা
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="flex items-center gap-2">
+              <FolderOpen className="h-4 w-4" />
+              ক্যাটাগরি
+            </TabsTrigger>
+          </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              পণ্য তালিকা ({products.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : products.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                কোন পণ্য নেই। উপরের বাটন দিয়ে নতুন পণ্য যোগ করুন।
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">ছবি</TableHead>
-                      <TableHead>পণ্যের নাম</TableHead>
-                      <TableHead>ক্যাটাগরি</TableHead>
-                      <TableHead className="text-center">স্টক</TableHead>
-                      <TableHead className="text-right">মূল দাম</TableHead>
-                      <TableHead className="text-right">বিক্রয় দাম</TableHead>
-                      <TableHead className="text-center">অ্যাকশন</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.map((product) => {
-                      const stock = product.stock_quantity || 0;
-                      const reorder = product.reorder_level || 10;
-                      const isLowStock = stock <= reorder && stock > 0;
-                      const isOutOfStock = stock === 0;
-                      
-                      return (
-                        <TableRow key={product.id}>
-                          <TableCell>
-                            {product.image_url ? (
-                              <img
-                                src={product.image_url}
-                                alt={product.name}
-                                className="w-12 h-12 object-cover rounded-lg"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                                <Package className="h-5 w-5 text-muted-foreground" />
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium">{product.name}</div>
-                            {product.sku && (
-                              <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{getCategoryLabel(product.category)}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {isOutOfStock ? (
-                              <Badge variant="destructive">স্টক শেষ</Badge>
-                            ) : isLowStock ? (
-                              <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
-                                {stock} {getUnitLabel(product.unit || "pcs")}
-                              </Badge>
-                            ) : (
-                              <span className="font-medium">{stock} {getUnitLabel(product.unit || "pcs")}</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">৳{product.price}</TableCell>
-                          <TableCell className="text-right font-bold text-primary">
-                            ৳{getDiscountedPrice(product.price, product.discount_percentage)}
-                            {product.discount_percentage > 0 && (
-                              <span className="ml-1 text-xs font-normal text-muted-foreground">
-                                ({product.discount_percentage}%)
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center gap-1">
-                              <Link to={`/product/${product.id}`} target="_blank">
-                                <Button3D variant="primary" size="sm">
-                                  <Eye className="h-4 w-4" />
-                                </Button3D>
-                              </Link>
-                              <Button3D
-                                variant="primary"
-                                size="sm"
-                                onClick={() => openEditDialog(product)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button3D>
-                              <Button3D
-                                variant="danger"
-                                size="sm"
-                                onClick={() => openDeleteDialog(product)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button3D>
-                            </div>
-                          </TableCell>
+          <TabsContent value="products" className="space-y-6 mt-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-2xl font-bold">{products.length}</div>
+                  <div className="text-sm text-muted-foreground">মোট পণ্য</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-2xl font-bold text-primary">
+                    {products.reduce((sum, p) => sum + (p.stock_quantity || 0), 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">মোট স্টক</div>
+                </CardContent>
+              </Card>
+              <Card className={lowStockProducts.length > 0 ? "border-amber-500" : ""}>
+                <CardContent className="p-4">
+                  <div className="text-2xl font-bold text-amber-600">{lowStockProducts.length}</div>
+                  <div className="text-sm text-muted-foreground">কম স্টক</div>
+                </CardContent>
+              </Card>
+              <Card className={outOfStockProducts.length > 0 ? "border-destructive" : ""}>
+                <CardContent className="p-4">
+                  <div className="text-2xl font-bold text-destructive">{outOfStockProducts.length}</div>
+                  <div className="text-sm text-muted-foreground">স্টক শেষ</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  পণ্য তালিকা ({products.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading || categoriesLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : products.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    কোন পণ্য নেই। উপরের বাটন দিয়ে নতুন পণ্য যোগ করুন।
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16">ছবি</TableHead>
+                          <TableHead>পণ্যের নাম</TableHead>
+                          <TableHead>ক্যাটাগরি</TableHead>
+                          <TableHead className="text-center">স্টক</TableHead>
+                          <TableHead className="text-right">মূল দাম</TableHead>
+                          <TableHead className="text-right">বিক্রয় দাম</TableHead>
+                          <TableHead className="text-center">অ্যাকশন</TableHead>
                         </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      </TableHeader>
+                      <TableBody>
+                        {products.map((product) => {
+                          const stock = product.stock_quantity || 0;
+                          const reorder = product.reorder_level || 10;
+                          const isLowStock = stock <= reorder && stock > 0;
+                          const isOutOfStock = stock === 0;
+                          
+                          return (
+                            <TableRow key={product.id}>
+                              <TableCell>
+                                {product.image_url ? (
+                                  <img
+                                    src={product.image_url}
+                                    alt={product.name}
+                                    className="w-12 h-12 object-cover rounded-lg"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                                    <Package className="h-5 w-5 text-muted-foreground" />
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="font-medium">{product.name}</div>
+                                {product.sku && (
+                                  <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{getCategoryLabel(product.category)}</Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {isOutOfStock ? (
+                                  <Badge variant="destructive">স্টক শেষ</Badge>
+                                ) : isLowStock ? (
+                                  <Badge variant="secondary">
+                                    {stock} {getUnitLabel(product.unit || "pcs")}
+                                  </Badge>
+                                ) : (
+                                  <span className="font-medium">{stock} {getUnitLabel(product.unit || "pcs")}</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">৳{product.price}</TableCell>
+                              <TableCell className="text-right font-bold text-primary">
+                                ৳{getDiscountedPrice(product.price, product.discount_percentage)}
+                                {product.discount_percentage > 0 && (
+                                  <span className="ml-1 text-xs font-normal text-muted-foreground">
+                                    ({product.discount_percentage}%)
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center justify-center gap-1">
+                                  <Link to={`/product/${product.id}`} target="_blank">
+                                    <Button3D variant="primary" size="sm">
+                                      <Eye className="h-4 w-4" />
+                                    </Button3D>
+                                  </Link>
+                                  <Button3D
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => openEditDialog(product)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button3D>
+                                  <Button3D
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={() => openDeleteDialog(product)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button3D>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
+          <TabsContent value="categories" className="mt-6">
+            <CategoryManagement />
+          </TabsContent>
+        </Tabs>
         {/* Edit Dialog */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -694,6 +721,7 @@ const AdminProducts = () => {
               isSubmitting={isSubmitting}
               companies={companies}
               brands={brands}
+              categories={categories}
             />
           </DialogContent>
         </Dialog>
