@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import { Link } from "react-router-dom";
+import Autoplay from "embla-carousel-autoplay";
 import { Button3D } from "@/components/ui/button-3d";
 import {
   Carousel,
@@ -68,6 +70,11 @@ const getButtonVariant = (variant: string | null): "primary" | "success" | "warn
 export function HeroSlider() {
   const { slides, loading } = useHeroSlides();
   const { t } = useLanguage();
+  
+  // Autoplay plugin with 5 second delay
+  const autoplayPlugin = useRef(
+    Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
+  );
 
   if (loading) {
     return (
@@ -124,6 +131,9 @@ export function HeroSlider() {
           align: "start",
           loop: true,
         }}
+        plugins={[autoplayPlugin.current]}
+        onMouseEnter={() => autoplayPlugin.current.stop()}
+        onMouseLeave={() => autoplayPlugin.current.play()}
         className="w-full"
       >
         <CarouselContent>
