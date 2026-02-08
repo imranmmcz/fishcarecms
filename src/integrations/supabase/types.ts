@@ -226,6 +226,57 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_slides: {
+        Row: {
+          background_type: string | null
+          background_value: string | null
+          button_link: string | null
+          button_text: string | null
+          button_variant: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          subtitle: string | null
+          tagline: string | null
+          tagline_icon: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          background_type?: string | null
+          background_value?: string | null
+          button_link?: string | null
+          button_text?: string | null
+          button_variant?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          subtitle?: string | null
+          tagline?: string | null
+          tagline_icon?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          background_type?: string | null
+          background_value?: string | null
+          button_link?: string | null
+          button_text?: string | null
+          button_variant?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          subtitle?: string | null
+          tagline?: string | null
+          tagline_icon?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       market_prices: {
         Row: {
           created_at: string
