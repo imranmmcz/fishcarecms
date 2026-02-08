@@ -1,12 +1,13 @@
+import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ModuleCard } from "@/components/ModuleCard";
 import { Button3D } from "@/components/ui/button-3d";
 import { ProductSlider } from "@/components/ProductSlider";
 import { FishHealthAdvice } from "@/components/FishHealthAdvice";
+import { HeroSlider } from "@/components/home/HeroSlider";
 import AdUnit from "@/components/AdUnit";
-import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, LayoutDashboard, FlaskConical, Leaf, BarChart3, Languages } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, FlaskConical, Leaf, BarChart3, Languages } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Carousel,
@@ -15,6 +16,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+
 const Index = () => {
   const { t } = useLanguage();
 
@@ -139,140 +141,8 @@ const Index = () => {
       {/* Header Ad */}
       <AdUnit position="header" className="py-2 container" />
 
-      {/* Hero Section with Slider */}
-      <section className="relative overflow-hidden bg-gradient-hero text-white">
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          className="w-full"
-        >
-          <CarouselContent>
-            {/* Slide 1 - Main Hero */}
-            <CarouselItem>
-              <div className="py-20">
-                <div className="container relative z-10">
-                  <div className="max-w-3xl mx-auto text-center space-y-6 animate-fade-in">
-                    <div className="inline-block rounded-full bg-white/20 px-4 py-1 text-sm backdrop-blur-sm">
-                      {t.heroTagline}
-                    </div>
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      {t.heroTitle}
-                    </h1>
-                    <p className="text-lg md:text-xl text-white/90 leading-relaxed">
-                      {t.heroDescription}
-                    </p>
-                    <div className="flex gap-4 justify-center flex-wrap">
-                      <Link to="/pond-calculator">
-                        <Button3D size="lg" variant="success">
-                          <Calculator className="mr-2 h-5 w-5" />
-                          {t.startNow}
-                        </Button3D>
-                      </Link>
-                      <Link to="/dashboard">
-                        <Button3D size="lg" variant="purple">
-                          <LayoutDashboard className="mr-2 h-5 w-5" />
-                          {t.dashboard}
-                        </Button3D>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CarouselItem>
-
-            {/* Slide 2 - Pond Calculator */}
-            <CarouselItem>
-              <div className="py-20">
-                <div className="container relative z-10">
-                  <div className="max-w-3xl mx-auto text-center space-y-6 animate-fade-in">
-                    <div className="inline-block rounded-full bg-white/20 px-4 py-1 text-sm backdrop-blur-sm">
-                      <Droplets className="inline h-4 w-4 mr-1" />
-                      পুকুর পরিমাপ
-                    </div>
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      সঠিক পুকুর পরিমাপ করুন
-                    </h1>
-                    <p className="text-lg md:text-xl text-white/90 leading-relaxed">
-                      আয়তকার, বর্গাকার, ট্রাপিজয়েড বা বৃত্তাকার - যেকোনো আকৃতির পুকুরের আয়তন ও জলধারণ ক্ষমতা নির্ণয় করুন
-                    </p>
-                    <div className="flex gap-4 justify-center flex-wrap">
-                      <Link to="/pond-calculator">
-                        <Button3D size="lg" variant="warning">
-                          <Calculator className="mr-2 h-5 w-5" />
-                          পুকুর পরিমাপ করুন
-                        </Button3D>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CarouselItem>
-
-            {/* Slide 3 - Fish Stocking */}
-            <CarouselItem>
-              <div className="py-20">
-                <div className="container relative z-10">
-                  <div className="max-w-3xl mx-auto text-center space-y-6 animate-fade-in">
-                    <div className="inline-block rounded-full bg-white/20 px-4 py-1 text-sm backdrop-blur-sm">
-                      <Fish className="inline h-4 w-4 mr-1" />
-                      মাছ মজুদ
-                    </div>
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      সঠিক মাছ মজুদ পরিকল্পনা
-                    </h1>
-                    <p className="text-lg md:text-xl text-white/90 leading-relaxed">
-                      আপনার পুকুরের আয়তন অনুযায়ী সঠিক সংখ্যক মাছ মজুদ করুন এবং সর্বোচ্চ উৎপাদন নিশ্চিত করুন
-                    </p>
-                    <div className="flex gap-4 justify-center flex-wrap">
-                      <Link to="/fish-stocking">
-                        <Button3D size="lg" variant="primary">
-                          <Fish className="mr-2 h-5 w-5" />
-                          মাছ মজুদ পরিকল্পনা
-                        </Button3D>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CarouselItem>
-
-            {/* Slide 4 - Shop */}
-            <CarouselItem>
-              <div className="py-20">
-                <div className="container relative z-10">
-                  <div className="max-w-3xl mx-auto text-center space-y-6 animate-fade-in">
-                    <div className="inline-block rounded-full bg-white/20 px-4 py-1 text-sm backdrop-blur-sm">
-                      <Package className="inline h-4 w-4 mr-1" />
-                      মাছ চাষের সরঞ্জাম
-                    </div>
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      মানসম্মত পণ্য সংগ্রহ করুন
-                    </h1>
-                    <p className="text-lg md:text-xl text-white/90 leading-relaxed">
-                      মাছের খাবার, ওষুধ, সরঞ্জাম - সবকিছু এক জায়গায়। সেরা দামে সেরা পণ্য পান
-                    </p>
-                    <div className="flex gap-4 justify-center flex-wrap">
-                      <Link to="/shop">
-                        <Button3D size="lg" variant="success">
-                          <Package className="mr-2 h-5 w-5" />
-                          শপে যান
-                        </Button3D>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CarouselItem>
-          </CarouselContent>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-            <CarouselPrevious className="static translate-y-0 bg-white/20 hover:bg-white/40 border-white/30 text-white" />
-            <CarouselNext className="static translate-y-0 bg-white/20 hover:bg-white/40 border-white/30 text-white" />
-          </div>
-        </Carousel>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/20 pointer-events-none"></div>
-      </section>
+      {/* Dynamic Hero Slider */}
+      <HeroSlider />
 
       {/* Features Section */}
       <section className="py-16 bg-muted/30">

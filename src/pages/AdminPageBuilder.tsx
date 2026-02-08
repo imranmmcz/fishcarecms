@@ -21,8 +21,10 @@ import {
   Plus,
   Trash2,
   GripVertical,
-  Loader2
+  Loader2,
+  Sliders
 } from "lucide-react";
+import { HeroSliderManagement } from "@/components/admin/HeroSliderManagement";
 
 interface PageSection {
   id: string;
@@ -366,76 +368,9 @@ export default function AdminPageBuilder() {
             <TabsTrigger value="cta">CTA</TabsTrigger>
           </TabsList>
 
-          {/* Hero Section */}
+          {/* Hero Slider Section */}
           <TabsContent value="hero">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Type className="h-5 w-5" />
-                      হিরো সেকশন
-                    </CardTitle>
-                    <CardDescription>মূল ব্যানার এবং হেডলাইন এডিট করুন</CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="hero-active">সক্রিয়</Label>
-                    <Switch
-                      id="hero-active"
-                      checked={heroSection?.is_active}
-                      onCheckedChange={(checked) => updateSection("hero", { is_active: checked })}
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="hero-title">শিরোনাম</Label>
-                    <Input
-                      id="hero-title"
-                      value={heroSection?.content.title || ""}
-                      onChange={(e) => updateSectionContent("hero", "title", e.target.value)}
-                      placeholder="প্রধান শিরোনাম"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hero-subtitle">সাবটাইটেল</Label>
-                    <Textarea
-                      id="hero-subtitle"
-                      value={heroSection?.content.subtitle || ""}
-                      onChange={(e) => updateSectionContent("hero", "subtitle", e.target.value)}
-                      placeholder="সংক্ষিপ্ত বর্ণনা"
-                      rows={2}
-                    />
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="hero-cta-text">বাটন টেক্সট</Label>
-                      <Input
-                        id="hero-cta-text"
-                        value={heroSection?.content.ctaText || ""}
-                        onChange={(e) => updateSectionContent("hero", "ctaText", e.target.value)}
-                        placeholder="শুরু করুন"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="hero-cta-link">বাটন লিংক</Label>
-                      <Input
-                        id="hero-cta-link"
-                        value={heroSection?.content.ctaLink || ""}
-                        onChange={(e) => updateSectionContent("hero", "ctaLink", e.target.value)}
-                        placeholder="/auth"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <Button onClick={() => saveSection("hero")} disabled={saving}>
-                  <Save className="h-4 w-4 mr-2" />
-                  সংরক্ষণ করুন
-                </Button>
-              </CardContent>
-            </Card>
+            <HeroSliderManagement />
           </TabsContent>
 
           {/* Modules Section */}
