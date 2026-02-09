@@ -1,5 +1,5 @@
-import { ExternalLink, Pill, Utensils, Wrench, ShoppingCart, Plus, Minus, Check, Eye } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ExternalLink, Pill, Utensils, Wrench, ShoppingCart, Plus, Minus, Check, Eye, Package } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button3D } from "@/components/ui/button-3d";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
@@ -57,6 +57,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart, isInCart, getItemQuantity, updateQuantity, removeFromCart } = useCart();
   const { formatPrice } = useCurrency();
   const { language } = useLanguage();
+  const navigate = useNavigate();
   
   const imageUrl = product.image_url || product.image;
   const hasValidImage = isValidImage(imageUrl);
@@ -95,8 +96,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
 
+  const handleOrderNow = () => {
+    if (product.isFromDatabase) {
+      if (!inCart) {
+        handleAddToCart();
+      }
+      navigate("/checkout");
+    }
+  };
+
   const translations = {
-    orderNow: language === "bn" ? "এখনই অর্ডার করুন" : "Order Now",
+    orderNow: language === "bn" ? "অর্ডার করুন" : "Order Now",
     addToCart: language === "bn" ? "কার্টে যোগ করুন" : "Add to Cart",
     inCart: language === "bn" ? "কার্টে আছে" : "In Cart",
     discount: language === "bn" ? "ছাড়" : "OFF",
@@ -217,19 +227,30 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                   {translations.addToCart}
                 </Button3D>
               )}
+
+              {/* Order Now Button */}
+              <Button3D 
+                variant="success"
+                size="sm" 
+                className="w-full gap-2"
+                onClick={handleOrderNow}
+              >
+                <Package className="h-4 w-4" />
+                {translations.orderNow}
+              </Button3D>
             </>
           )}
 
           {/* External Order Button */}
           {externalLink && (
             <Button3D 
-              variant="success"
+              variant="warning"
               size="sm" 
               className="w-full gap-2"
               onClick={handleOrderClick}
             >
               <ExternalLink className="h-4 w-4" />
-              {translations.orderNow}
+              {language === "bn" ? "বাহ্যিক লিংক" : "External Link"}
             </Button3D>
           )}
         </div>
