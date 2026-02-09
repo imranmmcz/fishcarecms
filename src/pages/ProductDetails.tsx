@@ -141,6 +141,31 @@ const ProductDetails = () => {
     toast.success(language === "bn" ? "কার্টে যোগ করা হয়েছে" : "Added to cart");
   };
 
+  const handleOrderNow = () => {
+    if (!product) return;
+    if (!inCart) {
+      addToCart({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        discount_percentage: product.discount_percentage,
+        category: product.category,
+        image_url: product.image_url,
+        external_link: product.external_link,
+        stock_quantity: product.stock_quantity || 0,
+        sku: product.sku || null,
+        unit: product.unit || null,
+        reorder_level: null,
+        company_id: null,
+        brand_id: null,
+        created_at: product.created_at,
+        updated_at: product.updated_at,
+      }, quantity);
+    }
+    navigate("/checkout");
+  };
+
   const handleExternalOrder = () => {
     if (product?.external_link) {
       window.open(product.external_link, '_blank', 'noopener,noreferrer');
@@ -440,15 +465,25 @@ const ProductDetails = () => {
                 </Button3D>
               )}
               
+              <Button3D 
+                variant="success"
+                size="lg" 
+                className="flex-1 gap-2"
+                onClick={handleOrderNow}
+              >
+                <Package className="h-5 w-5" />
+                {translations.orderNow}
+              </Button3D>
+
               {product.external_link && (
                 <Button3D 
-                  variant="success"
+                  variant="warning"
                   size="lg" 
                   className="flex-1 gap-2"
                   onClick={handleExternalOrder}
                 >
                   <ExternalLink className="h-5 w-5" />
-                  {translations.orderNow}
+                  {language === "bn" ? "বাহ্যিক লিংক" : "External Link"}
                 </Button3D>
               )}
             </div>
