@@ -541,29 +541,126 @@ const ProductDetails = () => {
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-2xl font-bold mb-6">{translations.relatedProducts}</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">{translations.relatedProducts}</h2>
+              <Link to="/shop" className="text-sm text-primary hover:underline flex items-center gap-1">
+                {language === "bn" ? "সব দেখুন" : "View All"}
+                <ArrowLeft className="h-3 w-3 rotate-180" />
+              </Link>
+            </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((p) => (
-                <Link 
-                  key={p.id} 
-                  to={`/product/${p.id}`}
-                  className="group bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-elegant transition-all duration-300 border border-border/50"
-                >
-                  <div className="aspect-square bg-muted flex items-center justify-center">
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                    ) : (
-                      <Package className="h-16 w-16 text-muted-foreground" />
-                    )}
+              {relatedProducts.map((p) => {
+                const pDiscounted = getDiscountedPrice(p.price, p.discount_percentage);
+                const pInCart = isInCart(p.id);
+                return (
+                  <div 
+                    key={p.id} 
+                    className="group bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-elegant transition-all duration-300 border border-border/50 flex flex-col"
+                  >
+                    <Link to={`/product/${p.id}`} className="relative">
+                      <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
+                        {p.image_url ? (
+                          <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        ) : (
+                          <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${
+                            p.category === "medicine" ? "from-emerald-500/10 to-teal-500/10" :
+                            p.category === "food" ? "from-orange-500/10 to-amber-500/10" :
+                            "from-blue-500/10 to-indigo-500/10"
+                          }`}>
+                            <Package className="h-12 w-12 text-muted-foreground/50" />
+                          </div>
+                        )}
+                      </div>
+                      {/* Discount Badge */}
+                      {p.discount_percentage && p.discount_percentage > 0 && (
+                        <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs">
+                          -{p.discount_percentage}%
+                        </Badge>
+                      )}
+                      {/* Stock Badge */}
+                      {p.stock_quantity <= 0 && (
+                        <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                          <Badge variant="destructive" className="text-sm">
+                            {language === "bn" ? "স্টক শেষ" : "Out of Stock"}
+                          </Badge>
+                        </div>
+                      )}
+                    </Link>
+                    
+                    <div className="p-4 flex flex-col flex-1">
+                      {/* Category */}
+                      <span className="text-xs text-muted-foreground mb-1">
+                        {categoryConfig[p.category]?.label[language] || p.category}
+                      </span>
+                      
+                      <Link to={`/product/${p.id}`}>
+                        <h3 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors text-sm leading-snug">
+                          {p.name}
+                        </h3>
+                      </Link>
+                      
+                      {/* Price */}
+                      <div className="mt-auto pt-3 flex items-baseline gap-2">
+                        <span className="text-lg font-bold text-primary">
+                          {formatPrice(pDiscounted)}
+                        </span>
+                        {p.discount_percentage && p.discount_percentage > 0 && (
+                          <span className="text-xs text-muted-foreground line-through">
+                            {formatPrice(p.price)}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="mt-3 flex gap-2">
+                        {pInCart ? (
+                          <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" asChild>
+                            <Link to="/shop">
+                              <Check className="h-3 w-3 text-primary" />
+                              {language === "bn" ? "কার্টে আছে" : "In Cart"}
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 gap-1 text-xs"
+                            disabled={p.stock_quantity <= 0}
+                            onClick={() => addToCart({
+                              ...p,
+                              reorder_level: p.reorder_level ?? null,
+                              company_id: p.company_id ?? null,
+                              brand_id: p.brand_id ?? null,
+                            }, 1)}
+                          >
+                            <ShoppingCart className="h-3 w-3" />
+                            {language === "bn" ? "কার্ট" : "Cart"}
+                          </Button>
+                        )}
+                        <Button3D
+                          variant="success"
+                          size="sm"
+                          className="flex-1 gap-1 text-xs"
+                          onClick={() => {
+                            if (!pInCart) {
+                              addToCart({
+                                ...p,
+                                reorder_level: p.reorder_level ?? null,
+                                company_id: p.company_id ?? null,
+                                brand_id: p.brand_id ?? null,
+                              }, 1);
+                            }
+                            navigate("/checkout");
+                          }}
+                        >
+                          <Package className="h-3 w-3" />
+                          {language === "bn" ? "অর্ডার" : "Order"}
+                        </Button3D>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">{p.name}</h3>
-                    <p className="text-lg font-bold text-primary mt-1">
-                      {formatPrice(getDiscountedPrice(p.price, p.discount_percentage))}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
