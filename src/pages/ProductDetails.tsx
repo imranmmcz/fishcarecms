@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import AdUnit from "@/components/AdUnit";
 import { StarRating } from "@/components/StarRating";
 import { ProductReviews } from "@/components/ProductReviews";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
   ArrowLeft, 
   ShoppingCart, 
@@ -32,7 +33,9 @@ import {
   Clock,
   Loader2,
   Share2,
-  Heart
+  Heart,
+  ZoomIn,
+  X
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -83,6 +86,10 @@ const ProductDetails = () => {
   const [product, setProduct] = useState<ProductDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+  const [isLensActive, setIsLensActive] = useState(false);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -281,15 +288,58 @@ const ProductDetails = () => {
 
         {/* Main Product Section */}
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Product Image */}
+          {/* Product Image with Zoom */}
           <div className="relative">
-            <div className="aspect-square rounded-3xl overflow-hidden bg-muted sticky top-24">
+            <div 
+              ref={imageContainerRef}
+              className="aspect-square rounded-3xl overflow-hidden bg-muted sticky top-24 cursor-zoom-in group"
+              onClick={() => hasValidImage && setIsZoomOpen(true)}
+              onMouseMove={(e) => {
+                if (!imageContainerRef.current || !hasValidImage) return;
+                const rect = imageContainerRef.current.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                setZoomPosition({ x, y });
+                setIsLensActive(true);
+              }}
+              onMouseLeave={() => setIsLensActive(false)}
+            >
               {hasValidImage ? (
-                <img
-                  src={product.image_url!}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
+                <>
+                  <img
+                    src={product.image_url!}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-300"
+                  />
+                  {/* Hover lens effect */}
+                  {isLensActive && (
+                    <div 
+                      className="absolute w-40 h-40 border-2 border-white/80 rounded-full pointer-events-none shadow-lg overflow-hidden"
+                      style={{
+                        left: `${zoomPosition.x}%`,
+                        top: `${zoomPosition.y}%`,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    >
+                      <div
+                        className="absolute w-[400%] h-[400%]"
+                        style={{
+                          backgroundImage: `url(${product.image_url})`,
+                          backgroundSize: '100%',
+                          backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                          left: '50%',
+                          top: '50%',
+                          transform: 'translate(-50%, -50%)',
+                        }}
+                      />
+                    </div>
+                  )}
+                  {/* Zoom hint */}
+                  <div className="absolute bottom-4 left-4 bg-background/80 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ZoomIn className="h-3.5 w-3.5" />
+                    {language === "bn" ? "জুম করুন" : "Click to zoom"}
+                  </div>
+                </>
               ) : (
                 <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${
                   product.category === "medicine" ? "from-emerald-500/20 to-teal-500/20" :
@@ -309,6 +359,24 @@ const ProductDetails = () => {
                 </Badge>
               )}
             </div>
+
+            {/* Fullscreen Zoom Dialog */}
+            <Dialog open={isZoomOpen} onOpenChange={setIsZoomOpen}>
+              <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none overflow-hidden">
+                <div 
+                  className="w-full h-[90vh] overflow-auto cursor-grab active:cursor-grabbing flex items-center justify-center"
+                  onClick={() => setIsZoomOpen(false)}
+                >
+                  <img
+                    src={product.image_url!}
+                    alt={product.name}
+                    className="max-w-none w-[150%] h-auto object-contain select-none"
+                    draggable={false}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Product Info */}
