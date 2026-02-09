@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Autoplay from "embla-carousel-autoplay";
 import { Button3D } from "@/components/ui/button-3d";
@@ -70,11 +70,25 @@ const getButtonVariant = (variant: string | null): "primary" | "success" | "warn
 export function HeroSlider() {
   const { slides, loading } = useHeroSlides();
   const { t } = useLanguage();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [api, setApi] = useState<any>(null);
   
   // Autoplay plugin with 5 second delay
   const autoplayPlugin = useRef(
     Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
   );
+
+  const onSelect = useCallback(() => {
+    if (!api) return;
+    setCurrentSlide(api.selectedScrollSnap());
+  }, [api]);
+
+  useEffect(() => {
+    if (!api) return;
+    onSelect();
+    api.on("select", onSelect);
+    return () => { api.off("select", onSelect); };
+  }, [api, onSelect]);
 
   if (loading) {
     return (
@@ -134,6 +148,7 @@ export function HeroSlider() {
         plugins={[autoplayPlugin.current]}
         onMouseEnter={() => autoplayPlugin.current.stop()}
         onMouseLeave={() => autoplayPlugin.current.play()}
+        setApi={setApi}
         className="w-full"
       >
         <CarouselContent>
@@ -180,8 +195,22 @@ export function HeroSlider() {
             );
           })}
         </CarouselContent>
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
           <CarouselPrevious className="static translate-y-0 bg-white/20 hover:bg-white/40 border-white/30 text-white" />
+          <div className="flex gap-1.5">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => api?.scrollTo(index)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === currentSlide
+                    ? "w-6 bg-white"
+                    : "w-2 bg-white/40 hover:bg-white/60"
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
           <CarouselNext className="static translate-y-0 bg-white/20 hover:bg-white/40 border-white/30 text-white" />
         </div>
       </Carousel>
