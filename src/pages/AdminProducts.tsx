@@ -14,9 +14,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle, FolderOpen } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle, FolderOpen, ImagePlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CategoryManagement } from "@/components/admin/CategoryManagement";
+import { ProductImageGallery } from "@/components/admin/ProductImageGallery";
 
 const units = [
   { value: "pcs", label: "পিস" },
@@ -377,6 +378,7 @@ const AdminProducts = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isImagesOpen, setIsImagesOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(emptyProduct);
   const [activeTab, setActiveTab] = useState("products");
@@ -679,6 +681,17 @@ const AdminProducts = () => {
                                   <Button3D
                                     variant="primary"
                                     size="sm"
+                                    onClick={() => {
+                                      setSelectedProduct(product);
+                                      setIsImagesOpen(true);
+                                    }}
+                                    title="ছবি ম্যানেজ করুন"
+                                  >
+                                    <ImagePlus className="h-4 w-4" />
+                                  </Button3D>
+                                  <Button3D
+                                    variant="primary"
+                                    size="sm"
                                     onClick={() => openEditDialog(product)}
                                   >
                                     <Pencil className="h-4 w-4" />
@@ -723,6 +736,24 @@ const AdminProducts = () => {
               brands={brands}
               categories={categories}
             />
+            {/* Image Gallery Manager */}
+            {selectedProduct && (
+              <div className="mt-4">
+                <ProductImageGallery productId={selectedProduct.id} />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Images Dialog */}
+        <Dialog open={isImagesOpen} onOpenChange={setIsImagesOpen}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>ছবি ম্যানেজ করুন - {selectedProduct?.name}</DialogTitle>
+            </DialogHeader>
+            {selectedProduct && (
+              <ProductImageGallery productId={selectedProduct.id} />
+            )}
           </DialogContent>
         </Dialog>
 
