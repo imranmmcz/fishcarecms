@@ -35,7 +35,9 @@ import {
   Share2,
   Heart,
   ZoomIn,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -90,6 +92,8 @@ const ProductDetails = () => {
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const [isLensActive, setIsLensActive] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const [galleryImages, setGalleryImages] = useState<{ id: string; image_url: string; is_primary: boolean; alt_text: string | null }[]>([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -106,6 +110,25 @@ const ProductDetails = () => {
         if (error) throw error;
         if (data) {
           setProduct(data as ProductDetails);
+        }
+
+        // Fetch gallery images
+        const { data: images } = await supabase
+          .from("product_images")
+          .select("id, image_url, is_primary, alt_text")
+          .eq("product_id", id)
+          .order("display_order", { ascending: true });
+
+        if (images && images.length > 0) {
+          setGalleryImages(images);
+          const primaryIdx = images.findIndex(img => img.is_primary);
+          setSelectedImageIndex(primaryIdx >= 0 ? primaryIdx : 0);
+        } else if (data?.image_url) {
+          // Fallback: use main product image
+          setGalleryImages([{ id: 'main', image_url: data.image_url, is_primary: true, alt_text: data.name }]);
+          setSelectedImageIndex(0);
+        } else {
+          setGalleryImages([]);
         }
       } catch (error) {
         console.error("Error fetching product:", error);
@@ -253,7 +276,8 @@ const ProductDetails = () => {
     );
   }
 
-  const hasValidImage = product.image_url && !product.image_url.includes("placeholder");
+  const currentImage = galleryImages[selectedImageIndex]?.image_url || product.image_url;
+  const hasValidImage = currentImage && !currentImage.includes("placeholder");
 
   return (
     <div className="min-h-screen bg-background">
@@ -288,11 +312,12 @@ const ProductDetails = () => {
 
         {/* Main Product Section */}
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Product Image with Zoom */}
-          <div className="relative">
+          {/* Product Image with Zoom & Gallery */}
+          <div className="relative sticky top-24 space-y-3">
+            {/* Main Image */}
             <div 
               ref={imageContainerRef}
-              className="aspect-square rounded-3xl overflow-hidden bg-muted sticky top-24 cursor-zoom-in group"
+              className="aspect-square rounded-3xl overflow-hidden bg-muted cursor-zoom-in group relative"
               onClick={() => hasValidImage && setIsZoomOpen(true)}
               onMouseMove={(e) => {
                 if (!imageContainerRef.current || !hasValidImage) return;
@@ -307,8 +332,8 @@ const ProductDetails = () => {
               {hasValidImage ? (
                 <>
                   <img
-                    src={product.image_url!}
-                    alt={product.name}
+                    src={currentImage!}
+                    alt={galleryImages[selectedImageIndex]?.alt_text || product.name}
                     className="w-full h-full object-cover transition-transform duration-300"
                   />
                   {/* Hover lens effect */}
@@ -324,7 +349,7 @@ const ProductDetails = () => {
                       <div
                         className="absolute w-[400%] h-[400%]"
                         style={{
-                          backgroundImage: `url(${product.image_url})`,
+                          backgroundImage: `url(${currentImage})`,
                           backgroundSize: '100%',
                           backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
                           left: '50%',
@@ -339,6 +364,27 @@ const ProductDetails = () => {
                     <ZoomIn className="h-3.5 w-3.5" />
                     {language === "bn" ? "জুম করুন" : "Click to zoom"}
                   </div>
+                  {/* Gallery nav arrows on main image */}
+                  {galleryImages.length > 1 && (
+                    <>
+                      <button
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/90"
+                        onClick={(e) => { e.stopPropagation(); setSelectedImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length); }}
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <button
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/90"
+                        onClick={(e) => { e.stopPropagation(); setSelectedImageIndex((prev) => (prev + 1) % galleryImages.length); }}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                      {/* Image counter */}
+                      <div className="absolute bottom-4 right-4 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium">
+                        {selectedImageIndex + 1} / {galleryImages.length}
+                      </div>
+                    </>
+                  )}
                 </>
               ) : (
                 <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${
@@ -360,20 +406,72 @@ const ProductDetails = () => {
               )}
             </div>
 
+            {/* Thumbnail Gallery */}
+            {galleryImages.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                {galleryImages.map((img, idx) => (
+                  <button
+                    key={img.id}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+                      idx === selectedImageIndex 
+                        ? "border-primary ring-2 ring-primary/30 scale-105" 
+                        : "border-border/50 hover:border-primary/50 opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <img
+                      src={img.image_url}
+                      alt={img.alt_text || `${product.name} - ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Fullscreen Zoom Dialog */}
             <Dialog open={isZoomOpen} onOpenChange={setIsZoomOpen}>
               <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none overflow-hidden">
-                <div 
-                  className="w-full h-[90vh] overflow-auto cursor-grab active:cursor-grabbing flex items-center justify-center"
-                  onClick={() => setIsZoomOpen(false)}
-                >
+                <div className="relative w-full h-[90vh] flex items-center justify-center">
                   <img
-                    src={product.image_url!}
+                    src={currentImage!}
                     alt={product.name}
                     className="max-w-none w-[150%] h-auto object-contain select-none"
                     draggable={false}
-                    onClick={(e) => e.stopPropagation()}
                   />
+                  {/* Fullscreen gallery nav */}
+                  {galleryImages.length > 1 && (
+                    <>
+                      <button
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/40 transition-colors"
+                        onClick={() => setSelectedImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length)}
+                      >
+                        <ChevronLeft className="h-6 w-6 text-white" />
+                      </button>
+                      <button
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/40 transition-colors"
+                        onClick={() => setSelectedImageIndex((prev) => (prev + 1) % galleryImages.length)}
+                      >
+                        <ChevronRight className="h-6 w-6 text-white" />
+                      </button>
+                    </>
+                  )}
+                  {/* Fullscreen thumbnails */}
+                  {galleryImages.length > 1 && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/50 backdrop-blur-sm rounded-full px-4 py-2">
+                      {galleryImages.map((img, idx) => (
+                        <button
+                          key={img.id}
+                          onClick={() => setSelectedImageIndex(idx)}
+                          className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all ${
+                            idx === selectedImageIndex ? "border-white scale-110" : "border-transparent opacity-60 hover:opacity-100"
+                          }`}
+                        >
+                          <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
