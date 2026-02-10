@@ -5,10 +5,11 @@ import { ProductCard, DisplayProduct } from "@/components/ProductCard";
 import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fishProducts as staticProducts, productCategories } from "@/data/fishProductData";
-import { ShoppingBag, Loader2, Search, X, SlidersHorizontal, Pill, Utensils, Wrench } from "lucide-react";
+import { ShoppingBag, Loader2, Search, X, SlidersHorizontal, Pill, Utensils, Wrench, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -36,6 +37,7 @@ const Shop = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, 5000]);
+  const [sortBy, setSortBy] = useState("default");
   const searchRef = useRef<HTMLDivElement>(null);
   const { products: dbProducts, isLoading } = useProducts();
   const { t, language } = useLanguage();
@@ -128,33 +130,38 @@ const Shop = () => {
 
   // Filter products based on all criteria
   const filteredProducts = useMemo(() => {
-    return allProducts.filter((product) => {
-      // Category filter
-      if (activeCategory !== "all" && product.category !== activeCategory) {
-        return false;
-      }
-
-      // Price filter
-      if (product.price < appliedPriceRange[0] || product.price > appliedPriceRange[1]) {
-        return false;
-      }
-
-      // Search filter
+    let result = allProducts.filter((product) => {
+      if (activeCategory !== "all" && product.category !== activeCategory) return false;
+      if (product.price < appliedPriceRange[0] || product.price > appliedPriceRange[1]) return false;
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const matchesName = product.name.toLowerCase().includes(query) || 
                            (product.nameEn && product.nameEn.toLowerCase().includes(query));
         const matchesCategory = product.categoryLabel.toLowerCase().includes(query);
         const matchesDescription = product.description.toLowerCase().includes(query);
-        
-        if (!matchesName && !matchesCategory && !matchesDescription) {
-          return false;
-        }
+        if (!matchesName && !matchesCategory && !matchesDescription) return false;
       }
-
       return true;
     });
-  }, [allProducts, activeCategory, appliedPriceRange, searchQuery]);
+
+    // Sort
+    switch (sortBy) {
+      case "price-low":
+        result = [...result].sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        result = [...result].sort((a, b) => b.price - a.price);
+        break;
+      case "discount":
+        result = [...result].sort((a, b) => (b.discount_percentage || 0) - (a.discount_percentage || 0));
+        break;
+      case "name-az":
+        result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+        break;
+    }
+
+    return result;
+  }, [allProducts, activeCategory, appliedPriceRange, searchQuery, sortBy]);
 
   // Group filtered products by category
   const groupedProducts = useMemo(() => {
@@ -198,6 +205,7 @@ const Shop = () => {
     setSearchQuery("");
     setPriceRange([0, maxPrice]);
     setAppliedPriceRange([0, maxPrice]);
+    setSortBy("default");
   };
 
   const filterLabel = language === "bn" ? "ফিল্টার" : "Filter";
@@ -346,17 +354,34 @@ const Shop = () => {
           ))}
         </div>
 
-        {/* Results Count */}
-        <div className="mb-6 text-center text-muted-foreground">
-          {filteredProducts.length} {t.productsFound}
-          {(searchQuery || activeCategory !== "all" || appliedPriceRange[0] > 0 || appliedPriceRange[1] < maxPrice) && (
-            <button
-              onClick={resetFilters}
-              className="ml-3 text-primary hover:underline font-medium"
-            >
-              {t.resetFilters}
-            </button>
-          )}
+        {/* Results Count & Sort */}
+        <div className="mb-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-muted-foreground">
+            {filteredProducts.length} {t.productsFound}
+            {(searchQuery || activeCategory !== "all" || appliedPriceRange[0] > 0 || appliedPriceRange[1] < maxPrice || sortBy !== "default") && (
+              <button
+                onClick={resetFilters}
+                className="ml-3 text-primary hover:underline font-medium"
+              >
+                {t.resetFilters}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[180px] h-9 rounded-lg">
+                <SelectValue placeholder={language === "bn" ? "সাজানো" : "Sort by"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">{language === "bn" ? "ডিফল্ট" : "Default"}</SelectItem>
+                <SelectItem value="price-low">{language === "bn" ? "দাম: কম → বেশি" : "Price: Low → High"}</SelectItem>
+                <SelectItem value="price-high">{language === "bn" ? "দাম: বেশি → কম" : "Price: High → Low"}</SelectItem>
+                <SelectItem value="discount">{language === "bn" ? "বেশি ছাড়" : "Most Discount"}</SelectItem>
+                <SelectItem value="name-az">{language === "bn" ? "নাম: ক → হ" : "Name: A → Z"}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Loading State */}
