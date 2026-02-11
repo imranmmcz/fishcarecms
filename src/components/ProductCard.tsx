@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ExternalLink, Pill, Utensils, Wrench, ShoppingCart, Plus, Minus, Check, Eye, Package } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button3D } from "@/components/ui/button-3d";
@@ -6,6 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Product } from "@/contexts/ProductsContext";
+import QuickViewModal from "@/components/QuickViewModal";
 
 // Extended product type that can come from database or static data
 export interface DisplayProduct {
@@ -54,6 +56,7 @@ const isValidImage = (imageUrl: string | undefined): boolean => {
 };
 
 export const ProductCard = ({ product }: ProductCardProps) => {
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
   const { addToCart, isInCart, getItemQuantity, updateQuantity, removeFromCart } = useCart();
   const { formatPrice } = useCurrency();
   const { language } = useLanguage();
@@ -157,13 +160,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
         )}
 
-        {/* View Details Overlay */}
+        {/* View Details & Quick View Overlay */}
         {product.isFromDatabase && (
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
             <span className="bg-white/90 text-foreground px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2">
               <Eye className="h-4 w-4" />
               {translations.viewDetails}
             </span>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setQuickViewOpen(true);
+              }}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2 hover:bg-primary/90 transition-colors"
+            >
+              <Eye className="h-4 w-4" />
+              {language === "bn" ? "কুইক ভিউ" : "Quick View"}
+            </button>
           </div>
         )}
       </Link>
@@ -255,6 +269,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
         </div>
       </div>
+
+      {/* Quick View Modal */}
+      <QuickViewModal product={product} open={quickViewOpen} onOpenChange={setQuickViewOpen} />
     </div>
   );
 };
