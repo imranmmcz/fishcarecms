@@ -18,6 +18,17 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import AdUnit from "@/components/AdUnit";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
+
+const PRODUCTS_PER_PAGE = 12;
 
 const categoryIcons: Record<string, React.ReactNode> = {
   medicine: <Pill className="h-5 w-5" />,
@@ -38,6 +49,7 @@ const Shop = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, 5000]);
   const [sortBy, setSortBy] = useState("default");
+  const [currentPage, setCurrentPage] = useState(1);
   const searchRef = useRef<HTMLDivElement>(null);
   const { products: dbProducts, isLoading } = useProducts();
   const { t, language } = useLanguage();
@@ -163,6 +175,19 @@ const Shop = () => {
     return result;
   }, [allProducts, activeCategory, appliedPriceRange, searchQuery, sortBy]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, appliedPriceRange, searchQuery, sortBy]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
+
   // Group filtered products by category
   const groupedProducts = useMemo(() => {
     const groups: Record<string, typeof filteredProducts> = {
@@ -206,6 +231,7 @@ const Shop = () => {
     setPriceRange([0, maxPrice]);
     setAppliedPriceRange([0, maxPrice]);
     setSortBy("default");
+    setCurrentPage(1);
   };
 
   const filterLabel = language === "bn" ? "ফিল্টার" : "Filter";
@@ -422,12 +448,61 @@ const Shop = () => {
                 })}
               </div>
             ) : (
-              // Filtered view (non-grouped)
+              // Filtered view (non-grouped) with pagination
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => (
+                {paginatedProducts.map((product) => (
                   <ProductCard key={`${product.isFromDatabase ? 'db' : 'static'}-${product.id}`} product={product} />
                 ))}
               </div>
+            )}
+
+            {/* Pagination */}
+            {!showCategoryWise && totalPages > 1 && (
+              <Pagination className="mt-8">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((page) => {
+                      if (totalPages <= 7) return true;
+                      if (page === 1 || page === totalPages) return true;
+                      if (Math.abs(page - currentPage) <= 1) return true;
+                      return false;
+                    })
+                    .map((page, idx, arr) => {
+                      const elements: React.ReactNode[] = [];
+                      if (idx > 0 && page - arr[idx - 1] > 1) {
+                        elements.push(
+                          <PaginationItem key={`ellipsis-${page}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
+                      elements.push(
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            isActive={page === currentPage}
+                            onClick={() => setCurrentPage(page)}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                      return elements;
+                    })}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             )}
           </>
         )}
