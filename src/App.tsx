@@ -11,6 +11,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { AdSettingsProvider } from "@/contexts/AdSettingsContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { WishlistProvider } from "@/contexts/WishlistContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
@@ -56,6 +57,7 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
 import ProductDetails from "./pages/ProductDetails";
+import Wishlist from "./pages/Wishlist";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +68,7 @@ const App = () => (
         <AuthProvider>
           <ProductsProvider>
             <CartProvider>
+              <WishlistProvider>
               <FarmingProvider>
                 <AdSettingsProvider>
                   <TooltipProvider>
@@ -77,6 +80,7 @@ const App = () => (
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/modules" element={<Modules />} />
                       <Route path="/shop" element={<Shop />} />
+                      <Route path="/wishlist" element={<Wishlist />} />
                       <Route path="/product/:id" element={<ProductDetails />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
@@ -124,6 +128,7 @@ const App = () => (
                 </TooltipProvider>
               </AdSettingsProvider>
             </FarmingProvider>
+              </WishlistProvider>
           </CartProvider>
         </ProductsProvider>
       </AuthProvider>

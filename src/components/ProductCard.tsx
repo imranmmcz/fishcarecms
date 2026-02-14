@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, Pill, Utensils, Wrench, ShoppingCart, Plus, Minus, Check, Eye, Package } from "lucide-react";
+import { ExternalLink, Pill, Utensils, Wrench, ShoppingCart, Plus, Minus, Check, Eye, Package, Heart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button3D } from "@/components/ui/button-3d";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Product } from "@/contexts/ProductsContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import QuickViewModal from "@/components/QuickViewModal";
 
 // Extended product type that can come from database or static data
@@ -60,7 +61,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart, isInCart, getItemQuantity, updateQuantity, removeFromCart } = useCart();
   const { formatPrice } = useCurrency();
   const { language } = useLanguage();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
+  const wishlisted = product.isFromDatabase && isInWishlist(String(product.id));
   
   const imageUrl = product.image_url || product.image;
   const hasValidImage = isValidImage(imageUrl);
@@ -142,6 +145,21 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-primary text-primary-foreground shadow-md">
           {product.categoryLabel}
         </span>
+
+        {/* Wishlist Heart Button */}
+        {product.isFromDatabase && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleWishlist(String(product.id));
+            }}
+            className="absolute top-12 left-3 p-2 rounded-full bg-white/80 hover:bg-white shadow-md transition-all z-10"
+            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart className={`h-4 w-4 transition-colors ${wishlisted ? "text-destructive fill-destructive" : "text-muted-foreground"}`} />
+          </button>
+        )}
 
         {/* Discount Badge */}
         {(product.originalPrice || (product.discount_percentage && product.discount_percentage > 0)) && (
