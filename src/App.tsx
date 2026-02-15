@@ -26,6 +26,7 @@ import WaterQuality from "./pages/WaterQuality";
 import CostCalculator from "./pages/CostCalculator";
 import Reports from "./pages/Reports";
 import FishAdvice from "./pages/FishAdvice";
+import FeedFormulaCalculator from "./pages/FeedFormulaCalculator";
 import Shop from "./pages/Shop";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -95,6 +96,7 @@ const App = () => (
                       <Route path="/cost-calculator" element={<CostCalculator />} />
                       <Route path="/reports" element={<Reports />} />
                       <Route path="/fish-advice" element={<FishAdvice />} />
+                      <Route path="/feed-formula" element={<FeedFormulaCalculator />} />
                       <Route path="/fisheries-contact" element={<FisheriesContact />} />
                       <Route path="/market-price" element={<MarketPrice />} />
                       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
