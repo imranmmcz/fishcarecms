@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import AdUnit from "@/components/AdUnit";
-import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, ArrowRight, CheckCircle2, Info, MessageSquare } from "lucide-react";
+import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, ArrowRight, CheckCircle2, Info, MessageSquare, FlaskConical } from "lucide-react";
 import { useFarming } from "@/contexts/FarmingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 
 const Modules = () => {
   const { pondData, fishStockingData } = useFarming();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const modules = [
     {
@@ -102,6 +102,14 @@ const Modules = () => {
       icon: MessageSquare,
       path: "/fish-advice",
       step: 11,
+    },
+    {
+      id: 12,
+      title: language === "bn" ? "খাদ্য ফর্মুলা" : "Feed Formula",
+      description: language === "bn" ? "নিজের হাতে সুষম মাছের খাদ্য তৈরির ফর্মুলা ক্যালকুলেটর" : "Create custom balanced fish feed formula",
+      icon: FlaskConical,
+      path: "/feed-formula",
+      step: 12,
     },
   ];
 
