@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import { ModuleCard } from "@/components/ModuleCard";
 import { Button3D } from "@/components/ui/button-3d";
 import { ProductSlider } from "@/components/ProductSlider";
+import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { FishHealthAdvice } from "@/components/FishHealthAdvice";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import AdUnit from "@/components/AdUnit";
@@ -143,6 +144,9 @@ const Index = () => {
 
       {/* Dynamic Hero Slider */}
       <HeroSlider />
+
+      {/* Featured Products */}
+      <FeaturedProducts />
 
       {/* Features Section */}
       <section className="py-16 bg-muted/30">
