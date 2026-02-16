@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import AdUnit from "@/components/AdUnit";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { generateFeedFormulaPDF } from "@/lib/generateFeedFormulaPDF";
 
 interface Ingredient {
   id: string;
@@ -451,6 +452,23 @@ export default function FeedFormulaCalculator() {
                         <p className="text-sm text-muted-foreground">
                           {language === "bn" ? "প্রতি কেজি খরচ" : "Cost per kg"}: <strong className="text-primary">৳{formulaAnalysis.costPerKg.toFixed(2)}</strong>
                         </p>
+                        <Button
+                          className="w-full mt-2"
+                          onClick={() => {
+                            generateFeedFormulaPDF({
+                              language: language as "bn" | "en",
+                              ingredients: selectedIngredients,
+                              analysis: formulaAnalysis,
+                              batchWeight,
+                              totalCost,
+                              presetName: selectedPreset || undefined,
+                            });
+                            toast.success(language === "bn" ? "PDF ডাউনলোড হচ্ছে..." : "Downloading PDF...");
+                          }}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          {language === "bn" ? "ফর্মুলা PDF ডাউনলোড" : "Download Formula PDF"}
+                        </Button>
                       </CardContent>
                     </Card>
                   )}
