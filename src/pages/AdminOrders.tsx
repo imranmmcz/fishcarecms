@@ -1,68 +1,38 @@
 /**
- * Admin Order Management Page
+ * Admin Order Management Page - Supabase Implementation
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { apiClient } from "@/lib/api-client";
-import type { Order, OrderStats } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
-  Package,
-  Eye,
-  Loader2,
-  ShoppingBag,
-  Calendar,
-  MapPin,
-  Phone,
-  Clock,
-  Truck,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  TrendingUp,
-  DollarSign,
-  Users,
-  Search,
-  RefreshCw,
-  AlertTriangle,
-  ExternalLink,
+  Package, Eye, Loader2, ShoppingBag, Calendar, MapPin, Phone, Clock,
+  Truck, CheckCircle, XCircle, AlertCircle, TrendingUp,
+  Search, RefreshCw, AlertTriangle, Users,
 } from "lucide-react";
 import { ShipmentTrackingForm } from "@/components/ShipmentTrackingForm";
 import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
 import { InvoiceDownloadButton } from "@/components/InvoiceDownloadButton";
-import { sendOrderStatusEmail, sendShippingNotificationEmail } from "@/lib/emailService";
+import { sendOrderStatusEmail } from "@/lib/emailService";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
   pending: { color: "bg-yellow-500", icon: <Clock className="h-4 w-4" />, label: { bn: "পেন্ডিং", en: "Pending" } },
@@ -72,6 +42,48 @@ const statusConfig: Record<string, { color: string; icon: React.ReactNode; label
   cancelled: { color: "bg-red-500", icon: <XCircle className="h-4 w-4" />, label: { bn: "বাতিল", en: "Cancelled" } },
   refunded: { color: "bg-gray-500", icon: <AlertCircle className="h-4 w-4" />, label: { bn: "রিফান্ড", en: "Refunded" } },
 };
+
+interface OrderItem {
+  id: string;
+  product_name: string;
+  product_image: string | null;
+  quantity: number;
+  unit_price: number;
+  discount_percentage: number | null;
+  total_price: number;
+}
+
+interface Order {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  customer_email: string | null;
+  customer_phone: string;
+  shipping_address: string;
+  division: string | null;
+  district: string | null;
+  upazila: string | null;
+  payment_method: string;
+  payment_status: string;
+  transaction_id: string | null;
+  sender_number: string | null;
+  subtotal: number;
+  shipping_cost: number;
+  discount_amount: number;
+  total_amount: number;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  items?: OrderItem[];
+}
+
+interface OrderStats {
+  today: { count: number; total_amount: number };
+  this_month: { count: number; total_amount: number };
+  total: { count: number; total_amount: number };
+  by_status: Record<string, number>;
+}
 
 const AdminOrders = () => {
   const { language } = useLanguage();
@@ -103,83 +115,135 @@ const AdminOrders = () => {
     customer: language === "bn" ? "কাস্টমার" : "Customer",
     items: language === "bn" ? "পণ্য" : "Items",
     shippingAddress: language === "bn" ? "শিপিং ঠিকানা" : "Shipping Address",
-    statusHistory: language === "bn" ? "স্ট্যাটাস হিস্ট্রি" : "Status History",
     noOrders: language === "bn" ? "কোন অর্ডার নেই" : "No orders found",
   };
 
-  const fetchData = async () => {
+  const fetchOrders = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [ordersRes, statsRes] = await Promise.all([
-        apiClient.getOrders({ status: statusFilter !== 'all' ? statusFilter : undefined, limit: 100 }),
-        apiClient.getOrderStats(),
-      ]);
+      let query = supabase
+        .from("orders")
+        .select(`*, items:order_items(*)`)
+        .order("created_at", { ascending: false });
 
-      if (ordersRes.data?.orders) {
-        setOrders(ordersRes.data.orders);
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
       }
-      if (statsRes.data) {
-        setStats(statsRes.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
-      toast.error(language === "bn" ? "ডাটা লোড করতে সমস্যা হয়েছে" : "Failed to load data");
+
+      const { data, error } = await query;
+      if (error) throw error;
+      setOrders((data as Order[]) || []);
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+      toast.error(language === "bn" ? "অর্ডার লোড করতে সমস্যা হয়েছে" : "Failed to load orders");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [statusFilter, language]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const [todayRes, monthRes, allRes] = await Promise.all([
+        supabase.from("orders").select("total_amount").gte("created_at", todayStart),
+        supabase.from("orders").select("total_amount").gte("created_at", monthStart),
+        supabase.from("orders").select("total_amount, status"),
+      ]);
+
+      const todayTotal = todayRes.data?.reduce((s, o) => s + Number(o.total_amount), 0) || 0;
+      const monthTotal = monthRes.data?.reduce((s, o) => s + Number(o.total_amount), 0) || 0;
+      const total = allRes.data?.reduce((s, o) => s + Number(o.total_amount), 0) || 0;
+      const byStatus: Record<string, number> = {};
+      allRes.data?.forEach(o => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
+
+      setStats({
+        today: { count: todayRes.data?.length || 0, total_amount: todayTotal },
+        this_month: { count: monthRes.data?.length || 0, total_amount: monthTotal },
+        total: { count: allRes.data?.length || 0, total_amount: total },
+        by_status: byStatus,
+      });
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [statusFilter]);
+    fetchOrders();
+    fetchStats();
+  }, [fetchOrders, fetchStats]);
 
-  const handleViewDetails = async (orderId: number) => {
-    try {
-      const response = await apiClient.getOrder(String(orderId));
-      if (response.data?.order) {
-        setSelectedOrder(response.data.order);
-        setNewStatus(response.data.order.status);
-        setStatusNote("");
-        setIsDetailsOpen(true);
-      }
-    } catch (error) {
-      console.error("Failed to fetch order details:", error);
+  const handleViewDetails = async (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      setSelectedOrder(order);
+      setNewStatus(order.status);
+      setStatusNote("");
+      setIsDetailsOpen(true);
     }
   };
 
   const handleUpdateStatus = async () => {
     if (!selectedOrder || !newStatus) return;
-
     setIsUpdating(true);
     try {
-      const response = await apiClient.updateOrderStatus(String(selectedOrder.id), newStatus, statusNote);
-      if (response.error) {
-        toast.error(response.error);
-        return;
-      }
-      
-      // Send email notification for status update
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq("id", selectedOrder.id);
+
+      if (error) throw error;
+
       if (selectedOrder.customer_email) {
         sendOrderStatusEmail(
           selectedOrder.customer_email,
-          selectedOrder.customer_name || selectedOrder.shipping_name,
+          selectedOrder.customer_name,
           selectedOrder.order_number,
           newStatus
-        ).then(result => {
-          if (result.success) {
-            console.log("Status update email sent successfully");
-          } else {
-            console.log("Email not sent:", result.message);
-          }
-        });
+        ).catch(console.error);
       }
-      
+
       toast.success(language === "bn" ? "স্ট্যাটাস আপডেট হয়েছে" : "Status updated");
-      fetchData();
+      fetchOrders();
+      fetchStats();
       setIsDetailsOpen(false);
     } catch (error) {
       console.error("Failed to update status:", error);
       toast.error(language === "bn" ? "স্ট্যাটাস আপডেট করতে সমস্যা হয়েছে" : "Failed to update status");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleVerifyPayment = async (verified: boolean) => {
+    if (!selectedOrder) return;
+    setIsUpdating(true);
+    try {
+      const updates: Record<string, string> = {
+        payment_status: verified ? "paid" : "failed",
+        updated_at: new Date().toISOString(),
+      };
+      if (verified) {
+        updates.status = "processing";
+      }
+
+      const { error } = await supabase
+        .from("orders")
+        .update(updates)
+        .eq("id", selectedOrder.id);
+
+      if (error) throw error;
+
+      toast.success(language === "bn"
+        ? (verified ? "পেমেন্ট ভেরিফাইড হয়েছে" : "পেমেন্ট বাতিল হয়েছে")
+        : (verified ? "Payment verified" : "Payment rejected"));
+      fetchOrders();
+      fetchStats();
+      setIsDetailsOpen(false);
+    } catch (error) {
+      toast.error(language === "bn" ? "সমস্যা হয়েছে" : "Failed");
     } finally {
       setIsUpdating(false);
     }
@@ -200,10 +264,12 @@ const AdminOrders = () => {
     const query = searchQuery.toLowerCase();
     return (
       order.order_number.toLowerCase().includes(query) ||
-      order.shipping_name.toLowerCase().includes(query) ||
-      order.shipping_mobile.includes(query)
+      order.customer_name.toLowerCase().includes(query) ||
+      order.customer_phone.includes(query)
     );
   });
+
+  const lowStockCount = stats?.by_status?.cancelled || 0; // placeholder
 
   return (
     <AdminLayout>
@@ -213,7 +279,7 @@ const AdminOrders = () => {
             <Package className="h-6 w-6" />
             {translations.orderManagement}
           </h1>
-          <Button variant="outline" onClick={fetchData} disabled={isLoading}>
+          <Button variant="outline" onClick={() => { fetchOrders(); fetchStats(); }} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             {language === "bn" ? "রিফ্রেশ" : "Refresh"}
           </Button>
@@ -256,7 +322,8 @@ const AdminOrders = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{translations.totalOrders}</p>
-                  <p className="text-2xl font-bold">{orders.length}</p>
+                  <p className="text-2xl font-bold">{stats?.total?.count || 0}</p>
+                  <p className="text-sm text-primary">{formatPrice(stats?.total?.total_amount || 0)}</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <Package className="h-6 w-6 text-primary" />
@@ -269,11 +336,11 @@ const AdminOrders = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{translations.lowStock}</p>
-                  <p className="text-2xl font-bold text-destructive">{stats?.low_stock_products?.length || 0}</p>
+                  <p className="text-sm text-muted-foreground">{language === "bn" ? "অপেক্ষমান" : "Pending"}</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats?.by_status?.pending || 0}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                <div className="h-12 w-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-yellow-600" />
                 </div>
               </div>
             </CardContent>
@@ -328,6 +395,7 @@ const AdminOrders = () => {
                     <TableHead>{translations.customer}</TableHead>
                     <TableHead>{language === "bn" ? "তারিখ" : "Date"}</TableHead>
                     <TableHead>{language === "bn" ? "স্ট্যাটাস" : "Status"}</TableHead>
+                    <TableHead>{language === "bn" ? "পেমেন্ট" : "Payment"}</TableHead>
                     <TableHead>{language === "bn" ? "মোট" : "Total"}</TableHead>
                     <TableHead className="text-right">{language === "bn" ? "অ্যাকশন" : "Actions"}</TableHead>
                   </TableRow>
@@ -338,23 +406,32 @@ const AdminOrders = () => {
                       <TableCell>
                         <div>
                           <p className="font-medium">{order.order_number}</p>
-                          <p className="text-xs text-muted-foreground">{order.item_count || '?'} items</p>
+                          <p className="text-xs text-muted-foreground">{order.items?.length || 0} {language === "bn" ? "পণ্য" : "items"}</p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{order.customer_name || order.shipping_name}</p>
-                          <p className="text-xs text-muted-foreground">{order.shipping_mobile}</p>
+                          <p className="font-medium">{order.customer_name}</p>
+                          <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
                         </div>
                       </TableCell>
                       <TableCell>
                         {new Date(order.created_at).toLocaleDateString(language === "bn" ? "bn-BD" : "en-US")}
                       </TableCell>
                       <TableCell>{getStatusBadge(order.status)}</TableCell>
+                      <TableCell>
+                        <Badge variant={order.payment_status === 'paid' ? 'default' : order.payment_status === 'verification_pending' ? 'outline' : 'secondary'}>
+                          {order.payment_status === 'verification_pending'
+                            ? (language === "bn" ? "ভেরিফাই পেন্ডিং" : "Verify Pending")
+                            : order.payment_status === 'paid'
+                              ? (language === "bn" ? "পেইড" : "Paid")
+                              : (language === "bn" ? "পেন্ডিং" : "Pending")}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="font-semibold">{formatPrice(order.total_amount)}</TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleViewDetails(order.id)}
                         >
@@ -390,28 +467,26 @@ const AdminOrders = () => {
                 </TabsList>
 
                 <TabsContent value="details" className="space-y-4 mt-4">
-                  {/* Customer & Address */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <h4 className="font-semibold flex items-center gap-2">
                         <Users className="h-4 w-4" />
                         {translations.customer}
                       </h4>
-                      <p className="font-medium">{selectedOrder.customer_name || selectedOrder.shipping_name}</p>
+                      <p className="font-medium">{selectedOrder.customer_name}</p>
                       <p className="text-sm text-muted-foreground">{selectedOrder.customer_email}</p>
+                      <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        {selectedOrder.customer_phone}
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <h4 className="font-semibold flex items-center gap-2">
                         <MapPin className="h-4 w-4" />
                         {translations.shippingAddress}
                       </h4>
-                      <p className="font-medium">{selectedOrder.shipping_name}</p>
-                      <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Phone className="h-3 w-3" />
-                        {selectedOrder.shipping_mobile}
-                      </p>
                       <p className="text-sm text-muted-foreground">
-                        {[selectedOrder.shipping_address, selectedOrder.shipping_upazila, selectedOrder.shipping_district, selectedOrder.shipping_division]
+                        {[selectedOrder.shipping_address, selectedOrder.upazila, selectedOrder.district, selectedOrder.division]
                           .filter(Boolean)
                           .join(", ")}
                       </p>
@@ -420,7 +495,6 @@ const AdminOrders = () => {
 
                   <Separator />
 
-                  {/* Order Info */}
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">{language === "bn" ? "স্ট্যাটাস" : "Status"}</p>
@@ -429,7 +503,7 @@ const AdminOrders = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">{language === "bn" ? "পেমেন্ট" : "Payment"}</p>
                       <Badge variant={selectedOrder.payment_status === 'paid' ? 'default' : selectedOrder.payment_status === 'verification_pending' ? 'outline' : 'secondary'}>
-                        {selectedOrder.payment_status === 'verification_pending' 
+                        {selectedOrder.payment_status === 'verification_pending'
                           ? (language === "bn" ? "ভেরিফাই পেন্ডিং" : "Verify Pending")
                           : selectedOrder.payment_status}
                       </Badge>
@@ -445,7 +519,7 @@ const AdminOrders = () => {
                     <>
                       <Separator />
                       <div className={`p-4 rounded-lg border ${
-                        selectedOrder.payment_method === 'bkash' 
+                        selectedOrder.payment_method === 'bkash'
                           ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800'
                           : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
                       }`}>
@@ -460,75 +534,29 @@ const AdminOrders = () => {
                         <div className="grid sm:grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-muted-foreground">{language === "bn" ? "ট্রানজেকশন আইডি" : "Transaction ID"}</p>
-                            <p className="font-mono font-bold">{selectedOrder.payment_trx_id || '-'}</p>
+                            <p className="font-mono font-bold">{selectedOrder.transaction_id || '-'}</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">{language === "bn" ? "প্রেরকের নম্বর" : "Sender Number"}</p>
-                            <p className="font-mono font-bold">{selectedOrder.payment_sender_number || '-'}</p>
+                            <p className="font-mono font-bold">{selectedOrder.sender_number || '-'}</p>
                           </div>
                         </div>
-                        
+
                         {selectedOrder.payment_status === 'verification_pending' && (
                           <div className="mt-4 flex gap-2">
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               className="bg-green-600 hover:bg-green-700"
-                              onClick={async () => {
-                                setIsUpdating(true);
-                                try {
-                                  const response = await apiClient.updateOrderStatus(
-                                    String(selectedOrder.id), 
-                                    'processing', 
-                                    `পেমেন্ট ভেরিফাইড - ${selectedOrder.payment_method} TrxID: ${selectedOrder.payment_trx_id}`
-                                  );
-                                  if (!response.error) {
-                                    // Also update payment status to paid
-                                    await fetch(`${import.meta.env.VITE_API_URL || 'https://blog.fishcare.com.bd/api'}/orders/${selectedOrder.id}/payment`, {
-                                      method: 'PATCH',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                                      },
-                                      body: JSON.stringify({ payment_status: 'paid' })
-                                    });
-                                    toast.success(language === "bn" ? "পেমেন্ট ভেরিফাইড হয়েছে" : "Payment verified");
-                                    fetchData();
-                                    setIsDetailsOpen(false);
-                                  }
-                                } catch (error) {
-                                  toast.error(language === "bn" ? "সমস্যা হয়েছে" : "Failed to verify");
-                                } finally {
-                                  setIsUpdating(false);
-                                }
-                              }}
+                              onClick={() => handleVerifyPayment(true)}
                               disabled={isUpdating}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
                               {language === "bn" ? "পেমেন্ট ভেরিফাই করুন" : "Verify Payment"}
                             </Button>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="destructive"
-                              onClick={async () => {
-                                setIsUpdating(true);
-                                try {
-                                  await fetch(`${import.meta.env.VITE_API_URL || 'https://blog.fishcare.com.bd/api'}/orders/${selectedOrder.id}/payment`, {
-                                    method: 'PATCH',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                      'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                                    },
-                                    body: JSON.stringify({ payment_status: 'failed' })
-                                  });
-                                  toast.success(language === "bn" ? "পেমেন্ট বাতিল হয়েছে" : "Payment rejected");
-                                  fetchData();
-                                  setIsDetailsOpen(false);
-                                } catch (error) {
-                                  toast.error(language === "bn" ? "সমস্যা হয়েছে" : "Failed");
-                                } finally {
-                                  setIsUpdating(false);
-                                }
-                              }}
+                              onClick={() => handleVerifyPayment(false)}
                               disabled={isUpdating}
                             >
                               <XCircle className="h-4 w-4 mr-1" />
@@ -540,13 +568,13 @@ const AdminOrders = () => {
                     </>
                   )}
 
-                  {selectedOrder.customer_note && (
+                  {selectedOrder.notes && (
                     <>
                       <Separator />
                       <div>
                         <h4 className="font-semibold mb-2">{language === "bn" ? "কাস্টমার নোট" : "Customer Note"}</h4>
                         <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                          {selectedOrder.customer_note}
+                          {selectedOrder.notes}
                         </p>
                       </div>
                     </>
@@ -570,7 +598,7 @@ const AdminOrders = () => {
                           <p className="font-medium">{item.product_name}</p>
                           <p className="text-sm text-muted-foreground">
                             {formatPrice(item.unit_price)} × {item.quantity}
-                            {item.discount_percentage > 0 && (
+                            {(item.discount_percentage || 0) > 0 && (
                               <span className="ml-2 text-primary">(-{item.discount_percentage}%)</span>
                             )}
                           </p>
@@ -597,28 +625,18 @@ const AdminOrders = () => {
                       <span className="text-primary">{formatPrice(selectedOrder.total_amount)}</span>
                     </div>
                   </div>
-                  
-                  {/* Invoice Download */}
-                  <InvoiceDownloadButton order={selectedOrder} variant="default" className="w-full" />
+
+                  <InvoiceDownloadButton order={selectedOrder as any} variant="default" className="w-full" />
                 </TabsContent>
 
-                {/* Tracking Tab */}
                 <TabsContent value="tracking" className="space-y-4 mt-4">
-                  {/* Current Tracking Info */}
-                  {(selectedOrder.courier_name || selectedOrder.tracking_number) && (
-                    <>
-                      <ShipmentTrackingDisplay order={selectedOrder} />
-                      <Separator />
-                    </>
-                  )}
-                  
-                  {/* Tracking Form */}
-                  <ShipmentTrackingForm 
-                    order={selectedOrder} 
+                  <ShipmentTrackingDisplay order={selectedOrder as any} />
+                  <Separator />
+                  <ShipmentTrackingForm
+                    order={selectedOrder as any}
                     onSuccess={() => {
-                      handleViewDetails(selectedOrder.id);
-                      fetchData();
-                    }} 
+                      fetchOrders();
+                    }}
                   />
                 </TabsContent>
 
@@ -653,8 +671,8 @@ const AdminOrders = () => {
                       />
                     </div>
 
-                    <Button 
-                      className="w-full" 
+                    <Button
+                      className="w-full"
                       onClick={handleUpdateStatus}
                       disabled={isUpdating || newStatus === selectedOrder.status}
                     >
@@ -666,31 +684,6 @@ const AdminOrders = () => {
                       {translations.update}
                     </Button>
                   </div>
-
-                  {/* Status History */}
-                  {selectedOrder.status_history && selectedOrder.status_history.length > 0 && (
-                    <>
-                      <Separator />
-                      <div>
-                        <h4 className="font-semibold mb-3">{translations.statusHistory}</h4>
-                        <div className="space-y-3">
-                          {selectedOrder.status_history.map((history: any) => (
-                            <div key={history.id} className="flex gap-3 text-sm">
-                              <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-                              <div>
-                                <p className="font-medium">{history.status}</p>
-                                {history.note && <p className="text-muted-foreground">{history.note}</p>}
-                                <p className="text-xs text-muted-foreground">
-                                  {new Date(history.created_at).toLocaleString()} 
-                                  {history.changed_by_name && ` • ${history.changed_by_name}`}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
                 </TabsContent>
               </Tabs>
             )}
