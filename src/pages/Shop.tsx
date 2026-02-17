@@ -5,7 +5,8 @@ import { ProductCard, DisplayProduct } from "@/components/ProductCard";
 import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fishProducts as staticProducts, productCategories } from "@/data/fishProductData";
-import { ShoppingBag, Loader2, Search, X, SlidersHorizontal, Pill, Utensils, Wrench, ArrowUpDown } from "lucide-react";
+import { ShoppingBag, Search, X, SlidersHorizontal, Pill, Utensils, Wrench, ArrowUpDown } from "lucide-react";
+import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -410,12 +411,8 @@ const Shop = () => {
           </div>
         </div>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        )}
+        {/* Loading State - Skeleton */}
+        {isLoading && <ProductGridSkeleton count={8} />}
 
         {/* Products Display */}
         {!isLoading && (
