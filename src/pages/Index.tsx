@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/carousel";
 
 const Index = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const modules = [
     {
@@ -108,6 +108,14 @@ const Index = () => {
       description: t.fishAdviceDesc,
       icon: MessageSquare,
       path: "/fish-advice",
+      isActive: true,
+    },
+    {
+      id: 12,
+      title: language === "bn" ? "খাদ্য ফর্মুলা" : "Feed Formula",
+      description: language === "bn" ? "নিজের হাতে সুষম মাছের খাদ্য তৈরির ফর্মুলা ক্যালকুলেটর" : "Create custom balanced fish feed formula",
+      icon: FlaskConical,
+      path: "/feed-formula",
       isActive: true,
     },
   ];
