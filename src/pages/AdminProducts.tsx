@@ -14,7 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle, FolderOpen, ImagePlus } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle, FolderOpen, ImagePlus, Upload, Link2 } from "lucide-react";
+import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { CategoryManagement } from "@/components/admin/CategoryManagement";
 import { ProductImageGallery } from "@/components/admin/ProductImageGallery";
@@ -93,6 +94,9 @@ interface ProductFormProps {
 }
 
 const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitting, companies, brands, categories }: ProductFormProps) => {
+  const [imageMode, setImageMode] = useState<"url" | "upload">("url");
+  const [isUploading, setIsUploading] = useState(false);
+
   const handleChange = useCallback((field: keyof ProductFormData, value: string | number) => {
     onFormChange({ ...formData, [field]: value });
   }, [formData, onFormChange]);
@@ -326,18 +330,105 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
         <h4 className="font-semibold text-sm text-muted-foreground">মিডিয়া ও লিংক</h4>
         <Separator />
       </div>
-      
+
+      {/* Image Mode Toggle */}
       <div className="grid gap-2">
-        <Label htmlFor="image">ছবির URL</Label>
-        <Input
-          id="image"
-          value={formData.image_url}
-          onChange={(e) => handleChange("image_url", e.target.value)}
-          placeholder="https://example.com/image.jpg"
-          autoComplete="off"
-        />
+        <Label>পণ্যের ছবি</Label>
+        <div className="flex gap-2 mb-2">
+          <button
+            type="button"
+            onClick={() => setImageMode("upload")}
+            className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
+              imageMode === "upload" 
+                ? "bg-primary text-primary-foreground border-primary" 
+                : "bg-background text-foreground border-border hover:bg-muted"
+            }`}
+          >
+            <Upload className="h-4 w-4" />
+            আপলোড
+          </button>
+          <button
+            type="button"
+            onClick={() => setImageMode("url")}
+            className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
+              imageMode === "url" 
+                ? "bg-primary text-primary-foreground border-primary" 
+                : "bg-background text-foreground border-border hover:bg-muted"
+            }`}
+          >
+            <Link2 className="h-4 w-4" />
+            URL
+          </button>
+        </div>
+
+        {imageMode === "upload" ? (
+          <div className="space-y-2">
+            <label
+              htmlFor="product-image-upload"
+              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+            >
+              {isUploading ? (
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                  <span className="text-sm text-muted-foreground">ছবি নির্বাচন করুন</span>
+                  <span className="text-xs text-muted-foreground">JPG, PNG, WebP (সর্বোচ্চ 5MB)</span>
+                </>
+              )}
+            </label>
+            <input
+              id="product-image-upload"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) {
+                  toast.error("ফাইল সাইজ ৫MB এর বেশি হতে পারবে না");
+                  return;
+                }
+                setIsUploading(true);
+                try {
+                  const fileExt = file.name.split('.').pop();
+                  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+                  const filePath = `products/${fileName}`;
+                  
+                  const { error: uploadError } = await supabase.storage
+                    .from('product-images')
+                    .upload(filePath, file);
+                  
+                  if (uploadError) throw uploadError;
+                  
+                  const { data: { publicUrl } } = supabase.storage
+                    .from('product-images')
+                    .getPublicUrl(filePath);
+                  
+                  handleChange("image_url", publicUrl);
+                  toast.success("ছবি আপলোড সফল হয়েছে");
+                } catch (error) {
+                  console.error("Upload error:", error);
+                  toast.error("ছবি আপলোড করতে সমস্যা হয়েছে");
+                } finally {
+                  setIsUploading(false);
+                  e.target.value = '';
+                }
+              }}
+            />
+          </div>
+        ) : (
+          <Input
+            id="image"
+            value={formData.image_url}
+            onChange={(e) => handleChange("image_url", e.target.value)}
+            placeholder="https://example.com/image.jpg"
+            autoComplete="off"
+          />
+        )}
+
         {formData.image_url && (
-          <div className="mt-2">
+          <div className="mt-2 relative inline-block">
             <img 
               src={formData.image_url} 
               alt="Preview" 
