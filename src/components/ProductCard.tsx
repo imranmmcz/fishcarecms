@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ExternalLink, Pill, Utensils, Wrench, ShoppingCart, Plus, Minus, Check, Eye, Package, Heart } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ExternalLink, Pill, Utensils, Wrench, ShoppingCart, Plus, Minus, Check, Eye, Package, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button3D } from "@/components/ui/button-3d";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Product } from "@/contexts/ProductsContext";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { supabase } from "@/integrations/supabase/client";
 import QuickViewModal from "@/components/QuickViewModal";
 
 // Extended product type that can come from database or static data
@@ -56,21 +57,72 @@ const isValidImage = (imageUrl: string | undefined): boolean => {
   return true;
 };
 
+interface ProductImage {
+  id: string;
+  image_url: string;
+  alt_text: string | null;
+  display_order: number;
+  is_primary: boolean;
+}
+
 export const ProductCard = ({ product }: ProductCardProps) => {
   const [quickViewOpen, setQuickViewOpen] = useState(false);
-  const { addToCart, isInCart, getItemQuantity, updateQuantity, removeFromCart } = useCart();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const { addToCart, isInCart, getItemQuantity, updateQuantity } = useCart();
   const { formatPrice } = useCurrency();
   const { language } = useLanguage();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
   const wishlisted = product.isFromDatabase && isInWishlist(String(product.id));
   
-  const imageUrl = product.image_url || product.image;
-  const hasValidImage = isValidImage(imageUrl);
+  const mainImageUrl = product.image_url || product.image;
   const config = categoryConfig[product.category] || categoryConfig.medicine;
   const inCart = product.isFromDatabase && isInCart(String(product.id));
   const quantity = product.isFromDatabase ? getItemQuantity(String(product.id)) : 0;
   const externalLink = product.external_link || product.externalLink;
+
+  // Fetch product gallery images
+  useEffect(() => {
+    if (!product.isFromDatabase) return;
+    
+    const fetchImages = async () => {
+      const { data } = await supabase
+        .from("product_images")
+        .select("image_url, display_order, is_primary")
+        .eq("product_id", String(product.id))
+        .order("display_order", { ascending: true });
+      
+      if (data && data.length > 0) {
+        const urls = data.map(img => img.image_url);
+        // If main image exists and not already in gallery, prepend it
+        if (mainImageUrl && isValidImage(mainImageUrl) && !urls.includes(mainImageUrl)) {
+          setGalleryImages([mainImageUrl, ...urls]);
+        } else {
+          setGalleryImages(urls);
+        }
+      } else if (mainImageUrl && isValidImage(mainImageUrl)) {
+        setGalleryImages([mainImageUrl]);
+      }
+    };
+    
+    fetchImages();
+  }, [product.id, product.isFromDatabase, mainImageUrl]);
+
+  const images = galleryImages.length > 0 ? galleryImages : (isValidImage(mainImageUrl) ? [mainImageUrl!] : []);
+  const hasMultipleImages = images.length > 1;
+
+  const goToPrev = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
+  }, [images.length]);
+
+  const goToNext = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+  }, [images.length]);
 
   const handleOrderClick = () => {
     if (externalLink) {
@@ -121,18 +173,74 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <div className="group relative bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-elegant transition-all duration-300 border border-border/50">
-      {/* Product Image or Category Icon */}
+      {/* Product Image Gallery */}
       <Link 
         to={product.isFromDatabase ? `/product/${product.id}` : "#"} 
         className="block relative aspect-square overflow-hidden bg-muted"
         onClick={(e) => !product.isFromDatabase && e.preventDefault()}
       >
-        {hasValidImage ? (
-          <img
-            src={imageUrl}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          />
+        {images.length > 0 ? (
+          <div className="relative w-full h-full">
+            {images.map((imgUrl, idx) => (
+              <img
+                key={idx}
+                src={imgUrl}
+                alt={`${product.name} - ${idx + 1}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                  idx === currentImageIndex ? "opacity-100" : "opacity-0"
+                } group-hover:scale-110 transition-transform duration-500`}
+              />
+            ))}
+            
+            {/* Navigation Arrows */}
+            {hasMultipleImages && (
+              <>
+                <button
+                  onClick={goToPrev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-background/80 hover:bg-background text-foreground rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={goToNext}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-background/80 hover:bg-background text-foreground rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </>
+            )}
+
+            {/* Dot Indicators */}
+            {hasMultipleImages && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCurrentImageIndex(idx);
+                    }}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      idx === currentImageIndex 
+                        ? "bg-primary w-4" 
+                        : "bg-background/70 hover:bg-background"
+                    }`}
+                    aria-label={`Image ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Image Counter */}
+            {hasMultipleImages && (
+              <span className="absolute bottom-2 right-2 z-10 bg-background/80 text-foreground text-xs px-2 py-0.5 rounded-full">
+                {currentImageIndex + 1}/{images.length}
+              </span>
+            )}
+          </div>
         ) : (
           <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${config.bgClass}`}>
             <div className="text-primary/60 group-hover:scale-110 transition-transform duration-500">
@@ -142,7 +250,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         )}
         
         {/* Category Badge */}
-        <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-primary text-primary-foreground shadow-md">
+        <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-primary text-primary-foreground shadow-md z-10">
           {product.categoryLabel}
         </span>
 
@@ -163,7 +271,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
         {/* Discount Badge */}
         {(product.originalPrice || (product.discount_percentage && product.discount_percentage > 0)) && (
-          <span className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold bg-destructive text-destructive-foreground shadow-md">
+          <span className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold bg-destructive text-destructive-foreground shadow-md z-10">
             {product.originalPrice 
               ? `${Math.round((1 - product.price / product.originalPrice) * 100)}%`
               : `${product.discount_percentage}%`
@@ -173,14 +281,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
         {/* In Cart Badge */}
         {inCart && (
-          <div className="absolute bottom-3 right-3 bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
+          <div className="absolute bottom-3 right-3 bg-primary text-primary-foreground rounded-full p-2 shadow-lg z-10">
             <Check className="h-4 w-4" />
           </div>
         )}
 
         {/* View Details & Quick View Overlay */}
         {product.isFromDatabase && (
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 z-[5]">
             <span className="bg-white/90 text-foreground px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2">
               <Eye className="h-4 w-4" />
               {translations.viewDetails}
@@ -225,7 +333,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
         {/* Action Buttons */}
         <div className="space-y-2">
-          {/* Add to Cart / Quantity Controls (for database products) */}
           {product.isFromDatabase && (
             <>
               {inCart ? (
@@ -260,7 +367,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 </Button3D>
               )}
 
-              {/* Order Now Button */}
               <Button3D 
                 variant="success"
                 size="sm" 
@@ -273,7 +379,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </>
           )}
 
-          {/* External Order Button */}
           {externalLink && (
             <Button3D 
               variant="warning"
