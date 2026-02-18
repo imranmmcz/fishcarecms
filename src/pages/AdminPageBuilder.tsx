@@ -59,6 +59,18 @@ interface StatItem {
   label: string;
 }
 
+interface QuickLinkItem {
+  name_bn: string;
+  name_en: string;
+  path: string;
+}
+
+interface SocialLinkItem {
+  name: string;
+  icon: string;
+  url: string;
+}
+
 const iconOptions = [
   "Calculator", "Fish", "Wheat", "Droplets", "Stethoscope", "DollarSign",
   "CheckCircle", "Gift", "Globe", "Smartphone", "Heart", "Star",
@@ -314,12 +326,63 @@ export default function AdminPageBuilder() {
     );
   }
 
+  // Footer Quick Link handlers
+  const addQuickLink = () => {
+    const footerSection = getSection("footer");
+    if (!footerSection) return;
+    const items = footerSection.content.quickLinks || [];
+    updateSectionContent("footer", "quickLinks", [...items, { name_bn: "নতুন লিংক", name_en: "New Link", path: "/" }]);
+  };
+
+  const updateQuickLink = (index: number, field: keyof QuickLinkItem, value: string) => {
+    const footerSection = getSection("footer");
+    if (!footerSection) return;
+    const items = [...(footerSection.content.quickLinks || [])];
+    items[index] = { ...items[index], [field]: value };
+    updateSectionContent("footer", "quickLinks", items);
+  };
+
+  const removeQuickLink = (index: number) => {
+    const footerSection = getSection("footer");
+    if (!footerSection) return;
+    const items = [...(footerSection.content.quickLinks || [])];
+    items.splice(index, 1);
+    updateSectionContent("footer", "quickLinks", items);
+  };
+
+  // Footer Social Link handlers
+  const addSocialLink = () => {
+    const footerSection = getSection("footer");
+    if (!footerSection) return;
+    const items = footerSection.content.socialLinks || [];
+    updateSectionContent("footer", "socialLinks", [...items, { name: "New", icon: "Globe", url: "https://" }]);
+  };
+
+  const updateSocialLink = (index: number, field: keyof SocialLinkItem, value: string) => {
+    const footerSection = getSection("footer");
+    if (!footerSection) return;
+    const items = [...(footerSection.content.socialLinks || [])];
+    items[index] = { ...items[index], [field]: value };
+    updateSectionContent("footer", "socialLinks", items);
+  };
+
+  const removeSocialLink = (index: number) => {
+    const footerSection = getSection("footer");
+    if (!footerSection) return;
+    const items = [...(footerSection.content.socialLinks || [])];
+    items.splice(index, 1);
+    updateSectionContent("footer", "socialLinks", items);
+  };
+
+  const socialIconOptions = ["Facebook", "Youtube", "MessageCircle", "Instagram", "Twitter", "Globe", "Linkedin", "Github"];
+
   const heroSection = getSection("hero");
   const modulesSection = getSection("modules");
   const benefitsSection = getSection("benefits");
   const faqSection = getSection("faq");
   const socialProofSection = getSection("social_proof");
   const ctaSection = getSection("cta");
+  const footerSection = getSection("footer");
 
   return (
     <AdminLayout>
@@ -359,13 +422,14 @@ export default function AdminPageBuilder() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full">
+          <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full">
             <TabsTrigger value="hero">হিরো</TabsTrigger>
             <TabsTrigger value="modules">মডিউল</TabsTrigger>
             <TabsTrigger value="benefits">সুবিধা</TabsTrigger>
             <TabsTrigger value="faq">FAQ</TabsTrigger>
             <TabsTrigger value="stats">পরিসংখ্যান</TabsTrigger>
             <TabsTrigger value="cta">CTA</TabsTrigger>
+            <TabsTrigger value="footer">ফুটার</TabsTrigger>
           </TabsList>
 
           {/* Hero Slider Section */}
@@ -798,6 +862,268 @@ export default function AdminPageBuilder() {
                 </div>
 
                 <Button onClick={() => saveSection("cta")} disabled={saving}>
+                  <Save className="h-4 w-4 mr-2" />
+                  সংরক্ষণ করুন
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          {/* Footer Section */}
+          <TabsContent value="footer">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Layout className="h-5 w-5" />
+                      ফুটার সেকশন
+                    </CardTitle>
+                    <CardDescription>ফুটারের সকল তথ্য এডিট করুন</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="footer-active">সক্রিয়</Label>
+                    <Switch
+                      id="footer-active"
+                      checked={footerSection?.is_active}
+                      onCheckedChange={(checked) => updateSection("footer", { is_active: checked })}
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Company Info */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-base">কোম্পানি তথ্য</h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>কোম্পানির নাম</Label>
+                      <Input
+                        value={footerSection?.content.companyName || ""}
+                        onChange={(e) => updateSectionContent("footer", "companyName", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>বর্ণনা (বাংলা)</Label>
+                      <Textarea
+                        value={footerSection?.content.companyDescription_bn || ""}
+                        onChange={(e) => updateSectionContent("footer", "companyDescription_bn", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>বর্ণনা (English)</Label>
+                      <Textarea
+                        value={footerSection?.content.companyDescription_en || ""}
+                        onChange={(e) => updateSectionContent("footer", "companyDescription_en", e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Links */}
+                <div className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">দ্রুত লিংক</h4>
+                    <Button size="sm" onClick={addQuickLink}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      যোগ করুন
+                    </Button>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>হেডিং (বাংলা)</Label>
+                      <Input
+                        value={footerSection?.content.quickLinksHeading_bn || ""}
+                        onChange={(e) => updateSectionContent("footer", "quickLinksHeading_bn", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>হেডিং (English)</Label>
+                      <Input
+                        value={footerSection?.content.quickLinksHeading_en || ""}
+                        onChange={(e) => updateSectionContent("footer", "quickLinksHeading_en", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {(footerSection?.content.quickLinks || []).map((item: QuickLinkItem, index: number) => (
+                      <div key={index} className="flex items-center gap-3 border rounded-lg p-3">
+                        <div className="flex-1 grid grid-cols-3 gap-2">
+                          <Input
+                            placeholder="নাম (বাংলা)"
+                            value={item.name_bn}
+                            onChange={(e) => updateQuickLink(index, "name_bn", e.target.value)}
+                          />
+                          <Input
+                            placeholder="Name (EN)"
+                            value={item.name_en}
+                            onChange={(e) => updateQuickLink(index, "name_en", e.target.value)}
+                          />
+                          <Input
+                            placeholder="পাথ (/shop)"
+                            value={item.path}
+                            onChange={(e) => updateQuickLink(index, "path", e.target.value)}
+                          />
+                        </div>
+                        <Button variant="destructive" size="icon" onClick={() => removeQuickLink(index)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Social Links */}
+                <div className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">সোশ্যাল মিডিয়া</h4>
+                    <Button size="sm" onClick={addSocialLink}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      যোগ করুন
+                    </Button>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>হেডিং (বাংলা)</Label>
+                      <Input
+                        value={footerSection?.content.socialHeading_bn || ""}
+                        onChange={(e) => updateSectionContent("footer", "socialHeading_bn", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>হেডিং (English)</Label>
+                      <Input
+                        value={footerSection?.content.socialHeading_en || ""}
+                        onChange={(e) => updateSectionContent("footer", "socialHeading_en", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>সাবটেক্সট (বাংলা)</Label>
+                      <Input
+                        value={footerSection?.content.socialSubtext_bn || ""}
+                        onChange={(e) => updateSectionContent("footer", "socialSubtext_bn", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>সাবটেক্সট (English)</Label>
+                      <Input
+                        value={footerSection?.content.socialSubtext_en || ""}
+                        onChange={(e) => updateSectionContent("footer", "socialSubtext_en", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {(footerSection?.content.socialLinks || []).map((item: SocialLinkItem, index: number) => (
+                      <div key={index} className="flex items-center gap-3 border rounded-lg p-3">
+                        <div className="flex-1 grid grid-cols-3 gap-2">
+                          <Input
+                            placeholder="নাম"
+                            value={item.name}
+                            onChange={(e) => updateSocialLink(index, "name", e.target.value)}
+                          />
+                          <select
+                            className="p-2 border rounded-md bg-background text-sm"
+                            value={item.icon}
+                            onChange={(e) => updateSocialLink(index, "icon", e.target.value)}
+                          >
+                            {socialIconOptions.map(icon => (
+                              <option key={icon} value={icon}>{icon}</option>
+                            ))}
+                          </select>
+                          <Input
+                            placeholder="URL"
+                            value={item.url}
+                            onChange={(e) => updateSocialLink(index, "url", e.target.value)}
+                          />
+                        </div>
+                        <Button variant="destructive" size="icon" onClick={() => removeSocialLink(index)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Contact Info */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-base">যোগাযোগ তথ্য</h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>হেডিং (বাংলা)</Label>
+                      <Input
+                        value={footerSection?.content.contactHeading_bn || ""}
+                        onChange={(e) => updateSectionContent("footer", "contactHeading_bn", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>হেডিং (English)</Label>
+                      <Input
+                        value={footerSection?.content.contactHeading_en || ""}
+                        onChange={(e) => updateSectionContent("footer", "contactHeading_en", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>ফোন নম্বর</Label>
+                      <Input
+                        value={footerSection?.content.phone || ""}
+                        onChange={(e) => updateSectionContent("footer", "phone", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>ইমেইল</Label>
+                      <Input
+                        value={footerSection?.content.email || ""}
+                        onChange={(e) => updateSectionContent("footer", "email", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>ঠিকানা (লাইন ১)</Label>
+                      <Input
+                        value={footerSection?.content.address_line1 || ""}
+                        onChange={(e) => updateSectionContent("footer", "address_line1", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>ঠিকানা (লাইন ২)</Label>
+                      <Input
+                        value={footerSection?.content.address_line2 || ""}
+                        onChange={(e) => updateSectionContent("footer", "address_line2", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Bar */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-base">বটম বার</h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>টেক্সট (বাংলা)</Label>
+                      <Input
+                        value={footerSection?.content.bottomText_bn || ""}
+                        onChange={(e) => updateSectionContent("footer", "bottomText_bn", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>টেক্সট (English)</Label>
+                      <Input
+                        value={footerSection?.content.bottomText_en || ""}
+                        onChange={(e) => updateSectionContent("footer", "bottomText_en", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Button onClick={() => saveSection("footer")} disabled={saving}>
                   <Save className="h-4 w-4 mr-2" />
                   সংরক্ষণ করুন
                 </Button>
