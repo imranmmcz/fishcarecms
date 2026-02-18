@@ -71,6 +71,12 @@ interface SocialLinkItem {
   url: string;
 }
 
+interface NavItem {
+  label_bn: string;
+  label_en: string;
+  path: string;
+}
+
 const iconOptions = [
   "Calculator", "Fish", "Wheat", "Droplets", "Stethoscope", "DollarSign",
   "CheckCircle", "Gift", "Globe", "Smartphone", "Heart", "Star",
@@ -383,6 +389,28 @@ export default function AdminPageBuilder() {
   const socialProofSection = getSection("social_proof");
   const ctaSection = getSection("cta");
   const footerSection = getSection("footer");
+  const headerSection = getSection("header");
+
+  // Header Nav Item handlers
+  const addNavItem = () => {
+    if (!headerSection) return;
+    const items = headerSection.content.navItems || [];
+    updateSectionContent("header", "navItems", [...items, { label_bn: "নতুন", label_en: "New", path: "/" }]);
+  };
+
+  const updateNavItem = (index: number, field: keyof NavItem, value: string) => {
+    if (!headerSection) return;
+    const items = [...(headerSection.content.navItems || [])];
+    items[index] = { ...items[index], [field]: value };
+    updateSectionContent("header", "navItems", items);
+  };
+
+  const removeNavItem = (index: number) => {
+    if (!headerSection) return;
+    const items = [...(headerSection.content.navItems || [])];
+    items.splice(index, 1);
+    updateSectionContent("header", "navItems", items);
+  };
 
   return (
     <AdminLayout>
@@ -422,7 +450,8 @@ export default function AdminPageBuilder() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full">
+          <TabsList className="grid grid-cols-4 md:grid-cols-8 w-full">
+            <TabsTrigger value="header">হেডার</TabsTrigger>
             <TabsTrigger value="hero">হিরো</TabsTrigger>
             <TabsTrigger value="modules">মডিউল</TabsTrigger>
             <TabsTrigger value="benefits">সুবিধা</TabsTrigger>
@@ -431,6 +460,102 @@ export default function AdminPageBuilder() {
             <TabsTrigger value="cta">CTA</TabsTrigger>
             <TabsTrigger value="footer">ফুটার</TabsTrigger>
           </TabsList>
+
+          {/* Header Section */}
+          <TabsContent value="header">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Layout className="h-5 w-5" />
+                      হেডার সেকশন
+                    </CardTitle>
+                    <CardDescription>হেডারের লোগো, নাম এবং নেভিগেশন মেনু এডিট করুন</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="header-active">সক্রিয়</Label>
+                    <Switch
+                      id="header-active"
+                      checked={headerSection?.is_active}
+                      onCheckedChange={(checked) => updateSection("header", { is_active: checked })}
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Company Info */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-base">কোম্পানি/ব্র্যান্ড তথ্য</h4>
+                  <div className="space-y-2">
+                    <Label>কোম্পানির নাম (লোগো টেক্সট)</Label>
+                    <Input
+                      value={headerSection?.content.companyName || ""}
+                      onChange={(e) => updateSectionContent("header", "companyName", e.target.value)}
+                    />
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>সাবটাইটেল (বাংলা)</Label>
+                      <Input
+                        value={headerSection?.content.companySubtitle_bn || ""}
+                        onChange={(e) => updateSectionContent("header", "companySubtitle_bn", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>সাবটাইটেল (English)</Label>
+                      <Input
+                        value={headerSection?.content.companySubtitle_en || ""}
+                        onChange={(e) => updateSectionContent("header", "companySubtitle_en", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Navigation Items */}
+                <div className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">নেভিগেশন মেনু আইটেম</h4>
+                    <Button size="sm" onClick={addNavItem}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      যোগ করুন
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {(headerSection?.content.navItems || []).map((item: NavItem, index: number) => (
+                      <div key={index} className="flex items-center gap-3 border rounded-lg p-3">
+                        <div className="flex-1 grid grid-cols-3 gap-2">
+                          <Input
+                            placeholder="লেবেল (বাংলা)"
+                            value={item.label_bn}
+                            onChange={(e) => updateNavItem(index, "label_bn", e.target.value)}
+                          />
+                          <Input
+                            placeholder="Label (EN)"
+                            value={item.label_en}
+                            onChange={(e) => updateNavItem(index, "label_en", e.target.value)}
+                          />
+                          <Input
+                            placeholder="পাথ (/shop)"
+                            value={item.path}
+                            onChange={(e) => updateNavItem(index, "path", e.target.value)}
+                          />
+                        </div>
+                        <Button variant="destructive" size="icon" onClick={() => removeNavItem(index)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Button onClick={() => saveSection("header")} disabled={saving}>
+                  <Save className="h-4 w-4 mr-2" />
+                  সংরক্ষণ করুন
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Hero Slider Section */}
           <TabsContent value="hero">

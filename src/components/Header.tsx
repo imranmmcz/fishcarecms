@@ -17,21 +17,35 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CartSheet } from "@/components/CartSheet";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { usePageContent } from "@/hooks/usePageContent";
 
 export const Header = () => {
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
   const { t, language } = useLanguage();
   const { wishlistCount } = useWishlist();
+  const { getSectionContent } = usePageContent();
 
-  const navItems = [
-    { path: "/", label: t.home },
-    { path: "/shop", label: t.shop },
-    { path: "/market-price", label: t.marketPrice },
-    { path: "/pond-calculator", label: t.pondMeasurement },
-    { path: "/fish-advice", label: t.fishAdvice },
-    { path: "/modules", label: t.allModules },
-  ];
+  const headerData = getSectionContent<Record<string, any>>("header");
+
+  const companyName = headerData?.companyName || t.appTitle;
+  const companySubtitle = headerData
+    ? (language === "bn" ? headerData.companySubtitle_bn : headerData.companySubtitle_en)
+    : t.appSubtitle;
+
+  const navItems = headerData?.navItems
+    ? headerData.navItems.map((item: any) => ({
+        path: item.path,
+        label: language === "bn" ? item.label_bn : item.label_en,
+      }))
+    : [
+        { path: "/", label: t.home },
+        { path: "/shop", label: t.shop },
+        { path: "/market-price", label: t.marketPrice },
+        { path: "/pond-calculator", label: t.pondMeasurement },
+        { path: "/fish-advice", label: t.fishAdvice },
+        { path: "/modules", label: t.allModules },
+      ];
 
   // Get user display name from Supabase user metadata
   const defaultUserName = language === "bn" ? "ব্যবহারকারী" : "User";
@@ -47,8 +61,8 @@ export const Header = () => {
             <Fish className="h-6 w-6 text-primary-foreground" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-foreground">{t.appTitle}</span>
-            <span className="text-xs text-muted-foreground">{t.appSubtitle}</span>
+            <span className="text-lg font-bold text-foreground">{companyName}</span>
+            <span className="text-xs text-muted-foreground">{companySubtitle}</span>
           </div>
         </Link>
 
