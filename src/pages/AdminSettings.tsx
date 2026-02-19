@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
 import SmtpSettingsTab from "@/components/SmtpSettingsTab";
 import EmailLogsViewer from "@/components/EmailLogsViewer";
+import ThemeColorSettings from "@/components/ThemeColorSettings";
 
 interface SystemSetting {
   id: string;
@@ -219,10 +220,14 @@ const AdminSettings = () => {
         </div>
 
         <Tabs defaultValue="language" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[600px]">
+          <TabsList className="grid w-full grid-cols-6 lg:w-[720px]">
             <TabsTrigger value="language" className="flex items-center gap-2">
               <Globe className="h-4 w-4" />
               {language === "bn" ? "ভাষা" : "Language"}
+            </TabsTrigger>
+            <TabsTrigger value="theme" className="flex items-center gap-2">
+              <Palette className="h-4 w-4" />
+              {language === "bn" ? "থিম" : "Theme"}
             </TabsTrigger>
             <TabsTrigger value="currency" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
@@ -241,6 +246,11 @@ const AdminSettings = () => {
               {language === "bn" ? "সাধারণ" : "General"}
             </TabsTrigger>
           </TabsList>
+
+          {/* Theme Color Settings Tab */}
+          <TabsContent value="theme" className="space-y-6 mt-6">
+            <ThemeColorSettings />
+          </TabsContent>
 
           {/* Language Settings Tab */}
           <TabsContent value="language" className="space-y-6 mt-6">

@@ -13,6 +13,7 @@ import { AdSettingsProvider } from "@/contexts/AdSettingsContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ThemeLoader } from "@/components/ThemeLoader";
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
 import PondCalculator from "./pages/PondCalculator";
@@ -73,6 +74,7 @@ const App = () => (
               <FarmingProvider>
                 <AdSettingsProvider>
                   <TooltipProvider>
+                    <ThemeLoader />
                     <Toaster />
                     <Sonner />
                   <BrowserRouter>
