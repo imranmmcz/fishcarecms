@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Fish, Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, ChevronDown, TrendingUp, Package, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Button3D } from "@/components/ui/button-3d";
@@ -32,6 +33,17 @@ export const Header = () => {
   const companySubtitle = headerData
     ? (language === "bn" ? headerData.companySubtitle_bn : headerData.companySubtitle_en)
     : t.appSubtitle;
+
+  // Dynamically update favicon
+  useEffect(() => {
+    if (headerData?.faviconUrl) {
+      const link = document.querySelector<HTMLLinkElement>("link[rel='shortcut icon']") 
+        || document.querySelector<HTMLLinkElement>("link[rel='icon']");
+      if (link) {
+        link.href = headerData.faviconUrl;
+      }
+    }
+  }, [headerData?.faviconUrl]);
 
   const navItems = headerData?.navItems
     ? headerData.navItems.map((item: any) => ({
