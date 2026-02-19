@@ -57,9 +57,13 @@ export const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 transition-transform hover:scale-105">
-          <div className="rounded-lg bg-gradient-primary p-2">
-            <Fish className="h-6 w-6 text-primary-foreground" />
-          </div>
+          {headerData?.logoUrl ? (
+            <img src={headerData.logoUrl} alt={companyName} className="h-10 w-10 rounded-lg object-contain" />
+          ) : (
+            <div className="rounded-lg bg-gradient-primary p-2">
+              <Fish className="h-6 w-6 text-primary-foreground" />
+            </div>
+          )}
           <div className="flex flex-col">
             <span className="text-lg font-bold text-foreground">{companyName}</span>
             <span className="text-xs text-muted-foreground">{companySubtitle}</span>

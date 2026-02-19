@@ -487,6 +487,78 @@ export default function AdminPageBuilder() {
                 {/* Company Info */}
                 <div className="space-y-4">
                   <h4 className="font-semibold text-base">কোম্পানি/ব্র্যান্ড তথ্য</h4>
+                  
+                  {/* Logo Upload */}
+                  <div className="space-y-2">
+                    <Label>লোগো ইমেজ</Label>
+                    <div className="flex items-center gap-4">
+                      <div className="h-16 w-16 rounded-lg border border-border flex items-center justify-center overflow-hidden bg-muted">
+                        {headerSection?.content.logoUrl ? (
+                          <img src={headerSection.content.logoUrl} alt="Logo" className="h-full w-full object-contain" />
+                        ) : (
+                          <Image className="h-8 w-8 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => document.getElementById('header-logo-upload')?.click()}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            আপলোড করুন
+                          </Button>
+                          {headerSection?.content.logoUrl && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => updateSectionContent("header", "logoUrl", "")}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              মুছুন
+                            </Button>
+                          )}
+                        </div>
+                        <Input
+                          placeholder="অথবা ইমেজ URL দিন"
+                          value={headerSection?.content.logoUrl || ""}
+                          onChange={(e) => updateSectionContent("header", "logoUrl", e.target.value)}
+                        />
+                        <input
+                          id="header-logo-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 2 * 1024 * 1024) {
+                              toast.error("ফাইল সাইজ ২MB এর বেশি হতে পারবে না");
+                              return;
+                            }
+                            const fileExt = file.name.split('.').pop();
+                            const fileName = `header-logo-${Date.now()}.${fileExt}`;
+                            const { error: uploadError } = await supabase.storage
+                              .from('product-images')
+                              .upload(fileName, file);
+                            if (uploadError) {
+                              toast.error("আপলোড ব্যর্থ হয়েছে");
+                              return;
+                            }
+                            const { data: urlData } = supabase.storage
+                              .from('product-images')
+                              .getPublicUrl(fileName);
+                            updateSectionContent("header", "logoUrl", urlData.publicUrl);
+                            toast.success("লোগো আপলোড সফল হয়েছে");
+                            e.target.value = '';
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground">সর্বোচ্চ ২MB, PNG/JPG/SVG সাপোর্টেড। খালি রাখলে ডিফল্ট আইকন দেখাবে।</p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>কোম্পানির নাম (লোগো টেক্সট)</Label>
                     <Input
