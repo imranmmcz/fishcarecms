@@ -559,6 +559,77 @@ export default function AdminPageBuilder() {
                     </div>
                   </div>
 
+                  {/* Favicon Upload */}
+                  <div className="space-y-2">
+                    <Label>ফেভিকন (ব্রাউজার ট্যাব আইকন)</Label>
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
+                        {headerSection?.content.faviconUrl ? (
+                          <img src={headerSection.content.faviconUrl} alt="Favicon" className="h-full w-full object-contain" />
+                        ) : (
+                          <Image className="h-6 w-6 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => document.getElementById('header-favicon-upload')?.click()}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            আপলোড করুন
+                          </Button>
+                          {headerSection?.content.faviconUrl && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => updateSectionContent("header", "faviconUrl", "")}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              মুছুন
+                            </Button>
+                          )}
+                        </div>
+                        <Input
+                          placeholder="অথবা ফেভিকন URL দিন"
+                          value={headerSection?.content.faviconUrl || ""}
+                          onChange={(e) => updateSectionContent("header", "faviconUrl", e.target.value)}
+                        />
+                        <input
+                          id="header-favicon-upload"
+                          type="file"
+                          accept="image/png,image/x-icon,image/svg+xml,image/jpeg"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 1 * 1024 * 1024) {
+                              toast.error("ফাইল সাইজ ১MB এর বেশি হতে পারবে না");
+                              return;
+                            }
+                            const fileExt = file.name.split('.').pop();
+                            const fileName = `favicon-${Date.now()}.${fileExt}`;
+                            const { error: uploadError } = await supabase.storage
+                              .from('product-images')
+                              .upload(fileName, file);
+                            if (uploadError) {
+                              toast.error("আপলোড ব্যর্থ হয়েছে");
+                              return;
+                            }
+                            const { data: urlData } = supabase.storage
+                              .from('product-images')
+                              .getPublicUrl(fileName);
+                            updateSectionContent("header", "faviconUrl", urlData.publicUrl);
+                            toast.success("ফেভিকন আপলোড সফল হয়েছে");
+                            e.target.value = '';
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground">সর্বোচ্চ ১MB, PNG/ICO/SVG সাপোর্টেড। ৩২x৩২ বা ৬৪x৬৪ পিক্সেল রেকমেন্ডেড।</p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>কোম্পানির নাম (লোগো টেক্সট)</Label>
                     <Input
