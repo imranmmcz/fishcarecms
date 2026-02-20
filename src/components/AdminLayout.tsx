@@ -30,7 +30,8 @@ import {
   ShoppingCart,
   Warehouse,
   UserCheck,
-  Building2
+  Building2,
+  FileText
 } from "lucide-react";
 
 const menuItems = [
@@ -110,6 +111,13 @@ const menuItems = [
     icon: Megaphone,
     color: "bg-gradient-to-r from-rose-500 to-pink-600",
     iconColor: "text-rose-500"
+  },
+  { 
+    title: "পেজ ম্যানেজমেন্ট", 
+    url: "/admin/pages", 
+    icon: FileText,
+    color: "bg-gradient-to-r from-sky-500 to-blue-600",
+    iconColor: "text-sky-500"
   },
   { 
     title: "পেজ বিল্ডার", 
