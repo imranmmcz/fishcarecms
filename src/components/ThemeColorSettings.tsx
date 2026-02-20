@@ -66,6 +66,70 @@ const colorConfigs: ColorConfig[] = [
     description_en: "Card and popup background",
     defaultValue: "#FFFFFF",
   },
+  {
+    key: "theme_hover",
+    label_bn: "হোভার কালার",
+    label_en: "Hover Color",
+    description_bn: "মাউস হোভারে রঙ পরিবর্তন",
+    description_en: "Color change on mouse hover",
+    defaultValue: "#007A8A",
+  },
+  {
+    key: "theme_button",
+    label_bn: "বাটন কালার",
+    label_en: "Button Color",
+    description_bn: "প্রধান বাটনের পটভূমি রঙ",
+    description_en: "Primary button background color",
+    defaultValue: "#00899A",
+  },
+  {
+    key: "theme_button_hover",
+    label_bn: "বাটন হোভার কালার",
+    label_en: "Button Hover Color",
+    description_bn: "বাটনে হোভারের সময় রঙ",
+    description_en: "Button background color on hover",
+    defaultValue: "#006E7D",
+  },
+  {
+    key: "theme_link",
+    label_bn: "লিংক কালার",
+    label_en: "Link Color",
+    description_bn: "হাইপারলিংক রঙ",
+    description_en: "Hyperlink text color",
+    defaultValue: "#0077B6",
+  },
+  {
+    key: "theme_header_bg",
+    label_bn: "হেডার ব্যাকগ্রাউন্ড",
+    label_en: "Header Background",
+    description_bn: "সাইটের হেডার বার রঙ",
+    description_en: "Site header bar background color",
+    defaultValue: "#FFFFFF",
+  },
+  {
+    key: "theme_footer_bg",
+    label_bn: "ফুটার ব্যাকগ্রাউন্ড",
+    label_en: "Footer Background",
+    description_bn: "সাইটের ফুটার বার রঙ",
+    description_en: "Site footer bar background color",
+    defaultValue: "#1E2D3D",
+  },
+  {
+    key: "theme_border",
+    label_bn: "বর্ডার কালার",
+    label_en: "Border Color",
+    description_bn: "কার্ড ও ইনপুটের বর্ডার রঙ",
+    description_en: "Card and input border color",
+    defaultValue: "#E2E8F0",
+  },
+  {
+    key: "theme_alert",
+    label_bn: "অ্যালার্ট কালার",
+    label_en: "Alert Color",
+    description_bn: "সতর্কতা ও বিপদ বার্তার রঙ",
+    description_en: "Warning and error alert color",
+    defaultValue: "#EF4444",
+  },
 ];
 
 function hexToHsl(hex: string): string {
@@ -132,6 +196,14 @@ const cssVarMap: Record<string, string[]> = {
   theme_background: ["--background"],
   theme_foreground: ["--foreground", "--card-foreground", "--popover-foreground"],
   theme_card: ["--card", "--popover"],
+  theme_hover: ["--primary-glow"],
+  theme_button: ["--primary"],
+  theme_button_hover: ["--primary-glow"],
+  theme_link: ["--ring"],
+  theme_header_bg: ["--header-bg"],
+  theme_footer_bg: ["--footer-bg"],
+  theme_border: ["--border", "--input"],
+  theme_alert: ["--destructive"],
 };
 
 export function applyThemeColors(colors: Record<string, string>) {
@@ -251,35 +323,78 @@ export default function ThemeColorSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {colorConfigs.map((config) => (
-            <div key={config.key} className="space-y-2 rounded-lg border border-border p-4">
-              <Label className="font-semibold">
-                {language === "bn" ? config.label_bn : config.label_en}
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                {language === "bn" ? config.description_bn : config.description_en}
-              </p>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={colors[config.key] || config.defaultValue}
-                  onChange={(e) => handleColorChange(config.key, e.target.value)}
-                  className="h-10 w-14 cursor-pointer rounded border border-border"
-                />
-                <Input
-                  value={colors[config.key] || config.defaultValue}
-                  onChange={(e) => handleColorChange(config.key, e.target.value)}
-                  placeholder="#000000"
-                  className="font-mono text-sm"
+        {/* Base Colors */}
+        <div>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
+            {language === "bn" ? "মূল কালার" : "Base Colors"}
+          </h4>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {colorConfigs.slice(0, 6).map((config) => (
+              <div key={config.key} className="space-y-2 rounded-lg border border-border p-4">
+                <Label className="font-semibold">
+                  {language === "bn" ? config.label_bn : config.label_en}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {language === "bn" ? config.description_bn : config.description_en}
+                </p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={colors[config.key] || config.defaultValue}
+                    onChange={(e) => handleColorChange(config.key, e.target.value)}
+                    className="h-10 w-14 cursor-pointer rounded border border-border"
+                  />
+                  <Input
+                    value={colors[config.key] || config.defaultValue}
+                    onChange={(e) => handleColorChange(config.key, e.target.value)}
+                    placeholder="#000000"
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <div
+                  className="h-3 rounded-full"
+                  style={{ backgroundColor: colors[config.key] || config.defaultValue }}
                 />
               </div>
-              <div
-                className="h-3 rounded-full"
-                style={{ backgroundColor: colors[config.key] || config.defaultValue }}
-              />
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* Extended Colors */}
+        <div>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
+            {language === "bn" ? "বিস্তারিত কালার" : "Extended Colors"}
+          </h4>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {colorConfigs.slice(6).map((config) => (
+              <div key={config.key} className="space-y-2 rounded-lg border border-border p-4">
+                <Label className="font-semibold">
+                  {language === "bn" ? config.label_bn : config.label_en}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {language === "bn" ? config.description_bn : config.description_en}
+                </p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={colors[config.key] || config.defaultValue}
+                    onChange={(e) => handleColorChange(config.key, e.target.value)}
+                    className="h-10 w-14 cursor-pointer rounded border border-border"
+                  />
+                  <Input
+                    value={colors[config.key] || config.defaultValue}
+                    onChange={(e) => handleColorChange(config.key, e.target.value)}
+                    placeholder="#000000"
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <div
+                  className="h-3 rounded-full"
+                  style={{ backgroundColor: colors[config.key] || config.defaultValue }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Preview */}
@@ -287,24 +402,51 @@ export default function ThemeColorSettings() {
           <h4 className="font-semibold text-sm">
             {language === "bn" ? "লাইভ প্রিভিউ" : "Live Preview"}
           </h4>
-          <div className="flex flex-wrap gap-3">
-            <div className="px-4 py-2 rounded-md text-sm font-medium" style={{ backgroundColor: colors.theme_primary, color: "#fff" }}>
-              {language === "bn" ? "প্রাইমারি বাটন" : "Primary Button"}
-            </div>
-            <div className="px-4 py-2 rounded-md text-sm font-medium" style={{ backgroundColor: colors.theme_secondary, color: "#fff" }}>
-              {language === "bn" ? "সেকেন্ডারি বাটন" : "Secondary Button"}
-            </div>
-            <div className="px-4 py-2 rounded-md text-sm font-medium" style={{ backgroundColor: colors.theme_accent, color: "#fff" }}>
-              {language === "bn" ? "অ্যাকসেন্ট ব্যাজ" : "Accent Badge"}
+          {/* Header bar preview */}
+          <div className="rounded-md overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 text-white text-sm font-medium"
+              style={{ backgroundColor: colors.theme_header_bg || "#FFFFFF", color: colors.theme_foreground || "#1E2D3D", borderBottom: `2px solid ${colors.theme_border || "#E2E8F0"}` }}>
+              <span>{language === "bn" ? "হেডার" : "Header"}</span>
+              <span className="text-xs" style={{ color: colors.theme_link || "#0077B6" }}>{language === "bn" ? "লিংক →" : "Link →"}</span>
             </div>
           </div>
-          <div className="rounded-md p-3" style={{ backgroundColor: colors.theme_card, border: "1px solid #e5e7eb" }}>
+          {/* Buttons & badges */}
+          <div className="flex flex-wrap gap-3">
+            <div className="px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-default"
+              style={{ backgroundColor: colors.theme_button || colors.theme_primary, color: "#fff" }}>
+              {language === "bn" ? "বাটন" : "Button"}
+            </div>
+            <div className="px-4 py-2 rounded-md text-sm font-medium"
+              style={{ backgroundColor: colors.theme_button_hover || "#006E7D", color: "#fff" }}>
+              {language === "bn" ? "বাটন হোভার" : "Button Hover"}
+            </div>
+            <div className="px-4 py-2 rounded-md text-sm font-medium"
+              style={{ backgroundColor: colors.theme_secondary, color: "#fff" }}>
+              {language === "bn" ? "সেকেন্ডারি" : "Secondary"}
+            </div>
+            <div className="px-4 py-2 rounded-md text-sm font-medium"
+              style={{ backgroundColor: colors.theme_accent, color: "#fff" }}>
+              {language === "bn" ? "অ্যাকসেন্ট" : "Accent"}
+            </div>
+            <div className="px-4 py-2 rounded-md text-sm font-medium"
+              style={{ backgroundColor: colors.theme_alert || "#EF4444", color: "#fff" }}>
+              {language === "bn" ? "অ্যালার্ট" : "Alert"}
+            </div>
+          </div>
+          {/* Card preview */}
+          <div className="rounded-md p-3"
+            style={{ backgroundColor: colors.theme_card, border: `1px solid ${colors.theme_border || "#E2E8F0"}` }}>
             <p className="text-sm font-semibold" style={{ color: colors.theme_foreground }}>
-              {language === "bn" ? "এটি একটি কার্ডের উদাহরণ টেক্সট।" : "This is example card text."}
+              {language === "bn" ? "এটি একটি কার্ডের উদাহরণ।" : "This is an example card."}
             </p>
-            <p className="text-xs mt-1" style={{ color: colors.theme_foreground, opacity: 0.6 }}>
-              {language === "bn" ? "ব্যাকগ্রাউন্ড এবং ফন্ট কালার এখানে দেখানো হচ্ছে।" : "Background and font color shown here."}
+            <p className="text-xs mt-1" style={{ color: colors.theme_link || "#0077B6" }}>
+              {language === "bn" ? "লিংক উদাহরণ" : "Example link"}
             </p>
+          </div>
+          {/* Footer preview */}
+          <div className="rounded-md px-4 py-2 text-white text-sm"
+            style={{ backgroundColor: colors.theme_footer_bg || "#1E2D3D" }}>
+            {language === "bn" ? "ফুটার এরিয়া" : "Footer Area"}
           </div>
         </div>
 

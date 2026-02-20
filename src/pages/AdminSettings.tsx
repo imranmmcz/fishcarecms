@@ -9,12 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
 import SmtpSettingsTab from "@/components/SmtpSettingsTab";
 import EmailLogsViewer from "@/components/EmailLogsViewer";
 import ThemeColorSettings from "@/components/ThemeColorSettings";
+import LanguageFontSettings from "@/components/LanguageFontSettings";
 
 interface SystemSetting {
   id: string;
@@ -220,10 +221,14 @@ const AdminSettings = () => {
         </div>
 
         <Tabs defaultValue="language" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 lg:w-[720px]">
+          <TabsList className="flex flex-wrap h-auto gap-1 w-full lg:w-auto">
             <TabsTrigger value="language" className="flex items-center gap-2">
               <Globe className="h-4 w-4" />
               {language === "bn" ? "ভাষা" : "Language"}
+            </TabsTrigger>
+            <TabsTrigger value="font" className="flex items-center gap-2">
+              <Type className="h-4 w-4" />
+              {language === "bn" ? "ফন্ট" : "Font"}
             </TabsTrigger>
             <TabsTrigger value="theme" className="flex items-center gap-2">
               <Palette className="h-4 w-4" />
@@ -336,6 +341,11 @@ const AdminSettings = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Font Settings Tab */}
+          <TabsContent value="font" className="space-y-6 mt-6">
+            <LanguageFontSettings />
           </TabsContent>
 
           {/* Currency Settings Tab */}
