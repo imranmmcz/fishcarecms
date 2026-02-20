@@ -91,6 +91,13 @@ const menuItems = [
     iconColor: "text-blue-500"
   },
   { 
+    title: "ই-কমার্স ওভারভিউ", 
+    url: "/admin/ecommerce-overview", 
+    icon: ShoppingCart,
+    color: "bg-gradient-to-r from-emerald-500 to-teal-600",
+    iconColor: "text-emerald-500"
+  },
+  { 
     title: "রিপোর্ট", 
     url: "/admin/reports", 
     icon: BarChart3,
