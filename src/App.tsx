@@ -52,6 +52,8 @@ import AdminPageBuilder from "./pages/AdminPageBuilder";
 import AdminMarketPrices from "./pages/AdminMarketPrices";
 import AdminDatabaseExport from "./pages/AdminDatabaseExport";
 import AdminEcommerceOverview from "./pages/AdminEcommerceOverview";
+import AdminPages from "./pages/AdminPages";
+import CustomPage from "./pages/CustomPage";
 import AdminOrders from "./pages/AdminOrders";
 import AdminInventory from "./pages/AdminInventory";
 import AdminCustomers from "./pages/AdminCustomers";
@@ -126,6 +128,8 @@ const App = () => (
                       <Route path="/admin/suppliers" element={<ProtectedRoute requireAdmin><AdminSuppliers /></ProtectedRoute>} />
                       <Route path="/admin/database-export" element={<ProtectedRoute requireAdmin><AdminDatabaseExport /></ProtectedRoute>} />
                       <Route path="/admin/ecommerce-overview" element={<ProtectedRoute requireAdmin><AdminEcommerceOverview /></ProtectedRoute>} />
+                      <Route path="/admin/pages" element={<ProtectedRoute requireAdmin><AdminPages /></ProtectedRoute>} />
+                      <Route path="/pages/:slug" element={<CustomPage />} />
                       <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><Profile /></ProtectedRoute>} />
                       <Route path="/install" element={<Install />} />
                       <Route path="*" element={<NotFound />} />
