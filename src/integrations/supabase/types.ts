@@ -65,6 +65,54 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_logs: {
+        Row: {
+          backup_type: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          file_name: string | null
+          file_size: number | null
+          google_drive_file_id: string | null
+          google_drive_url: string | null
+          id: string
+          started_at: string
+          status: string
+          tables_included: string[] | null
+        }
+        Insert: {
+          backup_type?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          google_drive_file_id?: string | null
+          google_drive_url?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          tables_included?: string[] | null
+        }
+        Update: {
+          backup_type?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          google_drive_file_id?: string | null
+          google_drive_url?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          tables_included?: string[] | null
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           company_id: string | null
