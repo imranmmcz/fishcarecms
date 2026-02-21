@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
+import SeoHead from "@/components/SeoHead";
 import { supabase } from "@/integrations/supabase/client";
 import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
 import { useCart } from "@/contexts/CartContext";
@@ -281,6 +282,15 @@ const ProductDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SeoHead
+        title={(product as any).meta_title || product.name}
+        description={(product as any).meta_description || product.description || undefined}
+        image={product.image_url || undefined}
+        url={`/product/${(product as any).seo_url || product.id}`}
+        type="product"
+        keywords={(product as any).focus_keyword || undefined}
+        imageAlt={(product as any).image_alt_text || product.name}
+      />
       <Header />
       
       {/* Header Ad */}

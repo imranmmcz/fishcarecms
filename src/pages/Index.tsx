@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
+import SeoHead from "@/components/SeoHead";
 import { ModuleCard } from "@/components/ModuleCard";
 import { Button3D } from "@/components/ui/button-3d";
 import { ProductSlider } from "@/components/ProductSlider";
@@ -145,6 +146,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SeoHead
+        title={language === "bn" ? "বৈজ্ঞানিক মাছ চাষ ব্যবস্থাপনা" : "Scientific Fish Farming Management"}
+        description={language === "bn" ? "আধুনিক প্রযুক্তি ব্যবহার করে মাছ চাষকে আরও লাভজনক এবং টেকসই করুন। পুকুর পরিমাপ, খাদ্য ব্যবস্থাপনা, বায়োমাস গণনা।" : "Make fish farming more profitable with modern technology."}
+        url="/"
+        keywords="মাছ চাষ, একুয়াকালচার, ফিশ ফার্মিং, পুকুর ব্যবস্থাপনা"
+      />
       <Header />
       
       {/* Header Ad */}
