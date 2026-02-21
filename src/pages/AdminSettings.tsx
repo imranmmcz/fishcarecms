@@ -19,6 +19,7 @@ import ThemeColorSettings from "@/components/ThemeColorSettings";
 import LanguageFontSettings from "@/components/LanguageFontSettings";
 import GlobalSeoSettings from "@/components/admin/GlobalSeoSettings";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
+import DeliverySettingsAdmin from "@/components/admin/DeliverySettingsAdmin";
 
 interface SystemSetting {
   id: string;
@@ -596,6 +597,11 @@ const AdminSettings = () => {
 
             {/* Merchant API Gateway Settings */}
             <PaymentGatewaySettings />
+
+            <Separator className="my-6" />
+
+            {/* Delivery & Partial Payment Settings */}
+            <DeliverySettingsAdmin />
           </TabsContent>
 
           {/* Email/SMTP Settings Tab */}

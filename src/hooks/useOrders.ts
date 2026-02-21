@@ -65,6 +65,10 @@ export interface CreateOrderData {
   customer_note?: string;
   payment_trx_id?: string;
   payment_sender_number?: string;
+  shipping_cost?: number;
+  partial_payment?: boolean;
+  advance_amount?: number;
+  due_amount?: number;
 }
 
 export function useOrders() {
@@ -164,7 +168,7 @@ export function useOrders() {
         };
       });
 
-      const shippingCost = 0; // Free shipping
+      const shippingCost = orderData.shipping_cost || 0;
       const totalAmount = subtotal + shippingCost;
 
       // Determine payment status
@@ -194,7 +198,10 @@ export function useOrders() {
           discount_amount: 0,
           total_amount: totalAmount,
           status: "pending",
-          notes: orderData.customer_note || null,
+          notes: [
+            orderData.customer_note,
+            orderData.partial_payment ? `[Partial Payment] Advance: ${orderData.advance_amount}, Due: ${orderData.due_amount}` : null,
+          ].filter(Boolean).join(" | ") || null,
         })
         .select()
         .single();

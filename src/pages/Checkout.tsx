@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePaymentSettings } from "@/hooks/usePaymentSettings";
+import { useDeliverySettings } from "@/hooks/useDeliverySettings";
 import { useOrders } from "@/hooks/useOrders";
 import { supabase } from "@/integrations/supabase/client";
 import { sendOrderConfirmationEmail } from "@/lib/emailService";
@@ -47,9 +48,11 @@ const Checkout = () => {
   const { language } = useLanguage();
   const { formatPrice } = useCurrency();
   const { settings: paymentSettings, isLoading: isLoadingPayment } = usePaymentSettings();
+  const { calculateDeliveryCharge, calculatePartialPayment, settings: deliverySettings } = useDeliverySettings();
   const { createOrder } = useOrders();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [usePartialPayment, setUsePartialPayment] = useState(false);
   const [formData, setFormData] = useState({
     shipping_name: "",
     shipping_mobile: "",
@@ -71,9 +74,24 @@ const Checkout = () => {
     ? upazilasByDistrict[formData.shipping_district] || []
     : [];
 
-  const shippingCost = 0; // Free shipping
+  // Calculate total weight from cart items
+  const totalWeight = items.reduce((sum, item) => {
+    const weight = (item.product as any).weight_kg || 0;
+    return sum + weight * item.quantity;
+  }, 0);
+
+  // Dynamic delivery charge calculation
+  const shippingCost = calculateDeliveryCharge(
+    formData.shipping_district,
+    subtotal,
+    totalWeight
+  );
   const total = subtotal + shippingCost;
 
+  // Partial payment calculation
+  const partialPayment = calculatePartialPayment(total);
+  const payableAmount = usePartialPayment ? partialPayment.advanceAmount : total;
+  const dueAmount = usePartialPayment ? partialPayment.dueAmount : 0;
   const translations = {
     checkout: language === "bn" ? "চেকআউট" : "Checkout",
     orderSummary: language === "bn" ? "অর্ডার সামারি" : "Order Summary",
@@ -164,6 +182,10 @@ const Checkout = () => {
         customer_note: formData.customer_note,
         payment_trx_id: formData.payment_trx_id,
         payment_sender_number: formData.payment_sender_number,
+        shipping_cost: shippingCost,
+        partial_payment: usePartialPayment,
+        advance_amount: usePartialPayment ? partialPayment.advanceAmount : undefined,
+        due_amount: usePartialPayment ? partialPayment.dueAmount : undefined,
       };
 
       const { order, error } = await createOrder(orderData);
@@ -593,13 +615,54 @@ const Checkout = () => {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{translations.shipping}</span>
-                      <span className="text-primary font-medium">{translations.free}</span>
+                      {shippingCost === 0 ? (
+                        <span className="text-primary font-medium">{translations.free}</span>
+                      ) : (
+                        <span className="font-medium">{formatPrice(shippingCost)}</span>
+                      )}
                     </div>
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                       <span>{translations.total}</span>
                       <span className="text-primary">{formatPrice(total)}</span>
                     </div>
+
+                    {/* Partial Payment Option */}
+                    {deliverySettings.partialPaymentEnabled &&
+                      formData.payment_method !== "cod" &&
+                      deliverySettings.partialPaymentMethods.includes(formData.payment_method) && (
+                      <div className="mt-3 space-y-2">
+                        <Separator />
+                        <div className="flex items-center justify-between py-2">
+                          <Label htmlFor="partial_pay" className="text-sm cursor-pointer">
+                            {language === "bn" ? "আংশিক পেমেন্ট (অ্যাডভান্স)" : "Partial Payment (Advance)"}
+                          </Label>
+                          <input
+                            type="checkbox"
+                            id="partial_pay"
+                            checked={usePartialPayment}
+                            onChange={(e) => setUsePartialPayment(e.target.checked)}
+                            className="h-4 w-4 rounded border-input"
+                          />
+                        </div>
+                        {usePartialPayment && (
+                          <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                {language === "bn" ? `অ্যাডভান্স (${partialPayment.minPercent}%)` : `Advance (${partialPayment.minPercent}%)`}
+                              </span>
+                              <span className="font-semibold text-primary">{formatPrice(partialPayment.advanceAmount)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                {language === "bn" ? "বাকি (ডেলিভারিতে)" : "Due (on delivery)"}
+                              </span>
+                              <span className="font-medium">{formatPrice(partialPayment.dueAmount)}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Place Order Button */}

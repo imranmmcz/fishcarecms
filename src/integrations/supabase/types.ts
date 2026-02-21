@@ -283,6 +283,45 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_charge_rules: {
+        Row: {
+          charge_amount: number
+          created_at: string
+          district_name: string | null
+          id: string
+          is_active: boolean
+          max_value: number | null
+          min_value: number | null
+          priority: number
+          rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          charge_amount?: number
+          created_at?: string
+          district_name?: string | null
+          id?: string
+          is_active?: boolean
+          max_value?: number | null
+          min_value?: number | null
+          priority?: number
+          rule_type?: string
+          updated_at?: string
+        }
+        Update: {
+          charge_amount?: number
+          created_at?: string
+          district_name?: string | null
+          id?: string
+          is_active?: boolean
+          max_value?: number | null
+          min_value?: number | null
+          priority?: number
+          rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           created_at: string
@@ -697,6 +736,7 @@ export type Database = {
           stock_quantity: number
           unit: string | null
           updated_at: string
+          weight_kg: number | null
         }
         Insert: {
           brand_id?: string | null
@@ -720,6 +760,7 @@ export type Database = {
           stock_quantity?: number
           unit?: string | null
           updated_at?: string
+          weight_kg?: number | null
         }
         Update: {
           brand_id?: string | null
@@ -743,6 +784,7 @@ export type Database = {
           stock_quantity?: number
           unit?: string | null
           updated_at?: string
+          weight_kg?: number | null
         }
         Relationships: [
           {
