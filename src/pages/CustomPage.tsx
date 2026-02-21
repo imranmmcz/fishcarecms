@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
+import SeoHead from "@/components/SeoHead";
 import { FileText, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -38,11 +39,6 @@ export default function CustomPage() {
         setNotFound(true);
       } else {
         setPage(data as CustomPage);
-        // Set page title and meta
-        if (data.meta_title) document.title = data.meta_title;
-        else document.title = data.title;
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc && data.meta_description) metaDesc.setAttribute("content", data.meta_description);
       }
       setLoading(false);
     };
@@ -51,6 +47,14 @@ export default function CustomPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {page && (
+        <SeoHead
+          title={page.meta_title || page.title}
+          description={page.meta_description || undefined}
+          url={`/pages/${page.slug}`}
+          type="article"
+        />
+      )}
       <Header />
       <main className="flex-1">
         {loading ? (
