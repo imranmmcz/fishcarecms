@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
 import SmtpSettingsTab from "@/components/SmtpSettingsTab";
@@ -17,6 +18,7 @@ import EmailLogsViewer from "@/components/EmailLogsViewer";
 import ThemeColorSettings from "@/components/ThemeColorSettings";
 import LanguageFontSettings from "@/components/LanguageFontSettings";
 import GlobalSeoSettings from "@/components/admin/GlobalSeoSettings";
+import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 
 interface SystemSetting {
   id: string;
@@ -589,6 +591,11 @@ const AdminSettings = () => {
                 }
               </p>
             </div>
+
+            <Separator className="my-6" />
+
+            {/* Merchant API Gateway Settings */}
+            <PaymentGatewaySettings />
           </TabsContent>
 
           {/* Email/SMTP Settings Tab */}
