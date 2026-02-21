@@ -9,13 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
 import SmtpSettingsTab from "@/components/SmtpSettingsTab";
 import EmailLogsViewer from "@/components/EmailLogsViewer";
 import ThemeColorSettings from "@/components/ThemeColorSettings";
 import LanguageFontSettings from "@/components/LanguageFontSettings";
+import GlobalSeoSettings from "@/components/admin/GlobalSeoSettings";
 
 interface SystemSetting {
   id: string;
@@ -249,6 +250,10 @@ const AdminSettings = () => {
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               {language === "bn" ? "সাধারণ" : "General"}
+            </TabsTrigger>
+            <TabsTrigger value="seo" className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              SEO
             </TabsTrigger>
           </TabsList>
 
@@ -648,6 +653,11 @@ const AdminSettings = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* SEO Settings Tab */}
+          <TabsContent value="seo" className="space-y-6 mt-6">
+            <GlobalSeoSettings />
           </TabsContent>
         </Tabs>
       </div>
