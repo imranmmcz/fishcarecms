@@ -635,11 +635,16 @@ export type Database = {
           description: string | null
           discount_percentage: number | null
           external_link: string | null
+          focus_keyword: string | null
           id: string
+          image_alt_text: string | null
           image_url: string | null
+          meta_description: string | null
+          meta_title: string | null
           name: string
           price: number
           reorder_level: number | null
+          seo_url: string | null
           sku: string | null
           stock_quantity: number
           unit: string | null
@@ -653,11 +658,16 @@ export type Database = {
           description?: string | null
           discount_percentage?: number | null
           external_link?: string | null
+          focus_keyword?: string | null
           id?: string
+          image_alt_text?: string | null
           image_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           name: string
           price?: number
           reorder_level?: number | null
+          seo_url?: string | null
           sku?: string | null
           stock_quantity?: number
           unit?: string | null
@@ -671,11 +681,16 @@ export type Database = {
           description?: string | null
           discount_percentage?: number | null
           external_link?: string | null
+          focus_keyword?: string | null
           id?: string
+          image_alt_text?: string | null
           image_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           name?: string
           price?: number
           reorder_level?: number | null
+          seo_url?: string | null
           sku?: string | null
           stock_quantity?: number
           unit?: string | null

@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle, FolderOpen, ImagePlus, Upload, Link2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle, FolderOpen, ImagePlus, Upload, Link2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { CategoryManagement } from "@/components/admin/CategoryManagement";
@@ -63,6 +63,11 @@ interface ProductFormData {
   reorder_level: number;
   company_id: string;
   brand_id: string;
+  focus_keyword: string;
+  meta_title: string;
+  meta_description: string;
+  image_alt_text: string;
+  seo_url: string;
 }
 
 const emptyProduct: ProductFormData = {
@@ -79,6 +84,11 @@ const emptyProduct: ProductFormData = {
   reorder_level: 10,
   company_id: "",
   brand_id: "",
+  focus_keyword: "",
+  meta_title: "",
+  meta_description: "",
+  image_alt_text: "",
+  seo_url: "",
 };
 
 // Moved ProductForm outside of AdminProducts to prevent re-creation on each render
@@ -449,6 +459,99 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
           autoComplete="off"
         />
       </div>
+
+      {/* SEO Section */}
+      <div className="space-y-1 mt-2">
+        <h4 className="font-semibold text-sm text-muted-foreground flex items-center gap-1">
+          <Search className="h-3.5 w-3.5" />
+          SEO সেটিংস
+        </h4>
+        <Separator />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="focus_keyword">ফোকাস কীওয়ার্ড</Label>
+        <Input
+          id="focus_keyword"
+          value={formData.focus_keyword}
+          onChange={(e) => handleChange("focus_keyword", e.target.value)}
+          placeholder="যেমন: মাছের ঔষধ, ফিশ ফিড"
+          autoComplete="off"
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="meta_title">মেটা টাইটেল</Label>
+          <span className={`text-xs ${formData.meta_title.length > 60 ? 'text-destructive' : 'text-muted-foreground'}`}>
+            {formData.meta_title.length}/60
+          </span>
+        </div>
+        <Input
+          id="meta_title"
+          value={formData.meta_title}
+          onChange={(e) => handleChange("meta_title", e.target.value)}
+          placeholder="সার্চ ইঞ্জিনে যে টাইটেল দেখাবে"
+          autoComplete="off"
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="meta_description">মেটা ডেসক্রিপশন</Label>
+          <span className={`text-xs ${formData.meta_description.length > 160 ? 'text-destructive' : 'text-muted-foreground'}`}>
+            {formData.meta_description.length}/160
+          </span>
+        </div>
+        <Textarea
+          id="meta_description"
+          value={formData.meta_description}
+          onChange={(e) => handleChange("meta_description", e.target.value)}
+          placeholder="সার্চ রেজাল্টে দেখানো সংক্ষিপ্ত বিবরণ"
+          rows={2}
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="image_alt_text">ইমেজ ALT ট্যাগ</Label>
+        <Input
+          id="image_alt_text"
+          value={formData.image_alt_text}
+          onChange={(e) => handleChange("image_alt_text", e.target.value)}
+          placeholder="ছবির বিবরণ (SEO এর জন্য গুরুত্বপূর্ণ)"
+          autoComplete="off"
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="seo_url">SEO ফ্রেন্ডলি URL</Label>
+        <Input
+          id="seo_url"
+          value={formData.seo_url}
+          onChange={(e) => handleChange("seo_url", e.target.value.toLowerCase().replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-'))}
+          placeholder="product-name-in-english"
+          autoComplete="off"
+        />
+        <p className="text-xs text-muted-foreground">
+          ইংরেজিতে, শুধু ছোট হাতের অক্ষর ও হাইফেন ব্যবহার করুন
+        </p>
+      </div>
+
+      {/* SEO Preview */}
+      {(formData.meta_title || formData.name) && (
+        <div className="border rounded-lg p-3 bg-muted/30 space-y-1">
+          <p className="text-xs text-muted-foreground font-medium">সার্চ প্রিভিউ:</p>
+          <p className="text-blue-600 text-sm font-medium truncate">
+            {formData.meta_title || formData.name}
+          </p>
+          <p className="text-green-700 text-xs truncate">
+            fishcal.lovable.app/product/{formData.seo_url || formData.name.toLowerCase().replace(/\s+/g, '-')}
+          </p>
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {formData.meta_description || formData.description || 'কোনো ডেসক্রিপশন দেওয়া হয়নি...'}
+          </p>
+        </div>
+      )}
       
       <Button3D
         variant="success"
@@ -524,7 +627,12 @@ const AdminProducts = () => {
       reorder_level: formData.reorder_level,
       company_id: formData.company_id || null,
       brand_id: formData.brand_id || null,
-    });
+      focus_keyword: formData.focus_keyword || null,
+      meta_title: formData.meta_title || null,
+      meta_description: formData.meta_description || null,
+      image_alt_text: formData.image_alt_text || null,
+      seo_url: formData.seo_url || null,
+    } as any);
     setIsSubmitting(false);
     if (success) {
       setFormData(emptyProduct);
@@ -551,7 +659,12 @@ const AdminProducts = () => {
       reorder_level: formData.reorder_level,
       company_id: formData.company_id || null,
       brand_id: formData.brand_id || null,
-    });
+      focus_keyword: formData.focus_keyword || null,
+      meta_title: formData.meta_title || null,
+      meta_description: formData.meta_description || null,
+      image_alt_text: formData.image_alt_text || null,
+      seo_url: formData.seo_url || null,
+    } as any);
     setIsSubmitting(false);
     if (success) {
       setIsEditOpen(false);
@@ -572,6 +685,7 @@ const AdminProducts = () => {
 
   const openEditDialog = (product: Product) => {
     setSelectedProduct(product);
+    const p = product as any;
     setFormData({
       name: product.name,
       description: product.description || "",
@@ -586,6 +700,11 @@ const AdminProducts = () => {
       reorder_level: product.reorder_level || 10,
       company_id: product.company_id ? String(product.company_id) : "",
       brand_id: product.brand_id ? String(product.brand_id) : "",
+      focus_keyword: p.focus_keyword || "",
+      meta_title: p.meta_title || "",
+      meta_description: p.meta_description || "",
+      image_alt_text: p.image_alt_text || "",
+      seo_url: p.seo_url || "",
     });
     setIsEditOpen(true);
   };
