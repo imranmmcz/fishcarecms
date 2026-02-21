@@ -12,6 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePaymentSettings } from "@/hooks/usePaymentSettings";
 import { useOrders } from "@/hooks/useOrders";
+import { supabase } from "@/integrations/supabase/client";
 import { sendOrderConfirmationEmail } from "@/lib/emailService";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -170,6 +171,30 @@ const Checkout = () => {
       if (error) {
         toast.error(error);
         return;
+      }
+
+      // Auto-verify payment if bKash/Nagad with TrxID
+      if (order && (formData.payment_method === "bkash" || formData.payment_method === "nagad") && formData.payment_trx_id) {
+        try {
+          toast.info(language === "bn" ? "পেমেন্ট ভেরিফাই করা হচ্ছে..." : "Verifying payment...");
+          const { data: verifyResult } = await supabase.functions.invoke("verify-payment", {
+            body: {
+              order_id: order.id,
+              payment_method: formData.payment_method,
+              transaction_id: formData.payment_trx_id,
+              sender_number: formData.payment_sender_number,
+              amount: order.total_amount,
+            },
+          });
+
+          if (verifyResult?.verified) {
+            toast.success(language === "bn" ? "পেমেন্ট সফলভাবে ভেরিফাই হয়েছে!" : "Payment verified successfully!");
+          } else {
+            toast.info(language === "bn" ? "পেমেন্ট ম্যানুয়ালি ভেরিফাই করা হবে" : "Payment will be verified manually");
+          }
+        } catch (verifyErr) {
+          console.warn("Payment auto-verify failed, will be verified manually:", verifyErr);
+        }
       }
 
       // Send order confirmation email (fire and forget)

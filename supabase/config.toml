@@ -7,3 +7,7 @@ verify_jwt = false
 [functions.send-order-email]
 enabled = true
 verify_jwt = false
+
+[functions.verify-payment]
+enabled = true
+verify_jwt = false
