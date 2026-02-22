@@ -1,8 +1,10 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageCircle, X, Send, Bot, User, Trash2, ShoppingBag, HelpCircle, Truck, Fish } from "lucide-react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { MessageCircle, X, Send, Bot, User, Trash2, ShoppingBag, HelpCircle, Truck, Fish, ExternalLink, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
+import { useCart } from "@/contexts/CartContext";
 import ReactMarkdown from "react-markdown";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -25,10 +27,9 @@ const PAGE_GREETINGS: Record<string, string> = {
   "/water-quality": "💧 পানির গুণাগুণ নিয়ে পরামর্শ নিন!",
 };
 
-// Quick reply buttons per page context
 const QUICK_REPLIES: Record<string, { label: string; message: string; icon: string }[]> = {
   default: [
-    { label: "পণ্য দেখুন", message: "আপনাদের জনপ্রিয় পণ্যগুলো কি কি?", icon: "shop" },
+    { label: "পণ্য দেখুন", message: "আপনাদের জনপ্রিয় পণ্যগুলো দেখান", icon: "shop" },
     { label: "ডেলিভারি তথ্য", message: "ডেলিভারি কতদিন লাগে?", icon: "truck" },
     { label: "মাছ চাষ পরামর্শ", message: "মাছ চাষের পরামর্শ দিন", icon: "fish" },
     { label: "সাহায্য", message: "আমার সাহায্য দরকার", icon: "help" },
@@ -140,6 +141,119 @@ const loadMessages = (): Message[] => {
   } catch { return []; }
 };
 
+// Product card component for inline display
+const ChatProductCard = ({ productId }: { productId: string }) => {
+  const { products } = useProducts();
+  const { addToCart } = useCart();
+  const navigate = useNavigate();
+
+  const product = useMemo(() => products.find(p => p.id === productId), [products, productId]);
+
+  if (!product) return null;
+
+  const finalPrice = product.discount_percentage && product.discount_percentage > 0
+    ? getDiscountedPrice(product.price, product.discount_percentage)
+    : product.price;
+
+  return (
+    <div
+      className="my-2 border border-border rounded-lg overflow-hidden bg-background shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => navigate(`/product/${product.id}`)}
+    >
+      <div className="flex gap-2 p-2">
+        {/* Image */}
+        <div className="w-16 h-16 rounded-md overflow-hidden bg-muted shrink-0">
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <ShoppingBag className="h-6 w-6 text-muted-foreground/40" />
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-foreground truncate">{product.name}</p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-sm font-bold text-primary">৳{finalPrice}</span>
+            {product.discount_percentage && product.discount_percentage > 0 && (
+              <>
+                <span className="text-[10px] text-muted-foreground line-through">৳{product.price}</span>
+                <span className="text-[10px] font-medium text-destructive bg-destructive/10 px-1 rounded">
+                  -{product.discount_percentage}%
+                </span>
+              </>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            {product.stock_quantity > 0 ? `স্টকে আছে (${product.stock_quantity})` : "স্টক নেই"}
+          </p>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex border-t border-border">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            addToCart(product, 1);
+          }}
+          className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-medium text-primary hover:bg-primary/5 transition-colors"
+        >
+          <ShoppingCart className="h-3 w-3" /> কার্টে যোগ
+        </button>
+        <div className="w-px bg-border" />
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/product/${product.id}`);
+          }}
+          className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+        >
+          <ExternalLink className="h-3 w-3" /> বিস্তারিত
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Parse message content and render product cards inline
+const RenderMessageContent = ({ content }: { content: string }) => {
+  const parts = content.split(/\[PRODUCT_CARD:([^\]]+)\]/g);
+
+  if (parts.length === 1) {
+    return (
+      <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0 [&>ul]:m-0 [&>ol]:m-0">
+        <ReactMarkdown>{content}</ReactMarkdown>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {parts.map((part, i) => {
+        // Even indices are text, odd indices are product IDs
+        if (i % 2 === 0) {
+          if (!part.trim()) return null;
+          return (
+            <div key={i} className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0 [&>ul]:m-0 [&>ol]:m-0">
+              <ReactMarkdown>{part}</ReactMarkdown>
+            </div>
+          );
+        }
+        // Product card
+        return <ChatProductCard key={i} productId={part.trim()} />;
+      })}
+    </div>
+  );
+};
+
 const FloatingChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(loadMessages);
@@ -174,20 +288,14 @@ const FloatingChatbot = () => {
   useEffect(() => { scrollToBottom(); }, [messages]);
   useEffect(() => { if (isOpen && inputRef.current) inputRef.current.focus(); }, [isOpen]);
 
-  // Get greeting based on current page
   const getGreeting = useCallback(() => {
     const path = location.pathname;
-    // Check exact match first
     if (PAGE_GREETINGS[path]) return PAGE_GREETINGS[path];
-    // Check if product page
     if (path.startsWith("/product/")) return "🔍 এই পণ্য সম্পর্কে কিছু জানতে চান?";
-    // Check category
     if (path.startsWith("/category/")) return "📂 এই ক্যাটাগরির পণ্য সম্পর্কে প্রশ্ন করুন!";
-    // Default
     return "👋 আমি FishCare Smart AI! আপনাকে কিভাবে সাহায্য করতে পারি?";
   }, [location.pathname]);
 
-  // Get quick replies based on page
   const getQuickReplies = useCallback(() => {
     const path = location.pathname;
     if (QUICK_REPLIES[path]) return QUICK_REPLIES[path];
@@ -281,7 +389,6 @@ const FloatingChatbot = () => {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/20">
-            {/* Welcome / Page Greeting */}
             {messages.length === 0 && (
               <>
                 <div className="flex gap-2 items-start">
@@ -292,7 +399,6 @@ const FloatingChatbot = () => {
                     {getGreeting()}
                   </div>
                 </div>
-                {/* Quick Replies */}
                 <div className="flex flex-wrap gap-1.5 pl-8">
                   {getQuickReplies().map((qr, i) => (
                     <button
@@ -313,7 +419,7 @@ const FloatingChatbot = () => {
                 key={i}
                 className={`flex gap-2 items-start ${msg.role === "user" ? "flex-row-reverse" : ""}`}
               >
-                <div className={`rounded-full p-1.5 shrink-0 ${msg.role === "user" ? "bg-primary/10" : "bg-primary/10"}`}>
+                <div className="rounded-full p-1.5 shrink-0 bg-primary/10">
                   {msg.role === "user" ? (
                     <User className="h-4 w-4 text-primary" />
                   ) : (
@@ -328,9 +434,7 @@ const FloatingChatbot = () => {
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0 [&>ul]:m-0 [&>ol]:m-0">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
+                    <RenderMessageContent content={msg.content} />
                   ) : (
                     msg.content
                   )}
@@ -338,7 +442,6 @@ const FloatingChatbot = () => {
               </div>
             ))}
 
-            {/* Show quick replies after assistant response too */}
             {messages.length > 0 && !isLoading && messages[messages.length - 1]?.role === "assistant" && (
               <div className="flex flex-wrap gap-1.5 pl-8">
                 {getQuickReplies().slice(0, 3).map((qr, i) => (
@@ -371,7 +474,6 @@ const FloatingChatbot = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Powered by */}
           <div className="text-center text-[10px] text-muted-foreground/50 py-1 bg-muted/30">
             Powered by FishCare Smart AI
           </div>
