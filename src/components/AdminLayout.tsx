@@ -31,7 +31,8 @@ import {
   Warehouse,
   UserCheck,
   Building2,
-  FileText
+  FileText,
+  CloudUpload
 } from "lucide-react";
 
 const menuItems = [
@@ -139,6 +140,13 @@ const menuItems = [
     icon: Database,
     color: "bg-gradient-to-r from-cyan-500 to-teal-600",
     iconColor: "text-cyan-500"
+  },
+  { 
+    title: "সিস্টেম ব্যাকআপ", 
+    url: "/admin/backup", 
+    icon: CloudUpload,
+    color: "bg-gradient-to-r from-green-500 to-emerald-600",
+    iconColor: "text-green-500"
   },
   { 
     title: "প্রোফাইল", 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { DashboardLayout } from "@/components/DashboardLayout";
+import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,14 +8,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   CloudUpload, CloudDownload, HardDrive, Loader2, CheckCircle, 
-  AlertCircle, RefreshCw, FileJson, Link2, Link2Off, Clock, 
-  DownloadCloud, User
+  AlertCircle, RefreshCw, Trash2, Clock, FileJson, Link2, Link2Off, 
+  Database, Shield, DownloadCloud
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 
-const DashboardBackup = () => {
+const AdminBackup = () => {
   const { toast } = useToast();
-  const { session, user } = useAuth();
+  const { session } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const [driveEmail, setDriveEmail] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
@@ -75,7 +74,7 @@ const DashboardBackup = () => {
       const exchangeCode = async () => {
         setIsConnecting(true);
         try {
-          const redirectUri = `${window.location.origin}/dashboard/backup`;
+          const redirectUri = `${window.location.origin}/admin/backup`;
           const { data, error } = await supabase.functions.invoke('google-drive-auth', {
             body: { action: 'exchange_code', code, redirect_uri: redirectUri },
           });
@@ -84,7 +83,7 @@ const DashboardBackup = () => {
             setIsConnected(true);
             setDriveEmail(data.drive_email);
             toast({ title: "সফল", description: "Google Drive সংযুক্ত হয়েছে" });
-            window.history.replaceState({}, '', '/dashboard/backup');
+            window.history.replaceState({}, '', '/admin/backup');
             loadDriveFiles();
           }
         } catch (e: any) {
@@ -98,7 +97,7 @@ const DashboardBackup = () => {
   const connectGoogleDrive = async () => {
     setIsConnecting(true);
     try {
-      const redirectUri = `${window.location.origin}/dashboard/backup`;
+      const redirectUri = `${window.location.origin}/admin/backup`;
       const { data } = await supabase.functions.invoke('google-drive-auth', {
         body: { action: 'get_auth_url', redirect_uri: redirectUri },
       });
@@ -123,43 +122,18 @@ const DashboardBackup = () => {
     }
   };
 
-  const getAllLocalStorageData = () => {
-    const data: Record<string, any> = {};
-    const keys = ['farmingPondData', 'farmingFishStockingData', 'farmerIncomes',
-      'farmerExpenses', 'farmerPonds', 'feedManagementData', 'waterQualityData',
-      'medicineData', 'fertilizerData', 'biomassData'];
-    keys.forEach(key => {
-      const value = localStorage.getItem(key);
-      if (value) { try { data[key] = JSON.parse(value); } catch { data[key] = value; } }
-    });
-    return data;
-  };
-
   const createBackup = async () => {
     setIsBackingUp(true);
     try {
       const { data, error } = await supabase.functions.invoke('system-backup', {
-        body: { action: 'create_backup', backup_scope: 'user' },
+        body: { action: 'create_backup', backup_scope: 'system' },
       });
       if (error) throw error;
-
-      // If not connected to Drive, also download locally
-      if (!data?.google_drive_uploaded && data?.backup_data) {
-        const localData = { ...data.backup_data, localStorage: getAllLocalStorageData() };
-        const blob = new Blob([JSON.stringify(localData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = data.file_name;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-
       toast({
         title: "সফল",
         description: data?.google_drive_uploaded 
-          ? "ব্যাকআপ Google Drive এ আপলোড হয়েছে" 
-          : "ব্যাকআপ ফাইল ডাউনলোড হয়েছে",
+          ? "সিস্টেম ব্যাকআপ Google Drive এ আপলোড হয়েছে" 
+          : "সিস্টেম ব্যাকআপ তৈরি হয়েছে",
       });
       loadBackupLogs();
       if (isConnected) loadDriveFiles();
@@ -168,59 +142,22 @@ const DashboardBackup = () => {
     } finally { setIsBackingUp(false); }
   };
 
-  const restoreFromDrive = async (fileId: string) => {
-    if (!confirm('আপনি কি নিশ্চিত? এটি আপনার বর্তমান ডেটা প্রতিস্থাপন করবে।')) return;
+  const restoreBackup = async (fileId: string) => {
+    if (!confirm('আপনি কি নিশ্চিত? এটি বিদ্যমান ডেটা প্রতিস্থাপন করবে।')) return;
     setIsRestoring(true);
     try {
       const { data, error } = await supabase.functions.invoke('system-backup', {
         body: { action: 'restore_backup', file_id: fileId },
       });
       if (error) throw error;
-
-      // Restore localStorage data
-      if (data?.local_storage_data?.localStorage) {
-        Object.entries(data.local_storage_data.localStorage).forEach(([key, value]) => {
-          localStorage.setItem(key, JSON.stringify(value));
-        });
-      }
-
-      toast({ title: "সফল", description: "ডেটা পুনরুদ্ধার হয়েছে" });
+      toast({
+        title: "সফল",
+        description: `${data?.restored_tables?.length || 0}টি টেবিল পুনরুদ্ধার হয়েছে`,
+      });
       loadBackupLogs();
     } catch (e: any) {
       toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
     } finally { setIsRestoring(false); }
-  };
-
-  const handleLocalRestore = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-        if (data.localStorage) {
-          Object.entries(data.localStorage).forEach(([key, value]) => {
-            localStorage.setItem(key, JSON.stringify(value));
-          });
-        }
-        toast({ title: "সফল", description: "ডেটা সফলভাবে পুনরুদ্ধার হয়েছে" });
-      } catch {
-        toast({ title: "ত্রুটি", description: "ফাইল পড়তে সমস্যা হয়েছে", variant: "destructive" });
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleLocalBackup = () => {
-    const data = getAllLocalStorageData();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `user_backup_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: "সফল", description: "ব্যাকআপ ফাইল ডাউনলোড হয়েছে" });
   };
 
   const getStatusBadge = (status: string) => {
@@ -234,14 +171,22 @@ const DashboardBackup = () => {
   };
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <User className="h-6 w-6 text-primary" />
-            ব্যাকআপ ও রিস্টোর
-          </h1>
-          <p className="text-muted-foreground">আপনার ব্যক্তিগত ডেটা Google Drive এ সংরক্ষণ করুন</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Shield className="h-6 w-6 text-primary" />
+              সিস্টেম ব্যাকআপ
+            </h1>
+            <p className="text-muted-foreground">সম্পূর্ণ সিস্টেম ব্যাকআপ ও রিস্টোর ম্যানেজমেন্ট</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => { loadBackupLogs(); loadDriveFiles(); }}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              রিফ্রেশ
+            </Button>
+          </div>
         </div>
 
         {/* Google Drive Connection */}
@@ -251,7 +196,9 @@ const DashboardBackup = () => {
               <HardDrive className="h-5 w-5 text-primary" />
               Google Drive সংযোগ
             </CardTitle>
-            <CardDescription>একবার সংযুক্ত করলে পুনরায় লগইন করতে হবে না</CardDescription>
+            <CardDescription>
+              ব্যাকআপ ফাইল স্বয়ংক্রিয়ভাবে Google Drive এ আপলোড হবে
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {isConnected ? (
@@ -277,31 +224,34 @@ const DashboardBackup = () => {
           </CardContent>
         </Card>
 
-        {/* Cloud Backup */}
+        {/* Backup Actions */}
         <Card className="border-green-500/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CloudUpload className="h-5 w-5 text-green-500" />
-              ব্যক্তিগত ব্যাকআপ
+              <Database className="h-5 w-5 text-green-500" />
+              সিস্টেম ব্যাকআপ
             </CardTitle>
-            <CardDescription>অর্ডার, পুকুরের খরচ, ব্যবহারের তথ্য ব্যাকআপ</CardDescription>
+            <CardDescription>
+              সম্পূর্ণ ডাটাবেজ, পণ্যের ছবি, অর্ডার, ব্যবহারকারী ডেটা ব্যাকআপ
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Button
               onClick={createBackup}
               disabled={isBackingUp}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              size="lg"
             >
               {isBackingUp ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />ব্যাকআপ তৈরি হচ্ছে...</>
+                <><Loader2 className="mr-2 h-5 w-5 animate-spin" />ব্যাকআপ তৈরি হচ্ছে...</>
               ) : (
-                <><CloudUpload className="mr-2 h-4 w-4" />ব্যাকআপ নিন</>
+                <><CloudUpload className="mr-2 h-5 w-5" />এখনই ব্যাকআপ নিন</>
               )}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Drive Files - Restore */}
+        {/* Google Drive Files - Restore */}
         {isConnected && driveFiles.length > 0 && (
           <Card className="border-blue-500/20">
             <CardHeader>
@@ -309,9 +259,10 @@ const DashboardBackup = () => {
                 <DownloadCloud className="h-5 w-5 text-blue-500" />
                 Google Drive ব্যাকআপ ফাইল
               </CardTitle>
+              <CardDescription>Drive থেকে রিস্টোর করুন</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="space-y-2 max-h-64 overflow-y-auto">
                 {driveFiles.map((file: any) => (
                   <div key={file.id} className="flex items-center justify-between p-3 rounded-lg bg-muted hover:bg-muted/80">
                     <div className="flex items-center gap-2">
@@ -323,7 +274,12 @@ const DashboardBackup = () => {
                         </p>
                       </div>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => restoreFromDrive(file.id)} disabled={isRestoring}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => restoreBackup(file.id)}
+                      disabled={isRestoring}
+                    >
                       {isRestoring ? <Loader2 className="h-4 w-4 animate-spin" /> : (
                         <><CloudDownload className="mr-1 h-4 w-4" />রিস্টোর</>
                       )}
@@ -334,32 +290,6 @@ const DashboardBackup = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Local Backup */}
-        <Card className="border-orange-500/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileJson className="h-5 w-5 text-orange-500" />
-              লোকাল ব্যাকআপ
-            </CardTitle>
-            <CardDescription>JSON ফাইল হিসেবে ডাউনলোড বা আপলোড করুন</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Button onClick={handleLocalBackup} className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700">
-                <CloudDownload className="mr-2 h-4 w-4" />
-                ব্যাকআপ ডাউনলোড
-              </Button>
-              <div className="relative">
-                <Input type="file" accept=".json" onChange={handleLocalRestore} className="absolute inset-0 opacity-0 cursor-pointer" />
-                <Button variant="outline" className="w-full border-orange-500/50 hover:bg-orange-500/10">
-                  <CloudUpload className="mr-2 h-4 w-4" />
-                  ব্যাকআপ থেকে রিস্টোর
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Backup History */}
         <Card>
@@ -375,17 +305,31 @@ const DashboardBackup = () => {
             ) : backupLogs.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">কোনো ব্যাকআপ রেকর্ড নেই</p>
             ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <div className="space-y-2 max-h-96 overflow-y-auto">
                 {backupLogs.map((log: any) => (
-                  <div key={log.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <div className="flex items-center gap-2">
-                      <FileJson className="h-4 w-4 text-primary" />
+                  <div key={log.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg bg-muted/50 gap-2">
+                    <div className="flex items-center gap-3">
+                      <FileJson className="h-4 w-4 text-primary shrink-0" />
                       <div>
-                        <p className="text-sm font-medium">{log.file_name}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString('bn-BD')}</p>
+                        <p className="text-sm font-medium">{log.file_name || 'Unknown'}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{new Date(log.created_at).toLocaleString('bn-BD')}</span>
+                          {log.file_size && <span>• {(log.file_size / 1024).toFixed(1)} KB</span>}
+                          {log.backup_scope && <Badge variant="outline" className="text-xs">{log.backup_scope}</Badge>}
+                        </div>
                       </div>
                     </div>
-                    {getStatusBadge(log.status)}
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(log.status)}
+                      {log.google_drive_url && (
+                        <a href={log.google_drive_url} target="_blank" rel="noopener noreferrer">
+                          <Button variant="ghost" size="sm"><HardDrive className="h-3 w-3" /></Button>
+                        </a>
+                      )}
+                      {log.restore_status === 'restored' && (
+                        <Badge className="bg-purple-500/20 text-purple-700">রিস্টোর করা হয়েছে</Badge>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -399,21 +343,20 @@ const DashboardBackup = () => {
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
               <div className="space-y-2 text-sm">
-                <p className="font-medium text-blue-700">ব্যাকআপে যা অন্তর্ভুক্ত:</p>
+                <p className="font-medium text-blue-700">সিস্টেম ব্যাকআপে যা অন্তর্ভুক্ত:</p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                  <li>ব্যক্তিগত অর্ডার</li>
-                  <li>পুকুরের তথ্য ও খরচ</li>
-                  <li>আয়-ব্যয়ের রেকর্ড</li>
-                  <li>খাবার ব্যবস্থাপনা ও পানির গুণমান</li>
-                  <li>ওষুধ ও সারের তথ্য</li>
+                  <li>সমস্ত ডাটাবেজ টেবিল (পণ্য, অর্ডার, ব্যবহারকারী ইত্যাদি)</li>
+                  <li>পণ্যের ছবি ও ফাইল তালিকা</li>
+                  <li>সিস্টেম সেটিংস ও কনফিগারেশন</li>
+                  <li>স্বয়ংক্রিয় দৈনিক ব্যাকআপ (রাত ২:০০ টায়)</li>
                 </ul>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 };
 
-export default DashboardBackup;
+export default AdminBackup;
