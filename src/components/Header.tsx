@@ -103,17 +103,19 @@ export const Header = () => {
             {/* Wishlist & Cart & Auth Section */}
             <CartSheet />
             
-            {/* Wishlist Button */}
-            <Link to="/wishlist" className="relative">
-              <Button variant="ghost" size="icon" className="relative">
-                <Heart className={`h-5 w-5 ${wishlistCount > 0 ? "text-destructive fill-destructive" : ""}`} />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {wishlistCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
+            {/* Wishlist Button - only for logged in users */}
+            {user && (
+              <Link to="/wishlist" className="relative">
+                <Button variant="ghost" size="icon" className="relative">
+                  <Heart className={`h-5 w-5 ${wishlistCount > 0 ? "text-destructive fill-destructive" : ""}`} />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            )}
             
             {user ? (
               <DropdownMenu>
@@ -216,16 +218,18 @@ export const Header = () => {
               
               {/* Mobile Auth */}
               <div className="border-t border-border pt-4 mt-4 space-y-2">
-                {/* Mobile Wishlist */}
-                <Link to="/wishlist" className="block">
-                  <Button variant="ghost" className="w-full justify-start gap-2">
-                    <Heart className={`h-4 w-4 ${wishlistCount > 0 ? "text-destructive fill-destructive" : ""}`} />
-                    {language === "bn" ? "উইশলিস্ট" : "Wishlist"}
-                    {wishlistCount > 0 && (
-                      <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">{wishlistCount}</Badge>
-                    )}
-                  </Button>
-                </Link>
+                {/* Mobile Wishlist - only for logged in users */}
+                {user && (
+                  <Link to="/wishlist" className="block">
+                    <Button variant="ghost" className="w-full justify-start gap-2">
+                      <Heart className={`h-4 w-4 ${wishlistCount > 0 ? "text-destructive fill-destructive" : ""}`} />
+                      {language === "bn" ? "উইশলিস্ট" : "Wishlist"}
+                      {wishlistCount > 0 && (
+                        <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">{wishlistCount}</Badge>
+                      )}
+                    </Button>
+                  </Link>
+                )}
                 
                 {user ? (
                   <>
