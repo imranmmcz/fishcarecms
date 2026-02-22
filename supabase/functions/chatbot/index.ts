@@ -17,11 +17,11 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Fetch products from database
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Fetch products
     const { data: products } = await supabase
       .from("products")
       .select("id, name, price, discount_percentage, category, image_url, stock_quantity, description, unit")
@@ -33,8 +33,68 @@ serve(async (req) => {
       const discountedPrice = p.discount_percentage > 0
         ? Math.round(p.price * (1 - p.discount_percentage / 100))
         : p.price;
-      return `- ID: ${p.id} | নাম: ${p.name} | দাম: ৳${discountedPrice}${p.discount_percentage > 0 ? ` (${p.discount_percentage}% ছাড়, আসল ৳${p.price})` : ''} | ক্যাটাগরি: ${p.category} | স্টক: ${p.stock_quantity} ${p.unit || 'pcs'} | বিবরণ: ${(p.description || '').slice(0, 80)}`;
+      return `- ID: ${p.id} | নাম: ${p.name} | দাম: ৳${discountedPrice}${p.discount_percentage > 0 ? ` (${p.discount_percentage}% ছাড়, আসল ৳${p.price})` : ''} | ক্যাটাগরি: ${p.category} | স্টক: ${p.stock_quantity} ${p.unit || 'pcs'}`;
     }).join("\n");
+
+    // Check if user is asking about an order - look for order number patterns
+    const lastUserMessage = messages[messages.length - 1]?.content || "";
+    const orderNumberMatch = lastUserMessage.match(/ORD-\d{8}-\d{4}/i);
+    let orderInfo = "";
+
+    if (orderNumberMatch) {
+      const orderNumber = orderNumberMatch[0].toUpperCase();
+      const { data: order } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("order_number", orderNumber)
+        .single();
+
+      if (order) {
+        const statusMap: Record<string, string> = {
+          pending: "অপেক্ষমান",
+          processing: "প্রসেসিং",
+          shipped: "শিপ করা হয়েছে",
+          delivered: "ডেলিভারি সম্পন্ন",
+          cancelled: "বাতিল",
+          confirmed: "নিশ্চিত",
+        };
+        const paymentStatusMap: Record<string, string> = {
+          pending: "অপেক্ষমান",
+          paid: "পেইড",
+          failed: "ব্যর্থ",
+          refunded: "রিফান্ড",
+        };
+
+        // Fetch order items
+        const { data: items } = await supabase
+          .from("order_items")
+          .select("product_name, quantity, unit_price, total_price")
+          .eq("order_id", order.id);
+
+        const itemsList = (items || []).map(it => `${it.product_name} x${it.quantity} = ৳${it.total_price}`).join(", ");
+
+        orderInfo = `
+## ORDER FOUND IN DATABASE
+Order Number: ${order.order_number}
+Customer: ${order.customer_name}
+Phone: ${order.customer_phone}
+Status: ${statusMap[order.status] || order.status}
+Payment Method: ${order.payment_method}
+Payment Status: ${paymentStatusMap[order.payment_status] || order.payment_status}
+Total: ৳${order.total_amount}
+Shipping: ৳${order.shipping_cost}
+Address: ${order.shipping_address}${order.division ? `, ${order.division}` : ''}${order.district ? `, ${order.district}` : ''}
+Order Date: ${new Date(order.created_at).toLocaleDateString('bn-BD')}
+Items: ${itemsList}
+
+IMPORTANT: When showing this order info, use this exact format:
+[ORDER_TRACK:${order.order_number}]
+
+Then add a brief summary in Bengali about the order status.`;
+      } else {
+        orderInfo = `\n## ORDER NOT FOUND\nThe order number "${orderNumber}" was not found in the database. Tell the user politely that this order number was not found and ask them to double-check.`;
+      }
+    }
 
     const systemPrompt = `You are "FishCare Smart AI", the intelligent customer support chatbot for FishCare BD (ফিশকেয়ার বিডি) — https://fishcare.com.bd/
 
@@ -47,7 +107,6 @@ serve(async (req) => {
 - FishCare BD is Bangladesh's leading aquaculture e-commerce platform
 - Located in Jessore, Bangladesh
 - Sells: fish feed, medicines, vitamins, aquarium products, farming equipment & supplies
-- Serves customers across Bangladesh
 - Payment: bKash, Nagad, Rocket, bank transfer, Cash on Delivery (COD)
 - Delivery: 2-5 business days nationwide
 - Return: 7-day return policy
@@ -55,55 +114,43 @@ serve(async (req) => {
 
 ## Current Page Context
 The user is currently on: ${currentPage || "/"}
-Tailor your responses based on their current page context.
 
-## PRODUCT CATALOG (Real-time from database)
-${productCatalog || "No products available currently."}
+## PRODUCT CATALOG (Real-time)
+${productCatalog || "No products available."}
 
-## CRITICAL: Product Card Display Format
-When recommending or mentioning specific products, you MUST use this exact format to display product cards:
-\`\`\`
-[PRODUCT_CARD:product_id]
-\`\`\`
+## Product Card Format
+When recommending products, use: [PRODUCT_CARD:product_id]
 
-For example, if recommending a product with ID "abc-123", write:
-[PRODUCT_CARD:abc-123]
-
-You can show multiple product cards. Always show product cards when:
-1. User asks about products, prices, or recommendations
-2. You suggest a product
-3. User asks what's available
-4. User asks about a specific category
-
-Add a short description before/after the product cards. Do NOT write the product name/price in text if you're showing the card - the card will display all info.
+## ORDER TRACKING
+When a user asks about their order status, they should provide their order number (format: ORD-YYYYMMDD-XXXX).
+If they haven't provided an order number, ask them for it.
+When displaying order info, use: [ORDER_TRACK:order_number]
+${orderInfo}
 
 ## Key Responsibilities
-1. **Sales**: Recommend products using PRODUCT_CARD format, highlight offers, guide to purchase
+1. **Sales**: Recommend products using PRODUCT_CARD format
 2. **Support**: Answer queries about orders, delivery, payment, returns
-3. **Advisor**: Provide fish farming tips, feed recommendations, disease advice
-4. **Lead Capture**: For bulk orders/farm setup inquiries, ask for name & phone number
-5. **Checkout Rescue**: If on checkout page, help complete the order
-6. **Upsell**: Suggest complementary products when appropriate
+3. **Order Tracking**: Help users track their orders using order numbers
+4. **Advisor**: Fish farming tips, feed recommendations, disease advice
+5. **Lead Capture**: For bulk orders, ask for name & phone
+6. **Checkout Rescue**: Help complete orders on checkout page
+7. **Upsell**: Suggest complementary products
 
 ## Quick Keyword Responses
-When user mentions these topics, respond with relevant info:
-- দাম/মূল্য/price → Show relevant product cards with prices
-- মাছের খাবার/feed → Ask fish type, show feed product cards
-- অ্যাকুরিয়াম/aquarium → Show aquarium product cards
-- ডেলিভারি/delivery → 2-5 business days nationwide
+- দাম/মূল্য/price → Show product cards
+- মাছের খাবার/feed → Ask fish type, show feed cards
+- ডেলিভারি/delivery → 2-5 business days
 - রিটার্ন/return → 7-day return policy
-- পেমেন্ট/payment → bKash, Nagad, Rocket, bank transfer supported
-- স্টক/available → Check catalog and show product cards
-- অর্ডার/buy → Show relevant product cards with buy links
+- পেমেন্ট/payment → bKash, Nagad, Rocket, bank transfer
+- অর্ডার ট্র্যাক/track → Ask for order number (ORD-XXXXXXXX-XXXX)
+- স্টক/available → Check catalog, show cards
 
 ## Rules
-- ALWAYS respond in the same language as the user (Bengali or English)
-- Keep responses concise (2-4 sentences max unless detailed explanation needed)
-- Use emojis sparingly for friendliness
-- Use PRODUCT_CARD format for ANY product mention - never just list product names/prices in text
-- For bulk orders, capture lead info (name + phone)
-- Be proactive in suggesting products and solutions
-- If a product is not in the catalog, say it's not currently available`;
+- ALWAYS respond in the same language as the user
+- Keep responses concise (2-4 sentences)
+- Use PRODUCT_CARD for products, ORDER_TRACK for orders
+- Never make up order statuses or product info
+- For order tracking without a number, ask: "আপনার অর্ডার নম্বরটি দিন (যেমন: ORD-20260222-0001)"`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",

@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { MessageCircle, X, Send, Bot, User, Trash2, ShoppingBag, HelpCircle, Truck, Fish, ExternalLink, ShoppingCart } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User, Trash2, ShoppingBag, HelpCircle, Truck, Fish, ExternalLink, ShoppingCart, Package, Clock, CheckCircle2, MapPin, CreditCard, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
 import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -30,9 +31,9 @@ const PAGE_GREETINGS: Record<string, string> = {
 const QUICK_REPLIES: Record<string, { label: string; message: string; icon: string }[]> = {
   default: [
     { label: "পণ্য দেখুন", message: "আপনাদের জনপ্রিয় পণ্যগুলো দেখান", icon: "shop" },
+    { label: "অর্ডার ট্র্যাক", message: "আমার অর্ডার ট্র্যাক করতে চাই", icon: "track" },
     { label: "ডেলিভারি তথ্য", message: "ডেলিভারি কতদিন লাগে?", icon: "truck" },
     { label: "মাছ চাষ পরামর্শ", message: "মাছ চাষের পরামর্শ দিন", icon: "fish" },
-    { label: "সাহায্য", message: "আমার সাহায্য দরকার", icon: "help" },
   ],
   "/shop": [
     { label: "ফিশ ফিড", message: "ফিশ ফিড দেখতে চাই", icon: "fish" },
@@ -52,6 +53,7 @@ const getQuickIconComponent = (icon: string) => {
     case "shop": return <ShoppingBag className="h-3 w-3" />;
     case "truck": return <Truck className="h-3 w-3" />;
     case "fish": return <Fish className="h-3 w-3" />;
+    case "track": return <Search className="h-3 w-3" />;
     default: return <HelpCircle className="h-3 w-3" />;
   }
 };
@@ -223,9 +225,120 @@ const ChatProductCard = ({ productId }: { productId: string }) => {
   );
 };
 
-// Parse message content and render product cards inline
+// Order tracking card component
+const OrderTrackingCard = ({ orderNumber }: { orderNumber: string }) => {
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrder = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("order_number", orderNumber.trim())
+        .single();
+      setOrder(data);
+      setLoading(false);
+    };
+    fetchOrder();
+  }, [orderNumber]);
+
+  if (loading) {
+    return (
+      <div className="my-2 border border-border rounded-lg p-3 bg-background animate-pulse">
+        <div className="h-4 bg-muted rounded w-1/2 mb-2" />
+        <div className="h-3 bg-muted rounded w-3/4 mb-1" />
+        <div className="h-3 bg-muted rounded w-2/3" />
+      </div>
+    );
+  }
+
+  if (!order) return null;
+
+  const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+    pending: { label: "অপেক্ষমান", color: "bg-yellow-500", icon: <Clock className="h-3 w-3" /> },
+    confirmed: { label: "নিশ্চিত", color: "bg-blue-500", icon: <CheckCircle2 className="h-3 w-3" /> },
+    processing: { label: "প্রসেসিং", color: "bg-primary", icon: <Package className="h-3 w-3" /> },
+    shipped: { label: "শিপ করা হয়েছে", color: "bg-indigo-500", icon: <Truck className="h-3 w-3" /> },
+    delivered: { label: "ডেলিভারি সম্পন্ন", color: "bg-green-600", icon: <CheckCircle2 className="h-3 w-3" /> },
+    cancelled: { label: "বাতিল", color: "bg-destructive", icon: <X className="h-3 w-3" /> },
+  };
+
+  const statusSteps = ["pending", "confirmed", "processing", "shipped", "delivered"];
+  const currentStepIndex = statusSteps.indexOf(order.status);
+  const isCancelled = order.status === "cancelled";
+  const currentStatus = statusConfig[order.status] || statusConfig.pending;
+
+  return (
+    <div className="my-2 border border-border rounded-lg overflow-hidden bg-background shadow-sm">
+      {/* Header */}
+      <div className="bg-primary/5 px-3 py-2 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Package className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-bold text-foreground">{order.order_number}</span>
+        </div>
+        <span className={`text-[10px] font-medium text-white px-2 py-0.5 rounded-full ${currentStatus.color}`}>
+          {currentStatus.label}
+        </span>
+      </div>
+
+      {/* Progress Steps */}
+      {!isCancelled && (
+        <div className="px-3 py-2">
+          <div className="flex items-center justify-between mb-1">
+            {statusSteps.map((step, i) => {
+              const isActive = i <= currentStepIndex;
+              const stepConf = statusConfig[step];
+              return (
+                <div key={step} className="flex flex-col items-center flex-1">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white ${isActive ? stepConf.color : "bg-muted"}`}>
+                    {stepConf.icon}
+                  </div>
+                  {i < statusSteps.length - 1 && (
+                    <div className={`h-0.5 w-full mt-1 ${i < currentStepIndex ? "bg-primary" : "bg-muted"}`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex justify-between text-[9px] text-muted-foreground">
+            <span>অপেক্ষমান</span>
+            <span>নিশ্চিত</span>
+            <span>প্রসেসিং</span>
+            <span>শিপড</span>
+            <span>ডেলিভারি</span>
+          </div>
+        </div>
+      )}
+
+      {/* Details */}
+      <div className="px-3 py-2 space-y-1.5 text-[11px] border-t border-border">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <User className="h-3 w-3" />
+          <span>{order.customer_name} • {order.customer_phone}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <MapPin className="h-3 w-3" />
+          <span className="truncate">{order.shipping_address}{order.district ? `, ${order.district}` : ''}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <CreditCard className="h-3 w-3" />
+          <span>{order.payment_method.toUpperCase()} • ৳{order.total_amount}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Clock className="h-3 w-3" />
+          <span>{new Date(order.created_at).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Parse message content and render product/order cards inline
 const RenderMessageContent = ({ content }: { content: string }) => {
-  const parts = content.split(/\[PRODUCT_CARD:([^\]]+)\]/g);
+  // Split on both PRODUCT_CARD and ORDER_TRACK patterns
+  const parts = content.split(/\[PRODUCT_CARD:([^\]]+)\]|\[ORDER_TRACK:([^\]]+)\]/g);
 
   if (parts.length === 1) {
     return (
@@ -235,23 +348,32 @@ const RenderMessageContent = ({ content }: { content: string }) => {
     );
   }
 
-  return (
-    <div>
-      {parts.map((part, i) => {
-        // Even indices are text, odd indices are product IDs
-        if (i % 2 === 0) {
-          if (!part.trim()) return null;
-          return (
-            <div key={i} className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0 [&>ul]:m-0 [&>ol]:m-0">
-              <ReactMarkdown>{part}</ReactMarkdown>
-            </div>
-          );
-        }
-        // Product card
-        return <ChatProductCard key={i} productId={part.trim()} />;
-      })}
-    </div>
-  );
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+  while (i < parts.length) {
+    const text = parts[i];
+    const productId = parts[i + 1];
+    const orderNum = parts[i + 2];
+
+    if (text && text.trim()) {
+      elements.push(
+        <div key={`t-${i}`} className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0 [&>ul]:m-0 [&>ol]:m-0">
+          <ReactMarkdown>{text}</ReactMarkdown>
+        </div>
+      );
+    }
+
+    if (productId) {
+      elements.push(<ChatProductCard key={`p-${i}`} productId={productId.trim()} />);
+    }
+    if (orderNum) {
+      elements.push(<OrderTrackingCard key={`o-${i}`} orderNumber={orderNum.trim()} />);
+    }
+
+    i += 3;
+  }
+
+  return <div>{elements}</div>;
 };
 
 const FloatingChatbot = () => {
