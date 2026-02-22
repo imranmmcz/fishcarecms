@@ -11,8 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   CloudUpload, CloudDownload, HardDrive, Loader2, CheckCircle, 
   AlertCircle, RefreshCw, Trash2, Clock, FileJson, Link2, Link2Off, 
-  Database, Shield, DownloadCloud, Settings, BarChart3
+  Database, Shield, DownloadCloud, Settings, BarChart3, Mail
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const AdminBackup = () => {
   const { toast } = useToast();
@@ -29,6 +30,8 @@ const AdminBackup = () => {
   const [backupStats, setBackupStats] = useState<{ total_size: number; total_count: number; oldest_backup: string | null }>({ total_size: 0, total_count: 0, oldest_backup: null });
   const [maxBackups, setMaxBackups] = useState(10);
   const [maxSizeMB, setMaxSizeMB] = useState(500);
+  const [retentionDays, setRetentionDays] = useState(30);
+  const [emailNotification, setEmailNotification] = useState(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const checkConnection = useCallback(async () => {
@@ -75,8 +78,20 @@ const AdminBackup = () => {
       .select('setting_value')
       .eq('setting_key', 'backup_max_size_mb')
       .single();
+    const { data: retentionSetting } = await supabase
+      .from('system_settings')
+      .select('setting_value')
+      .eq('setting_key', 'backup_retention_days')
+      .single();
+    const { data: emailSetting } = await supabase
+      .from('system_settings')
+      .select('setting_value')
+      .eq('setting_key', 'backup_email_notification')
+      .single();
     if (countSetting?.setting_value) setMaxBackups(parseInt(countSetting.setting_value));
     if (sizeSetting?.setting_value) setMaxSizeMB(parseInt(sizeSetting.setting_value));
+    if (retentionSetting?.setting_value) setRetentionDays(parseInt(retentionSetting.setting_value));
+    if (emailSetting?.setting_value) setEmailNotification(emailSetting.setting_value !== 'false');
   }, []);
 
   const loadDriveFiles = useCallback(async () => {
@@ -163,8 +178,9 @@ const AdminBackup = () => {
         body: { action: 'create_backup', backup_scope: 'system' },
       });
       if (error) throw error;
-      const cleanupMsg = data?.auto_cleanup?.deleted > 0 
-        ? ` (${data.auto_cleanup.deleted}টি পুরানো ব্যাকআপ মুছে ফেলা হয়েছে)` 
+      const cleanupCount = (data?.auto_cleanup?.deleted || 0) + (data?.retention_cleanup?.deleted || 0);
+      const cleanupMsg = cleanupCount > 0
+        ? ` (${cleanupCount}টি পুরানো ব্যাকআপ মুছে ফেলা হয়েছে)` 
         : '';
       toast({
         title: "সফল",
@@ -200,14 +216,15 @@ const AdminBackup = () => {
   const saveSettings = async () => {
     setIsSavingSettings(true);
     try {
-      await supabase.from('system_settings').upsert(
+      const settingsToSave = [
         { setting_key: 'backup_max_count', setting_value: String(maxBackups), description: 'সর্বোচ্চ ব্যাকআপ সংখ্যা' },
-        { onConflict: 'setting_key' }
-      );
-      await supabase.from('system_settings').upsert(
         { setting_key: 'backup_max_size_mb', setting_value: String(maxSizeMB), description: 'সর্বোচ্চ ব্যাকআপ সাইজ (MB)' },
-        { onConflict: 'setting_key' }
-      );
+        { setting_key: 'backup_retention_days', setting_value: String(retentionDays), description: 'ব্যাকআপ রিটেনশন দিন' },
+        { setting_key: 'backup_email_notification', setting_value: String(emailNotification), description: 'ব্যাকআপ ইমেইল নোটিফিকেশন' },
+      ];
+      for (const s of settingsToSave) {
+        await supabase.from('system_settings').upsert(s, { onConflict: 'setting_key' });
+      }
       toast({ title: "সফল", description: "ব্যাকআপ সেটিংস সংরক্ষিত হয়েছে" });
     } catch (e: any) {
       toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
@@ -316,11 +333,11 @@ const AdminBackup = () => {
               ব্যাকআপ লিমিট ও স্বয়ংক্রিয় ক্লিনআপ
             </CardTitle>
             <CardDescription>
-              সর্বোচ্চ ব্যাকআপ সংখ্যা ও সাইজ নির্ধারণ করুন। লিমিট অতিক্রম করলে পুরানো ব্যাকআপ স্বয়ংক্রিয়ভাবে মুছে যাবে।
+              সর্বোচ্চ ব্যাকআপ সংখ্যা, সাইজ ও রিটেনশন দিন নির্ধারণ করুন। লিমিট অতিক্রম করলে পুরানো ব্যাকআপ স্বয়ংক্রিয়ভাবে মুছে যাবে।
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="maxBackups">সর্বোচ্চ ব্যাকআপ সংখ্যা</Label>
                 <Input
@@ -343,6 +360,28 @@ const AdminBackup = () => {
                   onChange={(e) => setMaxSizeMB(parseInt(e.target.value) || 500)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="retentionDays">রিটেনশন দিন</Label>
+                <Input
+                  id="retentionDays"
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={retentionDays}
+                  onChange={(e) => setRetentionDays(parseInt(e.target.value) || 30)}
+                />
+                <p className="text-xs text-muted-foreground">{retentionDays} দিনের পুরানো ব্যাকআপ স্বয়ংক্রিয় মুছে যাবে</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-primary" />
+                <div>
+                  <p className="text-sm font-medium">ইমেইল নোটিফিকেশন</p>
+                  <p className="text-xs text-muted-foreground">ব্যাকআপ সফল বা ব্যর্থ হলে অ্যাডমিনদের ইমেইল পাঠান</p>
+                </div>
+              </div>
+              <Switch checked={emailNotification} onCheckedChange={setEmailNotification} />
             </div>
             <div className="flex flex-wrap gap-2">
               <Button onClick={saveSettings} disabled={isSavingSettings}>
@@ -518,7 +557,8 @@ const AdminBackup = () => {
                   <li>সিস্টেম সেটিংস ও কনফিগারেশন</li>
                   <li>স্বয়ংক্রিয় দৈনিক ব্যাকআপ (রাত ২:০০ টায়)</li>
                   <li>সর্বোচ্চ {maxBackups}টি ব্যাকআপ রাখা হবে, {maxSizeMB} MB সাইজ লিমিট</li>
-                  <li>লিমিট অতিক্রম করলে পুরানো ব্যাকআপ স্বয়ংক্রিয়ভাবে মুছে যাবে</li>
+                  <li>{retentionDays} দিনের পুরানো ব্যাকআপ স্বয়ংক্রিয়ভাবে মুছে যাবে</li>
+                  <li>ব্যাকআপ {emailNotification ? 'সফল/ব্যর্থ হলে অ্যাডমিনদের ইমেইল পাঠানো হবে' : 'ইমেইল নোটিফিকেশন বন্ধ আছে'}</li>
                 </ul>
               </div>
             </div>

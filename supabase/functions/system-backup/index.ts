@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,49 +57,183 @@ async function deleteFromGoogleDrive(accessToken: string, fileId: string): Promi
   }
 }
 
-async function cleanupOldBackups(
+async function sendBackupNotificationEmail(
+  adminSupabase: any,
+  status: 'success' | 'failed',
+  details: {
+    fileName?: string;
+    fileSize?: number;
+    scope?: string;
+    errorMessage?: string;
+    driveUploaded?: boolean;
+    cleanupDeleted?: number;
+    retentionDeleted?: number;
+  }
+) {
+  try {
+    // Get SMTP settings
+    const { data: smtpSettings } = await adminSupabase
+      .from('smtp_settings')
+      .select('*')
+      .limit(1)
+      .maybeSingle();
+
+    if (!smtpSettings?.is_enabled || !smtpSettings.smtp_host || !smtpSettings.smtp_user || !smtpSettings.smtp_password) {
+      console.log('SMTP not configured, skipping backup notification email');
+      return;
+    }
+
+    // Get admin emails
+    const { data: adminRoles } = await adminSupabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'admin');
+
+    if (!adminRoles || adminRoles.length === 0) return;
+
+    const adminUserIds = adminRoles.map((r: any) => r.user_id);
+    const { data: adminProfiles } = await adminSupabase
+      .from('profiles')
+      .select('email')
+      .in('user_id', adminUserIds);
+
+    const adminEmails = (adminProfiles || [])
+      .map((p: any) => p.email)
+      .filter((e: string | null) => e);
+
+    if (adminEmails.length === 0) return;
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('bn-BD');
+
+    const formatSize = (bytes: number) => {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
+    const isSuccess = status === 'success';
+    const subject = isSuccess
+      ? `✅ ব্যাকআপ সফল - ${details.fileName || 'System Backup'}`
+      : `❌ ব্যাকআপ ব্যর্থ - ${dateStr}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8">
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background: ${isSuccess ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)'}; color: white; padding: 20px; text-align: center; border-radius: 12px 12px 0 0; }
+          .content { padding: 20px; background: #fff; }
+          .info-box { background: #f8fafc; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid ${isSuccess ? '#10b981' : '#ef4444'}; }
+          .stat { display: inline-block; background: #f1f5f9; padding: 8px 14px; border-radius: 6px; margin: 4px; font-size: 14px; }
+          .footer { background: #f8fafc; padding: 15px; text-align: center; font-size: 12px; color: #64748b; border-radius: 0 0 12px 12px; }
+          .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+          .badge-success { background: #dcfce7; color: #166534; }
+          .badge-error { background: #fee2e2; color: #991b1b; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>${isSuccess ? '✅ ব্যাকআপ সফল' : '❌ ব্যাকআপ ব্যর্থ'}</h2>
+          <p>${dateStr} - ${timeStr}</p>
+        </div>
+        <div class="content">
+          ${isSuccess ? `
+            <div class="info-box">
+              <p><strong>📁 ফাইলের নাম:</strong> ${details.fileName}</p>
+              <p><strong>📦 ফাইল সাইজ:</strong> ${details.fileSize ? formatSize(details.fileSize) : 'N/A'}</p>
+              <p><strong>🔄 স্কোপ:</strong> <span class="badge badge-success">${details.scope || 'system'}</span></p>
+              <p><strong>☁️ Google Drive:</strong> ${details.driveUploaded ? '✅ আপলোড হয়েছে' : '⚠️ লোকালে সংরক্ষিত'}</p>
+            </div>
+            ${(details.cleanupDeleted || 0) > 0 || (details.retentionDeleted || 0) > 0 ? `
+              <div class="info-box">
+                <p><strong>🧹 স্বয়ংক্রিয় ক্লিনআপ:</strong></p>
+                ${(details.cleanupDeleted || 0) > 0 ? `<span class="stat">📊 সংখ্যা/সাইজ লিমিট: ${details.cleanupDeleted}টি মুছা হয়েছে</span>` : ''}
+                ${(details.retentionDeleted || 0) > 0 ? `<span class="stat">📅 রিটেনশন পলিসি: ${details.retentionDeleted}টি মুছা হয়েছে</span>` : ''}
+              </div>
+            ` : ''}
+          ` : `
+            <div class="info-box">
+              <p><strong>❌ ত্রুটির বিবরণ:</strong></p>
+              <p style="color: #dc2626;">${details.errorMessage || 'অজানা ত্রুটি'}</p>
+            </div>
+            <p>অনুগ্রহ করে অ্যাডমিন প্যানেল থেকে ব্যাকআপ পুনরায় চেষ্টা করুন অথবা লগ দেখুন।</p>
+          `}
+        </div>
+        <div class="footer">
+          <p>© ${now.getFullYear()} FishCare BD - সিস্টেম ব্যাকআপ নোটিফিকেশন</p>
+          <p>এই ইমেইলটি স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে।</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const client = new SMTPClient({
+      connection: {
+        hostname: smtpSettings.smtp_host,
+        port: smtpSettings.smtp_port,
+        tls: smtpSettings.smtp_secure,
+        auth: {
+          username: smtpSettings.smtp_user,
+          password: smtpSettings.smtp_password,
+        },
+      },
+    });
+
+    for (const email of adminEmails) {
+      await client.send({
+        from: `${smtpSettings.smtp_from_name} <${smtpSettings.smtp_from_email}>`,
+        to: email,
+        subject,
+        content: 'Please view this email in an HTML-capable email client.',
+        html,
+      });
+
+      // Log email
+      await adminSupabase.from('email_logs').insert({
+        order_number: details.fileName || 'backup',
+        recipient_email: email,
+        subject,
+        template_type: 'backup_notification',
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+      });
+    }
+
+    await client.close();
+    console.log(`Backup notification sent to ${adminEmails.length} admin(s)`);
+  } catch (emailError) {
+    console.error('Failed to send backup notification email:', emailError);
+  }
+}
+
+async function cleanupByRetention(
   adminSupabase: any,
   userId: string,
   isAdmin: boolean,
-  maxBackups: number,
-  maxSizeMB: number,
+  retentionDays: number,
 ) {
+  if (retentionDays <= 0) return { deleted: 0 };
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+  const cutoffISO = cutoffDate.toISOString();
+
   const scope = isAdmin ? 'system' : 'user';
-  
-  // Get all backups ordered by date
   let query = adminSupabase
     .from('backup_logs')
     .select('*')
     .eq('backup_scope', scope)
-    .order('created_at', { ascending: false });
-  
+    .lt('created_at', cutoffISO);
+
   if (!isAdmin) query = query.eq('user_id', userId);
-  
-  const { data: allBackups } = await query;
-  if (!allBackups || allBackups.length === 0) return { deleted: 0 };
 
-  const toDelete: any[] = [];
-  
-  // 1. Delete backups beyond max count
-  if (maxBackups > 0 && allBackups.length > maxBackups) {
-    toDelete.push(...allBackups.slice(maxBackups));
-  }
+  const { data: oldBackups } = await query;
+  if (!oldBackups || oldBackups.length === 0) return { deleted: 0 };
 
-  // 2. Delete backups if total size exceeds limit
-  if (maxSizeMB > 0) {
-    const maxSizeBytes = maxSizeMB * 1024 * 1024;
-    let totalSize = 0;
-    for (const backup of allBackups) {
-      totalSize += (backup.file_size || 0);
-      if (totalSize > maxSizeBytes && !toDelete.find((d: any) => d.id === backup.id)) {
-        toDelete.push(backup);
-      }
-    }
-  }
-
-  if (toDelete.length === 0) return { deleted: 0 };
-
-  // Get Drive token for deleting Drive files
+  // Get Drive token
   let accessToken: string | null = null;
   const { data: driveToken } = await adminSupabase
     .from('google_drive_tokens')
@@ -112,17 +247,95 @@ async function cleanupOldBackups(
     } catch (_) { /* ignore */ }
   }
 
-  // Delete each old backup
-  for (const backup of toDelete) {
-    // Delete from Google Drive if applicable
+  for (const backup of oldBackups) {
     if (backup.google_drive_file_id && accessToken) {
       await deleteFromGoogleDrive(accessToken, backup.google_drive_file_id);
     }
-    // Delete log entry
+    await adminSupabase.from('backup_logs').delete().eq('id', backup.id);
+  }
+
+  return { deleted: oldBackups.length };
+}
+
+async function cleanupOldBackups(
+  adminSupabase: any,
+  userId: string,
+  isAdmin: boolean,
+  maxBackups: number,
+  maxSizeMB: number,
+) {
+  const scope = isAdmin ? 'system' : 'user';
+  
+  let query = adminSupabase
+    .from('backup_logs')
+    .select('*')
+    .eq('backup_scope', scope)
+    .order('created_at', { ascending: false });
+  
+  if (!isAdmin) query = query.eq('user_id', userId);
+  
+  const { data: allBackups } = await query;
+  if (!allBackups || allBackups.length === 0) return { deleted: 0 };
+
+  const toDelete: any[] = [];
+  
+  if (maxBackups > 0 && allBackups.length > maxBackups) {
+    toDelete.push(...allBackups.slice(maxBackups));
+  }
+
+  if (maxSizeMB > 0) {
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    let totalSize = 0;
+    for (const backup of allBackups) {
+      totalSize += (backup.file_size || 0);
+      if (totalSize > maxSizeBytes && !toDelete.find((d: any) => d.id === backup.id)) {
+        toDelete.push(backup);
+      }
+    }
+  }
+
+  if (toDelete.length === 0) return { deleted: 0 };
+
+  let accessToken: string | null = null;
+  const { data: driveToken } = await adminSupabase
+    .from('google_drive_tokens')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (driveToken?.refresh_token) {
+    try {
+      accessToken = await refreshAccessToken(driveToken.refresh_token);
+    } catch (_) { /* ignore */ }
+  }
+
+  for (const backup of toDelete) {
+    if (backup.google_drive_file_id && accessToken) {
+      await deleteFromGoogleDrive(accessToken, backup.google_drive_file_id);
+    }
     await adminSupabase.from('backup_logs').delete().eq('id', backup.id);
   }
 
   return { deleted: toDelete.length };
+}
+
+async function loadBackupSettings(adminSupabase: any) {
+  const keys = ['backup_max_count', 'backup_max_size_mb', 'backup_retention_days', 'backup_email_notification'];
+  const settings: Record<string, string> = {};
+  for (const key of keys) {
+    const { data } = await adminSupabase
+      .from('system_settings')
+      .select('setting_value')
+      .eq('setting_key', key)
+      .single();
+    if (data?.setting_value) settings[key] = data.setting_value;
+  }
+  return {
+    maxBackups: parseInt(settings['backup_max_count'] || '10'),
+    maxSizeMB: parseInt(settings['backup_max_size_mb'] || '500'),
+    retentionDays: parseInt(settings['backup_retention_days'] || '30'),
+    emailNotification: settings['backup_email_notification'] !== 'false',
+  };
 }
 
 serve(async (req) => {
@@ -159,7 +372,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // Check if user is admin for system backups
     const { data: roleData } = await adminSupabase
       .from('user_roles')
       .select('role')
@@ -182,7 +394,6 @@ serve(async (req) => {
         ? `system_backup_${dateStr}.json` 
         : `user_${userId.substring(0, 8)}_backup_${dateStr}.json`;
 
-      // Create backup log entry
       const { data: logEntry, error: logError } = await adminSupabase
         .from('backup_logs')
         .insert({
@@ -197,15 +408,14 @@ serve(async (req) => {
         .select()
         .single();
 
-      if (logError) {
-        console.error('Error creating backup log:', logError);
-      }
+      if (logError) console.error('Error creating backup log:', logError);
+
+      const backupSettings = await loadBackupSettings(adminSupabase);
 
       try {
         let backupData: Record<string, any> = {};
 
         if (scope === 'system') {
-          // Export all public tables
           const tables = ['products', 'categories', 'orders', 'order_items', 'profiles', 'user_roles',
             'market_prices', 'companies', 'brands', 'hero_slides', 'page_content', 'custom_pages',
             'system_settings', 'ad_settings', 'delivery_charge_rules', 'smtp_settings',
@@ -217,13 +427,11 @@ serve(async (req) => {
             if (!error) backupData[table] = data;
           }
 
-          // Get storage file list
           for (const bucket of ['product-images', 'avatars']) {
             const { data: files } = await adminSupabase.storage.from(bucket).list();
             backupData[`storage_${bucket}`] = files || [];
           }
         } else {
-          // User-specific backup
           const { data: orders } = await adminSupabase
             .from('orders')
             .select('*, order_items(*)')
@@ -237,7 +445,6 @@ serve(async (req) => {
             .single();
           backupData.profile = profile;
 
-          // Include localStorage keys info (client needs to add these)
           backupData.localStorage_keys = [
             'farmingPondData', 'farmingFishStockingData', 'farmerIncomes',
             'farmerExpenses', 'farmerPonds', 'feedManagementData',
@@ -255,7 +462,6 @@ serve(async (req) => {
         const content = JSON.stringify(backupData, null, 2);
         const fileSize = new TextEncoder().encode(content).length;
 
-        // Try to upload to Google Drive
         let driveFileId = null;
         let driveUrl = null;
 
@@ -268,8 +474,6 @@ serve(async (req) => {
         if (driveToken?.refresh_token) {
           try {
             const accessToken = await refreshAccessToken(driveToken.refresh_token);
-            
-            // Update stored access token
             await adminSupabase
               .from('google_drive_tokens')
               .update({ 
@@ -286,7 +490,6 @@ serve(async (req) => {
           }
         }
 
-        // Update backup log
         if (logEntry) {
           await adminSupabase
             .from('backup_logs')
@@ -301,26 +504,27 @@ serve(async (req) => {
             .eq('id', logEntry.id);
         }
 
-        // Auto-cleanup: keep max 10 backups and 500MB by default
-        const defaultMaxBackups = 10;
-        const defaultMaxSizeMB = 500;
-        
-        // Load settings from system_settings
-        const { data: maxBackupsSetting } = await adminSupabase
-          .from('system_settings')
-          .select('setting_value')
-          .eq('setting_key', 'backup_max_count')
-          .single();
-        const { data: maxSizeSetting } = await adminSupabase
-          .from('system_settings')
-          .select('setting_value')
-          .eq('setting_key', 'backup_max_size_mb')
-          .single();
+        // Auto-cleanup by count/size
+        const cleanupResult = await cleanupOldBackups(
+          adminSupabase, userId, isAdmin, backupSettings.maxBackups, backupSettings.maxSizeMB
+        );
 
-        const effectiveMaxBackups = maxBackupsSetting?.setting_value ? parseInt(maxBackupsSetting.setting_value) : defaultMaxBackups;
-        const effectiveMaxSizeMB = maxSizeSetting?.setting_value ? parseInt(maxSizeSetting.setting_value) : defaultMaxSizeMB;
+        // Auto-cleanup by retention days
+        const retentionResult = await cleanupByRetention(
+          adminSupabase, userId, isAdmin, backupSettings.retentionDays
+        );
 
-        const cleanupResult = await cleanupOldBackups(adminSupabase, userId, isAdmin, effectiveMaxBackups, effectiveMaxSizeMB);
+        // Send email notification
+        if (backupSettings.emailNotification) {
+          await sendBackupNotificationEmail(adminSupabase, 'success', {
+            fileName,
+            fileSize,
+            scope,
+            driveUploaded: !!driveFileId,
+            cleanupDeleted: cleanupResult.deleted,
+            retentionDeleted: retentionResult.deleted,
+          });
+        }
 
         return new Response(JSON.stringify({
           success: true,
@@ -331,6 +535,7 @@ serve(async (req) => {
           backup_data: scope === 'user' ? backupData : undefined,
           log_id: logEntry?.id,
           auto_cleanup: cleanupResult,
+          retention_cleanup: retentionResult,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -346,6 +551,15 @@ serve(async (req) => {
             })
             .eq('id', logEntry.id);
         }
+
+        // Send failure email notification
+        if (backupSettings.emailNotification) {
+          await sendBackupNotificationEmail(adminSupabase, 'failed', {
+            errorMessage: backupError.message,
+            scope: scope,
+          });
+        }
+
         throw backupError;
       }
     }
@@ -357,7 +571,6 @@ serve(async (req) => {
         });
       }
 
-      // Get user's Google Drive token
       const { data: driveToken } = await adminSupabase
         .from('google_drive_tokens')
         .select('*')
@@ -371,8 +584,6 @@ serve(async (req) => {
       }
 
       const accessToken = await refreshAccessToken(driveToken.refresh_token);
-
-      // Download file from Google Drive
       const downloadRes = await fetch(
         `https://www.googleapis.com/drive/v3/files/${file_id}?alt=media`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -393,11 +604,9 @@ serve(async (req) => {
         });
       }
 
-      // Restore data
       const restoredTables: string[] = [];
       
       if (scope === 'system') {
-        // For system restore, upsert data table by table
         const restorableTables = ['products', 'categories', 'market_prices', 'companies', 'brands',
           'hero_slides', 'page_content', 'system_settings', 'ad_settings', 'delivery_charge_rules'];
 
@@ -409,11 +618,8 @@ serve(async (req) => {
             restoredTables.push(table);
           }
         }
-      } else {
-        // User restore - return data for client-side localStorage restore
       }
 
-      // Update backup log restore status
       await adminSupabase
         .from('backup_logs')
         .update({ restore_status: 'restored', restored_at: new Date().toISOString() })
@@ -435,11 +641,9 @@ serve(async (req) => {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (!isAdmin) {
-        query.eq('user_id', userId);
-      }
+      if (!isAdmin) query.eq('user_id', userId);
 
-      const { data: backups, error } = await query;
+      const { data: backups } = await query;
 
       return new Response(JSON.stringify({ backups: backups || [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -478,9 +682,6 @@ serve(async (req) => {
     }
 
     if (action === 'cleanup_old_backups') {
-      if (!isAdmin) {
-        // Users can clean their own, but use default limits
-      }
       const effectiveMaxBackups = max_backups || 10;
       const effectiveMaxSizeMB = max_size_mb || 500;
 
