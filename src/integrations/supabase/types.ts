@@ -763,6 +763,7 @@ export type Database = {
           brand_id: string | null
           category: string
           company_id: string | null
+          cost_price: number | null
           created_at: string
           description: string | null
           discount_percentage: number | null
@@ -787,6 +788,7 @@ export type Database = {
           brand_id?: string | null
           category?: string
           company_id?: string | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           discount_percentage?: number | null
@@ -811,6 +813,7 @@ export type Database = {
           brand_id?: string | null
           category?: string
           company_id?: string | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           discount_percentage?: number | null

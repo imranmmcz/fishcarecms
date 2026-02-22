@@ -7,6 +7,7 @@ export interface Product {
   name: string;
   description: string | null;
   price: number;
+  cost_price: number;
   discount_percentage: number | null;
   category: string;
   image_url: string | null;

@@ -935,6 +935,7 @@ const AdminInventory = () => {
                 id: p.id,
                 name: p.name,
                 price: p.price,
+                cost_price: (p as any).cost_price || 0,
                 unit: p.unit,
               }))}
               onRefresh={fetchData}
