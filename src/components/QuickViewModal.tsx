@@ -55,6 +55,7 @@ const QuickViewModal = ({ product, open, onOpenChange }: QuickViewModalProps) =>
         name: product.name,
         description: product.description || null,
         price: product.originalPrice || product.price,
+        cost_price: 0,
         discount_percentage: product.discount_percentage || 0,
         category: product.category,
         image_url: product.image_url || null,

@@ -68,6 +68,7 @@ interface Product {
   id: string;
   name: string;
   price: number;
+  cost_price?: number;
   unit: string;
 }
 
@@ -234,12 +235,13 @@ const PurchaseOrders = ({ companies, products, onRefresh }: PurchaseOrdersProps)
     const updated = [...orderItems];
     if (field === "product_id") {
       const product = products.find((p) => p.id === value);
+      const costPrice = product?.cost_price || product?.price || 0;
       updated[index] = {
         ...updated[index],
         product_id: value as string,
         product_name: product?.name,
-        unit_cost: product?.price || 0,
-        total_cost: (product?.price || 0) * updated[index].quantity,
+        unit_cost: costPrice,
+        total_cost: costPrice * updated[index].quantity,
       };
     } else if (field === "quantity") {
       updated[index] = {

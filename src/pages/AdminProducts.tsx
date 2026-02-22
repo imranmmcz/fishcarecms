@@ -53,6 +53,7 @@ interface ProductFormData {
   name: string;
   description: string;
   price: number;
+  cost_price: number;
   discount_percentage: number;
   category: string;
   image_url: string;
@@ -75,6 +76,7 @@ const emptyProduct: ProductFormData = {
   name: "",
   description: "",
   price: 0,
+  cost_price: 0,
   discount_percentage: 0,
   category: "medicine",
   image_url: "",
@@ -192,7 +194,19 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
       
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="price">দাম (টাকা) *</Label>
+          <Label htmlFor="cost_price">ক্রয় মূল্য (টাকা)</Label>
+          <Input
+            id="cost_price"
+            type="number"
+            value={formData.cost_price}
+            onChange={(e) => handleChange("cost_price", Number(e.target.value))}
+            placeholder="0"
+            min={0}
+          />
+          <p className="text-xs text-muted-foreground">সাপ্লায়ার থেকে কেনার দাম</p>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="price">বিক্রয় মূল্য (টাকা) *</Label>
           <Input
             id="price"
             type="number"
@@ -201,7 +215,11 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
             placeholder="0"
             min={0}
           />
+          <p className="text-xs text-muted-foreground">কাস্টমারের কাছে বিক্রয়ের দাম</p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label htmlFor="discount">ডিসকাউন্ট (%)</Label>
           <Input
@@ -214,11 +232,26 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
             max={100}
           />
         </div>
+        {formData.cost_price > 0 && formData.price > 0 && (
+          <div className="flex items-end pb-2">
+            <div className={`text-sm p-3 rounded-lg w-full ${
+              formData.price > formData.cost_price 
+                ? "bg-green-500/10 text-green-700" 
+                : "bg-red-500/10 text-red-700"
+            }`}>
+              <span>লাভ/ক্ষতি: </span>
+              <span className="font-bold">
+                ৳{(formData.price - formData.cost_price).toLocaleString()} 
+                ({((formData.price - formData.cost_price) / formData.cost_price * 100).toFixed(1)}%)
+              </span>
+            </div>
+          </div>
+        )}
       </div>
       
       {formData.discount_percentage > 0 && (
         <div className="text-sm bg-primary/10 text-primary p-3 rounded-lg flex items-center gap-2">
-          <span>বিক্রয় মূল্য:</span>
+          <span>ডিসকাউন্ট পরে বিক্রয় মূল্য:</span>
           <span className="font-bold text-lg">৳{getDiscountedPrice(formData.price, formData.discount_percentage)}</span>
           <span className="text-xs">({formData.discount_percentage}% ছাড়)</span>
         </div>
@@ -635,6 +668,7 @@ const AdminProducts = () => {
       name: formData.name,
       description: formData.description || null,
       price: formData.price,
+      cost_price: formData.cost_price || 0,
       discount_percentage: formData.discount_percentage,
       category: formData.category,
       image_url: formData.image_url || null,
@@ -668,6 +702,7 @@ const AdminProducts = () => {
       name: formData.name,
       description: formData.description || null,
       price: formData.price,
+      cost_price: formData.cost_price || 0,
       discount_percentage: formData.discount_percentage,
       category: formData.category,
       image_url: formData.image_url || null,
@@ -710,6 +745,7 @@ const AdminProducts = () => {
       name: product.name,
       description: product.description || "",
       price: product.price,
+      cost_price: product.cost_price || 0,
       discount_percentage: product.discount_percentage,
       category: product.category,
       image_url: product.image_url || "",
