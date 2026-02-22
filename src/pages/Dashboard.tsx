@@ -77,7 +77,7 @@ interface PondChartData {
 const COLORS = ["#10b981", "#ef4444", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899"];
 
 export default function Dashboard() {
-  const { user, profile } = useAuth();
+  const { user, profile, isFarmer, isCustomer, userRole } = useAuth();
   const { t, language } = useLanguage();
   const { formatPrice } = useCurrency();
   const [userName, setUserName] = useState("");
@@ -248,7 +248,14 @@ export default function Dashboard() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">{t.welcome}, {userName || (language === "bn" ? "কৃষক" : "Farmer")}!</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-foreground">{t.welcome}, {userName || (language === "bn" ? "কৃষক" : "Farmer")}!</h1>
+              <Badge variant="outline" className="text-xs">
+                {userRole === 'farmer' ? (language === "bn" ? "কৃষক" : "Farmer") : 
+                 userRole === 'customer' ? (language === "bn" ? "কাস্টমার" : "Customer") : 
+                 userRole === 'admin' ? (language === "bn" ? "অ্যাডমিন" : "Admin") : ""}
+              </Badge>
+            </div>
             <p className="text-muted-foreground mt-1">{t.viewSummary}</p>
           </div>
         </div>

@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sendOrderConfirmationEmail } from "@/lib/emailService";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,7 +45,7 @@ import {
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, subtotal, clearCart } = useCart();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, signUp } = useAuth();
   const { language } = useLanguage();
   const { formatPrice } = useCurrency();
   const { settings: paymentSettings, isLoading: isLoadingPayment } = usePaymentSettings();
@@ -53,6 +54,9 @@ const Checkout = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [usePartialPayment, setUsePartialPayment] = useState(false);
+  const [createAccount, setCreateAccount] = useState(false);
+  const [accountEmail, setAccountEmail] = useState("");
+  const [accountPassword, setAccountPassword] = useState("");
   const [formData, setFormData] = useState({
     shipping_name: "",
     shipping_mobile: "",
@@ -242,6 +246,32 @@ const Checkout = () => {
         }).catch(err => {
           console.warn("Error sending order confirmation email:", err);
         });
+      }
+
+      // Create customer account if requested
+      if (createAccount && accountEmail && accountPassword && !user) {
+        try {
+          const { error: signUpError } = await signUp(
+            accountEmail, 
+            accountPassword, 
+            formData.shipping_name, 
+            {
+              mobile: formData.shipping_mobile,
+              division: formData.shipping_division,
+              district: formData.shipping_district,
+              upazila: formData.shipping_upazila,
+            },
+            'customer'
+          );
+          if (signUpError) {
+            console.warn("Account creation failed:", signUpError);
+            toast.info(language === "bn" ? "অ্যাকাউন্ট তৈরি করা যায়নি, কিন্তু অর্ডার সফল হয়েছে" : "Account creation failed, but order was placed");
+          } else {
+            toast.success(language === "bn" ? "কাস্টমার অ্যাকাউন্ট তৈরি হয়েছে!" : "Customer account created!");
+          }
+        } catch (accErr) {
+          console.warn("Account creation error:", accErr);
+        }
       }
 
       // Success
@@ -563,6 +593,49 @@ const Checkout = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Create Account Option - Only for Guest Users */}
+              {!user && (
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="create-account" 
+                        checked={createAccount}
+                        onCheckedChange={(checked) => setCreateAccount(checked === true)}
+                      />
+                      <Label htmlFor="create-account" className="cursor-pointer font-medium">
+                        {language === "bn" ? "অ্যাকাউন্ট তৈরি করুন (অর্ডার ট্র্যাক করতে)" : "Create an account (to track orders)"}
+                      </Label>
+                    </div>
+                    {createAccount && (
+                      <div className="grid sm:grid-cols-2 gap-4 pl-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="acc-email">{language === "bn" ? "ইমেইল" : "Email"} *</Label>
+                          <Input
+                            id="acc-email"
+                            type="email"
+                            value={accountEmail}
+                            onChange={(e) => setAccountEmail(e.target.value)}
+                            placeholder="your@email.com"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="acc-password">{language === "bn" ? "পাসওয়ার্ড" : "Password"} *</Label>
+                          <Input
+                            id="acc-password"
+                            type="password"
+                            value={accountPassword}
+                            onChange={(e) => setAccountPassword(e.target.value)}
+                            placeholder="••••••••"
+                            minLength={6}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Right Column - Order Summary */}

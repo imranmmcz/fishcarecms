@@ -23,19 +23,25 @@ interface UserProfile {
   avatar_url: string | null;
 }
 
+type UserRole = 'admin' | 'farmer' | 'customer' | 'user';
+
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   session: Session | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isFarmer: boolean;
+  isCustomer: boolean;
+  userRole: UserRole | null;
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string, addressData?: AddressData) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, addressData?: AddressData, roleType?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<{ error: Error | null }>;
   refreshUser: () => Promise<void>;
+  switchToFarmer: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,6 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -67,23 +74,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const checkAdminRole = async (userId: string) => {
+  const fetchUserRole = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", userId)
-        .eq("role", "admin")
-        .maybeSingle();
+        .eq("user_id", userId);
 
       if (error) {
-        console.error("Error checking admin role:", error);
-        return false;
+        console.error("Error fetching user role:", error);
+        return { isAdmin: false, role: null as UserRole | null };
       }
-      return !!data;
+
+      const roles = data?.map(r => r.role as UserRole) || [];
+      const hasAdmin = roles.includes('admin');
+      // Priority: admin > farmer > customer > user
+      const primaryRole = hasAdmin ? 'admin' : roles.includes('farmer') ? 'farmer' : roles.includes('customer') ? 'customer' : roles[0] || null;
+
+      return { isAdmin: hasAdmin, role: primaryRole };
     } catch (error) {
-      console.error("Error checking admin role:", error);
-      return false;
+      console.error("Error fetching user role:", error);
+      return { isAdmin: false, role: null as UserRole | null };
     }
   };
 
@@ -98,16 +109,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Defer profile and admin check with setTimeout to prevent deadlock
         if (session?.user) {
           setTimeout(async () => {
-            const [profileData, adminStatus] = await Promise.all([
+            const [profileData, roleData] = await Promise.all([
               fetchProfile(session.user.id),
-              checkAdminRole(session.user.id),
+              fetchUserRole(session.user.id),
             ]);
             setProfile(profileData);
-            setIsAdmin(adminStatus);
+            setIsAdmin(roleData.isAdmin);
+            setUserRole(roleData.role);
           }, 0);
         } else {
           setProfile(null);
           setIsAdmin(false);
+          setUserRole(null);
         }
       }
     );
@@ -119,12 +132,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
 
       if (session?.user) {
-        const [profileData, adminStatus] = await Promise.all([
+        const [profileData, roleData] = await Promise.all([
           fetchProfile(session.user.id),
-          checkAdminRole(session.user.id),
+          fetchUserRole(session.user.id),
         ]);
         setProfile(profileData);
-        setIsAdmin(adminStatus);
+        setIsAdmin(roleData.isAdmin);
+        setUserRole(roleData.role);
       }
     });
 
@@ -139,7 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, addressData?: AddressData) => {
+  const signUp = async (email: string, password: string, fullName: string, addressData?: AddressData, roleType?: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -154,6 +168,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           district: addressData?.district,
           upazila: addressData?.upazila,
           village: addressData?.village,
+          role_type: roleType || 'farmer',
         },
       },
     });
@@ -164,6 +179,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     setProfile(null);
     setIsAdmin(false);
+    setUserRole(null);
   };
 
   const updateProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
@@ -198,7 +214,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updatePassword = async (currentPassword: string, newPassword: string) => {
     try {
-      // Supabase doesn't require current password verification for logged-in users
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -208,10 +223,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const switchToFarmer = async (): Promise<boolean> => {
+    if (!user) return false;
+    try {
+      // Update the role from customer to farmer
+      const { error } = await supabase
+        .from("user_roles")
+        .update({ role: 'farmer' as any })
+        .eq("user_id", user.id)
+        .eq("role", 'customer' as any);
+
+      if (error) throw error;
+
+      setUserRole('farmer');
+      return true;
+    } catch (error) {
+      console.error("Error switching role:", error);
+      return false;
+    }
+  };
+
   const refreshUser = async () => {
     if (user) {
-      const profileData = await fetchProfile(user.id);
+      const [profileData, roleData] = await Promise.all([
+        fetchProfile(user.id),
+        fetchUserRole(user.id),
+      ]);
       setProfile(profileData);
+      setIsAdmin(roleData.isAdmin);
+      setUserRole(roleData.role);
     }
   };
 
@@ -223,6 +263,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         isLoading,
         isAdmin,
+        isFarmer: userRole === 'farmer',
+        isCustomer: userRole === 'customer',
+        userRole,
         isAuthenticated: !!user,
         signIn,
         signUp,
@@ -230,6 +273,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         updateProfile,
         updatePassword,
         refreshUser,
+        switchToFarmer,
       }}
     >
       {children}

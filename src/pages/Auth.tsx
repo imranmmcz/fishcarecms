@@ -129,7 +129,7 @@ const Auth = () => {
       district,
       upazila,
       village
-    });
+    }, 'farmer');
     setIsLoading(false);
 
     if (error) {

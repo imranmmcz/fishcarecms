@@ -39,7 +39,9 @@ import {
   LogOut,
   ChevronDown,
   Menu,
-  X
+  X,
+  Package,
+  RefreshCw
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -49,70 +51,103 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, user, profile, signOut } = useAuth();
+  const { isAdmin, isFarmer, isCustomer, userRole, user, profile, signOut, switchToFarmer } = useAuth();
   const { t, language } = useLanguage();
   const [userName, setUserName] = useState("");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
 
-  const menuItems = [
+  // Build menu items based on role
+  const baseMenuItems = [
     { 
       title: t.dashboard, 
       url: "/dashboard", 
       icon: LayoutDashboard,
       color: "bg-gradient-to-r from-purple-500 to-purple-600",
-      iconColor: "text-purple-500"
+      iconColor: "text-purple-500",
+      roles: ['farmer', 'customer', 'admin'] as string[],
+    },
+    { 
+      title: language === "bn" ? "আমার অর্ডার" : "My Orders", 
+      url: "/dashboard/orders", 
+      icon: Package,
+      color: "bg-gradient-to-r from-teal-500 to-emerald-600",
+      iconColor: "text-teal-500",
+      roles: ['farmer', 'customer', 'admin'] as string[],
     },
     { 
       title: t.income, 
       url: "/dashboard/income", 
       icon: TrendingUp,
       color: "bg-gradient-to-r from-emerald-500 to-green-600",
-      iconColor: "text-emerald-500"
+      iconColor: "text-emerald-500",
+      roles: ['farmer', 'admin'] as string[],
     },
     { 
       title: t.expense, 
       url: "/dashboard/expense", 
       icon: TrendingDown,
       color: "bg-gradient-to-r from-rose-500 to-red-600",
-      iconColor: "text-rose-500"
+      iconColor: "text-rose-500",
+      roles: ['farmer', 'admin'] as string[],
     },
     { 
       title: t.myPond, 
       url: "/dashboard/my-pond", 
       icon: Waves,
       color: "bg-gradient-to-r from-blue-500 to-cyan-600",
-      iconColor: "text-blue-500"
+      iconColor: "text-blue-500",
+      roles: ['farmer', 'admin'] as string[],
     },
     { 
       title: t.reports, 
       url: "/dashboard/reports", 
       icon: FileText,
       color: "bg-gradient-to-r from-amber-500 to-orange-600",
-      iconColor: "text-amber-500"
+      iconColor: "text-amber-500",
+      roles: ['farmer', 'admin'] as string[],
     },
     { 
       title: t.backup, 
       url: "/dashboard/backup", 
       icon: CloudUpload,
       color: "bg-gradient-to-r from-indigo-500 to-violet-600",
-      iconColor: "text-indigo-500"
+      iconColor: "text-indigo-500",
+      roles: ['farmer', 'admin'] as string[],
     },
     { 
       title: t.profile, 
       url: "/dashboard/profile", 
       icon: User,
       color: "bg-gradient-to-r from-pink-500 to-rose-600",
-      iconColor: "text-pink-500"
+      iconColor: "text-pink-500",
+      roles: ['farmer', 'customer', 'admin'] as string[],
     },
     { 
       title: t.settings, 
       url: "/dashboard/settings", 
       icon: Settings,
       color: "bg-gradient-to-r from-slate-500 to-gray-600",
-      iconColor: "text-slate-500"
+      iconColor: "text-slate-500",
+      roles: ['farmer', 'customer', 'admin'] as string[],
     },
   ];
+
+  const menuItems = baseMenuItems.filter(item => 
+    !userRole || item.roles.includes(userRole)
+  );
+
+  const handleSwitchToFarmer = async () => {
+    setIsSwitching(true);
+    const success = await switchToFarmer();
+    setIsSwitching(false);
+    if (success) {
+      const msg = language === "bn" ? "আপনি এখন কৃষক হিসেবে নিবন্ধিত!" : "You are now registered as a Farmer!";
+      navigate("/dashboard");
+      window.location.reload();
+    }
+  };
 
   // Use profile data from Supabase context
   useEffect(() => {
@@ -175,7 +210,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
                 <div className="group-data-[collapsible=icon]:hidden">
                   <h1 className="font-bold text-white text-lg">{language === "bn" ? "মাছ চাষ" : "Fish Farming"}</h1>
-                  <p className="text-xs text-slate-400">{language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard"}</p>
+                  <p className="text-xs text-slate-400">
+                    {userRole === 'customer' 
+                      ? (language === "bn" ? "কাস্টমার ড্যাশবোর্ড" : "Customer Dashboard")
+                      : (language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard")}
+                  </p>
                 </div>
               </div>
             </div>
@@ -233,6 +272,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
               )}
 
+              {/* Switch to Farmer - Only for Customer Users */}
+              {isCustomer && (
+                <div className="pt-4 border-t border-white/10">
+                  <button 
+                    onClick={handleSwitchToFarmer}
+                    disabled={isSwitching}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-emerald-300 hover:bg-emerald-500/20 hover:text-white transition-all w-full"
+                  >
+                    <div className="p-2 rounded-lg bg-emerald-600/50 shrink-0">
+                      <RefreshCw className={`h-5 w-5 text-emerald-300 ${isSwitching ? 'animate-spin' : ''}`} />
+                    </div>
+                    <span className="font-medium group-data-[collapsible=icon]:hidden">
+                      {language === "bn" ? "কৃষক হিসেবে যোগ দিন" : "Switch to Farmer"}
+                    </span>
+                  </button>
+                </div>
+              )}
+
               {/* Home Link at Bottom */}
               <div className="pt-4 border-t border-white/10">
                 <Link 
@@ -272,7 +329,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         </div>
                         <div>
                           <h1 className="font-bold text-white text-lg">{language === "bn" ? "মাছ চাষ" : "Fish Farming"}</h1>
-                          <p className="text-xs text-slate-400">{language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard"}</p>
+                          <p className="text-xs text-slate-400">
+                            {userRole === 'customer' 
+                              ? (language === "bn" ? "কাস্টমার ড্যাশবোর্ড" : "Customer Dashboard")
+                              : (language === "bn" ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard")}
+                          </p>
                         </div>
                       </div>
                       <SheetClose asChild>
@@ -308,6 +369,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           </div>
                           <span className="font-medium">{t.adminPanel}</span>
                         </Link>
+                      </div>
+                    )}
+
+                    {/* Switch to Farmer - Customer only */}
+                    {isCustomer && (
+                      <div className="pt-4 mt-4 border-t border-white/10">
+                        <button 
+                          onClick={() => { setMobileMenuOpen(false); handleSwitchToFarmer(); }}
+                          disabled={isSwitching}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl text-emerald-300 hover:bg-emerald-500/20 hover:text-white transition-all w-full"
+                        >
+                          <div className="p-2 rounded-lg bg-emerald-600/50 shrink-0">
+                            <RefreshCw className={`h-5 w-5 text-emerald-300 ${isSwitching ? 'animate-spin' : ''}`} />
+                          </div>
+                          <span className="font-medium">
+                            {language === "bn" ? "কৃষক হিসেবে যোগ দিন" : "Switch to Farmer"}
+                          </span>
+                        </button>
                       </div>
                     )}
 
