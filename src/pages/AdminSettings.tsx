@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,8 @@ interface PaymentSettingsState {
 
 const AdminSettings = () => {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "language";
   const { language, setLanguage, t } = useLanguage();
   const { currency, setCurrency, currencyInfo } = useCurrency();
   const [settings, setSettings] = useState<SystemSetting[]>([]);
@@ -225,7 +228,7 @@ const AdminSettings = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="language" className="w-full">
+        <Tabs defaultValue={initialTab} key={initialTab} className="w-full">
           <TabsList className="flex flex-wrap h-auto gap-1 w-full lg:w-auto">
             <TabsTrigger value="language" className="flex items-center gap-2">
               <Globe className="h-4 w-4" />

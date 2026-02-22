@@ -93,6 +93,10 @@ const settingsGroup: MenuGroup = {
   icon: Settings,
   items: [
     { title: "সাধারণ সেটিংস", url: "/admin/settings", icon: Sliders },
+    { title: "SEO সেটিংস", url: "/admin/settings?tab=seo", icon: Globe },
+    { title: "পেমেন্ট গেটওয়ে", url: "/admin/settings?tab=payment", icon: CreditCard },
+    { title: "ইমেইল/SMTP", url: "/admin/settings?tab=email", icon: Mail },
+    { title: "থিম", url: "/admin/settings?tab=theme", icon: Palette },
     { title: "ব্যবহারকারী", url: "/admin/users", icon: Users },
     { title: "ডাটাবেজ এক্সপোর্ট", url: "/admin/database-export", icon: Database },
     { title: "সিস্টেম ব্যাকআপ", url: "/admin/backup", icon: CloudUpload },
@@ -105,8 +109,12 @@ const allMenuUrls = allGroups.flatMap(g => g.items.map(i => i.url));
 
 // --- Collapsible Menu Group Component ---
 
-function SidebarMenuGroup({ group, currentPath }: { group: MenuGroup; currentPath: string }) {
-  const hasActive = group.items.some(item => currentPath === item.url);
+function SidebarMenuGroup({ group, currentPath, currentSearch }: { group: MenuGroup; currentPath: string; currentSearch: string }) {
+  const currentFull = currentPath + currentSearch;
+  const hasActive = group.items.some(item => {
+    if (item.url.includes("?")) return currentFull === item.url;
+    return currentPath === item.url && !currentSearch;
+  });
   const [open, setOpen] = useState(hasActive);
 
   // Keep open when navigating to a child route
@@ -132,7 +140,9 @@ function SidebarMenuGroup({ group, currentPath }: { group: MenuGroup; currentPat
       <CollapsibleContent>
         <div className="ml-4 pl-3 border-l border-white/10 mt-1 space-y-0.5">
           {group.items.map((item) => {
-            const isActive = currentPath === item.url;
+            const isActive = item.url.includes("?") 
+              ? currentFull === item.url 
+              : currentPath === item.url && !currentSearch;
             return (
               <Link
                 key={item.url}
@@ -270,16 +280,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <div className="h-px bg-white/10 mx-2 my-1" />
 
                 {/* CMS Group */}
-                <SidebarMenuGroup group={cmsGroup} currentPath={location.pathname} />
+                <SidebarMenuGroup group={cmsGroup} currentPath={location.pathname} currentSearch={location.search} />
 
                 {/* E-Commerce Group */}
-                <SidebarMenuGroup group={ecommerceGroup} currentPath={location.pathname} />
+                <SidebarMenuGroup group={ecommerceGroup} currentPath={location.pathname} currentSearch={location.search} />
 
                 {/* Divider */}
                 <div className="h-px bg-white/10 mx-2 my-1" />
 
                 {/* Settings Group */}
-                <SidebarMenuGroup group={settingsGroup} currentPath={location.pathname} />
+                <SidebarMenuGroup group={settingsGroup} currentPath={location.pathname} currentSearch={location.search} />
               </SidebarGroup>
 
               {/* Home Link */}
