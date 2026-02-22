@@ -3,13 +3,15 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   CloudUpload, CloudDownload, HardDrive, Loader2, CheckCircle, 
   AlertCircle, RefreshCw, Trash2, Clock, FileJson, Link2, Link2Off, 
-  Database, Shield, DownloadCloud
+  Database, Shield, DownloadCloud, Settings, BarChart3
 } from "lucide-react";
 
 const AdminBackup = () => {
@@ -20,9 +22,14 @@ const AdminBackup = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
   const [backupLogs, setBackupLogs] = useState<any[]>([]);
   const [driveFiles, setDriveFiles] = useState<any[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+  const [backupStats, setBackupStats] = useState<{ total_size: number; total_count: number; oldest_backup: string | null }>({ total_size: 0, total_count: 0, oldest_backup: null });
+  const [maxBackups, setMaxBackups] = useState(10);
+  const [maxSizeMB, setMaxSizeMB] = useState(500);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const checkConnection = useCallback(async () => {
     if (!session?.access_token) return;
@@ -47,6 +54,31 @@ const AdminBackup = () => {
     finally { setIsLoadingLogs(false); }
   }, [session]);
 
+  const loadBackupStats = useCallback(async () => {
+    if (!session?.access_token) return;
+    try {
+      const { data } = await supabase.functions.invoke('system-backup', {
+        body: { action: 'get_backup_stats' },
+      });
+      if (data) setBackupStats(data);
+    } catch (e) { console.error(e); }
+  }, [session]);
+
+  const loadSettings = useCallback(async () => {
+    const { data: countSetting } = await supabase
+      .from('system_settings')
+      .select('setting_value')
+      .eq('setting_key', 'backup_max_count')
+      .single();
+    const { data: sizeSetting } = await supabase
+      .from('system_settings')
+      .select('setting_value')
+      .eq('setting_key', 'backup_max_size_mb')
+      .single();
+    if (countSetting?.setting_value) setMaxBackups(parseInt(countSetting.setting_value));
+    if (sizeSetting?.setting_value) setMaxSizeMB(parseInt(sizeSetting.setting_value));
+  }, []);
+
   const loadDriveFiles = useCallback(async () => {
     if (!session?.access_token || !isConnected) return;
     try {
@@ -60,7 +92,9 @@ const AdminBackup = () => {
   useEffect(() => {
     checkConnection();
     loadBackupLogs();
-  }, [checkConnection, loadBackupLogs]);
+    loadBackupStats();
+    loadSettings();
+  }, [checkConnection, loadBackupLogs, loadBackupStats, loadSettings]);
 
   useEffect(() => {
     if (isConnected) loadDriveFiles();
@@ -129,17 +163,55 @@ const AdminBackup = () => {
         body: { action: 'create_backup', backup_scope: 'system' },
       });
       if (error) throw error;
+      const cleanupMsg = data?.auto_cleanup?.deleted > 0 
+        ? ` (${data.auto_cleanup.deleted}টি পুরানো ব্যাকআপ মুছে ফেলা হয়েছে)` 
+        : '';
       toast({
         title: "সফল",
-        description: data?.google_drive_uploaded 
+        description: (data?.google_drive_uploaded 
           ? "সিস্টেম ব্যাকআপ Google Drive এ আপলোড হয়েছে" 
-          : "সিস্টেম ব্যাকআপ তৈরি হয়েছে",
+          : "সিস্টেম ব্যাকআপ তৈরি হয়েছে") + cleanupMsg,
       });
       loadBackupLogs();
+      loadBackupStats();
       if (isConnected) loadDriveFiles();
     } catch (e: any) {
       toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
     } finally { setIsBackingUp(false); }
+  };
+
+  const manualCleanup = async () => {
+    if (!confirm('আপনি কি নিশ্চিত? পুরানো ব্যাকআপ স্থায়ীভাবে মুছে ফেলা হবে।')) return;
+    setIsCleaning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('system-backup', {
+        body: { action: 'cleanup_old_backups', max_backups: maxBackups, max_size_mb: maxSizeMB },
+      });
+      if (error) throw error;
+      toast({ title: "সফল", description: `${data?.deleted || 0}টি পুরানো ব্যাকআপ মুছে ফেলা হয়েছে` });
+      loadBackupLogs();
+      loadBackupStats();
+      if (isConnected) loadDriveFiles();
+    } catch (e: any) {
+      toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
+    } finally { setIsCleaning(false); }
+  };
+
+  const saveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      await supabase.from('system_settings').upsert(
+        { setting_key: 'backup_max_count', setting_value: String(maxBackups), description: 'সর্বোচ্চ ব্যাকআপ সংখ্যা' },
+        { onConflict: 'setting_key' }
+      );
+      await supabase.from('system_settings').upsert(
+        { setting_key: 'backup_max_size_mb', setting_value: String(maxSizeMB), description: 'সর্বোচ্চ ব্যাকআপ সাইজ (MB)' },
+        { onConflict: 'setting_key' }
+      );
+      toast({ title: "সফল", description: "ব্যাকআপ সেটিংস সংরক্ষিত হয়েছে" });
+    } catch (e: any) {
+      toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
+    } finally { setIsSavingSettings(false); }
   };
 
   const restoreBackup = async (fileId: string) => {
@@ -158,6 +230,12 @@ const AdminBackup = () => {
     } catch (e: any) {
       toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
     } finally { setIsRestoring(false); }
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const getStatusBadge = (status: string) => {
@@ -182,12 +260,102 @@ const AdminBackup = () => {
             <p className="text-muted-foreground">সম্পূর্ণ সিস্টেম ব্যাকআপ ও রিস্টোর ম্যানেজমেন্ট</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => { loadBackupLogs(); loadDriveFiles(); }}>
+            <Button variant="outline" onClick={() => { loadBackupLogs(); loadDriveFiles(); loadBackupStats(); }}>
               <RefreshCw className="h-4 w-4 mr-2" />
               রিফ্রেশ
             </Button>
           </div>
         </div>
+
+        {/* Backup Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <BarChart3 className="h-8 w-8 text-primary" />
+                <div>
+                  <p className="text-2xl font-bold">{backupStats.total_count}</p>
+                  <p className="text-sm text-muted-foreground">মোট ব্যাকআপ</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <HardDrive className="h-8 w-8 text-blue-500" />
+                <div>
+                  <p className="text-2xl font-bold">{formatSize(backupStats.total_size)}</p>
+                  <p className="text-sm text-muted-foreground">মোট সাইজ</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <Clock className="h-8 w-8 text-orange-500" />
+                <div>
+                  <p className="text-2xl font-bold">
+                    {backupStats.oldest_backup 
+                      ? new Date(backupStats.oldest_backup).toLocaleDateString('bn-BD') 
+                      : 'N/A'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">সবচেয়ে পুরানো</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Backup Size Limit & Cleanup Settings */}
+        <Card className="border-orange-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-orange-500" />
+              ব্যাকআপ লিমিট ও স্বয়ংক্রিয় ক্লিনআপ
+            </CardTitle>
+            <CardDescription>
+              সর্বোচ্চ ব্যাকআপ সংখ্যা ও সাইজ নির্ধারণ করুন। লিমিট অতিক্রম করলে পুরানো ব্যাকআপ স্বয়ংক্রিয়ভাবে মুছে যাবে।
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="maxBackups">সর্বোচ্চ ব্যাকআপ সংখ্যা</Label>
+                <Input
+                  id="maxBackups"
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={maxBackups}
+                  onChange={(e) => setMaxBackups(parseInt(e.target.value) || 10)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxSizeMB">সর্বোচ্চ সাইজ (MB)</Label>
+                <Input
+                  id="maxSizeMB"
+                  type="number"
+                  min={10}
+                  max={10000}
+                  value={maxSizeMB}
+                  onChange={(e) => setMaxSizeMB(parseInt(e.target.value) || 500)}
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={saveSettings} disabled={isSavingSettings}>
+                {isSavingSettings ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                সেটিংস সংরক্ষণ
+              </Button>
+              <Button variant="destructive" onClick={manualCleanup} disabled={isCleaning}>
+                {isCleaning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                এখনই পুরানো ব্যাকআপ মুছুন
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Google Drive Connection */}
         <Card className="border-primary/20">
@@ -314,7 +482,7 @@ const AdminBackup = () => {
                         <p className="text-sm font-medium">{log.file_name || 'Unknown'}</p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{new Date(log.created_at).toLocaleString('bn-BD')}</span>
-                          {log.file_size && <span>• {(log.file_size / 1024).toFixed(1)} KB</span>}
+                          {log.file_size && <span>• {formatSize(log.file_size)}</span>}
                           {log.backup_scope && <Badge variant="outline" className="text-xs">{log.backup_scope}</Badge>}
                         </div>
                       </div>
@@ -349,6 +517,8 @@ const AdminBackup = () => {
                   <li>পণ্যের ছবি ও ফাইল তালিকা</li>
                   <li>সিস্টেম সেটিংস ও কনফিগারেশন</li>
                   <li>স্বয়ংক্রিয় দৈনিক ব্যাকআপ (রাত ২:০০ টায়)</li>
+                  <li>সর্বোচ্চ {maxBackups}টি ব্যাকআপ রাখা হবে, {maxSizeMB} MB সাইজ লিমিট</li>
+                  <li>লিমিট অতিক্রম করলে পুরানো ব্যাকআপ স্বয়ংক্রিয়ভাবে মুছে যাবে</li>
                 </ul>
               </div>
             </div>

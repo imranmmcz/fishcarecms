@@ -46,6 +46,85 @@ async function uploadToGoogleDrive(accessToken: string, fileName: string, conten
   return await res.json();
 }
 
+async function deleteFromGoogleDrive(accessToken: string, fileId: string): Promise<void> {
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok && res.status !== 404) {
+    console.error('Failed to delete Drive file:', fileId);
+  }
+}
+
+async function cleanupOldBackups(
+  adminSupabase: any,
+  userId: string,
+  isAdmin: boolean,
+  maxBackups: number,
+  maxSizeMB: number,
+) {
+  const scope = isAdmin ? 'system' : 'user';
+  
+  // Get all backups ordered by date
+  let query = adminSupabase
+    .from('backup_logs')
+    .select('*')
+    .eq('backup_scope', scope)
+    .order('created_at', { ascending: false });
+  
+  if (!isAdmin) query = query.eq('user_id', userId);
+  
+  const { data: allBackups } = await query;
+  if (!allBackups || allBackups.length === 0) return { deleted: 0 };
+
+  const toDelete: any[] = [];
+  
+  // 1. Delete backups beyond max count
+  if (maxBackups > 0 && allBackups.length > maxBackups) {
+    toDelete.push(...allBackups.slice(maxBackups));
+  }
+
+  // 2. Delete backups if total size exceeds limit
+  if (maxSizeMB > 0) {
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    let totalSize = 0;
+    for (const backup of allBackups) {
+      totalSize += (backup.file_size || 0);
+      if (totalSize > maxSizeBytes && !toDelete.find((d: any) => d.id === backup.id)) {
+        toDelete.push(backup);
+      }
+    }
+  }
+
+  if (toDelete.length === 0) return { deleted: 0 };
+
+  // Get Drive token for deleting Drive files
+  let accessToken: string | null = null;
+  const { data: driveToken } = await adminSupabase
+    .from('google_drive_tokens')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (driveToken?.refresh_token) {
+    try {
+      accessToken = await refreshAccessToken(driveToken.refresh_token);
+    } catch (_) { /* ignore */ }
+  }
+
+  // Delete each old backup
+  for (const backup of toDelete) {
+    // Delete from Google Drive if applicable
+    if (backup.google_drive_file_id && accessToken) {
+      await deleteFromGoogleDrive(accessToken, backup.google_drive_file_id);
+    }
+    // Delete log entry
+    await adminSupabase.from('backup_logs').delete().eq('id', backup.id);
+  }
+
+  return { deleted: toDelete.length };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -74,7 +153,7 @@ serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    const { action, backup_scope, file_id } = await req.json();
+    const { action, backup_scope, file_id, max_backups, max_size_mb } = await req.json();
     const adminSupabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -222,14 +301,36 @@ serve(async (req) => {
             .eq('id', logEntry.id);
         }
 
+        // Auto-cleanup: keep max 10 backups and 500MB by default
+        const defaultMaxBackups = 10;
+        const defaultMaxSizeMB = 500;
+        
+        // Load settings from system_settings
+        const { data: maxBackupsSetting } = await adminSupabase
+          .from('system_settings')
+          .select('setting_value')
+          .eq('setting_key', 'backup_max_count')
+          .single();
+        const { data: maxSizeSetting } = await adminSupabase
+          .from('system_settings')
+          .select('setting_value')
+          .eq('setting_key', 'backup_max_size_mb')
+          .single();
+
+        const effectiveMaxBackups = maxBackupsSetting?.setting_value ? parseInt(maxBackupsSetting.setting_value) : defaultMaxBackups;
+        const effectiveMaxSizeMB = maxSizeSetting?.setting_value ? parseInt(maxSizeSetting.setting_value) : defaultMaxSizeMB;
+
+        const cleanupResult = await cleanupOldBackups(adminSupabase, userId, isAdmin, effectiveMaxBackups, effectiveMaxSizeMB);
+
         return new Response(JSON.stringify({
           success: true,
           file_name: fileName,
           file_size: fileSize,
           google_drive_uploaded: !!driveFileId,
           google_drive_url: driveUrl,
-          backup_data: scope === 'user' ? backupData : undefined, // Only return data for user backups
+          backup_data: scope === 'user' ? backupData : undefined,
           log_id: logEntry?.id,
+          auto_cleanup: cleanupResult,
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -372,6 +473,40 @@ serve(async (req) => {
       const listData = await listRes.json();
 
       return new Response(JSON.stringify({ files: listData.files || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (action === 'cleanup_old_backups') {
+      if (!isAdmin) {
+        // Users can clean their own, but use default limits
+      }
+      const effectiveMaxBackups = max_backups || 10;
+      const effectiveMaxSizeMB = max_size_mb || 500;
+
+      const result = await cleanupOldBackups(adminSupabase, userId, isAdmin, effectiveMaxBackups, effectiveMaxSizeMB);
+
+      return new Response(JSON.stringify({ success: true, ...result }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (action === 'get_backup_stats') {
+      const scope = isAdmin ? 'system' : 'user';
+      let query = adminSupabase
+        .from('backup_logs')
+        .select('file_size, created_at')
+        .eq('backup_scope', scope)
+        .order('created_at', { ascending: false });
+      
+      if (!isAdmin) query = query.eq('user_id', userId);
+      
+      const { data: backups } = await query;
+      const totalSize = (backups || []).reduce((sum: number, b: any) => sum + (b.file_size || 0), 0);
+      const totalCount = (backups || []).length;
+      const oldestBackup = backups && backups.length > 0 ? backups[backups.length - 1].created_at : null;
+
+      return new Response(JSON.stringify({ total_size: totalSize, total_count: totalCount, oldest_backup: oldestBackup }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
