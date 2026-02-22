@@ -67,6 +67,7 @@ export type Database = {
       }
       backup_logs: {
         Row: {
+          backup_scope: string
           backup_type: string
           completed_at: string | null
           created_at: string
@@ -77,11 +78,15 @@ export type Database = {
           google_drive_file_id: string | null
           google_drive_url: string | null
           id: string
+          restore_status: string | null
+          restored_at: string | null
           started_at: string
           status: string
           tables_included: string[] | null
+          user_id: string | null
         }
         Insert: {
+          backup_scope?: string
           backup_type?: string
           completed_at?: string | null
           created_at?: string
@@ -92,11 +97,15 @@ export type Database = {
           google_drive_file_id?: string | null
           google_drive_url?: string | null
           id?: string
+          restore_status?: string | null
+          restored_at?: string | null
           started_at?: string
           status?: string
           tables_included?: string[] | null
+          user_id?: string | null
         }
         Update: {
+          backup_scope?: string
           backup_type?: string
           completed_at?: string | null
           created_at?: string
@@ -107,9 +116,12 @@ export type Database = {
           google_drive_file_id?: string | null
           google_drive_url?: string | null
           id?: string
+          restore_status?: string | null
+          restored_at?: string | null
           started_at?: string
           status?: string
           tables_included?: string[] | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -355,6 +367,39 @@ export type Database = {
           status?: string
           subject?: string
           template_type?: string
+        }
+        Relationships: []
+      }
+      google_drive_tokens: {
+        Row: {
+          access_token: string | null
+          connected_at: string
+          drive_email: string | null
+          id: string
+          refresh_token: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          connected_at?: string
+          drive_email?: string | null
+          id?: string
+          refresh_token: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          connected_at?: string
+          drive_email?: string | null
+          id?: string
+          refresh_token?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
