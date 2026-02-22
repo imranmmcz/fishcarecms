@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Order } from "@/lib/api-client";
 import { generateInvoicePDF } from "@/lib/generateInvoicePDF";
+import { useInvoiceSettings } from "@/hooks/useInvoiceSettings";
 import { Button } from "@/components/ui/button";
 import { FileDown, Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ export const InvoiceDownloadButton = ({
   showAdminOption = false,
 }: InvoiceDownloadButtonProps) => {
   const { language } = useLanguage();
+  const { settings: companySettings } = useInvoiceSettings();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const translations = {
@@ -50,7 +52,16 @@ export const InvoiceDownloadButton = ({
     setIsGenerating(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 200));
-      generateInvoicePDF(order, { language, copyType });
+      generateInvoicePDF(order, {
+        language,
+        copyType,
+        companyName: companySettings.companyName,
+        companyAddress: companySettings.companyAddress,
+        companyPhone: companySettings.companyPhone,
+        companyEmail: companySettings.companyEmail,
+        companyWebsite: companySettings.companyWebsite,
+        companyLogo: companySettings.companyLogo,
+      });
       toast.success(translations.success);
     } catch (error) {
       console.error("Failed to generate invoice:", error);

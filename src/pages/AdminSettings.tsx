@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search, FileText } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
@@ -20,6 +20,7 @@ import LanguageFontSettings from "@/components/LanguageFontSettings";
 import GlobalSeoSettings from "@/components/admin/GlobalSeoSettings";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import DeliverySettingsAdmin from "@/components/admin/DeliverySettingsAdmin";
+import InvoiceSettings from "@/components/admin/InvoiceSettings";
 
 interface SystemSetting {
   id: string;
@@ -257,6 +258,10 @@ const AdminSettings = () => {
             <TabsTrigger value="seo" className="flex items-center gap-2">
               <Search className="h-4 w-4" />
               SEO
+            </TabsTrigger>
+            <TabsTrigger value="invoice" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              {language === "bn" ? "ইনভয়েস" : "Invoice"}
             </TabsTrigger>
           </TabsList>
 
@@ -671,6 +676,11 @@ const AdminSettings = () => {
           {/* SEO Settings Tab */}
           <TabsContent value="seo" className="space-y-6 mt-6">
             <GlobalSeoSettings />
+          </TabsContent>
+
+          {/* Invoice Settings Tab */}
+          <TabsContent value="invoice" className="space-y-6 mt-6">
+            <InvoiceSettings />
           </TabsContent>
         </Tabs>
       </div>
