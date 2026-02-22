@@ -386,13 +386,16 @@ const DashboardOrders = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-3">
-                  {/* Invoice Download */}
+                  {/* Invoice Download - Customer Copy */}
                   <Button
                     variant="outline"
-                    onClick={() => handlePrintInvoice(selectedOrder)}
+                    onClick={() => {
+                      const apiOrder = toApiOrder(selectedOrder);
+                      generateInvoicePDF(apiOrder, { language, copyType: "customer" });
+                    }}
                   >
                     <FileDown className="h-4 w-4 mr-2" />
-                    {translations.invoice}
+                    {language === "bn" ? "কাস্টমার কপি" : "Customer Copy"}
                   </Button>
 
                   {/* Add to Pond Expense - Farmer only */}

@@ -626,7 +626,7 @@ const AdminOrders = () => {
                     </div>
                   </div>
 
-                  <InvoiceDownloadButton order={selectedOrder as any} variant="default" className="w-full" />
+                  <InvoiceDownloadButton order={selectedOrder as any} variant="default" className="w-full" showAdminOption={true} />
                 </TabsContent>
 
                 <TabsContent value="tracking" className="space-y-4 mt-4">
