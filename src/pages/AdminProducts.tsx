@@ -63,6 +63,7 @@ interface ProductFormData {
   reorder_level: number;
   company_id: string;
   brand_id: string;
+  weight_kg: number;
   focus_keyword: string;
   meta_title: string;
   meta_description: string;
@@ -84,6 +85,7 @@ const emptyProduct: ProductFormData = {
   reorder_level: 10,
   company_id: "",
   brand_id: "",
+  weight_kg: 0,
   focus_keyword: "",
   meta_title: "",
   meta_description: "",
@@ -228,7 +230,7 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
         <Separator />
       </div>
       
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label htmlFor="stock">স্টক পরিমাণ</Label>
           <Input
@@ -258,6 +260,9 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label htmlFor="reorder">রিঅর্ডার লেভেল</Label>
           <Input
@@ -268,6 +273,19 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
             placeholder="10"
             min={0}
           />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="weight_kg">ওজন (কেজি)</Label>
+          <Input
+            id="weight_kg"
+            type="number"
+            value={formData.weight_kg}
+            onChange={(e) => handleChange("weight_kg", Number(e.target.value))}
+            placeholder="0.00"
+            min={0}
+            step="0.01"
+          />
+          <p className="text-xs text-muted-foreground">ডেলিভারি চার্জ ক্যালকুলেশনে ব্যবহৃত হবে</p>
         </div>
       </div>
       
@@ -627,6 +645,7 @@ const AdminProducts = () => {
       reorder_level: formData.reorder_level,
       company_id: formData.company_id || null,
       brand_id: formData.brand_id || null,
+      weight_kg: formData.weight_kg || 0,
       focus_keyword: formData.focus_keyword || null,
       meta_title: formData.meta_title || null,
       meta_description: formData.meta_description || null,
@@ -659,6 +678,7 @@ const AdminProducts = () => {
       reorder_level: formData.reorder_level,
       company_id: formData.company_id || null,
       brand_id: formData.brand_id || null,
+      weight_kg: formData.weight_kg || 0,
       focus_keyword: formData.focus_keyword || null,
       meta_title: formData.meta_title || null,
       meta_description: formData.meta_description || null,
@@ -700,6 +720,7 @@ const AdminProducts = () => {
       reorder_level: product.reorder_level || 10,
       company_id: product.company_id ? String(product.company_id) : "",
       brand_id: product.brand_id ? String(product.brand_id) : "",
+      weight_kg: p.weight_kg || 0,
       focus_keyword: p.focus_keyword || "",
       meta_title: p.meta_title || "",
       meta_description: p.meta_description || "",
