@@ -24,6 +24,33 @@ const DashboardBackup = () => {
   const [backupLogs, setBackupLogs] = useState<any[]>([]);
   const [driveFiles, setDriveFiles] = useState<any[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
+
+  const downloadBackup = async (logId?: string, driveFileId?: string, fileName?: string) => {
+    const key = logId || driveFileId || '';
+    setIsDownloading(key);
+    try {
+      const body: any = { action: 'download_backup' };
+      if (logId) body.log_id = logId;
+      if (driveFileId) body.drive_file_id = driveFileId;
+
+      const { data, error } = await supabase.functions.invoke('system-backup', { body });
+      if (error) throw error;
+      if (!data?.backup_content) throw new Error('ব্যাকআপ ডেটা পাওয়া যায়নি');
+
+      const content = typeof data.backup_content === 'string' ? data.backup_content : JSON.stringify(data.backup_content, null, 2);
+      const blob = new Blob([content], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.file_name || fileName || `backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "সফল", description: "ব্যাকআপ ফাইল ডাউনলোড হয়েছে" });
+    } catch (e: any) {
+      toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
+    } finally { setIsDownloading(null); }
+  };
 
   const checkConnection = useCallback(async () => {
     if (!session?.access_token) return;
@@ -323,11 +350,16 @@ const DashboardBackup = () => {
                         </p>
                       </div>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => restoreFromDrive(file.id)} disabled={isRestoring}>
-                      {isRestoring ? <Loader2 className="h-4 w-4 animate-spin" /> : (
-                        <><CloudDownload className="mr-1 h-4 w-4" />রিস্টোর</>
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => downloadBackup(undefined, file.id, file.name)} disabled={isDownloading === file.id} title="ডাউনলোড">
+                        {isDownloading === file.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadCloud className="h-4 w-4" />}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => restoreFromDrive(file.id)} disabled={isRestoring}>
+                        {isRestoring ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                          <><CloudDownload className="mr-1 h-4 w-4" />রিস্টোর</>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -385,7 +417,14 @@ const DashboardBackup = () => {
                         <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString('bn-BD')}</p>
                       </div>
                     </div>
-                    {getStatusBadge(log.status)}
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(log.status)}
+                      {(log.status === 'completed' || log.status === 'completed_local') && (
+                        <Button variant="ghost" size="sm" onClick={() => downloadBackup(log.id, undefined, log.file_name)} disabled={isDownloading === log.id} title="ডাউনলোড">
+                          {isDownloading === log.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <DownloadCloud className="h-3 w-3" />}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

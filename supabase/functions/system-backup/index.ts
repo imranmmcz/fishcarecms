@@ -692,6 +692,133 @@ serve(async (req) => {
       });
     }
 
+    if (action === 'download_backup') {
+      const { log_id, drive_file_id } = await req.json().catch(() => ({}));
+      
+      // If drive_file_id provided, download from Google Drive
+      if (drive_file_id) {
+        const { data: driveToken } = await adminSupabase
+          .from('google_drive_tokens')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (!driveToken?.refresh_token) {
+          return new Response(JSON.stringify({ error: 'Google Drive not connected' }), {
+            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const accessToken = await refreshAccessToken(driveToken.refresh_token);
+        const downloadRes = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${drive_file_id}?alt=media`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+
+        if (!downloadRes.ok) {
+          return new Response(JSON.stringify({ error: 'Failed to download from Drive' }), {
+            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const content = await downloadRes.text();
+        
+        // Get filename from backup_logs
+        const { data: logEntry } = await adminSupabase
+          .from('backup_logs')
+          .select('file_name')
+          .eq('google_drive_file_id', drive_file_id)
+          .single();
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          backup_content: content,
+          file_name: logEntry?.file_name || `backup_${new Date().toISOString().split('T')[0]}.json`
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // If log_id provided, regenerate backup data for that scope
+      if (log_id) {
+        const { data: logEntry } = await adminSupabase
+          .from('backup_logs')
+          .select('*')
+          .eq('id', log_id)
+          .single();
+
+        if (!logEntry) {
+          return new Response(JSON.stringify({ error: 'Backup log not found' }), {
+            status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // Check access
+        if (logEntry.backup_scope === 'user' && logEntry.user_id !== userId && !isAdmin) {
+          return new Response(JSON.stringify({ error: 'Access denied' }), {
+            status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // If it has a drive file, download from drive
+        if (logEntry.google_drive_file_id) {
+          const { data: driveToken } = await adminSupabase
+            .from('google_drive_tokens')
+            .select('*')
+            .eq('user_id', logEntry.created_by || userId)
+            .single();
+
+          if (driveToken?.refresh_token) {
+            try {
+              const accessToken = await refreshAccessToken(driveToken.refresh_token);
+              const downloadRes = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${logEntry.google_drive_file_id}?alt=media`,
+                { headers: { Authorization: `Bearer ${accessToken}` } }
+              );
+              if (downloadRes.ok) {
+                const content = await downloadRes.text();
+                return new Response(JSON.stringify({ 
+                  success: true, backup_content: content, file_name: logEntry.file_name 
+                }), {
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+              }
+            } catch (_) { /* fall through to regenerate */ }
+          }
+        }
+
+        // Regenerate backup data
+        let backupData: Record<string, any> = {};
+        if (logEntry.backup_scope === 'system') {
+          const tables = logEntry.tables_included || ['products', 'categories', 'orders', 'order_items', 'profiles'];
+          for (const table of tables) {
+            if (table === 'backup_metadata' || table.startsWith('storage_')) continue;
+            const { data } = await adminSupabase.from(table).select('*');
+            if (data) backupData[table] = data;
+          }
+        } else {
+          const targetUserId = logEntry.user_id || userId;
+          const { data: orders } = await adminSupabase.from('orders').select('*, order_items(*)').eq('user_id', targetUserId);
+          backupData.orders = orders;
+          const { data: profile } = await adminSupabase.from('profiles').select('*').eq('user_id', targetUserId).single();
+          backupData.profile = profile;
+        }
+        backupData.backup_metadata = { created_at: logEntry.created_at, scope: logEntry.backup_scope, version: '2.0.0' };
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          backup_content: JSON.stringify(backupData, null, 2), 
+          file_name: logEntry.file_name 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'log_id or drive_file_id required' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     if (action === 'get_backup_stats') {
       const scope = isAdmin ? 'system' : 'user';
       let query = adminSupabase
