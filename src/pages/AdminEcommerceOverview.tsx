@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ShoppingCart, CreditCard, Package, AlertCircle, RefreshCw,
-  TrendingUp, Calendar, BarChart2
+  TrendingUp, TrendingDown, Calendar, BarChart2, DollarSign
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -30,6 +30,10 @@ interface EcommerceStats {
   totalPurchase: number;
   purchaseDue: number;
   totalPurchaseReturn: number;
+  totalCostPrice: number;
+  totalSellingPrice: number;
+  grossProfit: number;
+  profitMargin: number;
 }
 
 interface ChartPoint {
@@ -65,6 +69,10 @@ const AdminEcommerceOverview = () => {
     totalPurchase: 0,
     purchaseDue: 0,
     totalPurchaseReturn: 0,
+    totalCostPrice: 0,
+    totalSellingPrice: 0,
+    grossProfit: 0,
+    profitMargin: 0,
   });
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,7 +88,7 @@ const AdminEcommerceOverview = () => {
       // Fetch orders within date range
       const { data: orders } = await supabase
         .from("orders")
-        .select("total_amount, payment_status, status, created_at")
+        .select("id, total_amount, payment_status, status, created_at")
         .gte("created_at", fromISO)
         .lte("created_at", toISO);
 
@@ -91,31 +99,66 @@ const AdminEcommerceOverview = () => {
         .gte("created_at", fromISO)
         .lte("created_at", toISO);
 
+      // Fetch order items with product cost_price for profit calculation
+      const orderIds = (orders || []).map(o => o.id);
+      let allOrderItems: any[] = [];
+      if (orderIds.length > 0) {
+        const { data: orderItems } = await supabase
+          .from("order_items")
+          .select("order_id, quantity, unit_price, total_price, product_id")
+          .in("order_id", orderIds);
+        allOrderItems = orderItems || [];
+      }
+
+      // Fetch products for cost_price
+      const productIds = [...new Set(allOrderItems.map(i => i.product_id))];
+      let productCostMap: Record<string, number> = {};
+      if (productIds.length > 0) {
+        const { data: products } = await supabase
+          .from("products")
+          .select("id, cost_price")
+          .in("id", productIds);
+        (products || []).forEach(p => {
+          productCostMap[p.id] = Number(p.cost_price || 0);
+        });
+      }
+
       const allOrders = orders || [];
       const allPurchases = purchaseOrders || [];
 
-      // Total Sales = sum of all orders total_amount
+      // Total Sales
       const totalSales = allOrders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
 
-      // Invoice Due = sum of orders where payment_status = 'pending' or 'unpaid'
+      // Invoice Due
       const invoiceDue = allOrders
         .filter(o => o.payment_status === "pending" || o.payment_status === "unpaid")
         .reduce((s, o) => s + Number(o.total_amount || 0), 0);
 
-      // Total Purchase = sum of all purchase orders total_amount
+      // Total Purchase
       const totalPurchase = allPurchases.reduce((s, p) => s + Number(p.total_amount || 0), 0);
 
-      // Purchase Due = purchase orders where status is 'pending' or 'ordered'
+      // Purchase Due
       const purchaseDue = allPurchases
         .filter(p => p.status === "pending" || p.status === "ordered")
         .reduce((s, p) => s + Number(p.total_amount || 0), 0);
 
-      // Total Purchase Return = purchase orders with status 'returned'
+      // Total Purchase Return
       const totalPurchaseReturn = allPurchases
         .filter(p => p.status === "returned")
         .reduce((s, p) => s + Number(p.total_amount || 0), 0);
 
-      setStats({ totalSales, invoiceDue, totalPurchase, purchaseDue, totalPurchaseReturn });
+      // Profit/Loss calculation based on cost_price
+      let totalCostPrice = 0;
+      let totalSellingPrice = 0;
+      allOrderItems.forEach(item => {
+        const costPrice = productCostMap[item.product_id] || 0;
+        totalCostPrice += costPrice * Number(item.quantity);
+        totalSellingPrice += Number(item.total_price || 0);
+      });
+      const grossProfit = totalSellingPrice - totalCostPrice;
+      const profitMargin = totalSellingPrice > 0 ? (grossProfit / totalSellingPrice) * 100 : 0;
+
+      setStats({ totalSales, invoiceDue, totalPurchase, purchaseDue, totalPurchaseReturn, totalCostPrice, totalSellingPrice, grossProfit, profitMargin });
 
       // Build chart data grouped by day
       buildChartData(allOrders, allPurchases);
@@ -336,6 +379,53 @@ const AdminEcommerceOverview = () => {
             </Card>
           ))}
         </div>
+
+        {/* Profit/Loss Summary */}
+        <Card className={cn("border", stats.grossProfit >= 0 ? "border-emerald-500/20 bg-emerald-500/5" : "border-rose-500/20 bg-rose-500/5")}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-primary" />
+              লাভ/ক্ষতি সারসংক্ষেপ (Profit/Loss Summary)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-20 bg-muted animate-pulse rounded" />
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">মোট বিক্রয় মূল্য</p>
+                  <p className="text-lg font-bold text-foreground">৳{stats.totalSellingPrice.toLocaleString("en-IN")}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">মোট ক্রয় মূল্য (Cost)</p>
+                  <p className="text-lg font-bold text-foreground">৳{stats.totalCostPrice.toLocaleString("en-IN")}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">গ্রস লাভ/ক্ষতি</p>
+                  <div className="flex items-center gap-2">
+                    {stats.grossProfit >= 0 ? (
+                      <TrendingUp className="h-4 w-4 text-emerald-500" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 text-rose-500" />
+                    )}
+                    <p className={cn("text-lg font-bold", stats.grossProfit >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                      ৳{Math.abs(stats.grossProfit).toLocaleString("en-IN")}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">প্রফিট মার্জিন</p>
+                  <div className="flex items-center gap-2">
+                    <p className={cn("text-lg font-bold", stats.profitMargin >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                      {stats.profitMargin.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-2">
