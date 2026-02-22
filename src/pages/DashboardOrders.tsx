@@ -46,6 +46,7 @@ import {
   Printer,
 } from "lucide-react";
 import { generateInvoicePDF } from "@/lib/generateInvoicePDF";
+import { useInvoiceSettings } from "@/hooks/useInvoiceSettings";
 import type { Order as ApiOrder } from "@/lib/api-client";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
@@ -62,6 +63,7 @@ const DashboardOrders = () => {
   const { formatPrice } = useCurrency();
   const { isFarmer } = useAuth();
   const { orders, isLoading, getOrder, cancelOrder, refetch } = useOrders();
+  const { settings: companySettings } = useInvoiceSettings();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -391,7 +393,7 @@ const DashboardOrders = () => {
                     variant="outline"
                     onClick={() => {
                       const apiOrder = toApiOrder(selectedOrder);
-                      generateInvoicePDF(apiOrder, { language, copyType: "customer" });
+                      generateInvoicePDF(apiOrder, { language, copyType: "customer", ...companySettings });
                     }}
                   >
                     <FileDown className="h-4 w-4 mr-2" />
