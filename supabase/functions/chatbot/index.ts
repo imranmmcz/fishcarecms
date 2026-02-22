@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.86.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,25 @@ serve(async (req) => {
     const { messages, currentPage } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Fetch products from database
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: products } = await supabase
+      .from("products")
+      .select("id, name, price, discount_percentage, category, image_url, stock_quantity, description, unit")
+      .gt("stock_quantity", 0)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    const productCatalog = (products || []).map(p => {
+      const discountedPrice = p.discount_percentage > 0
+        ? Math.round(p.price * (1 - p.discount_percentage / 100))
+        : p.price;
+      return `- ID: ${p.id} | নাম: ${p.name} | দাম: ৳${discountedPrice}${p.discount_percentage > 0 ? ` (${p.discount_percentage}% ছাড়, আসল ৳${p.price})` : ''} | ক্যাটাগরি: ${p.category} | স্টক: ${p.stock_quantity} ${p.unit || 'pcs'} | বিবরণ: ${(p.description || '').slice(0, 80)}`;
+    }).join("\n");
 
     const systemPrompt = `You are "FishCare Smart AI", the intelligent customer support chatbot for FishCare BD (ফিশকেয়ার বিডি) — https://fishcare.com.bd/
 
@@ -37,8 +57,28 @@ serve(async (req) => {
 The user is currently on: ${currentPage || "/"}
 Tailor your responses based on their current page context.
 
+## PRODUCT CATALOG (Real-time from database)
+${productCatalog || "No products available currently."}
+
+## CRITICAL: Product Card Display Format
+When recommending or mentioning specific products, you MUST use this exact format to display product cards:
+\`\`\`
+[PRODUCT_CARD:product_id]
+\`\`\`
+
+For example, if recommending a product with ID "abc-123", write:
+[PRODUCT_CARD:abc-123]
+
+You can show multiple product cards. Always show product cards when:
+1. User asks about products, prices, or recommendations
+2. You suggest a product
+3. User asks what's available
+4. User asks about a specific category
+
+Add a short description before/after the product cards. Do NOT write the product name/price in text if you're showing the card - the card will display all info.
+
 ## Key Responsibilities
-1. **Sales**: Recommend products, highlight offers, guide to purchase
+1. **Sales**: Recommend products using PRODUCT_CARD format, highlight offers, guide to purchase
 2. **Support**: Answer queries about orders, delivery, payment, returns
 3. **Advisor**: Provide fish farming tips, feed recommendations, disease advice
 4. **Lead Capture**: For bulk orders/farm setup inquiries, ask for name & phone number
@@ -47,35 +87,23 @@ Tailor your responses based on their current page context.
 
 ## Quick Keyword Responses
 When user mentions these topics, respond with relevant info:
-- দাম/মূল্য/price → Share pricing info, link to /shop
-- মাছের খাবার/feed → Ask fish type, suggest appropriate feed
-- অ্যাকুরিয়াম/aquarium → Suggest complete aquarium packages
+- দাম/মূল্য/price → Show relevant product cards with prices
+- মাছের খাবার/feed → Ask fish type, show feed product cards
+- অ্যাকুরিয়াম/aquarium → Show aquarium product cards
 - ডেলিভারি/delivery → 2-5 business days nationwide
 - রিটার্ন/return → 7-day return policy
 - পেমেন্ট/payment → bKash, Nagad, Rocket, bank transfer supported
-- স্টক/available → Ask product name, check availability
-- অর্ডার/buy → Guide to /shop page
-- সাপোর্ট/support → Support hours 9 AM – 10 PM
-
-## Website Pages Reference
-- /shop — All products
-- /checkout — Order placement
-- /fish-advice — Fish health & farming advice
-- /market-price — Current fish market prices
-- /pond-calculator — Pond size calculator
-- /feed-management — Feed management tools
-- /medicine-application — Medicine guides
-- /water-quality — Water quality tools
-- /fisheries-contact — Fisheries contacts
+- স্টক/available → Check catalog and show product cards
+- অর্ডার/buy → Show relevant product cards with buy links
 
 ## Rules
 - ALWAYS respond in the same language as the user (Bengali or English)
 - Keep responses concise (2-4 sentences max unless detailed explanation needed)
 - Use emojis sparingly for friendliness
-- For product-specific questions you can't answer, suggest browsing /shop or contacting support
-- Never make up product names, prices, or stock info — say you'll check or redirect
+- Use PRODUCT_CARD format for ANY product mention - never just list product names/prices in text
 - For bulk orders, capture lead info (name + phone)
-- Be proactive in suggesting products and solutions`;
+- Be proactive in suggesting products and solutions
+- If a product is not in the catalog, say it's not currently available`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
