@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useOrders, Order } from "@/hooks/useOrders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,6 +41,7 @@ import {
   Truck,
   CheckCircle,
   AlertCircle,
+  PlusCircle,
 } from "lucide-react";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
@@ -54,6 +56,7 @@ const statusConfig: Record<string, { color: string; icon: React.ReactNode; label
 const DashboardOrders = () => {
   const { language } = useLanguage();
   const { formatPrice } = useCurrency();
+  const { isFarmer } = useAuth();
   const { orders, isLoading, getOrder, cancelOrder, refetch } = useOrders();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -82,6 +85,8 @@ const DashboardOrders = () => {
     paymentStatus: language === "bn" ? "পেমেন্ট স্ট্যাটাস" : "Payment Status",
     trxId: language === "bn" ? "ট্রানজেকশন আইডি" : "Transaction ID",
     verificationPending: language === "bn" ? "ভেরিফিকেশন পেন্ডিং" : "Verification Pending",
+    addToExpense: language === "bn" ? "পুকুরের খরচে যোগ করুন" : "Add to Pond Expense",
+    addedToExpense: language === "bn" ? "পুকুরের খরচে যোগ করা হয়েছে!" : "Added to pond expense!",
   };
 
   const handleViewDetails = async (orderId: string) => {
@@ -325,22 +330,57 @@ const DashboardOrders = () => {
                   </div>
                 </div>
 
-                {/* Cancel Button */}
-                {selectedOrder.status === 'pending' && (
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => handleCancelOrder(selectedOrder.id)}
-                    disabled={isCancelling}
-                  >
-                    {isCancelling ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <XCircle className="h-4 w-4 mr-2" />
-                    )}
-                    {translations.cancelOrder}
-                  </Button>
-                )}
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  {/* Add to Pond Expense - Farmer only */}
+                  {isFarmer && selectedOrder.status === 'delivered' && (
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        // Add to localStorage expenses
+                        const expenses = JSON.parse(localStorage.getItem("farmerExpenses") || "[]");
+                        const newExpense = {
+                          id: `order-${selectedOrder.id}`,
+                          date: new Date(selectedOrder.created_at).toISOString().split('T')[0],
+                          category: language === "bn" ? "অর্ডার কেনাকাটা" : "Order Purchase",
+                          amount: selectedOrder.total_amount,
+                          description: `${language === "bn" ? "অর্ডার" : "Order"} #${selectedOrder.order_number}`,
+                          pondName: "",
+                        };
+                        // Check if already added
+                        const exists = expenses.find((e: any) => e.id === newExpense.id);
+                        if (exists) {
+                          toast.info(language === "bn" ? "এই অর্ডার ইতোমধ্যে খরচে যোগ করা আছে" : "This order is already added to expenses");
+                          return;
+                        }
+                        expenses.push(newExpense);
+                        localStorage.setItem("farmerExpenses", JSON.stringify(expenses));
+                        toast.success(translations.addedToExpense);
+                      }}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      {translations.addToExpense}
+                    </Button>
+                  )}
+
+                  {/* Cancel Button */}
+                  {selectedOrder.status === 'pending' && (
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() => handleCancelOrder(selectedOrder.id)}
+                      disabled={isCancelling}
+                    >
+                      {isCancelling ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mr-2" />
+                      )}
+                      {translations.cancelOrder}
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </DialogContent>
