@@ -11,3 +11,11 @@ verify_jwt = false
 [functions.verify-payment]
 enabled = true
 verify_jwt = false
+
+[functions.google-drive-auth]
+enabled = true
+verify_jwt = false
+
+[functions.system-backup]
+enabled = true
+verify_jwt = false
