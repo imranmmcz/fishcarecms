@@ -68,7 +68,33 @@ const drawLine = (doc: jsPDF, x1: number, y1: number, x2: number, y2: number, co
   doc.line(x1, y1, x2, y2);
 };
 
-export const generateInvoicePDF = (order: Order, options: Partial<InvoiceOptions> = {}) => {
+// Helper to load image as base64
+const loadImageAsBase64 = (url: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        } else {
+          resolve(null);
+        }
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+};
+
+export const generateInvoicePDF = async (order: Order, options: Partial<InvoiceOptions> = {}) => {
   const opts = { ...defaultOptions, ...options };
   const isBn = opts.language === "bn";
   const isAdmin = opts.copyType === "admin";
@@ -87,11 +113,29 @@ export const generateInvoicePDF = (order: Order, options: Partial<InvoiceOptions
   y = 12;
 
   // ==================== HEADER SECTION ====================
-  // Company name (left)
+  // Try to load and render company logo
+  let logoRendered = false;
+  if (opts.companyLogo) {
+    try {
+      const logoBase64 = await loadImageAsBase64(opts.companyLogo);
+      if (logoBase64) {
+        const logoHeight = 14;
+        const logoWidth = 14;
+        doc.addImage(logoBase64, "PNG", margin, y - 4, logoWidth, logoHeight);
+        logoRendered = true;
+      }
+    } catch {
+      // Logo loading failed, continue without it
+    }
+  }
+
+  const textStartX = logoRendered ? margin + 17 : margin;
+
+  // Company name
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...COLORS.primary);
-  doc.text(opts.companyName || "FishCare Pro", margin, y + 6);
+  doc.text(opts.companyName || "FishCare Pro", textStartX, y + 6);
 
   // Invoice label (right)
   doc.setFontSize(28);
