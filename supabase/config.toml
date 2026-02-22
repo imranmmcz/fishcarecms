@@ -19,3 +19,7 @@ verify_jwt = false
 [functions.system-backup]
 enabled = true
 verify_jwt = false
+
+[functions.chatbot]
+enabled = true
+verify_jwt = false

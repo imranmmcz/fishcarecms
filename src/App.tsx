@@ -14,6 +14,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeLoader } from "@/components/ThemeLoader";
+import FloatingChatbot from "@/components/FloatingChatbot";
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
 import PondCalculator from "./pages/PondCalculator";
@@ -136,6 +137,7 @@ const App = () => (
                       <Route path="/install" element={<Install />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    <FloatingChatbot />
                   </BrowserRouter>
                 </TooltipProvider>
               </AdSettingsProvider>
