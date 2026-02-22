@@ -42,7 +42,11 @@ import {
   CheckCircle,
   AlertCircle,
   PlusCircle,
+  FileDown,
+  Printer,
 } from "lucide-react";
+import { generateInvoicePDF } from "@/lib/generateInvoicePDF";
+import type { Order as ApiOrder } from "@/lib/api-client";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
   pending: { color: "bg-yellow-500", icon: <Clock className="h-4 w-4" />, label: { bn: "পেন্ডিং", en: "Pending" } },
@@ -87,6 +91,56 @@ const DashboardOrders = () => {
     verificationPending: language === "bn" ? "ভেরিফিকেশন পেন্ডিং" : "Verification Pending",
     addToExpense: language === "bn" ? "পুকুরের খরচে যোগ করুন" : "Add to Pond Expense",
     addedToExpense: language === "bn" ? "পুকুরের খরচে যোগ করা হয়েছে!" : "Added to pond expense!",
+    invoice: language === "bn" ? "ইনভয়েস" : "Invoice",
+    print: language === "bn" ? "প্রিন্ট" : "Print",
+  };
+
+  // Convert useOrders Order to api-client Order for invoice generation
+  const toApiOrder = (order: Order): ApiOrder => ({
+    id: 0,
+    order_number: order.order_number,
+    user_id: 0,
+    status: order.status as ApiOrder['status'],
+    payment_status: order.payment_status as ApiOrder['payment_status'],
+    payment_method: order.payment_method,
+    payment_trx_id: order.transaction_id,
+    payment_sender_number: order.sender_number,
+    subtotal: order.subtotal,
+    shipping_cost: order.shipping_cost,
+    discount_amount: order.discount_amount,
+    total_amount: order.total_amount,
+    shipping_name: order.customer_name,
+    shipping_mobile: order.customer_phone,
+    shipping_division: order.division,
+    shipping_district: order.district,
+    shipping_upazila: order.upazila,
+    shipping_address: order.shipping_address,
+    customer_note: order.notes,
+    admin_note: null,
+    created_at: order.created_at,
+    updated_at: order.updated_at,
+    shipped_at: null,
+    delivered_at: null,
+    courier_name: null,
+    tracking_number: null,
+    tracking_url: null,
+    estimated_delivery: null,
+    items: order.items?.map(item => ({
+      id: 0,
+      order_id: 0,
+      product_id: 0,
+      product_name: item.product_name,
+      product_image: item.product_image,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      discount_percentage: item.discount_percentage,
+      total_price: item.total_price,
+    })),
+  });
+
+  const handlePrintInvoice = (order: Order) => {
+    const apiOrder = toApiOrder(order);
+    generateInvoicePDF(apiOrder, { language });
   };
 
   const handleViewDetails = async (orderId: string) => {
@@ -331,14 +385,21 @@ const DashboardOrders = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
+                  {/* Invoice Download */}
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePrintInvoice(selectedOrder)}
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    {translations.invoice}
+                  </Button>
+
                   {/* Add to Pond Expense - Farmer only */}
                   {isFarmer && selectedOrder.status === 'delivered' && (
                     <Button
                       variant="outline"
-                      className="flex-1"
                       onClick={() => {
-                        // Add to localStorage expenses
                         const expenses = JSON.parse(localStorage.getItem("farmerExpenses") || "[]");
                         const newExpense = {
                           id: `order-${selectedOrder.id}`,
@@ -348,7 +409,6 @@ const DashboardOrders = () => {
                           description: `${language === "bn" ? "অর্ডার" : "Order"} #${selectedOrder.order_number}`,
                           pondName: "",
                         };
-                        // Check if already added
                         const exists = expenses.find((e: any) => e.id === newExpense.id);
                         if (exists) {
                           toast.info(language === "bn" ? "এই অর্ডার ইতোমধ্যে খরচে যোগ করা আছে" : "This order is already added to expenses");
@@ -368,7 +428,6 @@ const DashboardOrders = () => {
                   {selectedOrder.status === 'pending' && (
                     <Button
                       variant="destructive"
-                      className="flex-1"
                       onClick={() => handleCancelOrder(selectedOrder.id)}
                       disabled={isCancelling}
                     >
