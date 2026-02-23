@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search, FileText } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search, FileText, Truck } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
@@ -22,6 +22,7 @@ import GlobalSeoSettings from "@/components/admin/GlobalSeoSettings";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import DeliverySettingsAdmin from "@/components/admin/DeliverySettingsAdmin";
 import InvoiceSettings from "@/components/admin/InvoiceSettings";
+import { SteadfastCourierSettings } from "@/components/admin/SteadfastCourierSettings";
 
 interface SystemSetting {
   id: string;
@@ -265,6 +266,10 @@ const AdminSettings = () => {
             <TabsTrigger value="invoice" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               {language === "bn" ? "ইনভয়েস" : "Invoice"}
+            </TabsTrigger>
+            <TabsTrigger value="courier" className="flex items-center gap-2">
+              <Truck className="h-4 w-4" />
+              {language === "bn" ? "কুরিয়ার" : "Courier"}
             </TabsTrigger>
           </TabsList>
 
@@ -684,6 +689,11 @@ const AdminSettings = () => {
           {/* Invoice Settings Tab */}
           <TabsContent value="invoice" className="space-y-6 mt-6">
             <InvoiceSettings />
+          </TabsContent>
+
+          {/* Courier Settings Tab */}
+          <TabsContent value="courier" className="space-y-6 mt-6">
+            <SteadfastCourierSettings />
           </TabsContent>
         </Tabs>
       </div>
