@@ -358,6 +358,92 @@ class ApiClient {
       body: { is_helpful: isHelpful },
     });
   }
+
+  // ===================== FARMING ENDPOINTS =====================
+
+  // Ponds
+  async getPonds(userId?: string) {
+    const params = userId ? `?user_id=${userId}` : '';
+    return this.request<{ data: FarmerPond[] }>(`/farming/ponds${params}`);
+  }
+  async createPond(data: Record<string, unknown>) {
+    return this.request<{ data: FarmerPond }>('/farming/ponds', { method: 'POST', body: data });
+  }
+  async updatePond(id: string, data: Record<string, unknown>) {
+    return this.request<{ data: FarmerPond }>(`/farming/ponds/${id}`, { method: 'PUT', body: data });
+  }
+  async deletePond(id: string) {
+    return this.request(`/farming/ponds/${id}`, { method: 'DELETE' });
+  }
+
+  // Incomes
+  async getIncomes(userId?: string) {
+    const params = userId ? `?user_id=${userId}` : '';
+    return this.request<{ data: FarmerIncome[] }>(`/farming/incomes${params}`);
+  }
+  async createIncome(data: Record<string, unknown>) {
+    return this.request<{ data: FarmerIncome }>('/farming/incomes', { method: 'POST', body: data });
+  }
+  async deleteIncome(id: string) {
+    return this.request(`/farming/incomes/${id}`, { method: 'DELETE' });
+  }
+
+  // Expenses
+  async getExpenses(userId?: string) {
+    const params = userId ? `?user_id=${userId}` : '';
+    return this.request<{ data: FarmerExpense[] }>(`/farming/expenses${params}`);
+  }
+  async createExpense(data: Record<string, unknown>) {
+    return this.request<{ data: FarmerExpense }>('/farming/expenses', { method: 'POST', body: data });
+  }
+  async deleteExpense(id: string) {
+    return this.request(`/farming/expenses/${id}`, { method: 'DELETE' });
+  }
+
+  // Samplings
+  async getSamplings(userId?: string) {
+    const params = userId ? `?user_id=${userId}` : '';
+    return this.request<{ data: FarmerSampling[] }>(`/farming/samplings${params}`);
+  }
+  async createSampling(data: Record<string, unknown>) {
+    return this.request<{ data: FarmerSampling }>('/farming/samplings', { method: 'POST', body: data });
+  }
+  async deleteSampling(id: string) {
+    return this.request(`/farming/samplings/${id}`, { method: 'DELETE' });
+  }
+
+  // Dashboard Settings
+  async getDashboardSettings() {
+    return this.request<{ data: Record<string, unknown> | null }>('/farming/settings');
+  }
+  async saveDashboardSettings(settings: Record<string, unknown>) {
+    return this.request('/farming/settings', { method: 'PUT', body: { settings } });
+  }
+
+  // Admin: User Dashboard
+  async getAdminUserDashboard(userId: string) {
+    return this.request<{ ponds: FarmerPond[]; incomes: FarmerIncome[]; expenses: FarmerExpense[]; summary: Record<string, number> }>(`/farming/admin/user-dashboard/${userId}`);
+  }
+
+  // Extras
+  async getCategories() {
+    return this.request<{ data: Category[] }>('/categories', { requiresAuth: false });
+  }
+  async getHeroSlides() {
+    return this.request<{ data: HeroSlide[] }>('/hero-slides', { requiresAuth: false });
+  }
+  async getDeliveryRules() {
+    return this.request<{ data: DeliveryRule[] }>('/delivery-rules', { requiresAuth: false });
+  }
+  async getCustomPage(slug: string) {
+    return this.request<{ data: CustomPage }>(`/custom-pages/${slug}`, { requiresAuth: false });
+  }
+  async getSmtpSettings() {
+    return this.request<{ data: SmtpSettings }>('/smtp');
+  }
+  async getProductImages(productId: string) {
+    return this.request<{ data: ProductImage[] }>(`/product-images/${productId}`, { requiresAuth: false });
+  }
 }
 
 // Types
@@ -571,6 +657,55 @@ export interface ProductReviewsResponse {
   user_review: ProductReview | null;
   limit: number;
   offset: number;
+}
+
+// Farming Types
+export interface FarmerPond {
+  id: number; user_id: number; name: string; area: number; area_unit: string;
+  depth: number; depth_unit: string; fish_types: string[] | null; fish_count: number;
+  stocking_date: string | null; fish_stock_entries: unknown[] | null;
+  total_stocking_cost: number; status: string; notes: string | null;
+  created_at: string; updated_at: string;
+}
+export interface FarmerIncome {
+  id: number; user_id: number; date: string; category: string; description: string | null;
+  amount: number; pond_name: string | null; fish_type: string | null;
+  fish_weight: number | null; fish_price: number | null; created_at: string;
+}
+export interface FarmerExpense {
+  id: number; user_id: number; date: string; category: string; description: string | null;
+  amount: number; pond_name: string | null; created_at: string;
+}
+export interface FarmerSampling {
+  id: number; user_id: number; pond_id: number | null; pond_name: string; date: string;
+  fish_entries: unknown[] | null; total_fish: number; total_weight: number;
+  avg_weight: number; notes: string | null; created_at: string;
+}
+export interface Category {
+  id: number; name: string; name_bn: string; slug: string; description: string | null;
+  icon: string | null; is_active: boolean; display_order: number;
+}
+export interface HeroSlide {
+  id: number; title: string; subtitle: string | null; tagline: string | null;
+  button_text: string | null; button_link: string | null; background_type: string | null;
+  background_value: string | null; is_active: boolean; display_order: number;
+}
+export interface DeliveryRule {
+  id: number; rule_type: string; district_name: string | null; min_value: number;
+  max_value: number | null; charge_amount: number; is_active: boolean; priority: number;
+}
+export interface CustomPage {
+  id: number; title: string; title_bn: string | null; slug: string; content: string | null;
+  content_type: string; meta_title: string | null; meta_description: string | null; status: string;
+}
+export interface SmtpSettings {
+  id: number; smtp_host: string; smtp_port: number; smtp_secure: boolean;
+  smtp_user: string; smtp_password: string; smtp_from_name: string;
+  smtp_from_email: string; is_enabled: boolean;
+}
+export interface ProductImage {
+  id: number; product_id: number; image_url: string; alt_text: string | null;
+  display_order: number; is_primary: boolean;
 }
 
 // Export singleton instance
