@@ -1229,6 +1229,33 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          is_allowed: boolean
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_allowed?: boolean
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_allowed?: boolean
+          permission_key?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       smtp_settings: {
         Row: {
           created_at: string
@@ -1384,6 +1411,10 @@ export type Database = {
           name: string
         }[]
       }
+      has_permission: {
+        Args: { _permission_key: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1393,7 +1424,14 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "farmer" | "customer"
+      app_role:
+        | "admin"
+        | "user"
+        | "farmer"
+        | "customer"
+        | "manager"
+        | "cashier"
+        | "delivery_staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1521,7 +1559,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "farmer", "customer"],
+      app_role: [
+        "admin",
+        "user",
+        "farmer",
+        "customer",
+        "manager",
+        "cashier",
+        "delivery_staff",
+      ],
     },
   },
 } as const
