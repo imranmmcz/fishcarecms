@@ -600,6 +600,66 @@ export type Database = {
           },
         ]
       }
+      fish_diseases: {
+        Row: {
+          affected_fish: string[]
+          category: string
+          causes: string[]
+          created_at: string
+          display_order: number
+          id: string
+          image_description: string | null
+          image_url: string | null
+          is_active: boolean
+          name: string
+          name_en: string
+          prevention: string[]
+          season: string[]
+          severity: string
+          symptoms: string[]
+          treatment: Json
+          updated_at: string
+        }
+        Insert: {
+          affected_fish?: string[]
+          category?: string
+          causes?: string[]
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_description?: string | null
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          name_en: string
+          prevention?: string[]
+          season?: string[]
+          severity?: string
+          symptoms?: string[]
+          treatment?: Json
+          updated_at?: string
+        }
+        Update: {
+          affected_fish?: string[]
+          category?: string
+          causes?: string[]
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_description?: string | null
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          name_en?: string
+          prevention?: string[]
+          season?: string[]
+          severity?: string
+          symptoms?: string[]
+          treatment?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       google_drive_tokens: {
         Row: {
           access_token: string | null
