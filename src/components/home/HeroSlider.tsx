@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Autoplay from "embla-carousel-autoplay";
+import { HeroFeaturedProduct } from "@/components/home/HeroFeaturedProduct";
 import { Button3D } from "@/components/ui/button-3d";
 import {
   Carousel,
@@ -189,6 +190,12 @@ export function HeroSlider() {
                       )}
                     </div>
                   </div>
+                  {/* Per-slide featured product */}
+                  {slide.featured_product_id && (
+                    <div className="absolute top-4 right-4 z-10 hidden md:block">
+                      <HeroFeaturedProduct productId={slide.featured_product_id} />
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/20 pointer-events-none" />
                 </div>
               </CarouselItem>
