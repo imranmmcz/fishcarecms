@@ -444,6 +444,43 @@ class ApiClient {
   async getProductImages(productId: string) {
     return this.request<{ data: ProductImage[] }>(`/product-images/${productId}`, { requiresAuth: false });
   }
+
+  // Backup endpoints
+  async createBackup(scope: string) {
+    return this.request('/backup', { method: 'POST', body: { backup_scope: scope } });
+  }
+  async listBackups() {
+    return this.request<{ backups: any[] }>('/backup');
+  }
+  async restoreBackup(fileId: string) {
+    return this.request('/backup/restore', { method: 'POST', body: { file_id: fileId } });
+  }
+  async downloadBackup(logId?: string, driveFileId?: string) {
+    return this.request('/backup/download', { method: 'POST', body: { log_id: logId, drive_file_id: driveFileId } });
+  }
+  async getBackupStats() {
+    return this.request('/backup/stats');
+  }
+  async cleanupBackups(params: { max_backups?: number; max_size_mb?: number }) {
+    return this.request('/backup/cleanup', { method: 'POST', body: params });
+  }
+
+  // Google Drive endpoints
+  async checkDriveConnection() {
+    return this.request<{ connected: boolean; drive_email?: string }>('/backup/drive/check');
+  }
+  async getDriveAuthUrl(redirectUri: string) {
+    return this.request<{ auth_url: string }>('/backup/drive/auth-url', { method: 'POST', body: { redirect_uri: redirectUri } });
+  }
+  async exchangeDriveCode(code: string, redirectUri: string) {
+    return this.request<{ success: boolean; drive_email?: string }>('/backup/drive/exchange', { method: 'POST', body: { code, redirect_uri: redirectUri } });
+  }
+  async disconnectDrive() {
+    return this.request('/backup/drive/disconnect', { method: 'POST' });
+  }
+  async listDriveBackups() {
+    return this.request<{ files: any[] }>('/backup/drive/files');
+  }
 }
 
 // Types

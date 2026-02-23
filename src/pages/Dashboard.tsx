@@ -576,20 +576,20 @@ function RecentList({ type }: { type: "income" | "expense" }) {
 
   useEffect(() => {
     if (!user) return;
-    const table = type === "income" ? "farmer_incomes" : "farmer_expenses";
-    supabase
-      .from(table)
-      .select("*")
-      .eq("user_id", user.id)
-      .order("date", { ascending: false })
-      .limit(5)
-      .then(({ data }) => {
-        setItems((data || []).map(d => ({
-          id: d.id, date: d.date, category: d.category,
-          amount: Number(d.amount), description: d.description || "",
-          pondName: d.pond_name || undefined,
-        })));
-      });
+    const fetchData = async () => {
+      const res = type === "income" 
+        ? await apiClient.getIncomes(String(user.id))
+        : await apiClient.getExpenses(String(user.id));
+      const data = (res.data?.data || []) as any[];
+      // Take latest 5
+      const sorted = data.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+      setItems(sorted.map((d: any) => ({
+        id: String(d.id), date: d.date, category: d.category,
+        amount: Number(d.amount), description: d.description || "",
+        pondName: d.pond_name || undefined,
+      })));
+    };
+    fetchData();
   }, [type, user]);
 
   if (items.length === 0) {

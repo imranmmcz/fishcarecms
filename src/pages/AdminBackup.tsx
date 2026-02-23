@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/lib/api-client";
 import { 
   CloudUpload, CloudDownload, HardDrive, Loader2, CheckCircle, 
   AlertCircle, RefreshCw, Trash2, Clock, FileJson, Link2, Link2Off, 
@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 
 const AdminBackup = () => {
   const { toast } = useToast();
-  const { session } = useAuth();
+  const { user } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const [driveEmail, setDriveEmail] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
@@ -35,80 +35,54 @@ const AdminBackup = () => {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const checkConnection = useCallback(async () => {
-    if (!session?.access_token) return;
+    if (!user) return;
     try {
-      const { data } = await supabase.functions.invoke('google-drive-auth', {
-        body: { action: 'check_connection' },
-      });
-      setIsConnected(data?.connected || false);
-      setDriveEmail(data?.drive_email || "");
+      const res = await apiClient.checkDriveConnection();
+      setIsConnected(res.data?.connected || false);
+      setDriveEmail(res.data?.drive_email || "");
     } catch (e) { console.error(e); }
-  }, [session]);
+  }, [user]);
 
   const loadBackupLogs = useCallback(async () => {
-    if (!session?.access_token) return;
+    if (!user) return;
     setIsLoadingLogs(true);
     try {
-      const { data } = await supabase.functions.invoke('system-backup', {
-        body: { action: 'list_backups' },
-      });
-      setBackupLogs(data?.backups || []);
+      const res = await apiClient.listBackups();
+      setBackupLogs(res.data?.backups || []);
     } catch (e) { console.error(e); }
     finally { setIsLoadingLogs(false); }
-  }, [session]);
+  }, [user]);
 
   const loadBackupStats = useCallback(async () => {
-    if (!session?.access_token) return;
+    if (!user) return;
     try {
-      const { data } = await supabase.functions.invoke('system-backup', {
-        body: { action: 'get_backup_stats' },
-      });
-      if (data) setBackupStats(data);
+      const res = await apiClient.getBackupStats();
+      if (res.data) setBackupStats(res.data as any);
     } catch (e) { console.error(e); }
-  }, [session]);
+  }, [user]);
 
   const loadSettings = useCallback(async () => {
-    const { data: countSetting } = await supabase
-      .from('system_settings')
-      .select('setting_value')
-      .eq('setting_key', 'backup_max_count')
-      .single();
-    const { data: sizeSetting } = await supabase
-      .from('system_settings')
-      .select('setting_value')
-      .eq('setting_key', 'backup_max_size_mb')
-      .single();
-    const { data: retentionSetting } = await supabase
-      .from('system_settings')
-      .select('setting_value')
-      .eq('setting_key', 'backup_retention_days')
-      .single();
-    const { data: emailSetting } = await supabase
-      .from('system_settings')
-      .select('setting_value')
-      .eq('setting_key', 'backup_email_notification')
-      .single();
-    if (countSetting?.setting_value) setMaxBackups(parseInt(countSetting.setting_value));
-    if (sizeSetting?.setting_value) setMaxSizeMB(parseInt(sizeSetting.setting_value));
-    if (retentionSetting?.setting_value) setRetentionDays(parseInt(retentionSetting.setting_value));
-    if (emailSetting?.setting_value) setEmailNotification(emailSetting.setting_value !== 'false');
+    try {
+      const res = await apiClient.getSettings();
+      const settings = res.data?.settings || [];
+      const findVal = (key: string) => settings.find((s: any) => s.setting_key === key)?.setting_value;
+      if (findVal('backup_max_count')) setMaxBackups(parseInt(findVal('backup_max_count')!));
+      if (findVal('backup_max_size_mb')) setMaxSizeMB(parseInt(findVal('backup_max_size_mb')!));
+      if (findVal('backup_retention_days')) setRetentionDays(parseInt(findVal('backup_retention_days')!));
+      if (findVal('backup_email_notification')) setEmailNotification(findVal('backup_email_notification') !== 'false');
+    } catch (e) { console.error(e); }
   }, []);
 
   const loadDriveFiles = useCallback(async () => {
-    if (!session?.access_token || !isConnected) return;
+    if (!user || !isConnected) return;
     try {
-      const { data } = await supabase.functions.invoke('system-backup', {
-        body: { action: 'list_drive_backups' },
-      });
-      setDriveFiles(data?.files || []);
+      const res = await apiClient.listDriveBackups();
+      setDriveFiles(res.data?.files || []);
     } catch (e) { console.error(e); }
-  }, [session, isConnected]);
+  }, [user, isConnected]);
 
   useEffect(() => {
-    checkConnection();
-    loadBackupLogs();
-    loadBackupStats();
-    loadSettings();
+    checkConnection(); loadBackupLogs(); loadBackupStats(); loadSettings();
   }, [checkConnection, loadBackupLogs, loadBackupStats, loadSettings]);
 
   useEffect(() => {
@@ -119,18 +93,16 @@ const AdminBackup = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
-    if (code && session?.access_token) {
+    if (code && user) {
       const exchangeCode = async () => {
         setIsConnecting(true);
         try {
           const redirectUri = `${window.location.origin}/admin/backup`;
-          const { data, error } = await supabase.functions.invoke('google-drive-auth', {
-            body: { action: 'exchange_code', code, redirect_uri: redirectUri },
-          });
-          if (error) throw error;
-          if (data?.success) {
+          const res = await apiClient.exchangeDriveCode(code, redirectUri);
+          if (res.error) throw new Error(res.error);
+          if (res.data?.success) {
             setIsConnected(true);
-            setDriveEmail(data.drive_email);
+            setDriveEmail(res.data.drive_email || "");
             toast({ title: "সফল", description: "Google Drive সংযুক্ত হয়েছে" });
             window.history.replaceState({}, '', '/admin/backup');
             loadDriveFiles();
@@ -141,16 +113,14 @@ const AdminBackup = () => {
       };
       exchangeCode();
     }
-  }, [session]);
+  }, [user]);
 
   const connectGoogleDrive = async () => {
     setIsConnecting(true);
     try {
       const redirectUri = `${window.location.origin}/admin/backup`;
-      const { data } = await supabase.functions.invoke('google-drive-auth', {
-        body: { action: 'get_auth_url', redirect_uri: redirectUri },
-      });
-      if (data?.auth_url) window.location.href = data.auth_url;
+      const res = await apiClient.getDriveAuthUrl(redirectUri);
+      if (res.data?.auth_url) window.location.href = res.data.auth_url;
     } catch (e: any) {
       toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
       setIsConnecting(false);
@@ -159,12 +129,8 @@ const AdminBackup = () => {
 
   const disconnectDrive = async () => {
     try {
-      await supabase.functions.invoke('google-drive-auth', {
-        body: { action: 'disconnect' },
-      });
-      setIsConnected(false);
-      setDriveEmail("");
-      setDriveFiles([]);
+      await apiClient.disconnectDrive();
+      setIsConnected(false); setDriveEmail(""); setDriveFiles([]);
       toast({ title: "সফল", description: "Google Drive সংযোগ বিচ্ছিন্ন হয়েছে" });
     } catch (e: any) {
       toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
@@ -174,22 +140,18 @@ const AdminBackup = () => {
   const createBackup = async () => {
     setIsBackingUp(true);
     try {
-      const { data, error } = await supabase.functions.invoke('system-backup', {
-        body: { action: 'create_backup', backup_scope: 'system' },
-      });
-      if (error) throw error;
+      const res = await apiClient.createBackup('system');
+      if (res.error) throw new Error(res.error);
+      const data = res.data as any;
       const cleanupCount = (data?.auto_cleanup?.deleted || 0) + (data?.retention_cleanup?.deleted || 0);
-      const cleanupMsg = cleanupCount > 0
-        ? ` (${cleanupCount}টি পুরানো ব্যাকআপ মুছে ফেলা হয়েছে)` 
-        : '';
+      const cleanupMsg = cleanupCount > 0 ? ` (${cleanupCount}টি পুরানো ব্যাকআপ মুছে ফেলা হয়েছে)` : '';
       toast({
         title: "সফল",
         description: (data?.google_drive_uploaded 
           ? "সিস্টেম ব্যাকআপ Google Drive এ আপলোড হয়েছে" 
           : "সিস্টেম ব্যাকআপ তৈরি হয়েছে") + cleanupMsg,
       });
-      loadBackupLogs();
-      loadBackupStats();
+      loadBackupLogs(); loadBackupStats();
       if (isConnected) loadDriveFiles();
     } catch (e: any) {
       toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
@@ -200,13 +162,10 @@ const AdminBackup = () => {
     if (!confirm('আপনি কি নিশ্চিত? পুরানো ব্যাকআপ স্থায়ীভাবে মুছে ফেলা হবে।')) return;
     setIsCleaning(true);
     try {
-      const { data, error } = await supabase.functions.invoke('system-backup', {
-        body: { action: 'cleanup_old_backups', max_backups: maxBackups, max_size_mb: maxSizeMB },
-      });
-      if (error) throw error;
-      toast({ title: "সফল", description: `${data?.deleted || 0}টি পুরানো ব্যাকআপ মুছে ফেলা হয়েছে` });
-      loadBackupLogs();
-      loadBackupStats();
+      const res = await apiClient.cleanupBackups({ max_backups: maxBackups, max_size_mb: maxSizeMB });
+      if (res.error) throw new Error(res.error);
+      toast({ title: "সফল", description: `${(res.data as any)?.deleted || 0}টি পুরানো ব্যাকআপ মুছে ফেলা হয়েছে` });
+      loadBackupLogs(); loadBackupStats();
       if (isConnected) loadDriveFiles();
     } catch (e: any) {
       toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
@@ -217,13 +176,13 @@ const AdminBackup = () => {
     setIsSavingSettings(true);
     try {
       const settingsToSave = [
-        { setting_key: 'backup_max_count', setting_value: String(maxBackups), description: 'সর্বোচ্চ ব্যাকআপ সংখ্যা' },
-        { setting_key: 'backup_max_size_mb', setting_value: String(maxSizeMB), description: 'সর্বোচ্চ ব্যাকআপ সাইজ (MB)' },
-        { setting_key: 'backup_retention_days', setting_value: String(retentionDays), description: 'ব্যাকআপ রিটেনশন দিন' },
-        { setting_key: 'backup_email_notification', setting_value: String(emailNotification), description: 'ব্যাকআপ ইমেইল নোটিফিকেশন' },
+        { key: 'backup_max_count', value: String(maxBackups), description: 'সর্বোচ্চ ব্যাকআপ সংখ্যা' },
+        { key: 'backup_max_size_mb', value: String(maxSizeMB), description: 'সর্বোচ্চ ব্যাকআপ সাইজ (MB)' },
+        { key: 'backup_retention_days', value: String(retentionDays), description: 'ব্যাকআপ রিটেনশন দিন' },
+        { key: 'backup_email_notification', value: String(emailNotification), description: 'ব্যাকআপ ইমেইল নোটিফিকেশন' },
       ];
       for (const s of settingsToSave) {
-        await supabase.from('system_settings').upsert(s, { onConflict: 'setting_key' });
+        await apiClient.updateSetting(s.key, s.value, s.description);
       }
       toast({ title: "সফল", description: "ব্যাকআপ সেটিংস সংরক্ষিত হয়েছে" });
     } catch (e: any) {
@@ -237,14 +196,10 @@ const AdminBackup = () => {
     const key = logId || driveFileId || '';
     setIsDownloading(key);
     try {
-      const body: any = { action: 'download_backup' };
-      if (logId) body.log_id = logId;
-      if (driveFileId) body.drive_file_id = driveFileId;
-
-      const { data, error } = await supabase.functions.invoke('system-backup', { body });
-      if (error) throw error;
+      const res = await apiClient.downloadBackup(logId, driveFileId);
+      if (res.error) throw new Error(res.error);
+      const data = res.data as any;
       if (!data?.backup_content) throw new Error('ব্যাকআপ ডেটা পাওয়া যায়নি');
-
       const content = typeof data.backup_content === 'string' ? data.backup_content : JSON.stringify(data.backup_content, null, 2);
       const blob = new Blob([content], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -263,14 +218,9 @@ const AdminBackup = () => {
     if (!confirm('আপনি কি নিশ্চিত? এটি বিদ্যমান ডেটা প্রতিস্থাপন করবে।')) return;
     setIsRestoring(true);
     try {
-      const { data, error } = await supabase.functions.invoke('system-backup', {
-        body: { action: 'restore_backup', file_id: fileId },
-      });
-      if (error) throw error;
-      toast({
-        title: "সফল",
-        description: `${data?.restored_tables?.length || 0}টি টেবিল পুনরুদ্ধার হয়েছে`,
-      });
+      const res = await apiClient.restoreBackup(fileId);
+      if (res.error) throw new Error(res.error);
+      toast({ title: "সফল", description: `${(res.data as any)?.restored_tables?.length || 0}টি টেবিল পুনরুদ্ধার হয়েছে` });
       loadBackupLogs();
     } catch (e: any) {
       toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
@@ -306,229 +256,77 @@ const AdminBackup = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => { loadBackupLogs(); loadDriveFiles(); loadBackupStats(); }}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              রিফ্রেশ
+              <RefreshCw className="h-4 w-4 mr-2" />রিফ্রেশ
             </Button>
           </div>
         </div>
 
         {/* Backup Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <BarChart3 className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{backupStats.total_count}</p>
-                  <p className="text-sm text-muted-foreground">মোট ব্যাকআপ</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <HardDrive className="h-8 w-8 text-blue-500" />
-                <div>
-                  <p className="text-2xl font-bold">{formatSize(backupStats.total_size)}</p>
-                  <p className="text-sm text-muted-foreground">মোট সাইজ</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <Clock className="h-8 w-8 text-orange-500" />
-                <div>
-                  <p className="text-2xl font-bold">
-                    {backupStats.oldest_backup 
-                      ? new Date(backupStats.oldest_backup).toLocaleDateString('bn-BD') 
-                      : 'N/A'}
-                  </p>
-                  <p className="text-sm text-muted-foreground">সবচেয়ে পুরানো</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><BarChart3 className="h-8 w-8 text-primary" /><div><p className="text-2xl font-bold">{backupStats.total_count}</p><p className="text-sm text-muted-foreground">মোট ব্যাকআপ</p></div></div></CardContent></Card>
+          <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><HardDrive className="h-8 w-8 text-blue-500" /><div><p className="text-2xl font-bold">{formatSize(backupStats.total_size)}</p><p className="text-sm text-muted-foreground">মোট সাইজ</p></div></div></CardContent></Card>
+          <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><Clock className="h-8 w-8 text-orange-500" /><div><p className="text-2xl font-bold">{backupStats.oldest_backup ? new Date(backupStats.oldest_backup).toLocaleDateString('bn-BD') : 'N/A'}</p><p className="text-sm text-muted-foreground">সবচেয়ে পুরানো</p></div></div></CardContent></Card>
         </div>
 
-        {/* Backup Size Limit & Cleanup Settings */}
+        {/* Settings */}
         <Card className="border-orange-500/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5 text-orange-500" />
-              ব্যাকআপ লিমিট ও স্বয়ংক্রিয় ক্লিনআপ
-            </CardTitle>
-            <CardDescription>
-              সর্বোচ্চ ব্যাকআপ সংখ্যা, সাইজ ও রিটেনশন দিন নির্ধারণ করুন। লিমিট অতিক্রম করলে পুরানো ব্যাকআপ স্বয়ংক্রিয়ভাবে মুছে যাবে।
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5 text-orange-500" />ব্যাকআপ লিমিট ও স্বয়ংক্রিয় ক্লিনআপ</CardTitle>
+            <CardDescription>সর্বোচ্চ ব্যাকআপ সংখ্যা, সাইজ ও রিটেনশন দিন নির্ধারণ করুন।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="maxBackups">সর্বোচ্চ ব্যাকআপ সংখ্যা</Label>
-                <Input
-                  id="maxBackups"
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={maxBackups}
-                  onChange={(e) => setMaxBackups(parseInt(e.target.value) || 10)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maxSizeMB">সর্বোচ্চ সাইজ (MB)</Label>
-                <Input
-                  id="maxSizeMB"
-                  type="number"
-                  min={10}
-                  max={10000}
-                  value={maxSizeMB}
-                  onChange={(e) => setMaxSizeMB(parseInt(e.target.value) || 500)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="retentionDays">রিটেনশন দিন</Label>
-                <Input
-                  id="retentionDays"
-                  type="number"
-                  min={1}
-                  max={365}
-                  value={retentionDays}
-                  onChange={(e) => setRetentionDays(parseInt(e.target.value) || 30)}
-                />
-                <p className="text-xs text-muted-foreground">{retentionDays} দিনের পুরানো ব্যাকআপ স্বয়ংক্রিয় মুছে যাবে</p>
-              </div>
+              <div className="space-y-2"><Label>সর্বোচ্চ ব্যাকআপ সংখ্যা</Label><Input type="number" min={1} max={100} value={maxBackups} onChange={(e) => setMaxBackups(parseInt(e.target.value) || 10)} /></div>
+              <div className="space-y-2"><Label>সর্বোচ্চ সাইজ (MB)</Label><Input type="number" min={10} max={10000} value={maxSizeMB} onChange={(e) => setMaxSizeMB(parseInt(e.target.value) || 500)} /></div>
+              <div className="space-y-2"><Label>রিটেনশন দিন</Label><Input type="number" min={1} max={365} value={retentionDays} onChange={(e) => setRetentionDays(parseInt(e.target.value) || 30)} /></div>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="text-sm font-medium">ইমেইল নোটিফিকেশন</p>
-                  <p className="text-xs text-muted-foreground">ব্যাকআপ সফল বা ব্যর্থ হলে অ্যাডমিনদের ইমেইল পাঠান</p>
-                </div>
-              </div>
-              <Switch checked={emailNotification} onCheckedChange={setEmailNotification} />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={saveSettings} disabled={isSavingSettings}>
-                {isSavingSettings ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                সেটিংস সংরক্ষণ
-              </Button>
-              <Button variant="destructive" onClick={manualCleanup} disabled={isCleaning}>
-                {isCleaning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
-                এখনই পুরানো ব্যাকআপ মুছুন
-              </Button>
+            <div className="flex items-center gap-3"><Switch checked={emailNotification} onCheckedChange={setEmailNotification} /><Label className="flex items-center gap-2"><Mail className="h-4 w-4" />ইমেইল নোটিফিকেশন</Label></div>
+            <div className="flex gap-2">
+              <Button onClick={saveSettings} disabled={isSavingSettings}>{isSavingSettings ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}সেটিংস সেভ করুন</Button>
+              <Button variant="outline" onClick={manualCleanup} disabled={isCleaning}>{isCleaning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}ম্যানুয়াল ক্লিনআপ</Button>
             </div>
           </CardContent>
         </Card>
 
         {/* Google Drive Connection */}
         <Card className="border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <HardDrive className="h-5 w-5 text-primary" />
-              Google Drive সংযোগ
-            </CardTitle>
-            <CardDescription>
-              ব্যাকআপ ফাইল স্বয়ংক্রিয়ভাবে Google Drive এ আপলোড হবে
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <CardHeader><CardTitle className="flex items-center gap-2"><HardDrive className="h-5 w-5 text-primary" />Google Drive সংযোগ</CardTitle></CardHeader>
+          <CardContent>
             {isConnected ? (
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="flex items-center gap-2 text-green-600">
-                  <CheckCircle className="h-5 w-5" />
-                  <div>
-                    <p className="font-medium">Google Drive সংযুক্ত</p>
-                    <p className="text-sm text-muted-foreground">{driveEmail}</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={disconnectDrive}>
-                  <Link2Off className="h-4 w-4 mr-2" />
-                  সংযোগ বিচ্ছিন্ন
-                </Button>
+                <div className="flex items-center gap-2 text-green-600"><CheckCircle className="h-5 w-5" /><div><p className="font-medium">সংযুক্ত</p><p className="text-sm text-muted-foreground">{driveEmail}</p></div></div>
+                <Button variant="outline" size="sm" onClick={disconnectDrive}><Link2Off className="h-4 w-4 mr-2" />সংযোগ বিচ্ছিন্ন</Button>
               </div>
             ) : (
               <Button onClick={connectGoogleDrive} disabled={isConnecting} className="bg-blue-600 hover:bg-blue-700">
-                {isConnecting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Link2 className="h-4 w-4 mr-2" />}
-                Google Drive সংযুক্ত করুন
+                {isConnecting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Link2 className="h-4 w-4 mr-2" />}Google Drive সংযুক্ত করুন
               </Button>
             )}
           </CardContent>
         </Card>
 
-        {/* Backup Actions */}
+        {/* Create Backup */}
         <Card className="border-green-500/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-green-500" />
-              সিস্টেম ব্যাকআপ
-            </CardTitle>
-            <CardDescription>
-              সম্পূর্ণ ডাটাবেজ, পণ্যের ছবি, অর্ডার, ব্যবহারকারী ডেটা ব্যাকআপ
-            </CardDescription>
-          </CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Database className="h-5 w-5 text-green-500" />সিস্টেম ব্যাকআপ</CardTitle></CardHeader>
           <CardContent>
-            <Button
-              onClick={createBackup}
-              disabled={isBackingUp}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-              size="lg"
-            >
-              {isBackingUp ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin" />ব্যাকআপ তৈরি হচ্ছে...</>
-              ) : (
-                <><CloudUpload className="mr-2 h-5 w-5" />এখনই ব্যাকআপ নিন</>
-              )}
+            <Button onClick={createBackup} disabled={isBackingUp} className="w-full bg-gradient-to-r from-green-500 to-emerald-600">
+              {isBackingUp ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />ব্যাকআপ তৈরি হচ্ছে...</> : <><CloudUpload className="mr-2 h-4 w-4" />সম্পূর্ণ সিস্টেম ব্যাকআপ</>}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Google Drive Files - Restore */}
+        {/* Drive Files */}
         {isConnected && driveFiles.length > 0 && (
           <Card className="border-blue-500/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DownloadCloud className="h-5 w-5 text-blue-500" />
-                Google Drive ব্যাকআপ ফাইল
-              </CardTitle>
-              <CardDescription>Drive থেকে রিস্টোর করুন</CardDescription>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><DownloadCloud className="h-5 w-5 text-blue-500" />Google Drive ফাইল</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {driveFiles.map((file: any) => (
                   <div key={file.id} className="flex items-center justify-between p-3 rounded-lg bg-muted hover:bg-muted/80">
-                    <div className="flex items-center gap-2">
-                      <FileJson className="h-4 w-4 text-blue-500" />
-                      <div>
-                        <p className="text-sm font-medium">{file.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(file.createdTime).toLocaleDateString('bn-BD')}
-                        </p>
-                      </div>
-                    </div>
+                    <div className="flex items-center gap-2"><FileJson className="h-4 w-4 text-blue-500" /><div><p className="text-sm font-medium">{file.name}</p><p className="text-xs text-muted-foreground">{new Date(file.createdTime).toLocaleDateString('bn-BD')}</p></div></div>
                     <div className="flex items-center gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => downloadBackup(undefined, file.id, file.name)}
-                        disabled={isDownloading === file.id}
-                        title="ডাউনলোড"
-                      >
-                        {isDownloading === file.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudDownload className="h-4 w-4" />}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => restoreBackup(file.id)}
-                        disabled={isRestoring}
-                      >
-                        {isRestoring ? <Loader2 className="h-4 w-4 animate-spin" /> : (
-                          <><RefreshCw className="mr-1 h-4 w-4" />রিস্টোর</>
-                        )}
-                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => downloadBackup(undefined, file.id, file.name)} disabled={isDownloading === file.id}>{isDownloading === file.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadCloud className="h-4 w-4" />}</Button>
+                      <Button size="sm" variant="outline" onClick={() => restoreBackup(file.id)} disabled={isRestoring}>{isRestoring ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CloudDownload className="mr-1 h-4 w-4" />রিস্টোর</>}</Button>
                     </div>
                   </div>
                 ))}
@@ -537,81 +335,35 @@ const AdminBackup = () => {
           </Card>
         )}
 
-        {/* Backup History */}
+        {/* Backup Logs */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              ব্যাকআপ ইতিহাস
-            </CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-muted-foreground" />ব্যাকআপ লগ</CardTitle></CardHeader>
           <CardContent>
             {isLoadingLogs ? (
-              <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+              <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
             ) : backupLogs.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">কোনো ব্যাকআপ রেকর্ড নেই</p>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {backupLogs.map((log: any) => (
-                  <div key={log.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg bg-muted/50 gap-2">
+                  <div key={log.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                     <div className="flex items-center gap-3">
-                      <FileJson className="h-4 w-4 text-primary shrink-0" />
+                      {getStatusBadge(log.status)}
                       <div>
-                        <p className="text-sm font-medium">{log.file_name || 'Unknown'}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{new Date(log.created_at).toLocaleString('bn-BD')}</span>
-                          {log.file_size && <span>• {formatSize(log.file_size)}</span>}
-                          {log.backup_scope && <Badge variant="outline" className="text-xs">{log.backup_scope}</Badge>}
-                        </div>
+                        <p className="text-sm font-medium">{log.file_name || 'ব্যাকআপ'}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(log.started_at).toLocaleString('bn-BD')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {getStatusBadge(log.status)}
-                      {(log.status === 'completed' || log.status === 'completed_local') && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => downloadBackup(log.id, undefined, log.file_name)}
-                          disabled={isDownloading === log.id}
-                          title="ডাউনলোড"
-                        >
-                          {isDownloading === log.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CloudDownload className="h-3 w-3" />}
-                        </Button>
-                      )}
-                      {log.google_drive_url && (
-                        <a href={log.google_drive_url} target="_blank" rel="noopener noreferrer">
-                          <Button variant="ghost" size="sm"><HardDrive className="h-3 w-3" /></Button>
-                        </a>
-                      )}
-                      {log.restore_status === 'restored' && (
-                        <Badge className="bg-purple-500/20 text-purple-700">রিস্টোর করা হয়েছে</Badge>
-                      )}
+                      {log.file_size && <span className="text-xs text-muted-foreground">{formatSize(log.file_size)}</span>}
+                      <Button size="sm" variant="ghost" onClick={() => downloadBackup(log.id)} disabled={isDownloading === log.id}>
+                        {isDownloading === log.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadCloud className="h-4 w-4" />}
+                      </Button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Info */}
-        <Card className="border-blue-500/20 bg-blue-500/5">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
-              <div className="space-y-2 text-sm">
-                <p className="font-medium text-blue-700">সিস্টেম ব্যাকআপে যা অন্তর্ভুক্ত:</p>
-                <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                  <li>সমস্ত ডাটাবেজ টেবিল (পণ্য, অর্ডার, ব্যবহারকারী ইত্যাদি)</li>
-                  <li>পণ্যের ছবি ও ফাইল তালিকা</li>
-                  <li>সিস্টেম সেটিংস ও কনফিগারেশন</li>
-                  <li>স্বয়ংক্রিয় দৈনিক ব্যাকআপ (রাত ২:০০ টায়)</li>
-                  <li>সর্বোচ্চ {maxBackups}টি ব্যাকআপ রাখা হবে, {maxSizeMB} MB সাইজ লিমিট</li>
-                  <li>{retentionDays} দিনের পুরানো ব্যাকআপ স্বয়ংক্রিয়ভাবে মুছে যাবে</li>
-                  <li>ব্যাকআপ {emailNotification ? 'সফল/ব্যর্থ হলে অ্যাডমিনদের ইমেইল পাঠানো হবে' : 'ইমেইল নোটিফিকেশন বন্ধ আছে'}</li>
-                </ul>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
