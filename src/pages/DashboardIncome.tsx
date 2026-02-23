@@ -8,19 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, TrendingUp, Printer, Download } from "lucide-react";
 import { toast } from "sonner";
-import { apiClient } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface IncomeRecord {
-  id: string;
-  date: string;
-  category: string;
-  amount: number;
-  description: string;
-  pond_name?: string;
-  fish_type?: string;
-  fish_weight?: number;
-  fish_price?: number;
+  id: string; date: string; category: string; amount: number; description: string;
+  pond_name?: string; fish_type?: string; fish_weight?: number; fish_price?: number;
 }
 
 const incomeCategories = [
@@ -45,38 +38,35 @@ export default function DashboardIncome() {
     if (!user) return;
     setIsLoading(true);
     const [incomesRes, pondsRes] = await Promise.all([
-      apiClient.getIncomes(String(user.id)),
-      apiClient.getPonds(String(user.id)),
+      supabase.from("farmer_incomes").select("*").eq("user_id", user.id).order("date", { ascending: false }),
+      supabase.from("farmer_ponds").select("id, name").eq("user_id", user.id),
     ]);
-    setRecords((incomesRes.data?.data || []).map((i: any) => ({
-      id: String(i.id), date: i.date, category: i.category, amount: Number(i.amount),
+    setRecords((incomesRes.data || []).map((i) => ({
+      id: i.id, date: i.date, category: i.category, amount: Number(i.amount),
       description: i.description || "", pond_name: i.pond_name || undefined,
       fish_type: i.fish_type || undefined, fish_weight: i.fish_weight ? Number(i.fish_weight) : undefined,
       fish_price: i.fish_price ? Number(i.fish_price) : undefined,
     })));
-    setPonds((pondsRes.data?.data || []).map((p: any) => ({ id: String(p.id), name: p.name })));
+    setPonds((pondsRes.data || []).map((p) => ({ id: p.id, name: p.name })));
     setIsLoading(false);
   }, [user]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleAdd = async () => {
-    if (!user || !date || !category || !amount) {
-      toast.error("তারিখ, ক্যাটাগরি এবং পরিমাণ দিন");
-      return;
-    }
-    const response = await apiClient.createIncome({
+    if (!user || !date || !category || !amount) { toast.error("তারিখ, ক্যাটাগরি এবং পরিমাণ দিন"); return; }
+    const { error } = await supabase.from("farmer_incomes").insert({
       user_id: user.id, date, category, amount: parseFloat(amount),
       description, pond_name: pondName || null,
     });
-    if (response.error) { toast.error("সংরক্ষণে সমস্যা হয়েছে"); return; }
+    if (error) { toast.error("সংরক্ষণে সমস্যা হয়েছে"); return; }
     toast.success("আয় যোগ করা হয়েছে");
     setCategory(""); setAmount(""); setDescription(""); setPondName("");
     fetchData();
   };
 
   const handleDelete = async (id: string) => {
-    await apiClient.deleteIncome(id);
+    await supabase.from("farmer_incomes").delete().eq("id", id);
     toast.success("রেকর্ড মুছে ফেলা হয়েছে");
     fetchData();
   };
@@ -100,10 +90,8 @@ export default function DashboardIncome() {
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = `আয়ের_রিপোর্ট_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    link.href = url; link.download = `আয়ের_রিপোর্ট_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click(); URL.revokeObjectURL(url);
     toast.success('CSV ডাউনলোড হয়েছে');
   };
 
@@ -111,19 +99,12 @@ export default function DashboardIncome() {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-green-100 rounded-full">
-            <TrendingUp className="h-6 w-6 text-green-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">আয় ব্যবস্থাপনা</h1>
-            <p className="text-muted-foreground">আপনার সকল আয়ের রেকর্ড রাখুন</p>
-          </div>
+          <div className="p-3 bg-green-100 rounded-full"><TrendingUp className="h-6 w-6 text-green-600" /></div>
+          <div><h1 className="text-2xl font-bold">আয় ব্যবস্থাপনা</h1><p className="text-muted-foreground">আপনার সকল আয়ের রেকর্ড রাখুন</p></div>
         </div>
 
         <Card className="shadow-elegant">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Plus className="h-5 w-5" /> নতুন আয় যোগ করুন</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Plus className="h-5 w-5" /> নতুন আয় যোগ করুন</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2"><Label>তারিখ</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
@@ -163,11 +144,9 @@ export default function DashboardIncome() {
             ) : (
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>তারিখ</TableHead><TableHead>ক্যাটাগরি</TableHead><TableHead>পুকুর</TableHead><TableHead>বিবরণ</TableHead><TableHead className="text-right">পরিমাণ</TableHead><TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <TableHeader><TableRow>
+                    <TableHead>তারিখ</TableHead><TableHead>ক্যাটাগরি</TableHead><TableHead>পুকুর</TableHead><TableHead>বিবরণ</TableHead><TableHead className="text-right">পরিমাণ</TableHead><TableHead></TableHead>
+                  </TableRow></TableHeader>
                   <TableBody>
                     {records.map(record => (
                       <TableRow key={record.id}>

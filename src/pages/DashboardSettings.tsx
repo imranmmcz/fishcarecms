@@ -26,7 +26,7 @@ import { Link } from "react-router-dom";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
-import { apiClient } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Settings {
@@ -63,27 +63,16 @@ export default function DashboardSettings() {
 
   useEffect(() => {
     const loadSettings = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
+      if (!user) { setLoading(false); return; }
       try {
-        const response = await apiClient.getDashboardSettings();
-        if (response.data?.data) {
-          const saved = response.data.data as unknown as Settings;
+        const { data, error } = await supabase.from("profiles").select("dashboard_settings").eq("user_id", user.id).single();
+        if (!error && data?.dashboard_settings) {
+          const saved = data.dashboard_settings as unknown as Settings;
           setSettings(saved);
           applyTheme(saved.theme);
         } else {
-          // Fallback: migrate from localStorage if exists
-          const localSettings = localStorage.getItem("dashboardSettings");
-          if (localSettings) {
-            const parsed = JSON.parse(localSettings) as Settings;
-            setSettings(parsed);
-            applyTheme(parsed.theme);
-          } else {
-            const savedTheme = localStorage.getItem("theme") || "system";
-            applyTheme(savedTheme as "light" | "dark" | "system");
-          }
+          const savedTheme = localStorage.getItem("theme") || "system";
+          applyTheme(savedTheme as "light" | "dark" | "system");
         }
       } catch {
         const savedTheme = localStorage.getItem("theme") || "system";
@@ -133,9 +122,8 @@ export default function DashboardSettings() {
     setSaving(true);
     try {
       if (user) {
-        const response = await apiClient.saveDashboardSettings(settings as unknown as Record<string, unknown>);
-        if (response.error) throw new Error(response.error);
-        localStorage.removeItem("dashboardSettings");
+        const { error } = await supabase.from("profiles").update({ dashboard_settings: settings as any }).eq("user_id", user.id);
+        if (error) throw error;
       } else {
         localStorage.setItem("dashboardSettings", JSON.stringify(settings));
       }

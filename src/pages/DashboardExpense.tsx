@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, TrendingDown, Printer, Download } from "lucide-react";
 import { toast } from "sonner";
-import { apiClient } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ExpenseRecord {
@@ -39,14 +39,14 @@ export default function DashboardExpense() {
     if (!user) return;
     setIsLoading(true);
     const [expensesRes, pondsRes] = await Promise.all([
-      apiClient.getExpenses(String(user.id)),
-      apiClient.getPonds(String(user.id)),
+      supabase.from("farmer_expenses").select("*").eq("user_id", user.id).order("date", { ascending: false }),
+      supabase.from("farmer_ponds").select("id, name").eq("user_id", user.id),
     ]);
-    setRecords((expensesRes.data?.data || []).map((e: any) => ({
-      id: String(e.id), date: e.date, category: e.category, amount: Number(e.amount),
+    setRecords((expensesRes.data || []).map((e) => ({
+      id: e.id, date: e.date, category: e.category, amount: Number(e.amount),
       description: e.description || "", pond_name: e.pond_name || undefined,
     })));
-    setPonds((pondsRes.data?.data || []).map((p: any) => ({ id: String(p.id), name: p.name })));
+    setPonds((pondsRes.data || []).map((p) => ({ id: p.id, name: p.name })));
     setIsLoading(false);
   }, [user]);
 
@@ -57,18 +57,18 @@ export default function DashboardExpense() {
       toast.error("তারিখ, ক্যাটাগরি এবং পরিমাণ দিন");
       return;
     }
-    const response = await apiClient.createExpense({
+    const { error } = await supabase.from("farmer_expenses").insert({
       user_id: user.id, date, category, amount: parseFloat(amount),
       description, pond_name: pondName || null,
     });
-    if (response.error) { toast.error("সংরক্ষণে সমস্যা হয়েছে"); return; }
+    if (error) { toast.error("সংরক্ষণে সমস্যা হয়েছে"); return; }
     toast.success("ব্যয় যোগ করা হয়েছে");
     setCategory(""); setAmount(""); setDescription(""); setPondName("");
     fetchData();
   };
 
   const handleDelete = async (id: string) => {
-    await apiClient.deleteExpense(id);
+    await supabase.from("farmer_expenses").delete().eq("id", id);
     toast.success("রেকর্ড মুছে ফেলা হয়েছে");
     fetchData();
   };

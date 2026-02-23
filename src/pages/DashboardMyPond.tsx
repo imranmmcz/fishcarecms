@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiClient } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -149,10 +149,10 @@ export default function DashboardMyPond() {
 
   const fetchPonds = useCallback(async () => {
     if (!user) return;
-    const res = await apiClient.getPonds(String(user.id));
-    const data = res.data?.data || [];
-    setPonds(data.map((p: any) => ({
-      id: String(p.id), name: p.name, area: Number(p.area), areaUnit: p.area_unit, depth: Number(p.depth), depthUnit: p.depth_unit,
+    const { data, error } = await supabase.from("farmer_ponds").select("*").eq("user_id", user.id);
+    if (error) { console.error(error); return; }
+    setPonds((data || []).map((p: any) => ({
+      id: p.id, name: p.name, area: Number(p.area), areaUnit: p.area_unit, depth: Number(p.depth), depthUnit: p.depth_unit,
       fishTypes: p.fish_types || [], fishCount: p.fish_count || 0, stockingDate: p.stocking_date || "",
       status: p.status, notes: p.notes || "",
       fishStockEntries: p.fish_stock_entries || [], totalStockingCost: Number(p.total_stocking_cost) || 0,
@@ -161,10 +161,10 @@ export default function DashboardMyPond() {
 
   const fetchSamplings = useCallback(async () => {
     if (!user) return;
-    const res = await apiClient.getSamplings(String(user.id));
-    const data = res.data?.data || [];
-    setSamplingRecords(data.map((s: any) => ({
-      id: String(s.id), pondId: s.pond_id ? String(s.pond_id) : "", pondName: s.pond_name, date: s.date,
+    const { data, error } = await supabase.from("farmer_samplings").select("*").eq("user_id", user.id);
+    if (error) { console.error(error); return; }
+    setSamplingRecords((data || []).map((s: any) => ({
+      id: s.id, pondId: s.pond_id || "", pondName: s.pond_name, date: s.date,
       fishEntries: s.fish_entries || [], totalFish: s.total_fish || 0,
       totalWeight: Number(s.total_weight) || 0, avgWeight: Number(s.avg_weight) || 0, notes: s.notes || "",
     })));
@@ -230,23 +230,20 @@ export default function DashboardMyPond() {
     const isNewPond = !editingPond;
 
     if (editingPond) {
-      const res = await apiClient.updatePond(editingPond.id, pondPayload);
-      if (res.error) { toast.error("আপডেটে সমস্যা"); return; }
+      const { error } = await supabase.from("farmer_ponds").update(pondPayload).eq("id", editingPond.id);
+      if (error) { toast.error("আপডেটে সমস্যা"); return; }
       toast.success("পুকুর আপডেট করা হয়েছে");
     } else {
-      const res = await apiClient.createPond(pondPayload);
-      if (res.error) { toast.error("সংরক্ষণে সমস্যা"); return; }
+      const { error } = await supabase.from("farmer_ponds").insert(pondPayload);
+      if (error) { toast.error("সংরক্ষণে সমস্যা"); return; }
       toast.success("পুকুর যোগ করা হয়েছে");
     }
 
     // Auto-create expense record for fish stocking cost (only for new ponds)
     if (isNewPond && totalCost > 0 && stockingDate) {
-      await apiClient.createExpense({
-        user_id: user.id,
-        date: stockingDate,
-        category: "পোনা ক্রয়",
-        amount: totalCost,
-        description: `${name} - পোনা মজুদ (${totalFish} টি)`,
+      await supabase.from("farmer_expenses").insert({
+        user_id: user.id, date: stockingDate, category: "পোনা ক্রয়",
+        amount: totalCost, description: `${name} - পোনা মজুদ (${totalFish} টি)`,
         pond_name: name,
       });
       toast.success(`৳${totalCost.toLocaleString("bn-BD")} পোনা ক্রয় খরচ রেকর্ড করা হয়েছে`);
@@ -273,7 +270,7 @@ export default function DashboardMyPond() {
 
   const handleDelete = async (id: string) => {
     if (confirm("আপনি কি এই পুকুরটি মুছে ফেলতে চান?")) {
-      await apiClient.deletePond(id);
+      await supabase.from("farmer_ponds").delete().eq("id", id);
       fetchPonds();
       toast.success("পুকুর মুছে ফেলা হয়েছে");
     }
@@ -303,7 +300,7 @@ export default function DashboardMyPond() {
     const pricePerKg = parseFloat(sellPricePerKg);
     const totalAmount = weight * pricePerKg;
 
-    await apiClient.createIncome({
+    await supabase.from("farmer_incomes").insert({
       user_id: user.id, date: sellDate, category: "মাছ বিক্রয়", amount: totalAmount,
       description: sellBuyer ? `ক্রেতা: ${sellBuyer}` : `${sellFishType} - ${weight} কেজি @ ৳${pricePerKg}/কেজি`,
       pond_name: sellingPond.name, fish_type: sellFishType, fish_weight: weight, fish_price: pricePerKg,
@@ -324,7 +321,7 @@ export default function DashboardMyPond() {
       toast.error("খরচের পরিমাণ দিন"); return;
     }
     const amount = parseFloat(expenseAmount);
-    await apiClient.createExpense({
+    await supabase.from("farmer_expenses").insert({
       user_id: user.id, date: expenseDate, category: expenseCategory, amount,
       description: expenseDescription || `${expensePond.name} - ${expenseCategory}`,
       pond_name: expensePond.name,
@@ -371,7 +368,7 @@ export default function DashboardMyPond() {
     if (validEntries.length === 0) { toast.error("অন্তত একটি মাছের নমুনা তথ্য দিন"); return; }
     const { avgWeight, totalFish, estimatedTotalWeight } = calculateSamplingTotals();
 
-    await apiClient.createSampling({
+    await supabase.from("farmer_samplings").insert({
       user_id: user.id, pond_id: samplingPond.id, pond_name: samplingPond.name, date: samplingDate,
       fish_entries: JSON.parse(JSON.stringify(validEntries)),
       total_fish: totalFish, total_weight: estimatedTotalWeight, avg_weight: avgWeight, notes: samplingNotes,
@@ -394,7 +391,7 @@ export default function DashboardMyPond() {
 
   const deleteSampling = async (id: string) => {
     if (confirm("আপনি কি এই নমুনায়ন রেকর্ড মুছে ফেলতে চান?")) {
-      await apiClient.deleteSampling(id);
+      await supabase.from("farmer_samplings").delete().eq("id", id);
       fetchSamplings();
       toast.success("নমুনায়ন রেকর্ড মুছে ফেলা হয়েছে");
     }

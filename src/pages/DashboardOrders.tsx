@@ -9,7 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrders, Order } from "@/hooks/useOrders";
-import { apiClient } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -409,7 +409,7 @@ const DashboardOrders = () => {
                         if (!user) return;
                         try {
                           // Check existing expenses via API (simplified - just add)
-                          const res = await apiClient.createExpense({
+                          const { error } = await supabase.from("farmer_expenses").insert({
                             user_id: user.id,
                             date: new Date(selectedOrder.created_at).toISOString().split('T')[0],
                             category: language === "bn" ? "অর্ডার কেনাকাটা" : "Order Purchase",
@@ -418,7 +418,7 @@ const DashboardOrders = () => {
                             pond_name: "",
                           });
                           
-                          if (res.error) {
+                          if (error) {
                             toast.error(language === "bn" ? "খরচ যোগ করতে ব্যর্থ" : "Failed to add expense");
                           } else {
                             toast.success(translations.addedToExpense);
