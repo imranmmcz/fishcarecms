@@ -8,6 +8,7 @@ import { ProductSlider } from "@/components/ProductSlider";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { FishHealthAdvice } from "@/components/FishHealthAdvice";
 import { HeroSlider } from "@/components/home/HeroSlider";
+import { HeroFeaturedProduct } from "@/components/home/HeroFeaturedProduct";
 import AdUnit from "@/components/AdUnit";
 import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, FlaskConical, Leaf, BarChart3, Languages } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -157,8 +158,23 @@ const Index = () => {
       {/* Header Ad */}
       <AdUnit position="header" className="py-2 container" />
 
-      {/* Dynamic Hero Slider */}
-      <HeroSlider />
+      {/* Hero Section with Featured Product */}
+      <section className="relative">
+        <div className="container py-0">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-0">
+            {/* Hero Slider - takes most space */}
+            <div className="w-full lg:flex-1 lg:min-w-0">
+              <HeroSlider />
+            </div>
+            {/* Featured Product - right side */}
+            <div className="w-full lg:w-64 xl:w-72 shrink-0 lg:relative">
+              <div className="lg:absolute lg:inset-0">
+                <HeroFeaturedProduct />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Featured Products */}
       <FeaturedProducts />
