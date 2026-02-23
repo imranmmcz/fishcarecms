@@ -702,6 +702,7 @@ export type Database = {
           button_variant: string | null
           created_at: string
           display_order: number | null
+          featured_product_id: string | null
           id: string
           is_active: boolean | null
           subtitle: string | null
@@ -718,6 +719,7 @@ export type Database = {
           button_variant?: string | null
           created_at?: string
           display_order?: number | null
+          featured_product_id?: string | null
           id?: string
           is_active?: boolean | null
           subtitle?: string | null
@@ -734,6 +736,7 @@ export type Database = {
           button_variant?: string | null
           created_at?: string
           display_order?: number | null
+          featured_product_id?: string | null
           id?: string
           is_active?: boolean | null
           subtitle?: string | null
@@ -742,7 +745,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "hero_slides_featured_product_id_fkey"
+            columns: ["featured_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       market_prices: {
         Row: {

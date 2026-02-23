@@ -1,0 +1,1 @@
+ALTER TABLE public.hero_slides ADD COLUMN IF NOT EXISTS featured_product_id uuid REFERENCES public.products(id) ON DELETE SET NULL;

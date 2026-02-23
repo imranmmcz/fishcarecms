@@ -8,7 +8,7 @@ import { ProductSlider } from "@/components/ProductSlider";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { FishHealthAdvice } from "@/components/FishHealthAdvice";
 import { HeroSlider } from "@/components/home/HeroSlider";
-import { HeroFeaturedProduct } from "@/components/home/HeroFeaturedProduct";
+
 import AdUnit from "@/components/AdUnit";
 import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, FlaskConical, Leaf, BarChart3, Languages } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -158,13 +158,9 @@ const Index = () => {
       {/* Header Ad */}
       <AdUnit position="header" className="py-2 container" />
 
-      {/* Hero Section with Floating Featured Product */}
+      {/* Hero Section */}
       <section className="relative">
         <HeroSlider />
-        {/* Floating product card - top right */}
-        <div className="absolute top-4 right-4 z-20 hidden md:block">
-          <HeroFeaturedProduct />
-        </div>
       </section>
 
       {/* Featured Products */}

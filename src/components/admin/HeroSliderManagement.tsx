@@ -79,6 +79,7 @@ interface SlideFormData {
   background_value: string;
   display_order: number;
   is_active: boolean;
+  featured_product_id: string;
 }
 
 const defaultFormData: SlideFormData = {
@@ -93,7 +94,14 @@ const defaultFormData: SlideFormData = {
   background_value: gradientPresets[0].value,
   display_order: 0,
   is_active: true,
+  featured_product_id: "",
 };
+
+interface ProductOption {
+  id: string;
+  name: string;
+  price: number;
+}
 
 export function HeroSliderManagement() {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
@@ -103,10 +111,17 @@ export function HeroSliderManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSlide, setSelectedSlide] = useState<HeroSlide | null>(null);
   const [formData, setFormData] = useState<SlideFormData>(defaultFormData);
+  const [products, setProducts] = useState<ProductOption[]>([]);
 
   useEffect(() => {
     fetchSlides();
+    fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    const { data } = await supabase.from("products").select("id, name, price").order("name");
+    setProducts(data || []);
+  };
 
   const fetchSlides = async () => {
     try {
@@ -141,6 +156,7 @@ export function HeroSliderManagement() {
         background_value: slide.background_value || gradientPresets[0].value,
         display_order: slide.display_order,
         is_active: slide.is_active,
+        featured_product_id: slide.featured_product_id || "",
       });
     } else {
       setSelectedSlide(null);
@@ -161,20 +177,26 @@ export function HeroSliderManagement() {
     setSaving(true);
     try {
       if (selectedSlide) {
+        const saveData = {
+          ...formData,
+          featured_product_id: formData.featured_product_id && formData.featured_product_id !== "none" ? formData.featured_product_id : null,
+          updated_at: new Date().toISOString(),
+        };
         const { error } = await supabase
           .from("hero_slides")
-          .update({
-            ...formData,
-            updated_at: new Date().toISOString(),
-          })
+          .update(saveData)
           .eq("id", selectedSlide.id);
 
         if (error) throw error;
         toast.success("স্লাইড আপডেট হয়েছে");
       } else {
+        const insertData = {
+          ...formData,
+          featured_product_id: formData.featured_product_id && formData.featured_product_id !== "none" ? formData.featured_product_id : null,
+        };
         const { error } = await supabase
           .from("hero_slides")
-          .insert(formData);
+          .insert(insertData);
 
         if (error) throw error;
         toast.success("নতুন স্লাইড যোগ হয়েছে");
@@ -541,6 +563,28 @@ export function HeroSliderManagement() {
                     />
                   </div>
                 )}
+              </div>
+
+              {/* Featured Product */}
+              <div className="space-y-2 border-t pt-4">
+                <Label>ফিচার্ড প্রোডাক্ট</Label>
+                <Select
+                  value={formData.featured_product_id}
+                  onValueChange={(value) => setFormData({ ...formData, featured_product_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="কোনো প্রোডাক্ট নেই" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">কোনো প্রোডাক্ট নেই</SelectItem>
+                    {products.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} — ৳{p.price}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">এই স্লাইডে যে প্রোডাক্ট দেখাবে সেটি নির্বাচন করুন</p>
               </div>
 
               {/* Order and Status */}

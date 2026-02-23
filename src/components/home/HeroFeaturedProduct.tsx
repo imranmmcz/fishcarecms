@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FeaturedProduct {
   id: string;
@@ -12,52 +11,35 @@ interface FeaturedProduct {
   image_url: string | null;
 }
 
-export function HeroFeaturedProduct() {
-  const { language } = useLanguage();
+interface HeroFeaturedProductProps {
+  productId?: string | null;
+}
+
+export function HeroFeaturedProduct({ productId }: HeroFeaturedProductProps) {
   const [product, setProduct] = useState<FeaturedProduct | null>(null);
-  const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      // Check if enabled
-      const { data: enabledSetting } = await supabase
-        .from("system_settings")
-        .select("setting_value")
-        .eq("setting_key", "hero_featured_product_enabled")
-        .single();
+    if (!productId) {
+      setProduct(null);
+      setLoading(false);
+      return;
+    }
 
-      if (enabledSetting?.setting_value !== "true") {
-        setLoading(false);
-        return;
-      }
-      setEnabled(true);
-
-      // Check if specific product is set
-      const { data: productIdSetting } = await supabase
-        .from("system_settings")
-        .select("setting_value")
-        .eq("setting_key", "hero_featured_product_id")
-        .single();
-
-      let query = supabase
+    const fetchProduct = async () => {
+      setLoading(true);
+      const { data } = await supabase
         .from("products")
-        .select("id, name, price, discount_percentage, image_url");
-
-      if (productIdSetting?.setting_value && productIdSetting.setting_value !== "auto") {
-        query = query.eq("id", productIdSetting.setting_value);
-      } else {
-        query = query.order("created_at", { ascending: false });
-      }
-
-      const { data } = await query.limit(1).single();
+        .select("id, name, price, discount_percentage, image_url")
+        .eq("id", productId)
+        .single();
       setProduct(data);
       setLoading(false);
     };
-    fetchSettings();
-  }, []);
+    fetchProduct();
+  }, [productId]);
 
-  if (loading || !enabled || !product) return null;
+  if (loading || !product) return null;
 
   const discountedPrice = product.discount_percentage
     ? product.price - (product.price * product.discount_percentage) / 100
@@ -66,17 +48,15 @@ export function HeroFeaturedProduct() {
   return (
     <Link
       to={`/product/${product.id}`}
-      className="relative block backdrop-blur-md bg-white/10 rounded-lg p-2.5 hover:bg-white/20 transition-all duration-300 group max-w-[180px]"
+      className="relative block backdrop-blur-md bg-white/10 rounded-lg p-2.5 hover:bg-white/20 transition-all duration-300 group max-w-[160px]"
     >
-      {/* Discount badge */}
       {product.discount_percentage && product.discount_percentage > 0 && (
         <span className="absolute -top-1.5 -right-1.5 z-10 bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
           -{product.discount_percentage}%
         </span>
       )}
 
-      {/* Image */}
-      <div className="w-full aspect-[4/3] rounded overflow-hidden mb-2">
+      <div className="w-full aspect-square rounded overflow-hidden">
         {product.image_url ? (
           <img
             src={product.image_url}
@@ -90,11 +70,7 @@ export function HeroFeaturedProduct() {
         )}
       </div>
 
-      {/* Info */}
-      <h3 className="text-white text-xs font-medium leading-tight line-clamp-2 mb-1 group-hover:text-white/90">
-        {product.name}
-      </h3>
-      <div className="flex items-baseline gap-1.5">
+      <div className="flex items-baseline gap-1.5 mt-1.5">
         <span className="text-sm font-bold text-white">
           ৳{Math.round(discountedPrice)}
         </span>
