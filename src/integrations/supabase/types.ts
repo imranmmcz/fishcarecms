@@ -370,6 +370,194 @@ export type Database = {
         }
         Relationships: []
       }
+      farmer_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          pond_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          pond_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          pond_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      farmer_incomes: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string | null
+          fish_price: number | null
+          fish_type: string | null
+          fish_weight: number | null
+          id: string
+          pond_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          fish_price?: number | null
+          fish_type?: string | null
+          fish_weight?: number | null
+          id?: string
+          pond_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          fish_price?: number | null
+          fish_type?: string | null
+          fish_weight?: number | null
+          id?: string
+          pond_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      farmer_ponds: {
+        Row: {
+          area: number
+          area_unit: string
+          created_at: string
+          depth: number
+          depth_unit: string
+          fish_count: number | null
+          fish_stock_entries: Json | null
+          fish_types: string[] | null
+          id: string
+          name: string
+          notes: string | null
+          status: string
+          stocking_date: string | null
+          total_stocking_cost: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area?: number
+          area_unit?: string
+          created_at?: string
+          depth?: number
+          depth_unit?: string
+          fish_count?: number | null
+          fish_stock_entries?: Json | null
+          fish_types?: string[] | null
+          id?: string
+          name: string
+          notes?: string | null
+          status?: string
+          stocking_date?: string | null
+          total_stocking_cost?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area?: number
+          area_unit?: string
+          created_at?: string
+          depth?: number
+          depth_unit?: string
+          fish_count?: number | null
+          fish_stock_entries?: Json | null
+          fish_types?: string[] | null
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: string
+          stocking_date?: string | null
+          total_stocking_cost?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      farmer_samplings: {
+        Row: {
+          avg_weight: number | null
+          created_at: string
+          date: string
+          fish_entries: Json | null
+          id: string
+          notes: string | null
+          pond_id: string | null
+          pond_name: string
+          total_fish: number | null
+          total_weight: number | null
+          user_id: string
+        }
+        Insert: {
+          avg_weight?: number | null
+          created_at?: string
+          date?: string
+          fish_entries?: Json | null
+          id?: string
+          notes?: string | null
+          pond_id?: string | null
+          pond_name: string
+          total_fish?: number | null
+          total_weight?: number | null
+          user_id: string
+        }
+        Update: {
+          avg_weight?: number | null
+          created_at?: string
+          date?: string
+          fish_entries?: Json | null
+          id?: string
+          notes?: string | null
+          pond_id?: string | null
+          pond_name?: string
+          total_fish?: number | null
+          total_weight?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_samplings_pond_id_fkey"
+            columns: ["pond_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_ponds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_drive_tokens: {
         Row: {
           access_token: string | null
