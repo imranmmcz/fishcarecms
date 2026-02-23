@@ -14,6 +14,8 @@ const adSettingsRoutes = require('./routes/adSettings');
 const pageContentRoutes = require('./routes/pageContent');
 const orderRoutes = require('./routes/orders');
 const reviewRoutes = require('./routes/reviews');
+const farmingRoutes = require('./routes/farming');
+const extrasRoutes = require('./routes/extras');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -80,6 +82,8 @@ app.use('/api/ad-settings', adSettingsRoutes);
 app.use('/api/page-content', pageContentRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/farming', farmingRoutes);
+app.use('/api', extrasRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
