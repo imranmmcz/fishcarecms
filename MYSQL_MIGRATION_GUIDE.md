@@ -10,14 +10,14 @@
 
 ### Database Configuration (Hostinger)
 ```env
-DB_HOST=mysql.hostinger.com
+DB_HOST=u109046763_cal-host.hostinger.com
 DB_PORT=3306
 DB_NAME=u109046763_cal
 DB_USER=u109046763_cal
 DB_PASSWORD=I1912.gp
 JWT_SECRET=fishcare-bd-secret-key-2025
 PORT=3000
-FRONTEND_URL=https://fishcal.lovable.app
+FRONTEND_URL=https://blog.fishcare.com.bd
 ```
 
 ### API Base URL
