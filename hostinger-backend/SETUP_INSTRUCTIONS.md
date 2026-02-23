@@ -1,31 +1,38 @@
-# FishCare Pro - Hostinger Backend Setup
+# FishCare Pro - Hostinger Backend Quick Setup
 
 ## 🚀 Quick Setup Guide
 
 ### Step 1: Database Setup
-1. **phpMyAdmin ওপেন করুন**: Hostinger hPanel → Databases → phpMyAdmin
-2. **Database নির্বাচন করুন**: `u109046763_cal`
-3. **SQL Tab এ যান**: Import → Browse → `database/schema.sql` আপলোড করুন
-4. **Execute করুন**: Go বাটনে ক্লিক করুন
+1. **MySQL-এ লগইন করুন**
+2. **Database তৈরি করুন**: `CREATE DATABASE fishcare_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+3. **Schema ইমপোর্ট করুন**: `mysql -u USER -p fishcare_db < database/complete_schema.sql`
 
 ### Step 2: Environment Configuration
-`.env` ফাইলটি সার্ভারে আপলোড করুন (ইতিমধ্যে কনফিগার করা আছে):
+```bash
+cp .env.example .env
+nano .env
+```
 
+নিচের তথ্যগুলো পূরণ করুন:
 ```env
-DB_HOST=mysql.hostinger.com
+DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=u109046763_cal
-DB_USER=u109046763_cal
-DB_PASSWORD=I1912.gp
-JWT_SECRET=fishcare-bd-secret-key-2025-production
-PORT=3000
+DB_NAME=fishcare_db
+DB_USER=your_user
+DB_PASSWORD=your_password
+JWT_SECRET=your-random-secret
+PORT=3001
 NODE_ENV=production
-FRONTEND_URL=https://fishcal.lovable.app
+FRONTEND_URL=https://your-domain.com
+```
+
+**JWT Secret জেনারেট করুন:**
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
 ### Step 3: Install Dependencies
 ```bash
-cd public_html/cal
 npm install
 ```
 
@@ -45,16 +52,17 @@ pm2 startup
 ```
 
 ### Step 5: Verify Installation
-**API Health Check:**
-```
-https://blog.fishcare.com.bd/api/health
+```bash
+curl http://localhost:3001/api/health
 ```
 
 **Expected Response:**
 ```json
 {
   "status": "ok",
-  "timestamp": "2025-01-23T..."
+  "timestamp": "2026-02-23T...",
+  "environment": "production",
+  "version": "1.0.0"
 }
 ```
 
@@ -77,49 +85,33 @@ https://blog.fishcare.com.bd/api/health
 | PUT | /api/products/:id | পণ্য আপডেট (Admin) |
 | DELETE | /api/products/:id | পণ্য মুছুন (Admin) |
 
+### Orders
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/orders | সকল অর্ডার |
+| POST | /api/orders | নতুন অর্ডার |
+| PATCH | /api/orders/:id/status | স্ট্যাটাস আপডেট |
+| PATCH | /api/orders/:id/shipping | শিপিং আপডেট |
+
 ### Market Prices
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /api/market-prices | সকল বাজার দাম |
-| POST | /api/market-prices | দাম যোগ করুন (Admin) |
-| PUT | /api/market-prices/:id | দাম আপডেট (Admin) |
-| DELETE | /api/market-prices/:id | দাম মুছুন (Admin) |
+| GET | /api/market-prices | বাজার দর |
+| POST | /api/market-prices | দাম যোগ করুন |
 
-### Settings
+### Farming
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /api/settings | সিস্টেম সেটিংস |
-| PUT | /api/settings/:key | সেটিং আপডেট (Admin) |
-| GET | /api/ad-settings | বিজ্ঞাপন সেটিংস |
-| PUT | /api/ad-settings | বিজ্ঞাপন আপডেট (Admin) |
+| GET/POST | /api/farming/ponds | পুকুর ব্যবস্থাপনা |
+| GET/POST | /api/farming/incomes | আয় হিসাব |
+| GET/POST | /api/farming/expenses | ব্যয় হিসাব |
+| GET/POST | /api/farming/samplings | স্যাম্পলিং |
 
-## 🔐 Default Admin Credentials
+## 🔐 Default Admin
 - **Email:** admin@fishcare.com
 - **Password:** admin123
 
-⚠️ **গুরুত্বপূর্ণ:** প্রথম লগইনের পর পাসওয়ার্ড পরিবর্তন করুন!
+⚠️ **প্রথম লগইনের পর অবশ্যই পাসওয়ার্ড পরিবর্তন করুন!**
 
-## 🛠 Troubleshooting
-
-### Database Connection Error
-```bash
-# Check MySQL is running
-systemctl status mysql
-
-# Test connection
-mysql -h mysql.hostinger.com -u u109046763_cal -p
-```
-
-### PM2 Issues
-```bash
-pm2 logs fishcare-api
-pm2 restart fishcare-api
-pm2 delete fishcare-api && pm2 start ecosystem.config.js
-```
-
-### CORS Issues
-`.htaccess` ফাইলটি সঠিকভাবে কনফিগার করা আছে কিনা নিশ্চিত করুন।
-
-## 📞 Support
-- Documentation: MYSQL_MIGRATION_GUIDE.md
-- GitHub: Auto-deploy configured
+## 📖 বিস্তারিত গাইড
+সম্পূর্ণ ডেপ্লয়মেন্ট গাইডের জন্য দেখুন: **HOSTINGER_DEPLOYMENT_GUIDE.md**

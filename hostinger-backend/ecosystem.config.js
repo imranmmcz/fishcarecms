@@ -1,4 +1,4 @@
-// PM2 Production Configuration
+// PM2 Production Configuration for Hostinger VPS
 module.exports = {
   apps: [
     {
@@ -10,16 +10,21 @@ module.exports = {
       max_memory_restart: '500M',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000
+        PORT: 3001
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3000
+        PORT: 3001
       },
       error_file: './logs/error.log',
       out_file: './logs/output.log',
       log_file: './logs/combined.log',
-      time: true
+      time: true,
+      // Restart after crash with exponential backoff
+      exp_backoff_restart_delay: 100,
+      // Graceful shutdown
+      kill_timeout: 5000,
+      listen_timeout: 10000,
     }
   ]
 };
