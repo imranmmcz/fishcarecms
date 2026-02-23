@@ -68,6 +68,7 @@ const MarketPrice = () => {
   const [formDistricts, setFormDistricts] = useState<string[]>([]);
   const [formUpazilas, setFormUpazilas] = useState<string[]>([]);
   const [fishPopoverOpen, setFishPopoverOpen] = useState(false);
+  const [isCustomFish, setIsCustomFish] = useState(false);
 
   // Auto-fill location from profile when dialog opens
   useEffect(() => {
@@ -138,6 +139,7 @@ const MarketPrice = () => {
       setSubmitOpen(false);
       setFormFishName(""); setFormFishNameBn(""); setFormPrice("");
       setFormMinPrice(""); setFormMaxPrice(""); setFormMarketName("");
+      setIsCustomFish(false);
       fetchPrices();
     } catch (error) {
       console.error("Error submitting price:", error);
@@ -286,50 +288,96 @@ const MarketPrice = () => {
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <Label>{language === "bn" ? "মাছ নির্বাচন করুন *" : "Select Fish *"}</Label>
-                    <Popover open={fishPopoverOpen} onOpenChange={setFishPopoverOpen}>
-                      <PopoverTrigger asChild>
+                    {!isCustomFish ? (
+                      <>
+                        <Popover open={fishPopoverOpen} onOpenChange={setFishPopoverOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={fishPopoverOpen}
+                              className="w-full justify-between font-normal"
+                            >
+                              {formFishNameBn
+                                ? `${formFishNameBn} (${formFishName})`
+                                : (language === "bn" ? "মাছ নির্বাচন করুন..." : "Select fish...")}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder={language === "bn" ? "মাছ খুঁজুন..." : "Search fish..."} />
+                              <CommandList>
+                                <CommandEmpty>{language === "bn" ? "কোনো মাছ পাওয়া যায়নি" : "No fish found"}</CommandEmpty>
+                                <CommandGroup>
+                                  {fishSpecies.map((fish) => (
+                                    <CommandItem
+                                      key={fish.id}
+                                      value={`${fish.nameEn} ${fish.nameBn}`}
+                                      onSelect={() => {
+                                        setFormFishName(fish.nameEn);
+                                        setFormFishNameBn(fish.nameBn);
+                                        setIsCustomFish(false);
+                                        setFishPopoverOpen(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          formFishName === fish.nameEn ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      {fish.nameBn} ({fish.nameEn})
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={fishPopoverOpen}
-                          className="w-full justify-between font-normal"
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-xs"
+                          onClick={() => {
+                            setIsCustomFish(true);
+                            setFormFishName("");
+                            setFormFishNameBn("");
+                          }}
                         >
-                          {formFishNameBn
-                            ? `${formFishNameBn} (${formFishName})`
-                            : (language === "bn" ? "মাছ নির্বাচন করুন..." : "Select fish...")}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          {language === "bn" ? "তালিকায় নেই? নিজে লিখুন" : "Not in the list? Enter manually"}
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder={language === "bn" ? "মাছ খুঁজুন..." : "Search fish..."} />
-                          <CommandList>
-                            <CommandEmpty>{language === "bn" ? "কোনো মাছ পাওয়া যায়নি" : "No fish found"}</CommandEmpty>
-                            <CommandGroup>
-                              {fishSpecies.map((fish) => (
-                                <CommandItem
-                                  key={fish.id}
-                                  value={`${fish.nameEn} ${fish.nameBn}`}
-                                  onSelect={() => {
-                                    setFormFishName(fish.nameEn);
-                                    setFormFishNameBn(fish.nameBn);
-                                    setFishPopoverOpen(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      formFishName === fish.nameEn ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  {fish.nameBn} ({fish.nameEn})
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                      </>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder={language === "bn" ? "মাছের নাম (বাংলা) *" : "Fish name (Bangla) *"}
+                            value={formFishNameBn}
+                            onChange={(e) => setFormFishNameBn(e.target.value)}
+                          />
+                          <Input
+                            placeholder={language === "bn" ? "মাছের নাম (ইংরেজি) *" : "Fish name (English) *"}
+                            value={formFishName}
+                            onChange={(e) => setFormFishName(e.target.value)}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-xs"
+                          onClick={() => {
+                            setIsCustomFish(false);
+                            setFormFishName("");
+                            setFormFishNameBn("");
+                          }}
+                        >
+                          {language === "bn" ? "তালিকা থেকে নির্বাচন করুন" : "Select from list"}
+                        </Button>
+                      </>
+                    )}
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-1.5">
