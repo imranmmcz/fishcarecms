@@ -59,9 +59,9 @@ export const Header = () => {
         { path: "/modules", label: t.allModules },
       ];
 
-  // Get user display name from Supabase user metadata
+  // Get user display name
   const defaultUserName = language === "bn" ? "ব্যবহারকারী" : "User";
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || defaultUserName;
+  const userName = (user as any)?.full_name || user?.email?.split('@')[0] || defaultUserName;
   const userRole = isAdmin ? (language === "bn" ? "অ্যাডমিন" : "Admin") : (language === "bn" ? "ব্যবহারকারী" : "User");
   const userInitials = userName.slice(0, 2).toUpperCase();
 

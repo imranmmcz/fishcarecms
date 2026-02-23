@@ -7,7 +7,7 @@ import { FileText, TrendingUp, TrendingDown, Calculator, Calendar, Printer, Down
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface IncomeRecord {
@@ -40,21 +40,21 @@ export default function DashboardReports() {
     if (!user) return;
     const fetchData = async () => {
       const [incomesRes, expensesRes, pondsRes] = await Promise.all([
-        supabase.from("farmer_incomes").select("*").eq("user_id", user.id),
-        supabase.from("farmer_expenses").select("*").eq("user_id", user.id),
-        supabase.from("farmer_ponds").select("id, name").eq("user_id", user.id),
+        apiClient.getIncomes(String(user.id)),
+        apiClient.getExpenses(String(user.id)),
+        apiClient.getPonds(String(user.id)),
       ]);
-      setIncomes((incomesRes.data || []).map(i => ({
-        id: i.id, date: i.date, category: i.category,
+      setIncomes((incomesRes.data?.data || []).map((i: any) => ({
+        id: String(i.id), date: i.date, category: i.category,
         amount: Number(i.amount), description: i.description || "",
         pondName: i.pond_name || undefined,
       })));
-      setExpenses((expensesRes.data || []).map(e => ({
-        id: e.id, date: e.date, category: e.category,
+      setExpenses((expensesRes.data?.data || []).map((e: any) => ({
+        id: String(e.id), date: e.date, category: e.category,
         amount: Number(e.amount), description: e.description || "",
         pondName: e.pond_name || undefined,
       })));
-      setPonds(pondsRes.data || []);
+      setPonds((pondsRes.data?.data || []).map((p: any) => ({ id: String(p.id), name: p.name })));
     };
     fetchData();
   }, [user]);

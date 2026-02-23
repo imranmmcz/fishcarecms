@@ -26,7 +26,7 @@ import { Link } from "react-router-dom";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Settings {
@@ -68,14 +68,9 @@ export default function DashboardSettings() {
         return;
       }
       try {
-        const { data } = await supabase
-          .from("profiles")
-          .select("dashboard_settings")
-          .eq("user_id", user.id)
-          .single();
-
-        if (data?.dashboard_settings) {
-          const saved = data.dashboard_settings as unknown as Settings;
+        const response = await apiClient.getDashboardSettings();
+        if (response.data?.data) {
+          const saved = response.data.data as unknown as Settings;
           setSettings(saved);
           applyTheme(saved.theme);
         } else {
@@ -138,12 +133,8 @@ export default function DashboardSettings() {
     setSaving(true);
     try {
       if (user) {
-        const { error } = await supabase
-          .from("profiles")
-          .update({ dashboard_settings: JSON.parse(JSON.stringify(settings)) })
-          .eq("user_id", user.id);
-        if (error) throw error;
-        // Clean up old localStorage
+        const response = await apiClient.saveDashboardSettings(settings as unknown as Record<string, unknown>);
+        if (response.error) throw new Error(response.error);
         localStorage.removeItem("dashboardSettings");
       } else {
         localStorage.setItem("dashboardSettings", JSON.stringify(settings));

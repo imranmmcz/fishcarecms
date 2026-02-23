@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FarmingProvider } from "@/contexts/FarmingContext";
-// Supabase/Lovable Cloud Contexts
+// MySQL API Contexts
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProductsProvider } from "@/contexts/ProductsContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";

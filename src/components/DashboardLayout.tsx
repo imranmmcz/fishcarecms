@@ -149,14 +149,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   };
 
-  // Use profile data from Supabase context
+  // Use profile data from context
   useEffect(() => {
     if (profile) {
       setUserName(profile.full_name || user?.email?.split('@')[0] || '');
       setUserAvatar(profile.avatar_url || null);
     } else if (user) {
-      setUserName(user.user_metadata?.full_name || user.email?.split('@')[0] || '');
-      setUserAvatar(null);
+      setUserName((user as any)?.full_name || user.email?.split('@')[0] || '');
+      setUserAvatar((user as any)?.avatar_url || null);
     }
   }, [user, profile]);
 
