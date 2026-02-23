@@ -27,7 +27,7 @@ interface UserProfile {
   avatar_url: string | null;
 }
 
-type UserRole = 'admin' | 'farmer' | 'customer' | 'user';
+type UserRole = 'admin' | 'farmer' | 'customer' | 'user' | 'manager' | 'cashier' | 'delivery_staff';
 
 interface AuthContextType {
   user: User | null;
