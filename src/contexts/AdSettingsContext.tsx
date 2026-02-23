@@ -1,12 +1,12 @@
 /**
- * AdSettingsContext - MySQL Backend API Version
+ * AdSettingsContext - Supabase/Lovable Cloud Version
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiClient } from '@/lib/api-client';
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdSettings {
-  id: string | number;
+  id: string;
   ad_client_id: string | null;
   header_ad_enabled: boolean;
   header_ad_slot: string | null;
@@ -34,16 +34,29 @@ export const AdSettingsProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchAdSettings = async () => {
     try {
-      const response = await apiClient.getAdSettings();
-      if (response.data?.settings) {
-        setAdSettings(response.data.settings as unknown as AdSettings);
-        if (response.data.settings.ad_client_id) {
-          const scriptEl = document.getElementById('adsense-script');
-          if (scriptEl) {
-            scriptEl.setAttribute('src', `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${response.data.settings.ad_client_id}`);
-            scriptEl.setAttribute('crossorigin', 'anonymous');
-          }
-        }
+      const { data, error } = await supabase
+        .from("ad_settings")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setAdSettings({
+          id: data.id,
+          ad_client_id: data.ad_client_id,
+          header_ad_enabled: data.header_ad_enabled ?? false,
+          header_ad_slot: data.header_ad_slot,
+          sidebar_ad_enabled: data.sidebar_ad_enabled ?? false,
+          sidebar_ad_slot: data.sidebar_ad_slot,
+          footer_ad_enabled: data.footer_ad_enabled ?? false,
+          footer_ad_slot: data.footer_ad_slot,
+          in_article_ad_enabled: data.in_article_ad_enabled ?? false,
+          in_article_ad_slot: data.in_article_ad_slot,
+          between_modules_ad_enabled: data.between_modules_ad_enabled ?? false,
+          between_modules_ad_slot: data.between_modules_ad_slot,
+        });
       }
     } catch (err) {
       console.error('Error fetching ad settings:', err);

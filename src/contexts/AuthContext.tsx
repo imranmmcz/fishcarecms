@@ -1,10 +1,10 @@
 /**
- * AuthContext - MySQL Backend API Version
- * VITE_API_URL পরিবর্তন করলেই ব্যাকএন্ড পরিবর্তন হবে
+ * AuthContext - Supabase/Lovable Cloud Version
  */
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { apiClient, User } from "@/lib/api-client";
+import { User as SupabaseUser, Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddressData {
   mobile?: string;
@@ -29,10 +29,25 @@ interface UserProfile {
 
 type UserRole = 'admin' | 'farmer' | 'customer' | 'user' | 'manager' | 'cashier' | 'delivery_staff';
 
+// Compatibility User type
+interface User {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  mobile?: string | null;
+  division?: string | null;
+  district?: string | null;
+  upazila?: string | null;
+  village?: string | null;
+  avatar_url?: string | null;
+  created_at?: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
-  session: unknown | null;
+  session: Session | null;
   isLoading: boolean;
   isAdmin: boolean;
   isFarmer: boolean;
@@ -50,108 +65,175 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const userToProfile = (user: User | null): UserProfile | null => {
-  if (!user) return null;
-  return {
-    id: String(user.id),
-    user_id: String(user.id),
-    email: user.email,
-    full_name: user.full_name,
-    mobile: user.mobile,
-    division: user.division,
-    district: user.district,
-    upazila: user.upazila,
-    village: user.village,
-    avatar_url: user.avatar_url,
-  };
-};
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isAdmin = user?.role === 'admin';
-  const userRole: UserRole | null = user?.role ? (user.role as UserRole) : null;
+  const isAdmin = userRole === 'admin';
   const isFarmer = userRole === 'farmer';
   const isCustomer = userRole === 'customer';
-  const isAuthenticated = !!user;
-  const profile = userToProfile(user);
+  const isAuthenticated = !!supabaseUser;
 
-  // Check for existing session on mount
+  // Build compatibility User object
+  const user: User | null = supabaseUser ? {
+    id: supabaseUser.id,
+    email: supabaseUser.email || '',
+    full_name: profile?.full_name || supabaseUser.user_metadata?.full_name || null,
+    role: userRole || 'user',
+    mobile: profile?.mobile,
+    division: profile?.division,
+    district: profile?.district,
+    upazila: profile?.upazila,
+    village: profile?.village,
+    avatar_url: profile?.avatar_url,
+    created_at: supabaseUser.created_at,
+  } : null;
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return null;
+      }
+
+      return {
+        id: data.id,
+        user_id: data.user_id,
+        email: data.email,
+        full_name: data.full_name,
+        mobile: data.mobile,
+        division: data.division,
+        district: data.district,
+        upazila: data.upazila,
+        village: data.village,
+        avatar_url: data.avatar_url,
+      } as UserProfile;
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      return null;
+    }
+  };
+
+  const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
+    try {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching user role:", error);
+        return null;
+      }
+      return (data?.role as UserRole) || 'user';
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+      return null;
+    }
+  };
+
+  const loadUserData = async (userId: string) => {
+    const [profileData, role] = await Promise.all([
+      fetchProfile(userId),
+      fetchUserRole(userId),
+    ]);
+    setProfile(profileData);
+    setUserRole(role);
+  };
+
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setSupabaseUser(session?.user ?? null);
         setIsLoading(false);
-        return;
-      }
-      try {
-        const response = await apiClient.getCurrentUser();
-        if (response.data?.user) {
-          setUser(response.data.user);
+
+        if (session?.user) {
+          setTimeout(() => loadUserData(session.user.id), 0);
         } else {
-          apiClient.removeToken();
+          setProfile(null);
+          setUserRole(null);
         }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        apiClient.removeToken();
-      } finally {
-        setIsLoading(false);
       }
-    };
-    checkAuth();
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setSupabaseUser(session?.user ?? null);
+      setIsLoading(false);
+
+      if (session?.user) {
+        await loadUserData(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const response = await apiClient.signIn(email, password);
-      if (response.error) {
-        return { error: new Error(response.error) };
-      }
-      if (response.data?.user) {
-        setUser(response.data.user);
-      }
-      return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error as Error | null };
   };
 
   const signUp = async (email: string, password: string, fullName: string, addressData?: AddressData, roleType?: string) => {
-    try {
-      const signUpData: Record<string, unknown> = { ...addressData };
-      if (roleType) signUpData.role_type = roleType;
-      const response = await apiClient.signUp(email, password, fullName, signUpData as any);
-      if (response.error) {
-        return { error: new Error(response.error) };
-      }
-      if (response.data?.user) {
-        setUser(response.data.user);
-      }
-      return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    }
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          full_name: fullName,
+          mobile: addressData?.mobile,
+          division: addressData?.division,
+          district: addressData?.district,
+          upazila: addressData?.upazila,
+          village: addressData?.village,
+          role_type: roleType || 'farmer',
+        },
+      },
+    });
+    return { error: error as Error | null };
   };
 
   const signOut = async () => {
-    try {
-      await apiClient.signOut();
-    } catch (error) {
-      console.error('Sign out error:', error);
-    } finally {
-      setUser(null);
-    }
+    await supabase.auth.signOut();
+    setProfile(null);
+    setUserRole(null);
   };
 
   const updateProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
-    if (!user) return false;
+    if (!supabaseUser) return false;
     try {
-      const response = await apiClient.updateUser(String(user.id), data as unknown as Partial<User>);
-      if (response.error) return false;
-      if (response.data?.user) {
-        setUser(response.data.user);
-      }
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: data.full_name,
+          mobile: data.mobile,
+          division: data.division,
+          district: data.district,
+          upazila: data.upazila,
+          village: data.village,
+          avatar_url: data.avatar_url,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", supabaseUser.id);
+
+      if (error) throw error;
+
+      const updatedProfile = await fetchProfile(supabaseUser.id);
+      setProfile(updatedProfile);
       return true;
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -159,42 +241,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updatePassword = async (currentPassword: string, newPassword: string) => {
-    try {
-      const response = await apiClient.updatePassword(currentPassword, newPassword);
-      if (response.error) {
-        return { error: new Error(response.error) };
-      }
-      return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    }
-  };
-
-  const switchToFarmer = async (): Promise<boolean> => {
-    if (!user) return false;
-    try {
-      const response = await apiClient.updateUserRole(String(user.id), 'user');
-      if (response.error) return false;
-      // Refresh user data
-      await refreshUser();
-      return true;
-    } catch (error) {
-      console.error("Error switching role:", error);
-      return false;
-    }
+  const updatePassword = async (_currentPassword: string, newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error: error as Error | null };
   };
 
   const refreshUser = async () => {
-    if (!user) return;
-    try {
-      const response = await apiClient.getCurrentUser();
-      if (response.data?.user) {
-        setUser(response.data.user);
-      }
-    } catch (error) {
-      console.error('Refresh user failed:', error);
-    }
+    if (!supabaseUser) return;
+    await loadUserData(supabaseUser.id);
+  };
+
+  const switchToFarmer = async (): Promise<boolean> => {
+    // Role switching not directly supported with Supabase RLS
+    return false;
   };
 
   return (
@@ -202,7 +261,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         profile,
-        session: user ? { user } : null,
+        session,
         isLoading,
         isAdmin,
         isFarmer,
