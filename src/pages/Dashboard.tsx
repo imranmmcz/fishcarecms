@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -106,74 +107,91 @@ export default function Dashboard() {
   }, [user, profile]);
 
   useEffect(() => {
-    const incomes: IncomeRecord[] = JSON.parse(localStorage.getItem("farmerIncomes") || "[]");
-    const expenses: ExpenseRecord[] = JSON.parse(localStorage.getItem("farmerExpenses") || "[]");
-    const ponds: PondRecord[] = JSON.parse(localStorage.getItem("farmerPonds") || "[]");
-
-    setTotalIncome(incomes.reduce((sum, item) => sum + item.amount, 0));
-    setTotalExpense(expenses.reduce((sum, item) => sum + item.amount, 0));
-    setPondCount(ponds.length);
-
-    // Calculate total fish count and area
-    const fishTotal = ponds.reduce((sum, pond) => sum + (pond.fishCount || 0), 0);
-    const areaTotal = ponds.reduce((sum, pond) => sum + pond.area, 0);
-    setTotalFishCount(fishTotal);
-    setTotalArea(areaTotal);
-
-    // Calculate pond-wise data
-    const pondData: PondChartData[] = ponds.map((pond) => {
-      const pondIncome = incomes
-        .filter((i) => i.pondName === pond.name)
-        .reduce((sum, i) => sum + i.amount, 0);
-      const pondExpense = expenses
-        .filter((e) => e.pondName === pond.name)
-        .reduce((sum, e) => sum + e.amount, 0);
-      return {
-        name: pond.name,
-        income: pondIncome,
-        expense: pondExpense,
-        profit: pondIncome - pondExpense,
-      };
-    });
-    setPondChartData(pondData);
-
-    // Calculate pond summaries
-    const summaries: PondSummary[] = ponds.map((pond) => {
-      const pondIncome = incomes
-        .filter((i) => i.pondName === pond.name)
-        .reduce((sum, i) => sum + i.amount, 0);
-      const pondExpense = expenses
-        .filter((e) => e.pondName === pond.name)
-        .reduce((sum, e) => sum + e.amount, 0);
-      return {
-        name: pond.name,
-        area: pond.area,
-        areaUnit: pond.areaUnit || "শতক",
-        fishCount: pond.fishCount || 0,
-        income: pondIncome,
-        expense: pondExpense,
-        profit: pondIncome - pondExpense,
-        status: pond.status,
-        fishTypes: pond.fishTypes || [],
-      };
-    });
-    setPondSummaries(summaries);
-
-    // Calculate expense category data
-    const categoryMap: { [key: string]: number } = {};
-    expenses.forEach((e) => {
-      categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
-    });
-    const catData = Object.entries(categoryMap).map(([name, value]) => ({ name, value }));
-    setCategoryData(catData);
-  }, []);
-
-  const handleViewPondDetails = (pond: PondSummary) => {
-    const incomes: IncomeRecord[] = JSON.parse(localStorage.getItem("farmerIncomes") || "[]");
-    const expenses: ExpenseRecord[] = JSON.parse(localStorage.getItem("farmerExpenses") || "[]");
+    if (!user) return;
     
-    setPondIncomes(incomes.filter((i) => i.pondName === pond.name));
-    setPondExpenses(expenses.filter((e) => e.pondName === pond.name));
+    const fetchData = async () => {
+      const [pondsRes, incomesRes, expensesRes] = await Promise.all([
+        supabase.from("farmer_ponds").select("*").eq("user_id", user.id),
+        supabase.from("farmer_incomes").select("*").eq("user_id", user.id),
+        supabase.from("farmer_expenses").select("*").eq("user_id", user.id),
+      ]);
+
+      const ponds = pondsRes.data || [];
+      const incomes = incomesRes.data || [];
+      const expenses = expensesRes.data || [];
+
+      setTotalIncome(incomes.reduce((sum, item) => sum + Number(item.amount), 0));
+      setTotalExpense(expenses.reduce((sum, item) => sum + Number(item.amount), 0));
+      setPondCount(ponds.length);
+
+      const fishTotal = ponds.reduce((sum, pond) => sum + (pond.fish_count || 0), 0);
+      const areaTotal = ponds.reduce((sum, pond) => sum + Number(pond.area), 0);
+      setTotalFishCount(fishTotal);
+      setTotalArea(areaTotal);
+
+      const pondData: PondChartData[] = ponds.map((pond) => {
+        const pondIncome = incomes
+          .filter((i) => i.pond_name === pond.name)
+          .reduce((sum, i) => sum + Number(i.amount), 0);
+        const pondExpense = expenses
+          .filter((e) => e.pond_name === pond.name)
+          .reduce((sum, e) => sum + Number(e.amount), 0);
+        return {
+          name: pond.name,
+          income: pondIncome,
+          expense: pondExpense,
+          profit: pondIncome - pondExpense,
+        };
+      });
+      setPondChartData(pondData);
+
+      const summaries: PondSummary[] = ponds.map((pond) => {
+        const pondIncome = incomes
+          .filter((i) => i.pond_name === pond.name)
+          .reduce((sum, i) => sum + Number(i.amount), 0);
+        const pondExpense = expenses
+          .filter((e) => e.pond_name === pond.name)
+          .reduce((sum, e) => sum + Number(e.amount), 0);
+        return {
+          name: pond.name,
+          area: Number(pond.area),
+          areaUnit: pond.area_unit || "শতক",
+          fishCount: pond.fish_count || 0,
+          income: pondIncome,
+          expense: pondExpense,
+          profit: pondIncome - pondExpense,
+          status: pond.status,
+          fishTypes: pond.fish_types || [],
+        };
+      });
+      setPondSummaries(summaries);
+
+      const categoryMap: { [key: string]: number } = {};
+      expenses.forEach((e) => {
+        categoryMap[e.category] = (categoryMap[e.category] || 0) + Number(e.amount);
+      });
+      const catData = Object.entries(categoryMap).map(([name, value]) => ({ name, value }));
+      setCategoryData(catData);
+    };
+
+    fetchData();
+  }, [user]);
+
+  const handleViewPondDetails = async (pond: PondSummary) => {
+    if (!user) return;
+    const [incomesRes, expensesRes] = await Promise.all([
+      supabase.from("farmer_incomes").select("*").eq("user_id", user.id).eq("pond_name", pond.name),
+      supabase.from("farmer_expenses").select("*").eq("user_id", user.id).eq("pond_name", pond.name),
+    ]);
+    
+    setPondIncomes((incomesRes.data || []).map(i => ({
+      id: i.id, date: i.date, category: i.category, amount: Number(i.amount),
+      description: i.description || "", pondName: i.pond_name || undefined,
+    })));
+    setPondExpenses((expensesRes.data || []).map(e => ({
+      id: e.id, date: e.date, category: e.category, amount: Number(e.amount),
+      description: e.description || "", pondName: e.pond_name || undefined,
+    })));
     setSelectedPond(pond);
   };
 
@@ -554,12 +572,25 @@ function RecentList({ type }: { type: "income" | "expense" }) {
   const [items, setItems] = useState<(IncomeRecord | ExpenseRecord)[]>([]);
   const { language } = useLanguage();
   const { formatPrice } = useCurrency();
+  const { user } = useAuth();
 
   useEffect(() => {
-    const key = type === "income" ? "farmerIncomes" : "farmerExpenses";
-    const data = JSON.parse(localStorage.getItem(key) || "[]");
-    setItems(data.slice(-5).reverse());
-  }, [type]);
+    if (!user) return;
+    const table = type === "income" ? "farmer_incomes" : "farmer_expenses";
+    supabase
+      .from(table)
+      .select("*")
+      .eq("user_id", user.id)
+      .order("date", { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        setItems((data || []).map(d => ({
+          id: d.id, date: d.date, category: d.category,
+          amount: Number(d.amount), description: d.description || "",
+          pondName: d.pond_name || undefined,
+        })));
+      });
+  }, [type, user]);
 
   if (items.length === 0) {
     return <p className="text-muted-foreground text-center py-4">{language === "bn" ? "কোনো রেকর্ড নেই" : "No records"}</p>;

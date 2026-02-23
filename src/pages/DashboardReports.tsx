@@ -7,6 +7,8 @@ import { FileText, TrendingUp, TrendingDown, Calculator, Calendar, Printer, Down
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface IncomeRecord {
   id: string;
@@ -27,6 +29,7 @@ interface ExpenseRecord {
 }
 
 export default function DashboardReports() {
+  const { user } = useAuth();
   const [incomes, setIncomes] = useState<IncomeRecord[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
   const [filterMonth, setFilterMonth] = useState("all");
@@ -34,10 +37,27 @@ export default function DashboardReports() {
   const [ponds, setPonds] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
-    setIncomes(JSON.parse(localStorage.getItem("farmerIncomes") || "[]"));
-    setExpenses(JSON.parse(localStorage.getItem("farmerExpenses") || "[]"));
-    setPonds(JSON.parse(localStorage.getItem("farmerPonds") || "[]"));
-  }, []);
+    if (!user) return;
+    const fetchData = async () => {
+      const [incomesRes, expensesRes, pondsRes] = await Promise.all([
+        supabase.from("farmer_incomes").select("*").eq("user_id", user.id),
+        supabase.from("farmer_expenses").select("*").eq("user_id", user.id),
+        supabase.from("farmer_ponds").select("id, name").eq("user_id", user.id),
+      ]);
+      setIncomes((incomesRes.data || []).map(i => ({
+        id: i.id, date: i.date, category: i.category,
+        amount: Number(i.amount), description: i.description || "",
+        pondName: i.pond_name || undefined,
+      })));
+      setExpenses((expensesRes.data || []).map(e => ({
+        id: e.id, date: e.date, category: e.category,
+        amount: Number(e.amount), description: e.description || "",
+        pondName: e.pond_name || undefined,
+      })));
+      setPonds(pondsRes.data || []);
+    };
+    fetchData();
+  }, [user]);
 
   const months = [
     { value: "01", label: "জানুয়ারি" },
