@@ -132,6 +132,28 @@ const Modules = () => {
             </p>
           </div>
 
+          {/* Modules Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {modules.map((module, index) => (
+              <>
+                <ModuleCard
+                  key={module.id}
+                  title={module.title}
+                  description={module.description}
+                  icon={module.icon}
+                  path={module.path}
+                  isActive={true}
+                />
+                {/* Show ad after every 6th module */}
+                {(index + 1) % 6 === 0 && index < modules.length - 1 && (
+                  <div className="md:col-span-2 lg:col-span-3">
+                    <AdUnit position="between-modules" className="py-2" />
+                  </div>
+                )}
+              </>
+            ))}
+          </div>
+
           {/* Progress Card */}
           <Card className="bg-gradient-card shadow-medium">
             <CardHeader>
@@ -220,28 +242,6 @@ const Modules = () => {
               </ol>
             </CardContent>
           </Card>
-
-          {/* Modules Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {modules.map((module, index) => (
-              <>
-                <ModuleCard
-                  key={module.id}
-                  title={module.title}
-                  description={module.description}
-                  icon={module.icon}
-                  path={module.path}
-                  isActive={true}
-                />
-                {/* Show ad after every 6th module */}
-                {(index + 1) % 6 === 0 && index < modules.length - 1 && (
-                  <div className="md:col-span-2 lg:col-span-3">
-                    <AdUnit position="between-modules" className="py-2" />
-                  </div>
-                )}
-              </>
-            ))}
-          </div>
 
           {/* Quick Start */}
           <Card className="bg-gradient-primary text-white shadow-large">
