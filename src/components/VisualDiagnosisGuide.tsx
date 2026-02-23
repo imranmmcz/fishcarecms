@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Search, 
   AlertTriangle, 
@@ -17,8 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 import { 
-  fishDiseases, 
   diseaseCategories, 
   severityLabels,
   type FishDisease 
@@ -29,8 +29,37 @@ export const VisualDiagnosisGuide = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedDisease, setSelectedDisease] = useState<FishDisease | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [diseases, setDiseases] = useState<FishDisease[]>([]);
 
-  const filteredDiseases = fishDiseases.filter((disease) => {
+  useEffect(() => {
+    const fetchDiseases = async () => {
+      const { data } = await supabase
+        .from('fish_diseases')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+      if (data) {
+        setDiseases(data.map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          nameEn: d.name_en,
+          category: d.category,
+          affectedFish: d.affected_fish || [],
+          season: d.season || [],
+          severity: d.severity,
+          symptoms: d.symptoms || [],
+          causes: d.causes || [],
+          prevention: d.prevention || [],
+          treatment: d.treatment || [],
+          imageUrl: d.image_url || '',
+          imageDescription: d.image_description || '',
+        })));
+      }
+    };
+    fetchDiseases();
+  }, []);
+
+  const filteredDiseases = diseases.filter((disease) => {
     const matchesCategory = selectedCategory === "all" || disease.category === selectedCategory;
     const matchesSearch = 
       disease.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
