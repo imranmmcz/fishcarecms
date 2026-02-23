@@ -158,13 +158,13 @@ const MarketPrice = () => {
         .select("*")
         .order("fish_name_bn", { ascending: true });
 
-      if (division) {
+      if (division && division !== "all") {
         query = query.eq("division", division);
       }
-      if (district) {
+      if (district && district !== "all") {
         query = query.eq("district", district);
       }
-      if (upazila) {
+      if (upazila && upazila !== "all") {
         query = query.eq("upazila", upazila);
       }
       if (searchQuery) {
