@@ -316,8 +316,8 @@ export default function DeliverySettingsAdmin() {
                 ? "ফ্রি ডেলিভারি সীমার উপরে অর্ডার করলে ডেলিভারি চার্জ মওকুফ হবে"
                 : "Free delivery will apply when order exceeds the threshold")}
               {deliveryChargeMandatory === "all" && (language === "bn"
-                ? "সকল অর্ডারে ডেলিভারি চার্জ প্রযোজ্য হবে, ফ্রি ডেলিভারি অফার থাকলেও"
-                : "Delivery charge will apply to all orders, even if free delivery threshold is met")}
+                ? "সকল অর্ডারে বাধ্যতামূলক — ফ্রি ডেলিভারি থ্রেশহোল্ড পূরণ হলেও চার্জ মওকুফ হবে না"
+                : "Mandatory for all orders — delivery charge will not be waived even if free delivery threshold is met")}
               {deliveryChargeMandatory === "cod_only" && (language === "bn"
                 ? "ক্যাশ অন ডেলিভারি অর্ডারে সবসময় ডেলিভারি চার্জ নেওয়া হবে। অন্যান্য পেমেন্টে ফ্রি ডেলিভারি প্রযোজ্য"
                 : "COD orders will always have delivery charge. Other payment methods can get free delivery")}
