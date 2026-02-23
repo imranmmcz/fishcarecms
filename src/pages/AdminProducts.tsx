@@ -901,6 +901,7 @@ const AdminProducts = () => {
                           <TableHead>পণ্যের নাম</TableHead>
                           <TableHead>ক্যাটাগরি</TableHead>
                           <TableHead className="text-center">স্টক</TableHead>
+                          <TableHead className="text-right">ক্রয় মূল্য</TableHead>
                           <TableHead className="text-right">মূল দাম</TableHead>
                           <TableHead className="text-right">বিক্রয় দাম</TableHead>
                           <TableHead className="text-center">অ্যাকশন</TableHead>
@@ -947,6 +948,9 @@ const AdminProducts = () => {
                                 ) : (
                                   <span className="font-medium">{stock} {getUnitLabel(product.unit || "pcs")}</span>
                                 )}
+                              </TableCell>
+                              <TableCell className="text-right text-muted-foreground">
+                                {(product as any).cost_price > 0 ? `৳${(product as any).cost_price}` : '—'}
                               </TableCell>
                               <TableCell className="text-right">৳{product.price}</TableCell>
                               <TableCell className="text-right font-bold text-primary">
