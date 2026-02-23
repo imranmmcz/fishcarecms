@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle, FolderOpen, ImagePlus, Upload, Link2, Search } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { CategoryManagement } from "@/components/admin/CategoryManagement";
@@ -110,6 +111,7 @@ interface ProductFormProps {
 const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitting, companies, brands, categories }: ProductFormProps) => {
   const [imageMode, setImageMode] = useState<"url" | "upload">("url");
   const [isUploading, setIsUploading] = useState(false);
+  const [hideExternalLink, setHideExternalLink] = useState(!formData.external_link);
 
   const handleChange = useCallback((field: keyof ProductFormData, value: string | number) => {
     onFormChange({ ...formData, [field]: value });
@@ -501,14 +503,31 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
       </div>
       
       <div className="grid gap-2">
-        <Label htmlFor="link">বাহ্যিক লিংক</Label>
-        <Input
-          id="link"
-          value={formData.external_link}
-          onChange={(e) => handleChange("external_link", e.target.value)}
-          placeholder="https://fishcare.com.bd/product"
-          autoComplete="off"
-        />
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="hide-external-link"
+            checked={hideExternalLink}
+            onCheckedChange={(checked) => {
+              setHideExternalLink(!!checked);
+              if (checked) {
+                handleChange("external_link", "");
+              }
+            }}
+          />
+          <Label htmlFor="hide-external-link" className="text-sm cursor-pointer">বাহ্যিক লিংক হাইড করুন</Label>
+        </div>
+        {!hideExternalLink && (
+          <>
+            <Label htmlFor="link">বাহ্যিক লিংক</Label>
+            <Input
+              id="link"
+              value={formData.external_link}
+              onChange={(e) => handleChange("external_link", e.target.value)}
+              placeholder="https://fishcare.com.bd/product"
+              autoComplete="off"
+            />
+          </>
+        )}
       </div>
 
       {/* SEO Section */}
