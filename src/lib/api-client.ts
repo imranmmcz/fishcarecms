@@ -481,217 +481,206 @@ class ApiClient {
   async listDriveBackups() {
     return this.request<{ files: any[] }>('/backup/drive/files');
   }
+
+  // ===================== FILE UPLOAD =====================
+
+  private async uploadFile(endpoint: string, formData: FormData): Promise<ApiResponse<any>> {
+    const token = this.getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) return { error: data.error || 'Upload failed' };
+      return { data };
+    } catch (error) {
+      console.error('Upload failed:', error);
+      return { error: 'Network error during upload.' };
+    }
+  }
+
+  async uploadProductImage(file: File, productId?: number, altText?: string, displayOrder?: number, isPrimary?: boolean) {
+    const formData = new FormData();
+    formData.append('image', file);
+    if (productId) formData.append('product_id', String(productId));
+    if (altText) formData.append('alt_text', altText);
+    if (displayOrder !== undefined) formData.append('display_order', String(displayOrder));
+    if (isPrimary) formData.append('is_primary', '1');
+    return this.uploadFile('/upload/product-image', formData);
+  }
+
+  async uploadProductImages(files: File[], productId?: number) {
+    const formData = new FormData();
+    files.forEach(f => formData.append('images', f));
+    if (productId) formData.append('product_id', String(productId));
+    return this.uploadFile('/upload/product-images', formData);
+  }
+
+  async uploadProductMainImage(productId: number, file: File) {
+    const formData = new FormData();
+    formData.append('image', file);
+    return this.uploadFile(`/upload/product-main-image/${productId}`, formData);
+  }
+
+  async uploadAvatar(file: File) {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return this.uploadFile('/upload/avatar', formData);
+  }
+
+  async uploadGeneralImage(file: File) {
+    const formData = new FormData();
+    formData.append('image', file);
+    return this.uploadFile('/upload/image', formData);
+  }
+
+  async deleteUploadedFile(url: string) {
+    return this.request('/upload/file', { method: 'DELETE', body: { url } });
+  }
 }
 
 // Types
 export interface User {
-  id: number;
-  email: string;
-  full_name: string | null;
-  mobile: string | null;
-  division: string | null;
-  district: string | null;
-  upazila: string | null;
-  village: string | null;
-  role: 'user' | 'admin';
-  avatar_url: string | null;
-  created_at: string;
-  updated_at?: string;
+  id: number; email: string; full_name: string; role: string;
+  mobile?: string; division?: string; district?: string; upazila?: string;
+  village?: string; avatar_url?: string; is_active?: boolean;
+  created_at: string; updated_at?: string;
 }
 
 export interface Product {
-  id: number;
-  name: string;
-  description: string | null;
-  price: number;
-  discount_percentage: number;
-  category: string;
-  image_url: string | null;
-  external_link: string | null;
-  stock_quantity?: number;
-  sku?: string | null;
-  unit?: string | null;
-  reorder_level?: number | null;
-  brand_id?: number | null;
-  company_id?: number | null;
-  brand_name?: string;
-  company_name?: string;
-  created_at: string;
-  updated_at: string;
+  id: number; name: string; description: string | null; price: number;
+  discount_percentage: number; category: string; image_url: string | null;
+  external_link: string | null; stock_quantity: number; sku: string | null;
+  unit: string | null; reorder_level: number; company_id: number | null;
+  brand_id: number | null; meta_title: string | null; meta_description: string | null;
+  seo_url: string | null; focus_keyword: string | null; image_alt_text: string | null;
+  cost_price: number | null; weight_kg: number | null;
+  created_at: string; updated_at: string;
 }
 
 export interface MarketPrice {
-  id: number;
-  fish_name: string;
-  fish_name_bn: string;
-  price_per_kg: number;
-  min_price: number | null;
-  max_price: number | null;
-  division: string;
-  district: string;
-  upazila: string;
-  market_name: string | null;
-  price_date: string;
-  created_at: string;
-  updated_at: string;
+  id: number; fish_name: string; fish_name_bn: string; price_per_kg: number;
+  min_price: number | null; max_price: number | null; market_name: string | null;
+  division: string; district: string; upazila: string; price_date: string;
+  created_at: string; updated_at: string;
 }
 
 export interface SystemSetting {
-  id: number;
-  setting_key: string;
-  setting_value: string | null;
+  id: number; setting_key: string; setting_value: string | null;
   description: string | null;
-  updated_at: string;
-  updated_by: number | null;
+  updated_at: string; updated_by: number | null;
 }
 
 export interface AdSettings {
-  id: number;
-  ad_client_id: string | null;
-  header_ad_enabled: boolean;
-  header_ad_slot: string | null;
-  sidebar_ad_enabled: boolean;
-  sidebar_ad_slot: string | null;
-  footer_ad_enabled: boolean;
-  footer_ad_slot: string | null;
-  in_article_ad_enabled: boolean;
-  in_article_ad_slot: string | null;
-  between_modules_ad_enabled: boolean;
-  between_modules_ad_slot: string | null;
+  id: number; ad_client_id: string | null;
+  header_ad_enabled: boolean; header_ad_slot: string | null;
+  footer_ad_enabled: boolean; footer_ad_slot: string | null;
+  sidebar_ad_enabled: boolean; sidebar_ad_slot: string | null;
+  in_article_ad_enabled: boolean; in_article_ad_slot: string | null;
+  between_modules_ad_enabled: boolean; between_modules_ad_slot: string | null;
 }
 
 export interface PageContent {
-  id: number;
-  section_key: string;
-  section_name: string;
-  content: Record<string, unknown>;
-  is_active: boolean;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
+  id: number; section_key: string; section_name: string;
+  content: unknown; is_active: boolean; display_order: number;
+  created_at: string; updated_at: string;
 }
 
 export interface OrderItem {
-  id: number;
-  order_id: number;
-  product_id: number;
-  product_name: string;
-  product_image: string | null;
-  quantity: number;
-  unit_price: number;
-  discount_percentage: number;
-  total_price: number;
+  id: number; order_id: number; product_id: number;
+  product_name: string; product_image: string | null;
+  quantity: number; unit_price: number;
+  discount_percentage: number; total_price: number;
 }
 
 export interface OrderStatusHistory {
-  id: number;
-  order_id: number;
-  status: string;
-  note: string | null;
-  changed_by: number | null;
+  id: number; order_id: number;
+  old_status: string; new_status: string;
+  notes: string | null;
   changed_by_name?: string;
   created_at: string;
 }
 
 export interface Order {
-  id: number;
-  order_number: string;
-  user_id: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
-  payment_status: 'pending' | 'paid' | 'failed' | 'refunded' | 'verification_pending';
-  payment_method: string;
-  payment_trx_id: string | null;
-  payment_sender_number: string | null;
-  subtotal: number;
-  shipping_cost: number;
-  discount_amount: number;
-  total_amount: number;
-  shipping_name: string;
-  shipping_mobile: string;
-  shipping_division: string | null;
-  shipping_district: string | null;
-  shipping_upazila: string | null;
-  shipping_address: string | null;
-  customer_note: string | null;
-  admin_note: string | null;
-  created_at: string;
-  updated_at: string;
-  shipped_at: string | null;
-  delivered_at: string | null;
-  // Shipment Tracking fields
-  courier_name: string | null;
-  tracking_number: string | null;
-  tracking_url: string | null;
-  estimated_delivery: string | null;
+  id: number; order_number: string; user_id?: number | null;
+  customer_name?: string; customer_phone?: string; customer_email?: string | null;
+  shipping_address?: string; division?: string | null; district?: string | null;
+  upazila?: string | null;
+  shipping_name?: string; shipping_mobile?: string;
+  shipping_division?: string; shipping_district?: string; shipping_upazila?: string;
+  status?: string; payment_method?: string; payment_status?: string;
+  subtotal?: number; discount_amount?: number; shipping_cost?: number; total_amount?: number;
+  notes?: string | null; transaction_id?: string | null; sender_number?: string | null;
+  payment_trx_id?: string; payment_sender_number?: string;
+  customer_note?: string; admin_note?: string;
+  courier_name?: string; tracking_number?: string; tracking_url?: string;
+  estimated_delivery?: string; shipped_at?: string | null; delivered_at?: string | null;
+  created_at: string; updated_at: string;
   items?: OrderItem[];
   status_history?: OrderStatusHistory[];
-  customer_name?: string;
-  customer_email?: string;
   item_count?: number;
+  [key: string]: any;
 }
 
 export interface CourierService {
-  id: number;
-  name: string;
-  name_bn: string | null;
-  tracking_url_template: string | null;
+  id: number; name: string; name_bn?: string;
+  api_base_url?: string | null;
+  api_key?: string | null;
+  tracking_url_template?: string | null;
   is_active: boolean;
   display_order: number;
 }
 
 export interface CreateOrderData {
+  customer_name?: string; customer_phone?: string; customer_email?: string;
+  shipping_address?: string; division?: string; district?: string; upazila?: string;
+  shipping_name?: string; shipping_mobile?: string;
+  shipping_division?: string; shipping_district?: string; shipping_upazila?: string;
+  payment_method?: string; notes?: string; customer_note?: string;
   items: { product_id: number; quantity: number }[];
-  shipping_name: string;
-  shipping_mobile: string;
-  shipping_division?: string;
-  shipping_district?: string;
-  shipping_upazila?: string;
-  shipping_address?: string;
-  payment_method?: string;
-  customer_note?: string;
-  // Manual payment fields (bKash/Nagad)
-  payment_trx_id?: string;
-  payment_sender_number?: string;
+  subtotal?: number; discount_amount?: number;
+  shipping_cost?: number; total_amount?: number;
+  payment_trx_id?: string; payment_sender_number?: string;
 }
 
 export interface OrderStats {
-  status_summary: { status: string; count: number; total_amount: number }[];
-  today: { count: number; total_amount: number };
-  this_month: { count: number; total_amount: number };
+  total_orders: number; pending_orders: number;
+  total_revenue: number;
   recent_orders: Order[];
   low_stock_products: { id: number; name: string; stock_quantity: number; stock_status: string }[];
+  status_summary?: any;
+  today?: any;
+  this_month?: any;
+  [key: string]: any;
 }
 
 export interface ProductReview {
-  id: number;
-  product_id: number;
-  user_id: number;
-  rating: number;
-  title: string | null;
-  review_text: string | null;
-  is_verified_purchase: boolean;
+  id: number; product_id: number; user_id: number | null;
+  rating: number; title: string | null; comment: string | null;
+  review_text?: string | null;
+  is_approved: boolean; is_verified_purchase: boolean;
   helpful_count: number;
-  created_at: string;
-  user_name: string | null;
-  user_avatar: string | null;
+  created_at: string; updated_at: string;
+  user_name: string | null; user_avatar: string | null;
 }
 
 export interface ReviewStats {
   total_reviews: number;
   average_rating: number;
-  rating_breakdown: {
-    1: number;
-    2: number;
-    3: number;
-    4: number;
-    5: number;
-  };
+  rating_distribution: Record<number, number>;
+  rating_breakdown?: Record<number, number>;
 }
 
 export interface ProductReviewsResponse {
   reviews: ProductReview[];
   stats: ReviewStats;
-  user_review: ProductReview | null;
+  total: number;
+  user_review?: any;
   limit: number;
   offset: number;
 }
@@ -700,7 +689,7 @@ export interface ProductReviewsResponse {
 export interface FarmerPond {
   id: number; user_id: number; name: string; area: number; area_unit: string;
   depth: number; depth_unit: string; fish_types: string[] | null; fish_count: number;
-  stocking_date: string | null; fish_stock_entries: unknown[] | null;
+  fish_stock_entries: unknown[] | null; stocking_date: string | null;
   total_stocking_cost: number; status: string; notes: string | null;
   created_at: string; updated_at: string;
 }
