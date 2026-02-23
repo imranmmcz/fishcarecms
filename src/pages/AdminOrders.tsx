@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AdminLayout } from "@/components/AdminLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -174,6 +175,16 @@ const AdminOrders = () => {
     fetchOrders();
     fetchStats();
   }, [fetchOrders, fetchStats]);
+
+  // Auto-open order from query param
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const orderId = searchParams.get("order");
+    if (orderId && orders.length > 0) {
+      handleViewDetails(orderId);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, orders]);
 
   const handleViewDetails = async (orderId: string) => {
     const order = orders.find(o => o.id === orderId);

@@ -562,7 +562,7 @@ const AdminEcommerceOverview = () => {
                 </TableHeader>
                 <TableBody>
                   {recentOrders.map((order) => (
-                    <TableRow key={order.id}>
+                    <TableRow key={order.id} className="cursor-pointer" onClick={() => navigate(`/admin/orders?order=${order.id}`)}>
                       <TableCell className="font-medium">{order.order_number}</TableCell>
                       <TableCell>{order.customer_name}</TableCell>
                       <TableCell>৳{Number(order.total_amount).toLocaleString("en-IN")}</TableCell>
@@ -588,7 +588,7 @@ const AdminEcommerceOverview = () => {
                         {format(new Date(order.created_at), "dd/MM/yy hh:mm a")}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/orders")}>
+                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/admin/orders?order=${order.id}`); }}>
                           <Eye className="h-4 w-4" />
                         </Button>
                       </TableCell>
