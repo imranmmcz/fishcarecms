@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { ShoppingCart, Package, TrendingUp, Users, Clock, CheckCircle, Truck, XCircle, DollarSign, AlertTriangle, User, MapPin, Phone, Mail, CalendarDays, Search } from "lucide-react";
+import { ShoppingCart, Package, TrendingUp, TrendingDown, Users, Clock, CheckCircle, Truck, XCircle, DollarSign, AlertTriangle, User, MapPin, Phone, Mail, CalendarDays, Search, Waves, Fish } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +75,11 @@ interface UserDashboardData {
   deliveredOrders: number;
   orders: RecentOrder[];
   role: string;
+  pondCount: number;
+  activePondCount: number;
+  totalIncome: number;
+  totalExpense: number;
+  totalFishCount: number;
 }
 
 const AdminDashboard = () => {
@@ -181,14 +186,27 @@ const AdminDashboard = () => {
   const fetchUserDashboard = useCallback(async (userId: string) => {
     setIsUserLoading(true);
     try {
-      const [{ data: userOrders }, { data: roleData }] = await Promise.all([
+      const [
+        { data: userOrders },
+        { data: roleData },
+        { data: pondsData },
+        { data: incomesData },
+        { data: expensesData },
+      ] = await Promise.all([
         supabase.from("orders").select("id, order_number, customer_name, total_amount, status, payment_method, payment_status, created_at").eq("user_id", userId).order("created_at", { ascending: false }),
         supabase.from("user_roles").select("role").eq("user_id", userId).limit(1),
+        supabase.from("farmer_ponds").select("id, status, fish_count").eq("user_id", userId),
+        supabase.from("farmer_incomes").select("amount").eq("user_id", userId),
+        supabase.from("farmer_expenses").select("amount").eq("user_id", userId),
       ]);
 
       const orders = userOrders || [];
       const byStatus: Record<string, number> = {};
       orders.forEach(o => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
+
+      const ponds = pondsData || [];
+      const incomes = incomesData || [];
+      const expenses = expensesData || [];
 
       setSelectedUserData({
         totalOrders: orders.length,
@@ -197,6 +215,11 @@ const AdminDashboard = () => {
         deliveredOrders: byStatus["delivered"] || 0,
         orders: orders.slice(0, 10),
         role: roleData?.[0]?.role || "user",
+        pondCount: ponds.length,
+        activePondCount: ponds.filter(p => p.status === "active").length,
+        totalIncome: incomes.reduce((s, i) => s + Number(i.amount), 0),
+        totalExpense: expenses.reduce((s, e) => s + Number(e.amount), 0),
+        totalFishCount: ponds.reduce((s, p) => s + (p.fish_count || 0), 0),
       });
     } catch (err) {
       console.error("User dashboard error:", err);
@@ -419,6 +442,38 @@ const AdminDashboard = () => {
                 {/* User Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
+                    <Waves className="h-5 w-5 text-primary" />
+                    <span className="text-xl font-bold">{selectedUserData.pondCount.toLocaleString("bn-BD")}</span>
+                    <span className="text-xs text-muted-foreground">মোট পুকুর ({selectedUserData.activePondCount.toLocaleString("bn-BD")} চলমান)</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
+                    <Fish className="h-5 w-5 text-primary" />
+                    <span className="text-xl font-bold">{selectedUserData.totalFishCount.toLocaleString("bn-BD")}</span>
+                    <span className="text-xs text-muted-foreground">মোট মাছ</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
+                    <TrendingUp className="h-5 w-5 text-green-600" />
+                    <span className="text-xl font-bold text-green-600">৳{selectedUserData.totalIncome.toLocaleString("bn-BD")}</span>
+                    <span className="text-xs text-muted-foreground">মোট আয়</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
+                    <TrendingDown className="h-5 w-5 text-destructive" />
+                    <span className="text-xl font-bold text-destructive">৳{selectedUserData.totalExpense.toLocaleString("bn-BD")}</span>
+                    <span className="text-xs text-muted-foreground">মোট ব্যয়</span>
+                  </div>
+                </div>
+
+                {/* Profit/Loss */}
+                <div className="p-3 rounded-lg bg-muted/50 text-center">
+                  <span className="text-sm text-muted-foreground">নিট লাভ/ক্ষতি: </span>
+                  <span className={`text-lg font-bold ${(selectedUserData.totalIncome - selectedUserData.totalExpense) >= 0 ? "text-green-600" : "text-destructive"}`}>
+                    ৳{(selectedUserData.totalIncome - selectedUserData.totalExpense).toLocaleString("bn-BD")}
+                  </span>
+                </div>
+
+                {/* Order Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
                     <ShoppingCart className="h-5 w-5 text-primary" />
                     <span className="text-xl font-bold">{selectedUserData.totalOrders.toLocaleString("bn-BD")}</span>
                     <span className="text-xs text-muted-foreground">মোট অর্ডার</span>
@@ -426,7 +481,7 @@ const AdminDashboard = () => {
                   <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
                     <DollarSign className="h-5 w-5 text-primary" />
                     <span className="text-xl font-bold">৳{selectedUserData.totalSpent.toLocaleString("bn-BD")}</span>
-                    <span className="text-xs text-muted-foreground">মোট খরচ</span>
+                    <span className="text-xs text-muted-foreground">মোট ক্রয়</span>
                   </div>
                   <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
                     <Clock className="h-5 w-5 text-yellow-600" />
