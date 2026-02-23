@@ -43,6 +43,7 @@ export default function DeliverySettingsAdmin() {
   const [deliveryEnabled, setDeliveryEnabled] = useState(true);
   const [defaultCharge, setDefaultCharge] = useState("100");
   const [freeAbove, setFreeAbove] = useState("0");
+  const [deliveryChargeMandatory, setDeliveryChargeMandatory] = useState("none");
   const [partialEnabled, setPartialEnabled] = useState(false);
   const [minAdvancePercent, setMinAdvancePercent] = useState("50");
 
@@ -72,6 +73,7 @@ export default function DeliverySettingsAdmin() {
           "delivery_charge_enabled",
           "delivery_default_charge",
           "delivery_free_above",
+          "delivery_charge_mandatory",
           "partial_payment_enabled",
           "partial_payment_min_percent",
         ]);
@@ -82,6 +84,7 @@ export default function DeliverySettingsAdmin() {
       setDeliveryEnabled(map.delivery_charge_enabled !== "false");
       setDefaultCharge(map.delivery_default_charge || "100");
       setFreeAbove(map.delivery_free_above || "0");
+      setDeliveryChargeMandatory(map.delivery_charge_mandatory || "none");
       setPartialEnabled(map.partial_payment_enabled === "true");
       setMinAdvancePercent(map.partial_payment_min_percent || "50");
 
@@ -115,6 +118,7 @@ export default function DeliverySettingsAdmin() {
         delivery_charge_enabled: deliveryEnabled.toString(),
         delivery_default_charge: defaultCharge,
         delivery_free_above: freeAbove,
+        delivery_charge_mandatory: deliveryChargeMandatory,
         partial_payment_enabled: partialEnabled.toString(),
         partial_payment_min_percent: minAdvancePercent,
       };
@@ -282,6 +286,42 @@ export default function DeliverySettingsAdmin() {
                 {language === "bn" ? "0 = ফ্রি ডেলিভারি নিষ্ক্রিয়" : "0 = free delivery disabled"}
               </p>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Mandatory Delivery Charge */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">
+              {language === "bn" ? "ডেলিভারি চার্জ বাধ্যতামূলক" : "Mandatory Delivery Charge"}
+            </Label>
+            <Select value={deliveryChargeMandatory} onValueChange={setDeliveryChargeMandatory}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">
+                  {language === "bn" ? "বাধ্যতামূলক নয় (ফ্রি ডেলিভারি প্রযোজ্য)" : "Not mandatory (free delivery applies)"}
+                </SelectItem>
+                <SelectItem value="all">
+                  {language === "bn" ? "সকল অর্ডারে বাধ্যতামূলক" : "Mandatory for all orders"}
+                </SelectItem>
+                <SelectItem value="cod_only">
+                  {language === "bn" ? "শুধু ক্যাশ অন ডেলিভারিতে বাধ্যতামূলক" : "Mandatory for COD only"}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {deliveryChargeMandatory === "none" && (language === "bn"
+                ? "ফ্রি ডেলিভারি সীমার উপরে অর্ডার করলে ডেলিভারি চার্জ মওকুফ হবে"
+                : "Free delivery will apply when order exceeds the threshold")}
+              {deliveryChargeMandatory === "all" && (language === "bn"
+                ? "সকল অর্ডারে ডেলিভারি চার্জ প্রযোজ্য হবে, ফ্রি ডেলিভারি অফার থাকলেও"
+                : "Delivery charge will apply to all orders, even if free delivery threshold is met")}
+              {deliveryChargeMandatory === "cod_only" && (language === "bn"
+                ? "ক্যাশ অন ডেলিভারি অর্ডারে সবসময় ডেলিভারি চার্জ নেওয়া হবে। অন্যান্য পেমেন্টে ফ্রি ডেলিভারি প্রযোজ্য"
+                : "COD orders will always have delivery charge. Other payment methods can get free delivery")}
+            </p>
           </div>
         </CardContent>
       </Card>

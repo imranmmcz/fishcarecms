@@ -88,9 +88,14 @@ const Checkout = () => {
   const shippingCost = calculateDeliveryCharge(
     formData.shipping_district,
     subtotal,
-    totalWeight
+    totalWeight,
+    formData.payment_method
   );
   const total = subtotal + shippingCost;
+
+  // Check if delivery charge is mandatory for current payment method
+  const isDeliveryMandatory = deliverySettings.deliveryChargeMandatory === 'all' ||
+    (deliverySettings.deliveryChargeMandatory === 'cod_only' && formData.payment_method === 'cod');
 
   // Partial payment calculation
   const partialPayment = calculatePartialPayment(total);
@@ -694,6 +699,13 @@ const Checkout = () => {
                         <span className="font-medium">{formatPrice(shippingCost)}</span>
                       )}
                     </div>
+                    {isDeliveryMandatory && shippingCost > 0 && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        {deliverySettings.deliveryChargeMandatory === 'cod_only'
+                          ? (language === "bn" ? "* ক্যাশ অন ডেলিভারিতে ডেলিভারি চার্জ বাধ্যতামূলক" : "* Delivery charge is mandatory for COD")
+                          : (language === "bn" ? "* সকল অর্ডারে ডেলিভারি চার্জ বাধ্যতামূলক" : "* Delivery charge is mandatory for all orders")}
+                      </p>
+                    )}
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                       <span>{translations.total}</span>

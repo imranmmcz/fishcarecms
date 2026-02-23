@@ -19,6 +19,7 @@ export interface DeliverySettings {
   enabled: boolean;
   defaultCharge: number;
   freeAbove: number;
+  deliveryChargeMandatory: 'none' | 'all' | 'cod_only';
   partialPaymentEnabled: boolean;
   partialPaymentMinPercent: number;
   partialPaymentMethods: string[];
@@ -29,6 +30,7 @@ const defaultSettings: DeliverySettings = {
   enabled: true,
   defaultCharge: 100,
   freeAbove: 0,
+  deliveryChargeMandatory: 'none',
   partialPaymentEnabled: false,
   partialPaymentMinPercent: 50,
   partialPaymentMethods: ["bkash", "nagad"],
@@ -49,6 +51,7 @@ export function useDeliverySettings() {
           "delivery_charge_enabled",
           "delivery_default_charge",
           "delivery_free_above",
+          "delivery_charge_mandatory",
           "partial_payment_enabled",
           "partial_payment_min_percent",
           "partial_payment_methods",
@@ -80,6 +83,7 @@ export function useDeliverySettings() {
         enabled: map.delivery_charge_enabled !== "false",
         defaultCharge: parseFloat(map.delivery_default_charge || "100"),
         freeAbove: parseFloat(map.delivery_free_above || "0"),
+        deliveryChargeMandatory: (map.delivery_charge_mandatory as 'none' | 'all' | 'cod_only') || 'none',
         partialPaymentEnabled: map.partial_payment_enabled === "true",
         partialPaymentMinPercent: parseFloat(map.partial_payment_min_percent || "50"),
         partialPaymentMethods: (map.partial_payment_methods || "bkash,nagad").split(","),
@@ -97,9 +101,14 @@ export function useDeliverySettings() {
   }, [fetchSettings]);
 
   const calculateDeliveryCharge = useCallback(
-    (district: string, orderAmount: number, totalWeight: number): number => {
+    (district: string, orderAmount: number, totalWeight: number, paymentMethod?: string): number => {
       if (!settings.enabled) return 0;
-      if (settings.freeAbove > 0 && orderAmount >= settings.freeAbove) return 0;
+
+      // Check if delivery charge is mandatory
+      const isMandatory = settings.deliveryChargeMandatory === 'all' ||
+        (settings.deliveryChargeMandatory === 'cod_only' && paymentMethod === 'cod');
+
+      if (!isMandatory && settings.freeAbove > 0 && orderAmount >= settings.freeAbove) return 0;
 
       const sortedRules = [...settings.rules].sort((a, b) => b.priority - a.priority);
 
