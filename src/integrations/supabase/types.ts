@@ -250,6 +250,48 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_settings: {
+        Row: {
+          api_key: string | null
+          auto_create_on_status: string | null
+          auto_create_order: boolean | null
+          base_url: string | null
+          courier_name: string
+          created_at: string
+          id: string
+          is_enabled: boolean | null
+          secret_key: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          auto_create_on_status?: string | null
+          auto_create_order?: boolean | null
+          base_url?: string | null
+          courier_name: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          secret_key?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          auto_create_on_status?: string | null
+          auto_create_order?: boolean | null
+          base_url?: string | null
+          courier_name?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          secret_key?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       custom_pages: {
         Row: {
           content: string | null
@@ -1297,6 +1339,71 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      steadfast_consignments: {
+        Row: {
+          api_response: Json | null
+          charge: number | null
+          cod_amount: number | null
+          consignment_id: string | null
+          created_at: string
+          delivery_status: string | null
+          id: string
+          invoice: string
+          note: string | null
+          order_id: string
+          recipient_address: string | null
+          recipient_name: string | null
+          recipient_phone: string | null
+          status: string | null
+          tracking_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_response?: Json | null
+          charge?: number | null
+          cod_amount?: number | null
+          consignment_id?: string | null
+          created_at?: string
+          delivery_status?: string | null
+          id?: string
+          invoice: string
+          note?: string | null
+          order_id: string
+          recipient_address?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          status?: string | null
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_response?: Json | null
+          charge?: number | null
+          cod_amount?: number | null
+          consignment_id?: string | null
+          created_at?: string
+          delivery_status?: string | null
+          id?: string
+          invoice?: string
+          note?: string | null
+          order_id?: string
+          recipient_address?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          status?: string | null
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "steadfast_consignments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stock_adjustments: {
         Row: {

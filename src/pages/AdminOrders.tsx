@@ -33,6 +33,7 @@ import {
 import { ShipmentTrackingForm } from "@/components/ShipmentTrackingForm";
 import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
 import { InvoiceDownloadButton } from "@/components/InvoiceDownloadButton";
+import { SteadfastOrderButton } from "@/components/admin/SteadfastOrderButton";
 import { sendOrderStatusEmail } from "@/lib/emailService";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
@@ -441,14 +442,20 @@ const AdminOrders = () => {
                       </TableCell>
                       <TableCell className="font-semibold">{formatPrice(order.total_amount)}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewDetails(order.id)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          {language === "bn" ? "দেখুন" : "View"}
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <SteadfastOrderButton
+                            order={order}
+                            onSuccess={() => fetchOrders()}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDetails(order.id)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            {language === "bn" ? "দেখুন" : "View"}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

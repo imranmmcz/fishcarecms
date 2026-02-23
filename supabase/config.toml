@@ -23,3 +23,7 @@ verify_jwt = false
 [functions.chatbot]
 enabled = true
 verify_jwt = false
+
+[functions.steadfast-courier]
+enabled = true
+verify_jwt = false
