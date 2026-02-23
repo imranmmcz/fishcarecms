@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, TrendingUp, TrendingDown, Minus, RefreshCw, Fish, Search } from "lucide-react";
+import { ArrowLeft, MapPin, TrendingUp, TrendingDown, Minus, RefreshCw, Fish, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getDivisions, getDistrictsByDivision, getUpazilasByDistrict } from "@/data/bangladeshLocationData";
 import { format } from "date-fns";
 import { bn } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface MarketPrice {
   id: string;
@@ -35,6 +38,7 @@ interface MarketPrice {
 const MarketPrice = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { user, profile, isAuthenticated } = useAuth();
   const [division, setDivision] = useState("");
   const [district, setDistrict] = useState("");
   const [upazila, setUpazila] = useState("");
@@ -44,8 +48,99 @@ const MarketPrice = () => {
   const [prices, setPrices] = useState<MarketPrice[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Submit form state - auto-fill from profile
+  const [formFishName, setFormFishName] = useState("");
+  const [formFishNameBn, setFormFishNameBn] = useState("");
+  const [formPrice, setFormPrice] = useState("");
+  const [formMinPrice, setFormMinPrice] = useState("");
+  const [formMaxPrice, setFormMaxPrice] = useState("");
+  const [formMarketName, setFormMarketName] = useState("");
+  const [formDivision, setFormDivision] = useState("");
+  const [formDistrict, setFormDistrict] = useState("");
+  const [formUpazila, setFormUpazila] = useState("");
+  const [formDistricts, setFormDistricts] = useState<string[]>([]);
+  const [formUpazilas, setFormUpazilas] = useState<string[]>([]);
+
+  // Auto-fill location from profile when dialog opens
+  useEffect(() => {
+    if (submitOpen && profile) {
+      const div = profile.division || "";
+      setFormDivision(div);
+      if (div) {
+        const dists = getDistrictsByDivision(div);
+        setFormDistricts(dists);
+        const dist = profile.district || "";
+        setFormDistrict(dist);
+        if (dist) {
+          const upzs = getUpazilasByDistrict(dist);
+          setFormUpazilas(upzs);
+          setFormUpazila(profile.upazila || "");
+        }
+      }
+    }
+  }, [submitOpen, profile]);
+
+  // Update form districts when form division changes
+  useEffect(() => {
+    if (formDivision) {
+      setFormDistricts(getDistrictsByDivision(formDivision));
+      if (!profile?.division || formDivision !== profile.division) {
+        setFormDistrict("");
+        setFormUpazila("");
+      }
+    } else {
+      setFormDistricts([]);
+    }
+  }, [formDivision]);
+
+  // Update form upazilas when form district changes
+  useEffect(() => {
+    if (formDistrict) {
+      setFormUpazilas(getUpazilasByDistrict(formDistrict));
+      if (!profile?.district || formDistrict !== profile.district) {
+        setFormUpazila("");
+      }
+    } else {
+      setFormUpazilas([]);
+    }
+  }, [formDistrict]);
 
   const divisions = getDivisions();
+
+  const handleSubmitPrice = async () => {
+    if (!formFishName || !formFishNameBn || !formPrice || !formDivision || !formDistrict || !formUpazila) {
+      toast.error(language === "bn" ? "সকল প্রয়োজনীয় ফিল্ড পূরণ করুন" : "Please fill all required fields");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from("market_prices").insert({
+        fish_name: formFishName,
+        fish_name_bn: formFishNameBn,
+        price_per_kg: parseFloat(formPrice),
+        min_price: formMinPrice ? parseFloat(formMinPrice) : null,
+        max_price: formMaxPrice ? parseFloat(formMaxPrice) : null,
+        division: formDivision,
+        district: formDistrict,
+        upazila: formUpazila,
+        market_name: formMarketName || null,
+      });
+      if (error) throw error;
+      toast.success(language === "bn" ? "বাজার দর সফলভাবে জমা হয়েছে!" : "Market price submitted successfully!");
+      setSubmitOpen(false);
+      setFormFishName(""); setFormFishNameBn(""); setFormPrice("");
+      setFormMinPrice(""); setFormMaxPrice(""); setFormMarketName("");
+      fetchPrices();
+    } catch (error) {
+      console.error("Error submitting price:", error);
+      toast.error(language === "bn" ? "দর জমা দিতে সমস্যা হয়েছে" : "Failed to submit price");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Fetch market prices
   const fetchPrices = async () => {
@@ -171,9 +266,83 @@ const MarketPrice = () => {
                 : "View fish market prices by location"}
             </p>
           </div>
+          {isAuthenticated && (
+            <Dialog open={submitOpen} onOpenChange={setSubmitOpen}>
+              <DialogTrigger asChild>
+                <Button className="ml-auto shrink-0">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {language === "bn" ? "দর জমা দিন" : "Submit Price"}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{language === "bn" ? "বাজার দর জমা দিন" : "Submit Market Price"}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>{language === "bn" ? "মাছের নাম (English) *" : "Fish Name (EN) *"}</Label>
+                      <Input value={formFishName} onChange={(e) => setFormFishName(e.target.value)} placeholder="e.g. Rui" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>{language === "bn" ? "মাছের নাম (বাংলা) *" : "Fish Name (BN) *"}</Label>
+                      <Input value={formFishNameBn} onChange={(e) => setFormFishNameBn(e.target.value)} placeholder="যেমন: রুই" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>{language === "bn" ? "দাম (৳/কেজি) *" : "Price *"}</Label>
+                      <Input type="number" value={formPrice} onChange={(e) => setFormPrice(e.target.value)} placeholder="০" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>{language === "bn" ? "সর্বনিম্ন" : "Min"}</Label>
+                      <Input type="number" value={formMinPrice} onChange={(e) => setFormMinPrice(e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>{language === "bn" ? "সর্বোচ্চ" : "Max"}</Label>
+                      <Input type="number" value={formMaxPrice} onChange={(e) => setFormMaxPrice(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{language === "bn" ? "বাজারের নাম" : "Market Name"}</Label>
+                    <Input value={formMarketName} onChange={(e) => setFormMarketName(e.target.value)} placeholder={language === "bn" ? "যেমন: কাওরান বাজার" : "e.g. Kawran Bazar"} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{language === "bn" ? "বিভাগ *" : "Division *"}</Label>
+                    <Select value={formDivision} onValueChange={setFormDivision}>
+                      <SelectTrigger><SelectValue placeholder={language === "bn" ? "বিভাগ নির্বাচন" : "Select"} /></SelectTrigger>
+                      <SelectContent>{divisions.map((d) => (<SelectItem key={d} value={d}>{d}</SelectItem>))}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{language === "bn" ? "জেলা *" : "District *"}</Label>
+                    <Select value={formDistrict} onValueChange={setFormDistrict} disabled={!formDivision}>
+                      <SelectTrigger><SelectValue placeholder={language === "bn" ? "জেলা নির্বাচন" : "Select"} /></SelectTrigger>
+                      <SelectContent>{formDistricts.map((d) => (<SelectItem key={d} value={d}>{d}</SelectItem>))}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{language === "bn" ? "উপজেলা *" : "Upazila *"}</Label>
+                    <Select value={formUpazila} onValueChange={setFormUpazila} disabled={!formDistrict}>
+                      <SelectTrigger><SelectValue placeholder={language === "bn" ? "উপজেলা নির্বাচন" : "Select"} /></SelectTrigger>
+                      <SelectContent>{formUpazilas.map((u) => (<SelectItem key={u} value={u}>{u}</SelectItem>))}</SelectContent>
+                    </Select>
+                  </div>
+                  {profile?.division && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {language === "bn" ? "প্রোফাইল থেকে অবস্থান স্বয়ংক্রিয়ভাবে পূরণ হয়েছে" : "Location auto-filled from profile"}
+                    </p>
+                  )}
+                  <Button onClick={handleSubmitPrice} disabled={submitting} className="w-full">
+                    {submitting ? (language === "bn" ? "জমা হচ্ছে..." : "Submitting...") : (language === "bn" ? "দর জমা দিন" : "Submit Price")}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
-        {/* Filters */}
         <Card className="mb-6">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
