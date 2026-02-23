@@ -122,7 +122,7 @@ serve(async (req) => {
       try {
         const { data: order } = await supabase
           .from("orders")
-          .select("customer_email, customer_name, order_number")
+          .select("customer_email, customer_name, order_number, customer_phone")
           .eq("id", consignment.order_id)
           .single();
 
@@ -213,6 +213,65 @@ serve(async (req) => {
         }
       } catch (emailError) {
         console.error("Failed to send delivery notification email:", emailError);
+      }
+
+      // Send WhatsApp notification
+      try {
+        if (order?.customer_phone) {
+          const { data: waSettings } = await supabase
+            .from("whatsapp_settings")
+            .select("*")
+            .limit(1)
+            .maybeSingle();
+
+          if (waSettings?.is_enabled && waSettings?.delivery_update_enabled && waSettings?.access_token && waSettings?.phone_number_id) {
+            const statusLabelsWA: Record<string, string> = {
+              delivered: "ডেলিভারড ✅",
+              cancelled: "বাতিল ❌",
+              partial_delivered: "আংশিক ডেলিভারড",
+            };
+
+            const waMessage = `📦 *ডেলিভারি আপডেট*\n\nপ্রিয় ${order.customer_name},\n\nআপনার অর্ডার *${order.order_number}* এর স্ট্যাটাস: *${statusLabelsWA[mappedStatus] || mappedStatus}*${consignment.tracking_code ? `\nট্র্যাকিং কোড: ${consignment.tracking_code}` : ''}\n\n${mappedStatus === 'delivered' ? 'ধন্যবাদ আমাদের সাথে থাকার জন্য! 🎉' : 'বিস্তারিত জানতে আমাদের সাথে যোগাযোগ করুন।'}\n\n— FishCare BD`;
+
+            const apiVersion = waSettings.api_version || "v21.0";
+            let formattedPhone = order.customer_phone.replace(/[^0-9]/g, "");
+            if (formattedPhone.startsWith("0")) formattedPhone = "88" + formattedPhone;
+            else if (!formattedPhone.startsWith("88")) formattedPhone = "88" + formattedPhone;
+
+            const waRes = await fetch(
+              `https://graph.facebook.com/${apiVersion}/${waSettings.phone_number_id}/messages`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${waSettings.access_token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  messaging_product: "whatsapp",
+                  to: formattedPhone,
+                  type: "text",
+                  text: { body: waMessage },
+                }),
+              }
+            );
+
+            const waData = await waRes.json();
+
+            await supabase.from("whatsapp_logs").insert({
+              order_number: order.order_number,
+              recipient_phone: formattedPhone,
+              message_type: "delivery_update",
+              whatsapp_message_id: waData.messages?.[0]?.id || null,
+              status: waRes.ok ? "sent" : "failed",
+              error_message: waRes.ok ? null : (waData.error?.message || "Unknown error"),
+              sent_at: waRes.ok ? new Date().toISOString() : null,
+            });
+
+            console.log(`WhatsApp delivery notification ${waRes.ok ? 'sent' : 'failed'} to ${formattedPhone}`);
+          }
+        }
+      } catch (waError) {
+        console.error("Failed to send WhatsApp notification:", waError);
       }
     }
 
