@@ -9,6 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrders, Order } from "@/hooks/useOrders";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +62,7 @@ const statusConfig: Record<string, { color: string; icon: React.ReactNode; label
 const DashboardOrders = () => {
   const { language } = useLanguage();
   const { formatPrice } = useCurrency();
-  const { isFarmer } = useAuth();
+  const { isFarmer, user } = useAuth();
   const { orders, isLoading, getOrder, cancelOrder, refetch } = useOrders();
   const { settings: companySettings } = useInvoiceSettings();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -404,24 +405,36 @@ const DashboardOrders = () => {
                   {isFarmer && selectedOrder.status === 'delivered' && (
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        const expenses = JSON.parse(localStorage.getItem("farmerExpenses") || "[]");
-                        const newExpense = {
-                          id: `order-${selectedOrder.id}`,
+                      onClick={async () => {
+                        if (!user) return;
+                        // Check if already added
+                        const { data: existing } = await supabase
+                          .from("farmer_expenses")
+                          .select("id")
+                          .eq("user_id", user.id)
+                          .eq("description", `${language === "bn" ? "অর্ডার" : "Order"} #${selectedOrder.order_number}`)
+                          .eq("category", language === "bn" ? "অর্ডার কেনাকাটা" : "Order Purchase")
+                          .maybeSingle();
+                        
+                        if (existing) {
+                          toast.info(language === "bn" ? "এই অর্ডার ইতোমধ্যে খরচে যোগ করা আছে" : "This order is already added to expenses");
+                          return;
+                        }
+                        
+                        const { error } = await supabase.from("farmer_expenses").insert({
+                          user_id: user.id,
                           date: new Date(selectedOrder.created_at).toISOString().split('T')[0],
                           category: language === "bn" ? "অর্ডার কেনাকাটা" : "Order Purchase",
                           amount: selectedOrder.total_amount,
                           description: `${language === "bn" ? "অর্ডার" : "Order"} #${selectedOrder.order_number}`,
-                          pondName: "",
-                        };
-                        const exists = expenses.find((e: any) => e.id === newExpense.id);
-                        if (exists) {
-                          toast.info(language === "bn" ? "এই অর্ডার ইতোমধ্যে খরচে যোগ করা আছে" : "This order is already added to expenses");
-                          return;
+                          pond_name: "",
+                        });
+                        
+                        if (error) {
+                          toast.error(language === "bn" ? "খরচ যোগ করতে ব্যর্থ" : "Failed to add expense");
+                        } else {
+                          toast.success(translations.addedToExpense);
                         }
-                        expenses.push(newExpense);
-                        localStorage.setItem("farmerExpenses", JSON.stringify(expenses));
-                        toast.success(translations.addedToExpense);
                       }}
                     >
                       <PlusCircle className="h-4 w-4 mr-2" />
