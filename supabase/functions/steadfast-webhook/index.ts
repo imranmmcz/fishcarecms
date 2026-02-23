@@ -217,7 +217,13 @@ serve(async (req) => {
 
       // Send WhatsApp notification
       try {
-        if (order?.customer_phone) {
+        const { data: waOrder } = await supabase
+          .from("orders")
+          .select("customer_phone, customer_name, order_number")
+          .eq("id", consignment.order_id)
+          .single();
+
+        if (waOrder?.customer_phone) {
           const { data: waSettings } = await supabase
             .from("whatsapp_settings")
             .select("*")
@@ -231,10 +237,10 @@ serve(async (req) => {
               partial_delivered: "আংশিক ডেলিভারড",
             };
 
-            const waMessage = `📦 *ডেলিভারি আপডেট*\n\nপ্রিয় ${order.customer_name},\n\nআপনার অর্ডার *${order.order_number}* এর স্ট্যাটাস: *${statusLabelsWA[mappedStatus] || mappedStatus}*${consignment.tracking_code ? `\nট্র্যাকিং কোড: ${consignment.tracking_code}` : ''}\n\n${mappedStatus === 'delivered' ? 'ধন্যবাদ আমাদের সাথে থাকার জন্য! 🎉' : 'বিস্তারিত জানতে আমাদের সাথে যোগাযোগ করুন।'}\n\n— FishCare BD`;
+            const waMessage = `📦 *ডেলিভারি আপডেট*\n\nপ্রিয় ${waOrder.customer_name},\n\nআপনার অর্ডার *${waOrder.order_number}* এর স্ট্যাটাস: *${statusLabelsWA[mappedStatus] || mappedStatus}*${consignment.tracking_code ? `\nট্র্যাকিং কোড: ${consignment.tracking_code}` : ''}\n\n${mappedStatus === 'delivered' ? 'ধন্যবাদ আমাদের সাথে থাকার জন্য! 🎉' : 'বিস্তারিত জানতে আমাদের সাথে যোগাযোগ করুন।'}\n\n— FishCare BD`;
 
             const apiVersion = waSettings.api_version || "v21.0";
-            let formattedPhone = order.customer_phone.replace(/[^0-9]/g, "");
+            let formattedPhone = waOrder.customer_phone.replace(/[^0-9]/g, "");
             if (formattedPhone.startsWith("0")) formattedPhone = "88" + formattedPhone;
             else if (!formattedPhone.startsWith("88")) formattedPhone = "88" + formattedPhone;
 
@@ -258,7 +264,7 @@ serve(async (req) => {
             const waData = await waRes.json();
 
             await supabase.from("whatsapp_logs").insert({
-              order_number: order.order_number,
+              order_number: waOrder.order_number,
               recipient_phone: formattedPhone,
               message_type: "delivery_update",
               whatsapp_message_id: waData.messages?.[0]?.id || null,
@@ -291,7 +297,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Steadfast webhook error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Internal server error" }),
+      JSON.stringify({ error: (error as Error).message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

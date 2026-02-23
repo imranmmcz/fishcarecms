@@ -65,6 +65,7 @@ import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
 import ProductDetails from "./pages/ProductDetails";
 import Wishlist from "./pages/Wishlist";
+import TrackOrder from "./pages/TrackOrder";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,7 @@ const App = () => (
                       <Route path="/product/:id" element={<ProductDetails />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
+                      <Route path="/track-order" element={<TrackOrder />} />
                       <Route path="/pond-calculator" element={<PondCalculator />} />
                       <Route path="/fish-stocking" element={<FishStocking />} />
                       <Route path="/stocking-density" element={<StockingDensity />} />

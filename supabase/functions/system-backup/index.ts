@@ -506,12 +506,12 @@ serve(async (req) => {
 
         // Auto-cleanup by count/size
         const cleanupResult = await cleanupOldBackups(
-          adminSupabase, userId, isAdmin, backupSettings.maxBackups, backupSettings.maxSizeMB
+          adminSupabase, userId, isAdmin, backupSettings.maxBackups ?? 10, backupSettings.maxSizeMB ?? 500
         );
 
         // Auto-cleanup by retention days
         const retentionResult = await cleanupByRetention(
-          adminSupabase, userId, isAdmin, backupSettings.retentionDays
+          adminSupabase, userId, isAdmin, backupSettings.retentionDays ?? 30
         );
 
         // Send email notification
@@ -546,7 +546,7 @@ serve(async (req) => {
             .from('backup_logs')
             .update({
               status: 'failed',
-              error_message: backupError.message,
+              error_message: (backupError as Error).message,
               completed_at: new Date().toISOString(),
             })
             .eq('id', logEntry.id);
@@ -555,7 +555,7 @@ serve(async (req) => {
         // Send failure email notification
         if (backupSettings.emailNotification) {
           await sendBackupNotificationEmail(adminSupabase, 'failed', {
-            errorMessage: backupError.message,
+            errorMessage: (backupError as Error).message,
             scope: scope,
           });
         }
@@ -685,7 +685,7 @@ serve(async (req) => {
       const effectiveMaxBackups = max_backups || 10;
       const effectiveMaxSizeMB = max_size_mb || 500;
 
-      const result = await cleanupOldBackups(adminSupabase, userId, isAdmin, effectiveMaxBackups, effectiveMaxSizeMB);
+      const result = await cleanupOldBackups(adminSupabase, userId, isAdmin, effectiveMaxBackups as number, effectiveMaxSizeMB as number);
 
       return new Response(JSON.stringify({ success: true, ...result }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -844,7 +844,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Backup error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
