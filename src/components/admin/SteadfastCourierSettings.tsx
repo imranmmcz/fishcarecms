@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
-  Loader2, Save, Truck, Wallet, RefreshCw, ShieldCheck, Settings2, Zap,
+  Loader2, Save, Truck, Wallet, RefreshCw, ShieldCheck, Settings2, Zap, Webhook, Copy, CheckCircle2,
 } from "lucide-react";
+
+const WEBHOOK_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/steadfast-webhook`;
 
 export const SteadfastCourierSettings = () => {
   const { settings, isLoading, updateSettings, getBalance, syncAllStatuses, fraudCheck } = useSteadfast();
@@ -176,7 +178,73 @@ export const SteadfastCourierSettings = () => {
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
+      {/* Webhook Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Webhook className="h-5 w-5" />
+            ওয়েবহুক কনফিগারেশন
+          </CardTitle>
+          <CardDescription>
+            Steadfast পোর্টালে এই URL সেট করুন যাতে ডেলিভারি আপডেট স্বয়ংক্রিয়ভাবে আসে
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>ওয়েবহুক URL</Label>
+            <div className="flex gap-2">
+              <Input
+                value={WEBHOOK_URL}
+                readOnly
+                className="font-mono text-xs bg-muted"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  navigator.clipboard.writeText(WEBHOOK_URL);
+                  toast.success("ওয়েবহুক URL কপি হয়েছে!");
+                }}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              সেটআপ নির্দেশনা
+            </h4>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>
+                <a href="https://portal.packzy.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                  portal.packzy.com
+                </a>{" "}
+                এ লগইন করুন
+              </li>
+              <li>Settings → Webhook সেকশনে যান</li>
+              <li>উপরের URL কপি করে Webhook URL ফিল্ডে পেস্ট করুন</li>
+              <li>সংরক্ষণ করুন</li>
+            </ol>
+            <p className="text-xs text-muted-foreground mt-2">
+              ✅ সেটআপ সম্পন্ন হলে, Steadfast স্বয়ংক্রিয়ভাবে ডেলিভারি স্ট্যাটাস আপডেট পাঠাবে এবং
+              আপনার অর্ডার স্ট্যাটাসও অটোমেটিক আপডেট হবে।
+            </p>
+          </div>
+
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p className="font-medium">স্বয়ংক্রিয় স্ট্যাটাস ম্যাপিং:</p>
+            <div className="grid grid-cols-2 gap-1">
+              <span>🟢 delivered → ডেলিভার্ড</span>
+              <span>🔴 cancelled → বাতিল</span>
+              <span>🟡 hold → হোল্ড</span>
+              <span>🟠 partial_delivered → আংশিক ডেলিভারি</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
