@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ShoppingCart, CreditCard, Package, AlertCircle, RefreshCw,
-  TrendingUp, TrendingDown, Calendar, BarChart2, DollarSign, Eye
+  TrendingUp, TrendingDown, Calendar, BarChart2, DollarSign, Eye, Award
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -57,6 +57,14 @@ interface RecentOrder {
   created_at: string;
 }
 
+interface TopProduct {
+  product_id: string;
+  product_name: string;
+  product_image: string | null;
+  total_qty: number;
+  total_revenue: number;
+}
+
 const getDateRange = (range: DateRange, customFrom?: Date, customTo?: Date): { from: Date; to: Date } => {
   const now = new Date();
   switch (range) {
@@ -92,6 +100,7 @@ const AdminEcommerceOverview = () => {
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const { from, to } = getDateRange(activeRange, customFrom, customTo);
 
   const fetchStats = useCallback(async () => {
@@ -120,7 +129,7 @@ const AdminEcommerceOverview = () => {
       if (orderIds.length > 0) {
         const { data: orderItems } = await supabase
           .from("order_items")
-          .select("order_id, quantity, unit_price, total_price, product_id")
+          .select("order_id, quantity, unit_price, total_price, product_id, product_name, product_image")
           .in("order_id", orderIds);
         allOrderItems = orderItems || [];
       }
@@ -177,6 +186,27 @@ const AdminEcommerceOverview = () => {
 
       // Build chart data grouped by day
       buildChartData(allOrders, allPurchases);
+
+      // Calculate top selling products from order items
+      const productSalesMap: Record<string, TopProduct> = {};
+      allOrderItems.forEach(item => {
+        const key = item.product_id;
+        if (!productSalesMap[key]) {
+          productSalesMap[key] = {
+            product_id: key,
+            product_name: item.product_name || "Unknown",
+            product_image: item.product_image || null,
+            total_qty: 0,
+            total_revenue: 0,
+          };
+        }
+        productSalesMap[key].total_qty += Number(item.quantity);
+        productSalesMap[key].total_revenue += Number(item.total_price || 0);
+      });
+      const sortedProducts = Object.values(productSalesMap)
+        .sort((a, b) => b.total_revenue - a.total_revenue)
+        .slice(0, 10);
+      setTopProducts(sortedProducts);
 
       // Fetch recent 10 orders
       const { data: recent } = await supabase
@@ -529,6 +559,68 @@ const AdminEcommerceOverview = () => {
             </CardContent>
           </Card>
         </div>
+        {/* Top Selling Products */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Award className="h-4 w-4 text-primary" />
+                সেরা বিক্রিত পণ্য (Top Selling Products)
+              </CardTitle>
+              <Button variant="outline" size="sm" onClick={() => navigate("/admin/products")}>
+                সব পণ্য
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-[200px] bg-muted animate-pulse rounded" />
+            ) : topProducts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">এই সময়ে কোনো বিক্রয় হয়নি</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>পণ্য</TableHead>
+                    <TableHead className="text-center">বিক্রিত পরিমাণ</TableHead>
+                    <TableHead className="text-right">মোট আয়</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {topProducts.map((product, index) => (
+                    <TableRow key={product.product_id}>
+                      <TableCell className="font-medium text-muted-foreground">{index + 1}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {product.product_image ? (
+                            <img
+                              src={product.product_image}
+                              alt={product.product_name}
+                              className="h-9 w-9 rounded-lg object-cover border border-border"
+                            />
+                          ) : (
+                            <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <span className="font-medium text-sm">{product.product_name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary">{product.total_qty}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        ৳{product.total_revenue.toLocaleString("en-IN")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Recent Orders Table */}
         <Card>
           <CardHeader className="pb-2">
