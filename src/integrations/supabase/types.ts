@@ -1043,6 +1043,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          dashboard_settings: Json | null
           district: string | null
           division: string | null
           email: string | null
@@ -1057,6 +1058,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          dashboard_settings?: Json | null
           district?: string | null
           division?: string | null
           email?: string | null
@@ -1071,6 +1073,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          dashboard_settings?: Json | null
           district?: string | null
           division?: string | null
           email?: string | null
