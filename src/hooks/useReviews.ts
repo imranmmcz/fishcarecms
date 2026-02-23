@@ -1,9 +1,9 @@
 /**
- * Reviews Hook - MySQL API Implementation
+ * Reviews Hook - Supabase Implementation
  */
 
 import { useState, useCallback } from "react";
-import { apiClient } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -38,70 +38,54 @@ export function useReviews(productId?: string) {
 
   const fetchReviews = useCallback(async (params?: { sort?: string; limit?: number }) => {
     if (!productId) return;
-
     setIsLoading(true);
     try {
-      const response = await apiClient.getProductReviews(productId, {
-        sort: params?.sort,
-        limit: params?.limit,
-      });
+      let query = supabase
+        .from("product_reviews")
+        .select("*")
+        .eq("product_id", productId)
+        .eq("is_approved", true);
 
-      if (response.error) throw new Error(response.error);
+      if (params?.sort === "newest") query = query.order("created_at", { ascending: false });
+      else if (params?.sort === "highest") query = query.order("rating", { ascending: false });
+      else if (params?.sort === "lowest") query = query.order("rating", { ascending: true });
+      else if (params?.sort === "helpful") query = query.order("helpful_count", { ascending: false });
+      else query = query.order("created_at", { ascending: false });
 
-      const data = response.data;
-      if (!data) {
-        setReviews([]);
-        setStats({ total_reviews: 0, average_rating: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
-        return;
-      }
+      if (params?.limit) query = query.limit(params.limit);
 
-      // Map API reviews to local format
-      const mappedReviews: ProductReview[] = (data.reviews || []).map((r) => ({
-        id: String(r.id),
-        product_id: String(r.product_id),
-        user_id: r.user_id ? String(r.user_id) : null,
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const mapped: ProductReview[] = (data || []).map((r) => ({
+        id: r.id,
+        product_id: r.product_id,
+        user_id: r.user_id,
         user_name: r.user_name || "Anonymous",
-        user_email: null,
+        user_email: r.user_email,
         rating: r.rating,
         title: r.title,
-        comment: r.review_text,
-        is_verified_purchase: r.is_verified_purchase,
-        is_approved: true,
-        helpful_count: r.helpful_count,
+        comment: r.comment,
+        is_verified_purchase: r.is_verified_purchase || false,
+        is_approved: r.is_approved || true,
+        helpful_count: r.helpful_count || 0,
         created_at: r.created_at,
-        updated_at: r.created_at,
+        updated_at: r.updated_at,
       }));
 
-      setReviews(mappedReviews);
+      setReviews(mapped);
 
-      // Map stats
-      if (data.stats) {
-        setStats({
-          total_reviews: data.stats.total_reviews,
-          average_rating: data.stats.average_rating,
-          rating_distribution: data.stats.rating_breakdown || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-        });
-      } else {
-        setStats({ total_reviews: 0, average_rating: 0, rating_distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
-      }
+      // Calculate stats
+      const total = mapped.length;
+      const avg = total > 0 ? mapped.reduce((s, r) => s + r.rating, 0) / total : 0;
+      const dist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      mapped.forEach((r) => { dist[r.rating] = (dist[r.rating] || 0) + 1; });
+      setStats({ total_reviews: total, average_rating: Math.round(avg * 10) / 10, rating_distribution: dist });
 
       // Find user's review
-      if (user && data.user_review) {
-        setUserReview({
-          id: String(data.user_review.id),
-          product_id: String(data.user_review.product_id),
-          user_id: String(data.user_review.user_id),
-          user_name: data.user_review.user_name || "Anonymous",
-          user_email: null,
-          rating: data.user_review.rating,
-          title: data.user_review.title,
-          comment: data.user_review.review_text,
-          is_verified_purchase: data.user_review.is_verified_purchase,
-          is_approved: true,
-          helpful_count: data.user_review.helpful_count,
-          created_at: data.user_review.created_at,
-          updated_at: data.user_review.created_at,
-        });
+      if (user) {
+        const ur = mapped.find((r) => r.user_id === user.id);
+        setUserReview(ur || null);
       } else {
         setUserReview(null);
       }
@@ -112,29 +96,22 @@ export function useReviews(productId?: string) {
     }
   }, [productId, user]);
 
-  const createReview = async (data: {
-    rating: number;
-    title?: string;
-    comment?: string;
-  }): Promise<boolean> => {
+  const createReview = async (data: { rating: number; title?: string; comment?: string }): Promise<boolean> => {
     if (!productId || !user) {
       toast.error("রিভিউ দিতে লগইন করুন");
       return false;
     }
-
     try {
-      const response = await apiClient.createReview({
-        product_id: Number(productId),
+      const { error } = await supabase.from("product_reviews").insert({
+        product_id: productId,
+        user_id: user.id,
+        user_name: user.full_name || user.email || "Anonymous",
+        user_email: user.email,
         rating: data.rating,
-        title: data.title,
-        review_text: data.comment,
+        title: data.title || null,
+        comment: data.comment || null,
       });
-
-      if (response.error) {
-        toast.error(response.error || "রিভিউ যোগ করতে সমস্যা হয়েছে");
-        return false;
-      }
-
+      if (error) throw error;
       toast.success("রিভিউ সফলভাবে যোগ হয়েছে");
       await fetchReviews();
       return true;
@@ -145,22 +122,15 @@ export function useReviews(productId?: string) {
     }
   };
 
-  const updateReview = async (
-    reviewId: string,
-    data: { rating?: number; title?: string; comment?: string }
-  ): Promise<boolean> => {
+  const updateReview = async (reviewId: string, data: { rating?: number; title?: string; comment?: string }): Promise<boolean> => {
     try {
-      const response = await apiClient.updateReview(reviewId, {
-        rating: data.rating,
-        title: data.title,
-        review_text: data.comment,
-      });
+      const updateData: Record<string, unknown> = {};
+      if (data.rating !== undefined) updateData.rating = data.rating;
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.comment !== undefined) updateData.comment = data.comment;
 
-      if (response.error) {
-        toast.error("রিভিউ আপডেট করতে সমস্যা হয়েছে");
-        return false;
-      }
-
+      const { error } = await supabase.from("product_reviews").update(updateData).eq("id", reviewId);
+      if (error) throw error;
       toast.success("রিভিউ আপডেট হয়েছে");
       await fetchReviews();
       return true;
@@ -173,13 +143,8 @@ export function useReviews(productId?: string) {
 
   const deleteReview = async (reviewId: string): Promise<boolean> => {
     try {
-      const response = await apiClient.deleteReview(reviewId);
-
-      if (response.error) {
-        toast.error("রিভিউ মুছতে সমস্যা হয়েছে");
-        return false;
-      }
-
+      const { error } = await supabase.from("product_reviews").delete().eq("id", reviewId);
+      if (error) throw error;
       toast.success("রিভিউ মুছে ফেলা হয়েছে");
       await fetchReviews();
       return true;
@@ -195,14 +160,17 @@ export function useReviews(productId?: string) {
       toast.error("ভোট দিতে লগইন করুন");
       return false;
     }
-
     try {
-      const response = await apiClient.markReviewHelpful(reviewId, true);
-
-      if (response.error) {
+      const { error } = await supabase.from("review_helpful_votes").insert({
+        review_id: reviewId,
+        user_id: user.id,
+      });
+      if (error) {
+        if (error.code === "23505") {
+          toast.info("আপনি ইতিমধ্যে ভোট দিয়েছেন");
+        }
         return false;
       }
-
       toast.success("ধন্যবাদ আপনার ভোটের জন্য");
       await fetchReviews();
       return true;
@@ -212,15 +180,5 @@ export function useReviews(productId?: string) {
     }
   };
 
-  return {
-    reviews,
-    stats,
-    isLoading,
-    userReview,
-    fetchReviews,
-    createReview,
-    updateReview,
-    deleteReview,
-    markHelpful,
-  };
+  return { reviews, stats, isLoading, userReview, fetchReviews, createReview, updateReview, deleteReview, markHelpful };
 }

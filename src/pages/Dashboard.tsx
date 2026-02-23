@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { apiClient } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -111,14 +111,14 @@ export default function Dashboard() {
     
     const fetchData = async () => {
       const [pondsRes, incomesRes, expensesRes] = await Promise.all([
-        apiClient.getPonds(String(user.id)),
-        apiClient.getIncomes(String(user.id)),
-        apiClient.getExpenses(String(user.id)),
+        supabase.from("farmer_ponds").select("*").eq("user_id", user.id),
+        supabase.from("farmer_incomes").select("*").eq("user_id", user.id),
+        supabase.from("farmer_expenses").select("*").eq("user_id", user.id),
       ]);
 
-      const ponds = (pondsRes.data?.data || []) as any[];
-      const incomes = (incomesRes.data?.data || []) as any[];
-      const expenses = (expensesRes.data?.data || []) as any[];
+      const ponds = (pondsRes.data || []) as any[];
+      const incomes = (incomesRes.data || []) as any[];
+      const expenses = (expensesRes.data || []) as any[];
 
       setTotalIncome(incomes.reduce((sum, item) => sum + Number(item.amount), 0));
       setTotalExpense(expenses.reduce((sum, item) => sum + Number(item.amount), 0));
@@ -180,15 +180,15 @@ export default function Dashboard() {
   const handleViewPondDetails = async (pond: PondSummary) => {
     if (!user) return;
     const [incomesRes, expensesRes] = await Promise.all([
-      apiClient.getIncomes(String(user.id)),
-      apiClient.getExpenses(String(user.id)),
+      supabase.from("farmer_incomes").select("*").eq("user_id", user.id),
+      supabase.from("farmer_expenses").select("*").eq("user_id", user.id),
     ]);
     
-    setPondIncomes(((incomesRes.data?.data || []) as any[]).filter((i: any) => i.pond_name === pond.name).map((i: any) => ({
-      id: String(i.id), date: i.date, category: i.category, amount: Number(i.amount),
+    setPondIncomes(((incomesRes.data || []) as any[]).filter((i: any) => i.pond_name === pond.name).map((i: any) => ({
+      id: i.id, date: i.date, category: i.category, amount: Number(i.amount),
       description: i.description || "", pondName: i.pond_name || undefined,
     })));
-    setPondExpenses(((expensesRes.data?.data || []) as any[]).filter((e: any) => e.pond_name === pond.name).map((e: any) => ({
+    setPondExpenses(((expensesRes.data || []) as any[]).filter((e: any) => e.pond_name === pond.name).map((e: any) => ({
       id: String(e.id), date: e.date, category: e.category, amount: Number(e.amount),
       description: e.description || "", pondName: e.pond_name || undefined,
     })));
@@ -577,10 +577,10 @@ function RecentList({ type }: { type: "income" | "expense" }) {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const res = type === "income" 
-        ? await apiClient.getIncomes(String(user.id))
-        : await apiClient.getExpenses(String(user.id));
-      const data = (res.data?.data || []) as any[];
+      const res = type === "income"
+        ? await supabase.from("farmer_incomes").select("*").eq("user_id", user.id)
+        : await supabase.from("farmer_expenses").select("*").eq("user_id", user.id);
+      const data = (res.data || []) as any[];
       // Take latest 5
       const sorted = data.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
       setItems(sorted.map((d: any) => ({

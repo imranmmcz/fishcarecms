@@ -1,9 +1,9 @@
 /**
- * Orders Hook - MySQL API Version
+ * Orders Hook - Supabase Implementation
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { apiClient, Order as ApiOrder, OrderItem as ApiOrderItem, CreateOrderData as ApiCreateOrderData } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -66,47 +66,7 @@ export interface CreateOrderData {
   payment_trx_id?: string;
   payment_sender_number?: string;
   shipping_cost?: number;
-  partial_payment?: boolean;
-  advance_amount?: number;
-  due_amount?: number;
 }
-
-const mapApiOrder = (o: ApiOrder): Order => ({
-  id: String(o.id),
-  order_number: o.order_number,
-  user_id: o.user_id ? String(o.user_id) : null,
-  customer_name: o.customer_name || o.shipping_name,
-  customer_email: o.customer_email || null,
-  customer_phone: o.shipping_mobile,
-  shipping_address: o.shipping_address || '',
-  division: o.shipping_division || null,
-  district: o.shipping_district || null,
-  upazila: o.shipping_upazila || null,
-  payment_method: o.payment_method,
-  payment_status: o.payment_status,
-  transaction_id: o.payment_trx_id || null,
-  sender_number: o.payment_sender_number || null,
-  subtotal: o.subtotal,
-  shipping_cost: o.shipping_cost,
-  discount_amount: o.discount_amount,
-  total_amount: o.total_amount,
-  status: o.status,
-  notes: o.customer_note || null,
-  created_at: o.created_at,
-  updated_at: o.updated_at,
-  items: o.items?.map((item: ApiOrderItem) => ({
-    id: String(item.id),
-    order_id: String(item.order_id),
-    product_id: String(item.product_id),
-    product_name: item.product_name,
-    product_image: item.product_image,
-    quantity: item.quantity,
-    unit_price: item.unit_price,
-    discount_percentage: item.discount_percentage,
-    total_price: item.total_price,
-    created_at: '',
-  })),
-});
 
 export function useOrders() {
   const { user } = useAuth();
@@ -115,41 +75,49 @@ export function useOrders() {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchOrders = useCallback(async (params?: { status?: string; limit?: number }) => {
-    if (!user) {
-      setOrders([]);
-      setIsLoading(false);
-      return;
-    }
-
+    if (!user) { setOrders([]); setIsLoading(false); return; }
     setIsLoading(true);
     try {
-      const queryParams: { status?: string; limit?: number } = {};
-      if (params?.status && params.status !== "all") {
-        queryParams.status = params.status;
-      }
-      if (params?.limit) {
-        queryParams.limit = params.limit;
-      }
+      let query = supabase.from("orders").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+      if (params?.status && params.status !== "all") query = query.eq("status", params.status);
+      if (params?.limit) query = query.limit(params.limit);
 
-      const response = await apiClient.getOrders(queryParams);
-      if (response.data?.orders) {
-        setOrders(response.data.orders.map(mapApiOrder));
-      }
+      const { data, error: err } = await query;
+      if (err) throw err;
+      setOrders((data || []).map(mapRow));
     } catch (err) {
       console.error("Error fetching orders:", err);
       setError(err as Error);
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   }, [user]);
+
+  const mapRow = (o: any): Order => ({
+    id: o.id, order_number: o.order_number, user_id: o.user_id,
+    customer_name: o.customer_name, customer_email: o.customer_email,
+    customer_phone: o.customer_phone, shipping_address: o.shipping_address,
+    division: o.division, district: o.district, upazila: o.upazila,
+    payment_method: o.payment_method, payment_status: o.payment_status,
+    transaction_id: o.transaction_id, sender_number: o.sender_number,
+    subtotal: o.subtotal, shipping_cost: o.shipping_cost,
+    discount_amount: o.discount_amount, total_amount: o.total_amount,
+    status: o.status, notes: o.notes,
+    created_at: o.created_at, updated_at: o.updated_at,
+  });
 
   const getOrder = async (orderId: string): Promise<Order | null> => {
     try {
-      const response = await apiClient.getOrder(orderId);
-      if (response.data?.order) {
-        return mapApiOrder(response.data.order);
-      }
-      return null;
+      const { data: orderData, error: orderErr } = await supabase.from("orders").select("*").eq("id", orderId).single();
+      if (orderErr) throw orderErr;
+      const { data: itemsData } = await supabase.from("order_items").select("*").eq("order_id", orderId);
+      const order = mapRow(orderData);
+      order.items = (itemsData || []).map((i) => ({
+        id: i.id, order_id: i.order_id, product_id: i.product_id,
+        product_name: i.product_name, product_image: i.product_image,
+        quantity: i.quantity, unit_price: i.unit_price,
+        discount_percentage: i.discount_percentage || 0, total_price: i.total_price,
+        created_at: i.created_at,
+      }));
+      return order;
     } catch (err) {
       console.error("Error fetching order:", err);
       return null;
@@ -158,28 +126,58 @@ export function useOrders() {
 
   const createOrder = async (orderData: CreateOrderData): Promise<{ order: Order | null; error: string | null }> => {
     try {
-      const apiData: ApiCreateOrderData = {
-        items: orderData.items.map(i => ({ product_id: Number(i.product_id), quantity: i.quantity })),
-        shipping_name: orderData.shipping_name,
-        shipping_mobile: orderData.shipping_mobile,
-        shipping_division: orderData.shipping_division,
-        shipping_district: orderData.shipping_district,
-        shipping_upazila: orderData.shipping_upazila,
-        shipping_address: orderData.shipping_address,
-        payment_method: orderData.payment_method,
-        customer_note: orderData.customer_note,
-        payment_trx_id: orderData.payment_trx_id,
-        payment_sender_number: orderData.payment_sender_number,
-      };
+      // Get products for pricing
+      const productIds = orderData.items.map(i => i.product_id);
+      const { data: products } = await supabase.from("products").select("*").in("id", productIds);
+      if (!products) return { order: null, error: "পণ্য পাওয়া যায়নি" };
 
-      const response = await apiClient.createOrder(apiData);
-      if (response.error) {
-        return { order: null, error: response.error };
-      }
-      if (response.data?.order) {
-        return { order: mapApiOrder(response.data.order), error: null };
-      }
-      return { order: null, error: 'Unknown error' };
+      const subtotal = orderData.items.reduce((sum, item) => {
+        const product = products.find(p => p.id === item.product_id);
+        if (!product) return sum;
+        const discountedPrice = product.price * (1 - (product.discount_percentage || 0) / 100);
+        return sum + discountedPrice * item.quantity;
+      }, 0);
+
+      const shippingCost = orderData.shipping_cost || 0;
+      const totalAmount = subtotal + shippingCost;
+
+      // Generate order number
+      const { data: orderNumData } = await supabase.rpc("generate_order_number");
+      const orderNumber = orderNumData || `ORD-${Date.now()}`;
+
+      const { data: newOrder, error: insertErr } = await supabase.from("orders").insert({
+        order_number: orderNumber,
+        user_id: user?.id || null,
+        customer_name: orderData.shipping_name,
+        customer_phone: orderData.shipping_mobile,
+        shipping_address: orderData.shipping_address || "",
+        division: orderData.shipping_division || null,
+        district: orderData.shipping_district || null,
+        upazila: orderData.shipping_upazila || null,
+        payment_method: orderData.payment_method,
+        transaction_id: orderData.payment_trx_id || null,
+        sender_number: orderData.payment_sender_number || null,
+        notes: orderData.customer_note || null,
+        subtotal, shipping_cost: shippingCost, total_amount: totalAmount,
+      }).select().single();
+
+      if (insertErr) throw insertErr;
+
+      // Insert order items
+      const orderItems = orderData.items.map(item => {
+        const product = products.find(p => p.id === item.product_id)!;
+        const discountedPrice = product.price * (1 - (product.discount_percentage || 0) / 100);
+        return {
+          order_id: newOrder.id, product_id: item.product_id,
+          product_name: product.name, product_image: product.image_url,
+          quantity: item.quantity, unit_price: product.price,
+          discount_percentage: product.discount_percentage || 0,
+          total_price: discountedPrice * item.quantity,
+        };
+      });
+      await supabase.from("order_items").insert(orderItems);
+
+      return { order: mapRow(newOrder), error: null };
     } catch (err) {
       console.error("Error creating order:", err);
       return { order: null, error: (err as Error).message };
@@ -188,11 +186,8 @@ export function useOrders() {
 
   const updateOrderStatus = async (orderId: string, status: string): Promise<boolean> => {
     try {
-      const response = await apiClient.updateOrderStatus(orderId, status);
-      if (response.error) {
-        toast.error("স্ট্যাটাস আপডেট করতে সমস্যা হয়েছে");
-        return false;
-      }
+      const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
+      if (error) throw error;
       toast.success("অর্ডার স্ট্যাটাস আপডেট হয়েছে");
       return true;
     } catch (err) {
@@ -203,58 +198,35 @@ export function useOrders() {
   };
 
   const cancelOrder = async (orderId: string): Promise<boolean> => {
-    try {
-      const response = await apiClient.cancelOrder(orderId);
-      if (response.error) {
-        toast.error("অর্ডার বাতিল করতে সমস্যা হয়েছে");
-        return false;
-      }
-      toast.success("অর্ডার বাতিল হয়েছে");
-      return true;
-    } catch (err) {
-      console.error("Error cancelling order:", err);
-      toast.error("অর্ডার বাতিল করতে সমস্যা হয়েছে");
-      return false;
-    }
+    return updateOrderStatus(orderId, "cancelled");
   };
 
   const getOrderStats = async (): Promise<OrderStats | null> => {
     try {
-      const response = await apiClient.getOrderStats();
-      if (response.data) {
-        const stats = response.data;
-        const byStatus: Record<string, number> = {};
-        stats.status_summary?.forEach((s: { status: string; count: number }) => {
-          byStatus[s.status] = s.count;
-        });
-        return {
-          today: stats.today || { count: 0, total_amount: 0 },
-          this_month: stats.this_month || { count: 0, total_amount: 0 },
-          total: { count: Object.values(byStatus).reduce((a, b) => a + b, 0), total_amount: 0 },
-          by_status: byStatus,
-        };
-      }
-      return null;
+      const { data } = await supabase.from("orders").select("status, total_amount, created_at");
+      if (!data) return null;
+      const today = new Date().toISOString().split("T")[0];
+      const thisMonth = today.substring(0, 7);
+      const byStatus: Record<string, number> = {};
+      let todayCount = 0, todayTotal = 0, monthCount = 0, monthTotal = 0;
+      data.forEach(o => {
+        byStatus[o.status] = (byStatus[o.status] || 0) + 1;
+        if (o.created_at.startsWith(today)) { todayCount++; todayTotal += o.total_amount; }
+        if (o.created_at.startsWith(thisMonth)) { monthCount++; monthTotal += o.total_amount; }
+      });
+      return {
+        today: { count: todayCount, total_amount: todayTotal },
+        this_month: { count: monthCount, total_amount: monthTotal },
+        total: { count: data.length, total_amount: data.reduce((s, o) => s + o.total_amount, 0) },
+        by_status: byStatus,
+      };
     } catch (err) {
       console.error("Error fetching order stats:", err);
       return null;
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
-  return {
-    orders,
-    isLoading,
-    error,
-    fetchOrders,
-    getOrder,
-    createOrder,
-    updateOrderStatus,
-    cancelOrder,
-    getOrderStats,
-    refetch: fetchOrders,
-  };
+  return { orders, isLoading, error, fetchOrders, getOrder, createOrder, updateOrderStatus, cancelOrder, getOrderStats, refetch: fetchOrders };
 }
