@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, TrendingUp, TrendingDown, Minus, RefreshCw, Fish, Search, Plus } from "lucide-react";
+import { ArrowLeft, MapPin, TrendingUp, TrendingDown, Minus, RefreshCw, Fish, Search, Plus, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,15 +10,19 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getDivisions, getDistrictsByDivision, getUpazilasByDistrict } from "@/data/bangladeshLocationData";
+import { fishSpecies } from "@/data/fishData";
 import { format } from "date-fns";
 import { bn } from "date-fns/locale";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface MarketPrice {
   id: string;
@@ -63,6 +67,7 @@ const MarketPrice = () => {
   const [formUpazila, setFormUpazila] = useState("");
   const [formDistricts, setFormDistricts] = useState<string[]>([]);
   const [formUpazilas, setFormUpazilas] = useState<string[]>([]);
+  const [fishPopoverOpen, setFishPopoverOpen] = useState(false);
 
   // Auto-fill location from profile when dialog opens
   useEffect(() => {
@@ -279,15 +284,52 @@ const MarketPrice = () => {
                   <DialogTitle>{language === "bn" ? "বাজার দর জমা দিন" : "Submit Market Price"}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label>{language === "bn" ? "মাছের নাম (English) *" : "Fish Name (EN) *"}</Label>
-                      <Input value={formFishName} onChange={(e) => setFormFishName(e.target.value)} placeholder="e.g. Rui" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>{language === "bn" ? "মাছের নাম (বাংলা) *" : "Fish Name (BN) *"}</Label>
-                      <Input value={formFishNameBn} onChange={(e) => setFormFishNameBn(e.target.value)} placeholder="যেমন: রুই" />
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label>{language === "bn" ? "মাছ নির্বাচন করুন *" : "Select Fish *"}</Label>
+                    <Popover open={fishPopoverOpen} onOpenChange={setFishPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={fishPopoverOpen}
+                          className="w-full justify-between font-normal"
+                        >
+                          {formFishNameBn
+                            ? `${formFishNameBn} (${formFishName})`
+                            : (language === "bn" ? "মাছ নির্বাচন করুন..." : "Select fish...")}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder={language === "bn" ? "মাছ খুঁজুন..." : "Search fish..."} />
+                          <CommandList>
+                            <CommandEmpty>{language === "bn" ? "কোনো মাছ পাওয়া যায়নি" : "No fish found"}</CommandEmpty>
+                            <CommandGroup>
+                              {fishSpecies.map((fish) => (
+                                <CommandItem
+                                  key={fish.id}
+                                  value={`${fish.nameEn} ${fish.nameBn}`}
+                                  onSelect={() => {
+                                    setFormFishName(fish.nameEn);
+                                    setFormFishNameBn(fish.nameBn);
+                                    setFishPopoverOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      formFishName === fish.nameEn ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {fish.nameBn} ({fish.nameEn})
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-1.5">
