@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search, FileText, Truck } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search, FileText, Truck, MessageCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
@@ -23,6 +23,7 @@ import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import DeliverySettingsAdmin from "@/components/admin/DeliverySettingsAdmin";
 import InvoiceSettings from "@/components/admin/InvoiceSettings";
 import { SteadfastCourierSettings } from "@/components/admin/SteadfastCourierSettings";
+import { WhatsAppSettings } from "@/components/admin/WhatsAppSettings";
 
 interface SystemSetting {
   id: string;
@@ -270,6 +271,10 @@ const AdminSettings = () => {
             <TabsTrigger value="courier" className="flex items-center gap-2">
               <Truck className="h-4 w-4" />
               {language === "bn" ? "কুরিয়ার" : "Courier"}
+            </TabsTrigger>
+            <TabsTrigger value="whatsapp" className="flex items-center gap-2">
+              <MessageCircle className="h-4 w-4" />
+              WhatsApp
             </TabsTrigger>
           </TabsList>
 
@@ -694,6 +699,11 @@ const AdminSettings = () => {
           {/* Courier Settings Tab */}
           <TabsContent value="courier" className="space-y-6 mt-6">
             <SteadfastCourierSettings />
+          </TabsContent>
+
+          {/* WhatsApp Settings Tab */}
+          <TabsContent value="whatsapp" className="space-y-6 mt-6">
+            <WhatsAppSettings />
           </TabsContent>
         </Tabs>
       </div>

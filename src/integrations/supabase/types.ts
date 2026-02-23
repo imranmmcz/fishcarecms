@@ -1503,6 +1503,99 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          message_type: string
+          order_number: string | null
+          recipient_phone: string
+          sent_at: string | null
+          status: string
+          template_name: string | null
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_type: string
+          order_number?: string | null
+          recipient_phone: string
+          sent_at?: string | null
+          status?: string
+          template_name?: string | null
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_type?: string
+          order_number?: string | null
+          recipient_phone?: string
+          sent_at?: string | null
+          status?: string
+          template_name?: string | null
+          whatsapp_message_id?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_settings: {
+        Row: {
+          access_token: string | null
+          api_version: string | null
+          business_account_id: string | null
+          created_at: string
+          delivery_template: string | null
+          delivery_update_enabled: boolean | null
+          id: string
+          is_enabled: boolean
+          order_confirmation_enabled: boolean | null
+          order_confirmation_template: string | null
+          phone_number_id: string | null
+          shipping_notification_enabled: boolean | null
+          shipping_template: string | null
+          template_language: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          api_version?: string | null
+          business_account_id?: string | null
+          created_at?: string
+          delivery_template?: string | null
+          delivery_update_enabled?: boolean | null
+          id?: string
+          is_enabled?: boolean
+          order_confirmation_enabled?: boolean | null
+          order_confirmation_template?: string | null
+          phone_number_id?: string | null
+          shipping_notification_enabled?: boolean | null
+          shipping_template?: string | null
+          template_language?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          api_version?: string | null
+          business_account_id?: string | null
+          created_at?: string
+          delivery_template?: string | null
+          delivery_update_enabled?: boolean | null
+          id?: string
+          is_enabled?: boolean
+          order_confirmation_enabled?: boolean | null
+          order_confirmation_template?: string | null
+          phone_number_id?: string | null
+          shipping_notification_enabled?: boolean | null
+          shipping_template?: string | null
+          template_language?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
