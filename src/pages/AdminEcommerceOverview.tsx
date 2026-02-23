@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ShoppingCart, CreditCard, Package, AlertCircle, RefreshCw,
-  TrendingUp, TrendingDown, Calendar, BarChart2, DollarSign
+  TrendingUp, TrendingDown, Calendar, BarChart2, DollarSign, Eye
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -14,7 +14,10 @@ import {
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 type DateRange = "today" | "week" | "month" | "custom";
 
@@ -43,6 +46,17 @@ interface ChartPoint {
   due: number;
 }
 
+interface RecentOrder {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  total_amount: number;
+  status: string;
+  payment_status: string;
+  payment_method: string;
+  created_at: string;
+}
+
 const getDateRange = (range: DateRange, customFrom?: Date, customTo?: Date): { from: Date; to: Date } => {
   const now = new Date();
   switch (range) {
@@ -58,6 +72,7 @@ const getDateRange = (range: DateRange, customFrom?: Date, customTo?: Date): { f
 };
 
 const AdminEcommerceOverview = () => {
+  const navigate = useNavigate();
   const [activeRange, setActiveRange] = useState<DateRange>("month");
   const [customFrom, setCustomFrom] = useState<Date>(subDays(new Date(), 7));
   const [customTo, setCustomTo] = useState<Date>(new Date());
@@ -76,7 +91,7 @@ const AdminEcommerceOverview = () => {
   });
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const { from, to } = getDateRange(activeRange, customFrom, customTo);
 
   const fetchStats = useCallback(async () => {
@@ -162,6 +177,14 @@ const AdminEcommerceOverview = () => {
 
       // Build chart data grouped by day
       buildChartData(allOrders, allPurchases);
+
+      // Fetch recent 10 orders
+      const { data: recent } = await supabase
+        .from("orders")
+        .select("id, order_number, customer_name, total_amount, status, payment_status, payment_method, created_at")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      setRecentOrders(recent || []);
     } catch (err) {
       console.error("Error fetching ecommerce stats:", err);
     } finally {
@@ -506,6 +529,76 @@ const AdminEcommerceOverview = () => {
             </CardContent>
           </Card>
         </div>
+        {/* Recent Orders Table */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-primary" />
+                সাম্প্রতিক অর্ডার (Recent Orders)
+              </CardTitle>
+              <Button variant="outline" size="sm" onClick={() => navigate("/admin/orders")}>
+                সব দেখুন
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-[200px] bg-muted animate-pulse rounded" />
+            ) : recentOrders.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">কোনো অর্ডার পাওয়া যায়নি</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>অর্ডার নম্বর</TableHead>
+                    <TableHead>কাস্টমার</TableHead>
+                    <TableHead>মোট টাকা</TableHead>
+                    <TableHead>পেমেন্ট</TableHead>
+                    <TableHead>স্ট্যাটাস</TableHead>
+                    <TableHead>তারিখ</TableHead>
+                    <TableHead className="text-right">অ্যাকশন</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentOrders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{order.order_number}</TableCell>
+                      <TableCell>{order.customer_name}</TableCell>
+                      <TableCell>৳{Number(order.total_amount).toLocaleString("en-IN")}</TableCell>
+                      <TableCell>
+                        <Badge variant={order.payment_status === "paid" ? "default" : "secondary"} className="text-xs">
+                          {order.payment_status === "paid" ? "পেইড" : order.payment_status === "pending" ? "পেন্ডিং" : order.payment_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn("text-xs",
+                            order.status === "delivered" && "border-emerald-500 text-emerald-600",
+                            order.status === "processing" && "border-blue-500 text-blue-600",
+                            order.status === "shipped" && "border-violet-500 text-violet-600",
+                            order.status === "cancelled" && "border-destructive text-destructive",
+                          )}
+                        >
+                          {order.status === "pending" ? "পেন্ডিং" : order.status === "processing" ? "প্রসেসিং" : order.status === "shipped" ? "শিপড" : order.status === "delivered" ? "ডেলিভার্ড" : order.status === "cancelled" ? "বাতিল" : order.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {format(new Date(order.created_at), "dd/MM/yy hh:mm a")}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/orders")}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
