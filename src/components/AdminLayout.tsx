@@ -12,7 +12,7 @@ import {
   LayoutDashboard, Users, Settings, BarChart3, Home, Shield, User, Package,
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
   Building2, FileText, CloudUpload, Palette, Store, ChevronDown, CreditCard,
-  Mail, Globe, Sliders, type LucideIcon,
+  Mail, Globe, Sliders, Stethoscope, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +38,7 @@ const cmsGroup: MenuGroup = {
     { title: "পেজ বিল্ডার", url: "/admin/page-builder", icon: Layout, permissionKey: "admin_pages" },
     { title: "বিজ্ঞাপন", url: "/admin/ads", icon: Megaphone, permissionKey: "admin_ads" },
     { title: "বাজার দর", url: "/admin/market-prices", icon: TrendingUp, permissionKey: "admin_market_prices" },
+    { title: "রোগ ব্যবস্থাপনা", url: "/admin/diseases", icon: Stethoscope, permissionKey: "admin_pages" },
   ],
 };
 
