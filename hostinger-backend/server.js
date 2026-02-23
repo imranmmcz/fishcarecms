@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -19,23 +20,39 @@ const extrasRoutes = require('./routes/extras');
 const uploadRoutes = require('./routes/uploads');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
+
+// Ensure logs directory exists
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+['products', 'avatars', 'general'].forEach(dir => {
+  const fullPath = path.join(uploadsDir, dir);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+  }
+});
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: { error: 'Too many requests, please try again later.' }
+  max: 200, // limit each IP to 200 requests per windowMs
+  message: { error: 'অনেক বেশি রিকোয়েস্ট পাঠানো হয়েছে, কিছুক্ষণ পর আবার চেষ্টা করুন।' }
 });
 app.use(limiter);
 
-// CORS configuration - Allow multiple origins
+// CORS configuration
 const allowedOrigins = [
   'https://fishcal.lovable.app',
-  'https://5798b806-1411-4801-969c-cb11a23f8585.lovableproject.com',
   'http://localhost:5173',
   'http://localhost:8080',
   process.env.FRONTEND_URL
@@ -43,10 +60,8 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // Check if origin matches allowed origins or Lovable preview pattern
     const isAllowed = allowedOrigins.includes(origin) || 
       origin.includes('.lovableproject.com') ||
       origin.includes('.lovable.app');
@@ -55,7 +70,7 @@ app.use(cors({
       callback(null, true);
     } else {
       console.log('CORS blocked origin:', origin);
-      callback(null, true); // Allow all for now, log blocked ones
+      callback(null, true); // Allow all, log blocked
     }
   },
   credentials: true,
@@ -63,7 +78,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Handle preflight requests
 app.options('*', cors());
 
 // Body parsing
@@ -89,7 +103,12 @@ app.use('/api/upload', uploadRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0'
+  });
 });
 
 // Error handling middleware
@@ -109,4 +128,5 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 FishCare API Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'Not configured'}`);
 });

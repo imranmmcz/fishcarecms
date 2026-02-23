@@ -1,15 +1,20 @@
+# =====================================================
+# FishCare Pro - Hostinger Apache Configuration
+# এই ফাইলটি public_html/ ডিরেক্টরিতে রাখুন
+# =====================================================
+
 # Enable Rewrite Engine
 RewriteEngine On
 
-# CORS Configuration - Dynamic Origin Support
-# Allows: fishcal.lovable.app, *.lovableproject.com, blog.fishcare.com.bd, localhost
+# ========== CORS Configuration ==========
 <IfModule mod_headers.c>
-    # Match Lovable domains dynamically
+    # Dynamic Origin Support
     SetEnvIf Origin "^https://([a-z0-9-]+\.)?lovableproject\.com$" ORIGIN_OK=$0
     SetEnvIf Origin "^https://([a-z0-9-]+\.)?lovable\.app$" ORIGIN_OK=$0
     SetEnvIf Origin "^https://fishcal\.lovable\.app$" ORIGIN_OK=$0
-    SetEnvIf Origin "^https://blog\.fishcare\.com\.bd$" ORIGIN_OK=$0
-    SetEnvIf Origin "^http://localhost:(5173|8080|3000)$" ORIGIN_OK=$0
+    SetEnvIf Origin "^https://your-domain\.com$" ORIGIN_OK=$0
+    SetEnvIf Origin "^https://www\.your-domain\.com$" ORIGIN_OK=$0
+    SetEnvIf Origin "^http://localhost:(5173|8080|3000|3001)$" ORIGIN_OK=$0
     
     # Set CORS headers when origin matches
     Header always set Access-Control-Allow-Origin "%{ORIGIN_OK}e" env=ORIGIN_OK
@@ -19,17 +24,44 @@ RewriteEngine On
     Header always set Access-Control-Max-Age "86400"
 </IfModule>
 
-# Handle OPTIONS preflight requests immediately
+# ========== Handle OPTIONS preflight ==========
 RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule ^(.*)$ $1 [R=200,L]
 
-# Proxy all /api requests to Node.js server (port 3001)
+# ========== Proxy API to Node.js ==========
+# সকল /api রিকোয়েস্ট Node.js সার্ভারে ফরওয়ার্ড
 RewriteCond %{REQUEST_URI} ^/api(.*)$
 RewriteRule ^api(.*)$ http://127.0.0.1:3001/api$1 [P,L]
 
-# Security Headers
+# ========== SPA Routing ==========
+# React Router-এর জন্য - সকল রাউট index.html এ পাঠানো
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api
+RewriteCond %{REQUEST_URI} !^/uploads
+RewriteRule . /index.html [L]
+
+# ========== Security Headers ==========
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ========== Caching ==========
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType application/font-woff2 "access plus 1 month"
+</IfModule>
+
+# ========== Gzip Compression ==========
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
 </IfModule>
