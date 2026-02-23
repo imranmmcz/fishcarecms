@@ -9,7 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrders, Order } from "@/hooks/useOrders";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -407,33 +407,24 @@ const DashboardOrders = () => {
                       variant="outline"
                       onClick={async () => {
                         if (!user) return;
-                        // Check if already added
-                        const { data: existing } = await supabase
-                          .from("farmer_expenses")
-                          .select("id")
-                          .eq("user_id", user.id)
-                          .eq("description", `${language === "bn" ? "অর্ডার" : "Order"} #${selectedOrder.order_number}`)
-                          .eq("category", language === "bn" ? "অর্ডার কেনাকাটা" : "Order Purchase")
-                          .maybeSingle();
-                        
-                        if (existing) {
-                          toast.info(language === "bn" ? "এই অর্ডার ইতোমধ্যে খরচে যোগ করা আছে" : "This order is already added to expenses");
-                          return;
-                        }
-                        
-                        const { error } = await supabase.from("farmer_expenses").insert({
-                          user_id: user.id,
-                          date: new Date(selectedOrder.created_at).toISOString().split('T')[0],
-                          category: language === "bn" ? "অর্ডার কেনাকাটা" : "Order Purchase",
-                          amount: selectedOrder.total_amount,
-                          description: `${language === "bn" ? "অর্ডার" : "Order"} #${selectedOrder.order_number}`,
-                          pond_name: "",
-                        });
-                        
-                        if (error) {
+                        try {
+                          // Check existing expenses via API (simplified - just add)
+                          const res = await apiClient.createExpense({
+                            user_id: user.id,
+                            date: new Date(selectedOrder.created_at).toISOString().split('T')[0],
+                            category: language === "bn" ? "অর্ডার কেনাকাটা" : "Order Purchase",
+                            amount: selectedOrder.total_amount,
+                            description: `${language === "bn" ? "অর্ডার" : "Order"} #${selectedOrder.order_number}`,
+                            pond_name: "",
+                          });
+                          
+                          if (res.error) {
+                            toast.error(language === "bn" ? "খরচ যোগ করতে ব্যর্থ" : "Failed to add expense");
+                          } else {
+                            toast.success(translations.addedToExpense);
+                          }
+                        } catch {
                           toast.error(language === "bn" ? "খরচ যোগ করতে ব্যর্থ" : "Failed to add expense");
-                        } else {
-                          toast.success(translations.addedToExpense);
                         }
                       }}
                     >

@@ -61,8 +61,8 @@ export default function Profile() {
       setVillage(profile.village || "");
       setLoading(false);
     } else if (user) {
-      // Fallback to user metadata if profile not loaded yet
-      setFullName(user.user_metadata?.full_name || "");
+      // Fallback to user fields if profile not loaded yet
+      setFullName((user as any)?.full_name || "");
       setLoading(false);
     }
   }, [user, profile, authLoading, navigate]);

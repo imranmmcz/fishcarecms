@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiClient } from "@/lib/api-client";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,8 +62,8 @@ interface SamplingRecord {
 interface FishStockEntry {
   fishType: string;
   quantity: number;
-  weightPerFish: number; // গ্রাম
-  pricePerPiece: number; // টাকা/পিস
+  weightPerFish: number;
+  pricePerPiece: number;
 }
 
 const expenseCategories = [
@@ -87,7 +87,7 @@ interface PondRecord {
 }
 
 const fishTypeOptions = [
-  "রুই", "কাতলা", "মৃগেল", "সিলভার কার্প", "গ্রাস কার্প", 
+  "রুই", "কাতলা", "মৃগেল", "সিলভার কার্প", "গ্রাস কার্প",
   "কমন কার্প", "তেলাপিয়া", "পাঙ্গাস", "শিং", "মাগুর", "কই", "পাবদা"
 ];
 
@@ -149,58 +149,40 @@ export default function DashboardMyPond() {
 
   const fetchPonds = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from("farmer_ponds").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
-    if (data) {
-      setPonds(data.map(p => ({
-        id: p.id, name: p.name, area: Number(p.area), areaUnit: p.area_unit, depth: Number(p.depth), depthUnit: p.depth_unit,
-        fishTypes: p.fish_types || [], fishCount: p.fish_count || 0, stockingDate: p.stocking_date || "",
-        status: p.status, notes: p.notes || "",
-        fishStockEntries: (p.fish_stock_entries as any) || [], totalStockingCost: Number(p.total_stocking_cost) || 0,
-      })));
-    }
+    const res = await apiClient.getPonds(String(user.id));
+    const data = res.data?.data || [];
+    setPonds(data.map((p: any) => ({
+      id: String(p.id), name: p.name, area: Number(p.area), areaUnit: p.area_unit, depth: Number(p.depth), depthUnit: p.depth_unit,
+      fishTypes: p.fish_types || [], fishCount: p.fish_count || 0, stockingDate: p.stocking_date || "",
+      status: p.status, notes: p.notes || "",
+      fishStockEntries: p.fish_stock_entries || [], totalStockingCost: Number(p.total_stocking_cost) || 0,
+    })));
   }, [user]);
 
   const fetchSamplings = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from("farmer_samplings").select("*").eq("user_id", user.id).order("date", { ascending: false });
-    if (data) {
-      setSamplingRecords(data.map(s => ({
-        id: s.id, pondId: s.pond_id || "", pondName: s.pond_name, date: s.date,
-        fishEntries: (s.fish_entries as any) || [], totalFish: s.total_fish || 0,
-        totalWeight: Number(s.total_weight) || 0, avgWeight: Number(s.avg_weight) || 0, notes: s.notes || "",
-      })));
-    }
+    const res = await apiClient.getSamplings(String(user.id));
+    const data = res.data?.data || [];
+    setSamplingRecords(data.map((s: any) => ({
+      id: String(s.id), pondId: s.pond_id ? String(s.pond_id) : "", pondName: s.pond_name, date: s.date,
+      fishEntries: s.fish_entries || [], totalFish: s.total_fish || 0,
+      totalWeight: Number(s.total_weight) || 0, avgWeight: Number(s.avg_weight) || 0, notes: s.notes || "",
+    })));
   }, [user]);
 
   useEffect(() => { fetchPonds(); fetchSamplings(); }, [fetchPonds, fetchSamplings]);
 
-  const savePonds = async (newPonds: PondRecord[]) => {
-    setPonds(newPonds);
-  };
-
   const resetForm = () => {
-    setName("");
-    setArea("");
-    setAreaUnit("শতক");
-    setDepth("");
-    setDepthUnit("ফুট");
-    setFishTypes([]);
-    setFishCount("");
-    setStockingDate("");
-    setStatus("active");
-    setNotes("");
+    setName(""); setArea(""); setAreaUnit("শতক"); setDepth(""); setDepthUnit("ফুট");
+    setFishTypes([]); setFishCount(""); setStockingDate(""); setStatus("active"); setNotes("");
     setEditingPond(null);
     setFishStockEntries([{ fishType: "", quantity: 0, weightPerFish: 0, pricePerPiece: 0 }]);
   };
 
-  // Fish stock entry management
   const updateFishStockEntry = (index: number, field: keyof FishStockEntry, value: string | number) => {
     const newEntries = [...fishStockEntries];
-    if (field === "fishType") {
-      newEntries[index].fishType = value as string;
-    } else {
-      newEntries[index][field] = parseFloat(value as string) || 0;
-    }
+    if (field === "fishType") { newEntries[index].fishType = value as string; }
+    else { newEntries[index][field] = parseFloat(value as string) || 0; }
     setFishStockEntries(newEntries);
   };
 
@@ -209,9 +191,7 @@ export default function DashboardMyPond() {
   };
 
   const removeFishStockEntry = (index: number) => {
-    if (fishStockEntries.length > 1) {
-      setFishStockEntries(fishStockEntries.filter((_, i) => i !== index));
-    }
+    if (fishStockEntries.length > 1) setFishStockEntries(fishStockEntries.filter((_, i) => i !== index));
   };
 
   const calculateStockTotals = () => {
@@ -250,18 +230,18 @@ export default function DashboardMyPond() {
     const isNewPond = !editingPond;
 
     if (editingPond) {
-      const { error } = await supabase.from("farmer_ponds").update(pondPayload).eq("id", editingPond.id);
-      if (error) { toast.error("আপডেটে সমস্যা"); return; }
+      const res = await apiClient.updatePond(editingPond.id, pondPayload);
+      if (res.error) { toast.error("আপডেটে সমস্যা"); return; }
       toast.success("পুকুর আপডেট করা হয়েছে");
     } else {
-      const { error } = await supabase.from("farmer_ponds").insert(pondPayload);
-      if (error) { toast.error("সংরক্ষণে সমস্যা"); return; }
+      const res = await apiClient.createPond(pondPayload);
+      if (res.error) { toast.error("সংরক্ষণে সমস্যা"); return; }
       toast.success("পুকুর যোগ করা হয়েছে");
     }
 
     // Auto-create expense record for fish stocking cost (only for new ponds)
     if (isNewPond && totalCost > 0 && stockingDate) {
-      await supabase.from("farmer_expenses").insert({
+      await apiClient.createExpense({
         user_id: user.id,
         date: stockingDate,
         category: "পোনা ক্রয়",
@@ -279,17 +259,10 @@ export default function DashboardMyPond() {
 
   const handleEdit = (pond: PondRecord) => {
     setEditingPond(pond);
-    setName(pond.name);
-    setArea(pond.area.toString());
-    setAreaUnit(pond.areaUnit);
-    setDepth(pond.depth.toString());
-    setDepthUnit(pond.depthUnit);
-    setFishTypes(pond.fishTypes);
-    setFishCount(pond.fishCount.toString());
-    setStockingDate(pond.stockingDate);
-    setStatus(pond.status);
-    setNotes(pond.notes);
-    // Load fish stock entries if available
+    setName(pond.name); setArea(pond.area.toString()); setAreaUnit(pond.areaUnit);
+    setDepth(pond.depth.toString()); setDepthUnit(pond.depthUnit); setFishTypes(pond.fishTypes);
+    setFishCount(pond.fishCount.toString()); setStockingDate(pond.stockingDate);
+    setStatus(pond.status); setNotes(pond.notes);
     if (pond.fishStockEntries && pond.fishStockEntries.length > 0) {
       setFishStockEntries(pond.fishStockEntries);
     } else {
@@ -300,18 +273,15 @@ export default function DashboardMyPond() {
 
   const handleDelete = async (id: string) => {
     if (confirm("আপনি কি এই পুকুরটি মুছে ফেলতে চান?")) {
-      await supabase.from("farmer_ponds").delete().eq("id", id);
+      await apiClient.deletePond(id);
       fetchPonds();
       toast.success("পুকুর মুছে ফেলা হয়েছে");
     }
   };
 
   const toggleFishType = (fish: string) => {
-    if (fishTypes.includes(fish)) {
-      setFishTypes(fishTypes.filter((f) => f !== fish));
-    } else {
-      setFishTypes([...fishTypes, fish]);
-    }
+    if (fishTypes.includes(fish)) setFishTypes(fishTypes.filter((f) => f !== fish));
+    else setFishTypes([...fishTypes, fish]);
   };
 
   const getStatusInfo = (statusValue: string) => {
@@ -319,82 +289,62 @@ export default function DashboardMyPond() {
   };
 
   const handleOpenSellDialog = (pond: PondRecord) => {
-    setSellingPond(pond);
-    setSellFishType(pond.fishTypes[0] || "");
-    setSellWeight("");
-    setSellPricePerKg("");
-    setSellDate(new Date().toISOString().split("T")[0]);
-    setSellBuyer("");
+    setSellingPond(pond); setSellFishType(pond.fishTypes[0] || "");
+    setSellWeight(""); setSellPricePerKg("");
+    setSellDate(new Date().toISOString().split("T")[0]); setSellBuyer("");
     setIsSellDialogOpen(true);
   };
 
   const handleSellFish = async () => {
     if (!user || !sellingPond || !sellWeight || !sellPricePerKg) {
-      toast.error("ওজন এবং দাম দিন");
-      return;
+      toast.error("ওজন এবং দাম দিন"); return;
     }
     const weight = parseFloat(sellWeight);
     const pricePerKg = parseFloat(sellPricePerKg);
     const totalAmount = weight * pricePerKg;
 
-    await supabase.from("farmer_incomes").insert({
+    await apiClient.createIncome({
       user_id: user.id, date: sellDate, category: "মাছ বিক্রয়", amount: totalAmount,
       description: sellBuyer ? `ক্রেতা: ${sellBuyer}` : `${sellFishType} - ${weight} কেজি @ ৳${pricePerKg}/কেজি`,
       pond_name: sellingPond.name, fish_type: sellFishType, fish_weight: weight, fish_price: pricePerKg,
     });
 
     toast.success(`৳${totalAmount.toLocaleString("bn-BD")} আয় রেকর্ড করা হয়েছে`);
-    setIsSellDialogOpen(false);
-    setSellingPond(null);
+    setIsSellDialogOpen(false); setSellingPond(null);
   };
 
   const handleOpenExpenseDialog = (pond: PondRecord) => {
-    setExpensePond(pond);
-    setExpenseCategory("খাবার");
-    setExpenseAmount("");
-    setExpenseDate(new Date().toISOString().split("T")[0]);
-    setExpenseDescription("");
+    setExpensePond(pond); setExpenseCategory("খাবার"); setExpenseAmount("");
+    setExpenseDate(new Date().toISOString().split("T")[0]); setExpenseDescription("");
     setIsExpenseDialogOpen(true);
   };
 
   const handleAddExpense = async () => {
     if (!user || !expensePond || !expenseAmount) {
-      toast.error("খরচের পরিমাণ দিন");
-      return;
+      toast.error("খরচের পরিমাণ দিন"); return;
     }
     const amount = parseFloat(expenseAmount);
-    await supabase.from("farmer_expenses").insert({
+    await apiClient.createExpense({
       user_id: user.id, date: expenseDate, category: expenseCategory, amount,
       description: expenseDescription || `${expensePond.name} - ${expenseCategory}`,
       pond_name: expensePond.name,
     });
     toast.success(`৳${amount.toLocaleString("bn-BD")} খরচ রেকর্ড করা হয়েছে`);
-    setIsExpenseDialogOpen(false);
-    setExpensePond(null);
+    setIsExpenseDialogOpen(false); setExpensePond(null);
   };
 
   // Sampling functions
   const handleOpenSamplingDialog = (pond: PondRecord) => {
-    setSamplingPond(pond);
-    setSamplingDate(new Date().toISOString().split("T")[0]);
-    setSamplingNotes("");
-    // Initialize fish entries from pond's fish types
-    const initialEntries: SamplingFishEntry[] = pond.fishTypes.map(fish => ({
-      fishType: fish,
-      sampleCount: 0,
-      sampleWeight: 0
-    }));
+    setSamplingPond(pond); setSamplingDate(new Date().toISOString().split("T")[0]); setSamplingNotes("");
+    const initialEntries: SamplingFishEntry[] = pond.fishTypes.map(fish => ({ fishType: fish, sampleCount: 0, sampleWeight: 0 }));
     setSamplingFishEntries(initialEntries.length > 0 ? initialEntries : [{ fishType: "", sampleCount: 0, sampleWeight: 0 }]);
     setIsSamplingDialogOpen(true);
   };
 
   const updateSamplingEntry = (index: number, field: keyof SamplingFishEntry, value: string | number) => {
     const newEntries = [...samplingFishEntries];
-    if (field === "fishType") {
-      newEntries[index].fishType = value as string;
-    } else {
-      newEntries[index][field] = parseFloat(value as string) || 0;
-    }
+    if (field === "fishType") { newEntries[index].fishType = value as string; }
+    else { newEntries[index][field] = parseFloat(value as string) || 0; }
     setSamplingFishEntries(newEntries);
   };
 
@@ -403,20 +353,15 @@ export default function DashboardMyPond() {
   };
 
   const removeSamplingEntry = (index: number) => {
-    if (samplingFishEntries.length > 1) {
-      setSamplingFishEntries(samplingFishEntries.filter((_, i) => i !== index));
-    }
+    if (samplingFishEntries.length > 1) setSamplingFishEntries(samplingFishEntries.filter((_, i) => i !== index));
   };
 
   const calculateSamplingTotals = () => {
     const totalSampleFish = samplingFishEntries.reduce((sum, e) => sum + e.sampleCount, 0);
     const totalSampleWeight = samplingFishEntries.reduce((sum, e) => sum + e.sampleWeight, 0);
     const avgWeight = totalSampleFish > 0 ? totalSampleWeight / totalSampleFish : 0;
-    
-    // Estimate total weight based on pond's total fish count
     const totalFish = samplingPond?.fishCount || 0;
     const estimatedTotalWeight = avgWeight * totalFish;
-    
     return { totalSampleFish, totalSampleWeight, avgWeight, totalFish, estimatedTotalWeight };
   };
 
@@ -426,7 +371,7 @@ export default function DashboardMyPond() {
     if (validEntries.length === 0) { toast.error("অন্তত একটি মাছের নমুনা তথ্য দিন"); return; }
     const { avgWeight, totalFish, estimatedTotalWeight } = calculateSamplingTotals();
 
-    await supabase.from("farmer_samplings").insert({
+    await apiClient.createSampling({
       user_id: user.id, pond_id: samplingPond.id, pond_name: samplingPond.name, date: samplingDate,
       fish_entries: JSON.parse(JSON.stringify(validEntries)),
       total_fish: totalFish, total_weight: estimatedTotalWeight, avg_weight: avgWeight, notes: samplingNotes,
@@ -434,47 +379,43 @@ export default function DashboardMyPond() {
 
     toast.success("নমুনায়ন সংরক্ষণ করা হয়েছে");
     fetchSamplings();
-    setIsSamplingDialogOpen(false);
-    setSamplingPond(null);
+    setIsSamplingDialogOpen(false); setSamplingPond(null);
   };
 
   const handleViewSamplingHistory = (pond: PondRecord) => {
-    setViewSamplingPond(pond);
-    setIsViewSamplingOpen(true);
+    setViewSamplingPond(pond); setIsViewSamplingOpen(true);
   };
 
   const getPondSamplings = (pondId: string) => {
-    return samplingRecords.filter(s => s.pondId === pondId).sort((a, b) => 
+    return samplingRecords.filter(s => s.pondId === pondId).sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   };
 
   const deleteSampling = async (id: string) => {
     if (confirm("আপনি কি এই নমুনায়ন রেকর্ড মুছে ফেলতে চান?")) {
-      await supabase.from("farmer_samplings").delete().eq("id", id);
+      await apiClient.deleteSampling(id);
       fetchSamplings();
       toast.success("নমুনায়ন রেকর্ড মুছে ফেলা হয়েছে");
     }
   };
 
+  // The rest of the JSX remains exactly the same as before
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Waves className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">আমার পুকুর</h1>
-              <p className="text-muted-foreground">আপনার সকল পুকুরের তথ্য</p>
-            </div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Waves className="h-6 w-6 text-blue-500" />
+              আমার পুকুর
+            </h1>
+            <p className="text-muted-foreground">পুকুর পরিচালনা ও মনিটরিং</p>
           </div>
-
           <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button3D variant="primary">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button3D variant="primary" className="gap-2">
+                <Plus className="h-4 w-4" />
                 নতুন পুকুর যোগ করুন
               </Button3D>
             </DialogTrigger>
@@ -482,48 +423,49 @@ export default function DashboardMyPond() {
               <DialogHeader>
                 <DialogTitle>{editingPond ? "পুকুর সম্পাদনা" : "নতুন পুকুর যোগ করুন"}</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="space-y-2">
-                  <Label>পুকুরের নাম *</Label>
-                  <Input placeholder="যেমন: পশ্চিম পুকুর" value={name} onChange={(e) => setName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>স্ট্যাটাস</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>আয়তন *</Label>
-                  <div className="flex gap-2">
-                    <Input type="number" placeholder="০" value={area} onChange={(e) => setArea(e.target.value)} />
-                    <Select value={areaUnit} onValueChange={setAreaUnit}>
-                      <SelectTrigger className="w-24">
-                        <SelectValue />
-                      </SelectTrigger>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>পুকুরের নাম *</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="পুকুর ১" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>স্ট্যাটাস</Label>
+                    <Select value={status} onValueChange={setStatus}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="শতক">শতক</SelectItem>
-                        <SelectItem value="একর">একর</SelectItem>
-                        <SelectItem value="বর্গমিটার">বর্গমিটার</SelectItem>
+                        {statusOptions.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>গভীরতা *</Label>
-                  <div className="flex gap-2">
-                    <Input type="number" placeholder="০" value={depth} onChange={(e) => setDepth(e.target.value)} />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>আয়তন *</Label>
+                    <Input type="number" value={area} onChange={(e) => setArea(e.target.value)} placeholder="০" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>একক</Label>
+                    <Select value={areaUnit} onValueChange={setAreaUnit}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="শতক">শতক</SelectItem>
+                        <SelectItem value="একর">একর</SelectItem>
+                        <SelectItem value="বিঘা">বিঘা</SelectItem>
+                        <SelectItem value="হেক্টর">হেক্টর</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>গভীরতা *</Label>
+                    <Input type="number" value={depth} onChange={(e) => setDepth(e.target.value)} placeholder="০" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>একক</Label>
                     <Select value={depthUnit} onValueChange={setDepthUnit}>
-                      <SelectTrigger className="w-24">
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ফুট">ফুট</SelectItem>
                         <SelectItem value="মিটার">মিটার</SelectItem>
@@ -531,140 +473,87 @@ export default function DashboardMyPond() {
                     </Select>
                   </div>
                 </div>
+
+                {/* Fish Stock Entries */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-semibold flex items-center gap-2">
+                      <Fish className="h-4 w-4" /> মাছের স্টক তথ্য
+                    </Label>
+                    <Button variant="outline" size="sm" onClick={addFishStockEntry}><Plus className="h-3 w-3 mr-1" /> যোগ করুন</Button>
+                  </div>
+                  {fishStockEntries.map((entry, index) => (
+                    <div key={index} className="grid grid-cols-5 gap-2 items-end p-3 rounded-lg bg-muted/50">
+                      <div className="space-y-1">
+                        <Label className="text-xs">মাছের ধরন</Label>
+                        <Select value={entry.fishType} onValueChange={(v) => updateFishStockEntry(index, "fishType", v)}>
+                          <SelectTrigger className="h-9"><SelectValue placeholder="নির্বাচন" /></SelectTrigger>
+                          <SelectContent>{fishTypeOptions.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">সংখ্যা (টি)</Label>
+                        <Input type="number" className="h-9" value={entry.quantity || ""} onChange={(e) => updateFishStockEntry(index, "quantity", e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">ওজন/টি (গ্রাম)</Label>
+                        <Input type="number" className="h-9" value={entry.weightPerFish || ""} onChange={(e) => updateFishStockEntry(index, "weightPerFish", e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">দাম/টি (৳)</Label>
+                        <Input type="number" className="h-9" value={entry.pricePerPiece || ""} onChange={(e) => updateFishStockEntry(index, "pricePerPiece", e.target.value)} />
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => removeFishStockEntry(index)} className="h-9"><Trash2 className="h-3 w-3" /></Button>
+                    </div>
+                  ))}
+                  {(() => {
+                    const { totalFish, totalCost, totalWeight } = calculateStockTotals();
+                    return totalFish > 0 ? (
+                      <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm space-y-1">
+                        <p>মোট পোনা: <strong>{totalFish.toLocaleString("bn-BD")} টি</strong></p>
+                        <p>মোট ওজন: <strong>{(totalWeight / 1000).toFixed(2)} কেজি</strong></p>
+                        <p>মোট খরচ: <strong>৳{totalCost.toLocaleString("bn-BD")}</strong></p>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+
                 <div className="space-y-2">
                   <Label>মজুদের তারিখ</Label>
                   <Input type="date" value={stockingDate} onChange={(e) => setStockingDate(e.target.value)} />
                 </div>
-
-                {/* Fish Stocking Details Section */}
-                <div className="space-y-3 md:col-span-2 border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-semibold flex items-center gap-2">
-                      <Fish className="h-5 w-5 text-primary" />
-                      পোনা মজুদের বিস্তারিত
-                    </Label>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {fishStockEntries.map((entry, index) => (
-                      <div key={index} className="grid grid-cols-12 gap-2 items-end bg-muted/50 p-2 rounded-lg">
-                        <div className="col-span-12 md:col-span-3">
-                          <Label className="text-xs">মাছের প্রজাতি</Label>
-                          <Select 
-                            value={entry.fishType} 
-                            onValueChange={(val) => updateFishStockEntry(index, "fishType", val)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="নির্বাচন করুন" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {fishTypeOptions.map((fish) => (
-                                <SelectItem key={fish} value={fish}>{fish}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="col-span-4 md:col-span-2">
-                          <Label className="text-xs">সংখ্যা</Label>
-                          <Input 
-                            type="number" 
-                            placeholder="০"
-                            value={entry.quantity || ""}
-                            onChange={(e) => updateFishStockEntry(index, "quantity", e.target.value)}
-                          />
-                        </div>
-                        <div className="col-span-4 md:col-span-2">
-                          <Label className="text-xs">ওজন/পিস (গ্রাম)</Label>
-                          <Input 
-                            type="number" 
-                            placeholder="০"
-                            value={entry.weightPerFish || ""}
-                            onChange={(e) => updateFishStockEntry(index, "weightPerFish", e.target.value)}
-                          />
-                        </div>
-                        <div className="col-span-4 md:col-span-2">
-                          <Label className="text-xs">দাম/পিস (৳)</Label>
-                          <Input 
-                            type="number" 
-                            placeholder="০"
-                            value={entry.pricePerPiece || ""}
-                            onChange={(e) => updateFishStockEntry(index, "pricePerPiece", e.target.value)}
-                          />
-                        </div>
-                        <div className="col-span-8 md:col-span-2 text-sm">
-                          <Label className="text-xs">মোট</Label>
-                          <p className="font-semibold text-primary py-2">
-                            ৳{(entry.quantity * entry.pricePerPiece).toLocaleString("bn-BD")}
-                          </p>
-                        </div>
-                        <div className="col-span-4 md:col-span-1 flex justify-end">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            type="button"
-                            onClick={() => removeFishStockEntry(index)}
-                            disabled={fishStockEntries.length <= 1}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
+                <div className="space-y-2">
+                  <Label>মাছের ধরন (ম্যানুয়াল)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {fishTypeOptions.map(fish => (
+                      <Badge key={fish} variant={fishTypes.includes(fish) ? "default" : "outline"}
+                        className="cursor-pointer" onClick={() => toggleFishType(fish)}>{fish}</Badge>
                     ))}
-                    
-                    <Button variant="outline" size="sm" type="button" onClick={addFishStockEntry}>
-                      <Plus className="h-4 w-4 mr-1" />
-                      আরো মাছ যোগ করুন
-                    </Button>
                   </div>
-
-                  {/* Auto calculated summary */}
-                  {(() => {
-                    const { totalFish, totalCost, totalWeight } = calculateStockTotals();
-                    if (totalFish > 0) {
-                      return (
-                        <div className="bg-green-50 dark:bg-green-950 p-3 rounded-lg mt-3">
-                          <div className="grid grid-cols-3 gap-3 text-sm">
-                            <div className="text-center">
-                              <span className="text-muted-foreground block">মোট মাছ</span>
-                              <p className="font-bold text-lg">{totalFish.toLocaleString("bn-BD")} টি</p>
-                            </div>
-                            <div className="text-center">
-                              <span className="text-muted-foreground block">মোট ওজন</span>
-                              <p className="font-bold text-lg">{(totalWeight / 1000).toFixed(2)} কেজি</p>
-                            </div>
-                            <div className="text-center">
-                              <span className="text-muted-foreground block">মোট খরচ</span>
-                              <p className="font-bold text-lg text-green-600">৳{totalCost.toLocaleString("bn-BD")}</p>
-                            </div>
-                          </div>
-                          <p className="text-xs text-muted-foreground text-center mt-2">
-                            * এই খরচ স্বয়ংক্রিয়ভাবে ব্যয়ের তালিকায় যোগ হবে
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
                 </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label>নোট</Label>
-                  <Input placeholder="অতিরিক্ত তথ্য লিখুন" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                <div className="space-y-2">
+                  <Label>মোট মাছের সংখ্যা (ম্যানুয়াল)</Label>
+                  <Input type="number" value={fishCount} onChange={(e) => setFishCount(e.target.value)} placeholder="০" />
                 </div>
+                <div className="space-y-2">
+                  <Label>মন্তব্য</Label>
+                  <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="কোনো নোট..." />
+                </div>
+                <Button3D variant="primary" className="w-full" onClick={handleSubmit}>
+                  {editingPond ? "আপডেট করুন" : "সংরক্ষণ করুন"}
+                </Button3D>
               </div>
-              <Button3D className="mt-4 w-full" onClick={handleSubmit} variant="success">
-                {editingPond ? "আপডেট করুন" : "সংরক্ষণ করুন"}
-              </Button3D>
             </DialogContent>
           </Dialog>
         </div>
 
+        {/* Ponds List */}
         {ponds.length === 0 ? (
-          <Card className="shadow-elegant">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Waves className="h-16 w-16 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground text-lg">কোনো পুকুর যোগ করা হয়নি</p>
-              <p className="text-muted-foreground text-sm">উপরের বাটনে ক্লিক করে নতুন পুকুর যোগ করুন</p>
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Waves className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">কোনো পুকুর যোগ করা হয়নি</h3>
+              <p className="text-muted-foreground mb-4">আপনার প্রথম পুকুর যোগ করুন</p>
             </CardContent>
           </Card>
         ) : (
@@ -672,119 +561,39 @@ export default function DashboardMyPond() {
             {ponds.map((pond) => {
               const statusInfo = getStatusInfo(pond.status);
               return (
-                <Card key={pond.id} className="shadow-elegant hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Waves className="h-5 w-5 text-blue-500" />
-                          {pond.name}
-                        </CardTitle>
-                        <Badge className={`mt-2 ${statusInfo.color}`}>
-                          {statusInfo.label}
-                        </Badge>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(pond)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(pond.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
+                <Card key={pond.id} className="shadow-elegant">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Waves className="h-5 w-5 text-blue-500" />
+                        {pond.name}
+                      </CardTitle>
+                      <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">আয়তন:</span>
-                        <p className="font-medium">{pond.area} {pond.areaUnit}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">গভীরতা:</span>
-                        <p className="font-medium">{pond.depth} {pond.depthUnit}</p>
-                      </div>
+                      <div><span className="text-muted-foreground">আয়তন:</span> {pond.area} {pond.areaUnit}</div>
+                      <div><span className="text-muted-foreground">গভীরতা:</span> {pond.depth} {pond.depthUnit}</div>
+                      <div><span className="text-muted-foreground">মাছ:</span> {pond.fishCount.toLocaleString("bn-BD")} টি</div>
+                      {pond.stockingDate && <div><span className="text-muted-foreground">মজুদ:</span> {pond.stockingDate}</div>}
                     </div>
-                    {pond.fishCount > 0 && (
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <Fish className="h-4 w-4 text-primary" />
-                          <span>{pond.fishCount.toLocaleString("bn-BD")} টি মাছ</span>
-                        </div>
-                        {pond.totalStockingCost && pond.totalStockingCost > 0 && (
-                          <span className="text-green-600 font-medium">
-                            ৳{pond.totalStockingCost.toLocaleString("bn-BD")}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {pond.fishStockEntries && pond.fishStockEntries.length > 0 && (
+                    {pond.fishTypes.length > 0 && (
                       <div className="flex flex-wrap gap-1">
-                        {pond.fishStockEntries.map((entry, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {entry.fishType}: {entry.quantity}টি
-                          </Badge>
-                        ))}
+                        {pond.fishTypes.map(f => <Badge key={f} variant="outline" className="text-xs">{f}</Badge>)}
                       </div>
                     )}
-                    {(!pond.fishStockEntries || pond.fishStockEntries.length === 0) && pond.fishTypes.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {pond.fishTypes.map((fish) => (
-                          <Badge key={fish} variant="secondary" className="text-xs">
-                            {fish}
-                          </Badge>
-                        ))}
-                      </div>
+                    {pond.totalStockingCost && pond.totalStockingCost > 0 && (
+                      <p className="text-xs text-muted-foreground">মজুদ খরচ: ৳{pond.totalStockingCost.toLocaleString("bn-BD")}</p>
                     )}
-                    {pond.stockingDate && (
-                      <p className="text-xs text-muted-foreground">
-                        মজুদের তারিখ: {pond.stockingDate}
-                      </p>
-                    )}
-                    {pond.status === "active" && (
-                      <div className="space-y-2 mt-2">
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 text-green-600 border-green-600 hover:bg-green-50"
-                            onClick={() => handleOpenSellDialog(pond)}
-                          >
-                            <ShoppingCart className="h-4 w-4 mr-1" />
-                            বিক্রি
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 text-orange-600 border-orange-600 hover:bg-orange-50"
-                            onClick={() => handleOpenExpenseDialog(pond)}
-                          >
-                            <Receipt className="h-4 w-4 mr-1" />
-                            খরচ
-                          </Button>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 text-purple-600 border-purple-600 hover:bg-purple-50"
-                            onClick={() => handleOpenSamplingDialog(pond)}
-                          >
-                            <Scale className="h-4 w-4 mr-1" />
-                            নমুনায়ন
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 text-blue-600 border-blue-600 hover:bg-blue-50"
-                            onClick={() => handleViewSamplingHistory(pond)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            ইতিহাস
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-1 pt-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(pond)}><Edit className="h-3 w-3 mr-1" />সম্পাদনা</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleOpenSellDialog(pond)}><ShoppingCart className="h-3 w-3 mr-1" />বিক্রি</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleOpenExpenseDialog(pond)}><Receipt className="h-3 w-3 mr-1" />খরচ</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleOpenSamplingDialog(pond)}><Scale className="h-3 w-3 mr-1" />নমুনায়ন</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleViewSamplingHistory(pond)}><Eye className="h-3 w-3 mr-1" />ইতিহাস</Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(pond.id)}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -794,325 +603,127 @@ export default function DashboardMyPond() {
 
         {/* Sell Fish Dialog */}
         <Dialog open={isSellDialogOpen} onOpenChange={setIsSellDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-green-600" />
-                মাছ বিক্রি - {sellingPond?.name}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
+          <DialogContent>
+            <DialogHeader><DialogTitle>মাছ বিক্রয় - {sellingPond?.name}</DialogTitle></DialogHeader>
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label>তারিখ</Label>
-                <Input 
-                  type="date" 
-                  value={sellDate} 
-                  onChange={(e) => setSellDate(e.target.value)} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>মাছের প্রজাতি</Label>
+                <Label>মাছের ধরন</Label>
                 <Select value={sellFishType} onValueChange={setSellFishType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="প্রজাতি নির্বাচন করুন" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(sellingPond?.fishTypes.length ? sellingPond.fishTypes : fishTypeOptions).map((fish) => (
-                      <SelectItem key={fish} value={fish}>{fish}</SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue placeholder="নির্বাচন করুন" /></SelectTrigger>
+                  <SelectContent>{(sellingPond?.fishTypes || fishTypeOptions).map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>ওজন (কেজি) *</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="০" 
-                    value={sellWeight} 
-                    onChange={(e) => setSellWeight(e.target.value)} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>দাম/কেজি (৳) *</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="০" 
-                    value={sellPricePerKg} 
-                    onChange={(e) => setSellPricePerKg(e.target.value)} 
-                  />
-                </div>
+                <div className="space-y-2"><Label>ওজন (কেজি) *</Label><Input type="number" value={sellWeight} onChange={(e) => setSellWeight(e.target.value)} /></div>
+                <div className="space-y-2"><Label>দাম/কেজি (৳) *</Label><Input type="number" value={sellPricePerKg} onChange={(e) => setSellPricePerKg(e.target.value)} /></div>
               </div>
               {sellWeight && sellPricePerKg && (
-                <div className="bg-green-50 p-3 rounded-lg text-center">
-                  <p className="text-sm text-muted-foreground">মোট আয়</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    ৳{(parseFloat(sellWeight) * parseFloat(sellPricePerKg)).toLocaleString("bn-BD")}
-                  </p>
-                </div>
+                <p className="text-lg font-bold text-green-600">মোট: ৳{(parseFloat(sellWeight) * parseFloat(sellPricePerKg)).toLocaleString("bn-BD")}</p>
               )}
-              <div className="space-y-2">
-                <Label>ক্রেতার নাম (ঐচ্ছিক)</Label>
-                <Input 
-                  placeholder="ক্রেতার নাম লিখুন" 
-                  value={sellBuyer} 
-                  onChange={(e) => setSellBuyer(e.target.value)} 
-                />
-              </div>
-              <Button className="w-full bg-green-600 hover:bg-green-700" onClick={handleSellFish}>
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                বিক্রি রেকর্ড করুন
-              </Button>
+              <div className="space-y-2"><Label>তারিখ</Label><Input type="date" value={sellDate} onChange={(e) => setSellDate(e.target.value)} /></div>
+              <div className="space-y-2"><Label>ক্রেতার নাম (ঐচ্ছিক)</Label><Input value={sellBuyer} onChange={(e) => setSellBuyer(e.target.value)} /></div>
+              <Button3D variant="primary" className="w-full" onClick={handleSellFish}>বিক্রয় রেকর্ড করুন</Button3D>
             </div>
           </DialogContent>
         </Dialog>
 
         {/* Add Expense Dialog */}
         <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-orange-600" />
-                খরচ যোগ করুন - {expensePond?.name}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
+          <DialogContent>
+            <DialogHeader><DialogTitle>খরচ যোগ - {expensePond?.name}</DialogTitle></DialogHeader>
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label>তারিখ</Label>
-                <Input 
-                  type="date" 
-                  value={expenseDate} 
-                  onChange={(e) => setExpenseDate(e.target.value)} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>খরচের ধরন</Label>
+                <Label>ক্যাটাগরি</Label>
                 <Select value={expenseCategory} onValueChange={setExpenseCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="ধরন নির্বাচন করুন" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {expenseCategories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{expenseCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>পরিমাণ (৳) *</Label>
-                <Input 
-                  type="number" 
-                  placeholder="০" 
-                  value={expenseAmount} 
-                  onChange={(e) => setExpenseAmount(e.target.value)} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>বিবরণ (ঐচ্ছিক)</Label>
-                <Input 
-                  placeholder="বিস্তারিত লিখুন" 
-                  value={expenseDescription} 
-                  onChange={(e) => setExpenseDescription(e.target.value)} 
-                />
-              </div>
-              <Button className="w-full bg-orange-600 hover:bg-orange-700" onClick={handleAddExpense}>
-                <Receipt className="h-4 w-4 mr-2" />
-                খরচ রেকর্ড করুন
-              </Button>
+              <div className="space-y-2"><Label>পরিমাণ (৳) *</Label><Input type="number" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} /></div>
+              <div className="space-y-2"><Label>তারিখ</Label><Input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} /></div>
+              <div className="space-y-2"><Label>বিবরণ (ঐচ্ছিক)</Label><Input value={expenseDescription} onChange={(e) => setExpenseDescription(e.target.value)} /></div>
+              <Button3D variant="primary" className="w-full" onClick={handleAddExpense}>খরচ রেকর্ড করুন</Button3D>
             </div>
           </DialogContent>
         </Dialog>
 
         {/* Sampling Dialog */}
         <Dialog open={isSamplingDialogOpen} onOpenChange={setIsSamplingDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Scale className="h-5 w-5 text-purple-600" />
-                নমুনায়ন - {samplingPond?.name}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>তারিখ</Label>
-                  <Input 
-                    type="date" 
-                    value={samplingDate} 
-                    onChange={(e) => setSamplingDate(e.target.value)} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>পুকুরে মোট মাছ</Label>
-                  <Input 
-                    type="text" 
-                    value={`${samplingPond?.fishCount?.toLocaleString("bn-BD") || "০"} টি`}
-                    disabled
-                    className="bg-muted"
-                  />
-                </div>
-              </div>
-
+          <DialogContent className="max-w-lg">
+            <DialogHeader><DialogTitle>নমুনায়ন - {samplingPond?.name}</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2"><Label>তারিখ</Label><Input type="date" value={samplingDate} onChange={(e) => setSamplingDate(e.target.value)} /></div>
               <div className="space-y-3">
-                <Label>নমুনা তথ্য (মাছের প্রজাতি অনুযায়ী)</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="font-semibold">মাছের নমুনা</Label>
+                  <Button variant="outline" size="sm" onClick={addSamplingEntry}><Plus className="h-3 w-3 mr-1" />যোগ</Button>
+                </div>
                 {samplingFishEntries.map((entry, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-4">
-                      <Select 
-                        value={entry.fishType} 
-                        onValueChange={(val) => updateSamplingEntry(index, "fishType", val)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="মাছ" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fishTypeOptions.map((fish) => (
-                            <SelectItem key={fish} value={fish}>{fish}</SelectItem>
-                          ))}
-                        </SelectContent>
+                  <div key={index} className="grid grid-cols-4 gap-2 items-end p-2 rounded bg-muted/50">
+                    <div className="space-y-1">
+                      <Label className="text-xs">মাছ</Label>
+                      <Select value={entry.fishType} onValueChange={(v) => updateSamplingEntry(index, "fishType", v)}>
+                        <SelectTrigger className="h-8"><SelectValue placeholder="নির্বাচন" /></SelectTrigger>
+                        <SelectContent>{fishTypeOptions.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
-                    <div className="col-span-3">
-                      <Input 
-                        type="number" 
-                        placeholder="সংখ্যা"
-                        value={entry.sampleCount || ""}
-                        onChange={(e) => updateSamplingEntry(index, "sampleCount", e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-4">
-                      <Input 
-                        type="number" 
-                        placeholder="ওজন (গ্রাম)"
-                        value={entry.sampleWeight || ""}
-                        onChange={(e) => updateSamplingEntry(index, "sampleWeight", e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => removeSamplingEntry(index)}
-                        disabled={samplingFishEntries.length <= 1}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
+                    <div className="space-y-1"><Label className="text-xs">সংখ্যা</Label><Input type="number" className="h-8" value={entry.sampleCount || ""} onChange={(e) => updateSamplingEntry(index, "sampleCount", e.target.value)} /></div>
+                    <div className="space-y-1"><Label className="text-xs">ওজন (গ্রাম)</Label><Input type="number" className="h-8" value={entry.sampleWeight || ""} onChange={(e) => updateSamplingEntry(index, "sampleWeight", e.target.value)} /></div>
+                    <Button variant="ghost" size="sm" className="h-8" onClick={() => removeSamplingEntry(index)}><Trash2 className="h-3 w-3" /></Button>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={addSamplingEntry}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  আরো যোগ করুন
-                </Button>
-              </div>
-
-              {/* Auto calculated summary */}
-              {(() => {
-                const { totalSampleFish, totalSampleWeight, avgWeight, totalFish, estimatedTotalWeight } = calculateSamplingTotals();
-                return (
-                  <div className="bg-purple-50 dark:bg-purple-950 p-4 rounded-lg space-y-2">
-                    <h4 className="font-semibold text-purple-700 dark:text-purple-300">গণনা ফলাফল</h4>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">নমুনা মাছ:</span>
-                        <p className="font-medium">{totalSampleFish.toLocaleString("bn-BD")} টি</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">নমুনা ওজন:</span>
-                        <p className="font-medium">{totalSampleWeight.toLocaleString("bn-BD")} গ্রাম</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">গড় ওজন/মাছ:</span>
-                        <p className="font-medium text-purple-600">{avgWeight.toFixed(2)} গ্রাম</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">আনুমানিক মোট ওজন:</span>
-                        <p className="font-bold text-lg text-purple-600">
-                          {(estimatedTotalWeight / 1000).toFixed(2)} কেজি
-                        </p>
-                      </div>
+                {(() => {
+                  const { totalSampleFish, totalSampleWeight, avgWeight, estimatedTotalWeight } = calculateSamplingTotals();
+                  return totalSampleFish > 0 ? (
+                    <div className="p-3 rounded bg-blue-50 dark:bg-blue-950/20 text-sm space-y-1">
+                      <p>নমুনা মাছ: <strong>{totalSampleFish} টি</strong> | নমুনা ওজন: <strong>{totalSampleWeight.toFixed(0)} গ্রাম</strong></p>
+                      <p>গড় ওজন: <strong>{avgWeight.toFixed(1)} গ্রাম/টি</strong></p>
+                      <p>আনুমানিক মোট ওজন: <strong>{(estimatedTotalWeight / 1000).toFixed(2)} কেজি</strong></p>
                     </div>
-                  </div>
-                );
-              })()}
-
-              <div className="space-y-2">
-                <Label>নোট (ঐচ্ছিক)</Label>
-                <Input 
-                  placeholder="অতিরিক্ত তথ্য লিখুন" 
-                  value={samplingNotes} 
-                  onChange={(e) => setSamplingNotes(e.target.value)} 
-                />
+                  ) : null;
+                })()}
               </div>
-
-              <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={handleSaveSampling}>
-                <Scale className="h-4 w-4 mr-2" />
-                সংরক্ষণ করুন
-              </Button>
+              <div className="space-y-2"><Label>মন্তব্য</Label><Input value={samplingNotes} onChange={(e) => setSamplingNotes(e.target.value)} /></div>
+              <Button3D variant="primary" className="w-full" onClick={handleSaveSampling}>সংরক্ষণ করুন</Button3D>
             </div>
           </DialogContent>
         </Dialog>
 
         {/* View Sampling History Dialog */}
         <Dialog open={isViewSamplingOpen} onOpenChange={setIsViewSamplingOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5 text-blue-600" />
-                নমুনায়ন ইতিহাস - {viewSamplingPond?.name}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="mt-4">
-              {viewSamplingPond && getPondSamplings(viewSamplingPond.id).length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Scale className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>এই পুকুরে কোনো নমুনায়ন রেকর্ড নেই</p>
-                </div>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>নমুনায়ন ইতিহাস - {viewSamplingPond?.name}</DialogTitle></DialogHeader>
+            {viewSamplingPond && (() => {
+              const pondSamplings = getPondSamplings(viewSamplingPond.id);
+              return pondSamplings.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">কোনো নমুনায়ন রেকর্ড নেই</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>তারিখ</TableHead>
-                      <TableHead>নমুনা</TableHead>
+                      <TableHead>মাছের ধরন</TableHead>
                       <TableHead>গড় ওজন</TableHead>
-                      <TableHead>মোট মাছ</TableHead>
                       <TableHead>আনুমানিক ওজন</TableHead>
+                      <TableHead>মন্তব্য</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {viewSamplingPond && getPondSamplings(viewSamplingPond.id).map((sampling) => (
-                      <TableRow key={sampling.id}>
-                        <TableCell>{sampling.date}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {sampling.fishEntries.map((entry, i) => (
-                              <Badge key={i} variant="secondary" className="text-xs">
-                                {entry.fishType}: {entry.sampleCount}টি
-                              </Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell>{sampling.avgWeight.toFixed(1)} গ্রাম</TableCell>
-                        <TableCell>{sampling.totalFish.toLocaleString("bn-BD")} টি</TableCell>
-                        <TableCell className="font-semibold text-purple-600">
-                          {(sampling.totalWeight / 1000).toFixed(2)} কেজি
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => deleteSampling(sampling.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
+                    {pondSamplings.map(s => (
+                      <TableRow key={s.id}>
+                        <TableCell>{s.date}</TableCell>
+                        <TableCell>{s.fishEntries.map(e => e.fishType).join(", ")}</TableCell>
+                        <TableCell>{s.avgWeight.toFixed(1)} গ্রাম</TableCell>
+                        <TableCell>{(s.totalWeight / 1000).toFixed(2)} কেজি</TableCell>
+                        <TableCell className="text-xs">{s.notes}</TableCell>
+                        <TableCell><Button variant="ghost" size="sm" onClick={() => deleteSampling(s.id)}><Trash2 className="h-3 w-3" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              )}
-            </div>
+              );
+            })()}
           </DialogContent>
         </Dialog>
       </div>
