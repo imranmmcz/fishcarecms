@@ -65,10 +65,21 @@ const AdminAds = () => {
         .from('ad_settings')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setSettings(data);
+      if (!data) {
+        // Create default settings if none exist
+        const { data: newData, error: insertError } = await supabase
+          .from('ad_settings')
+          .insert({})
+          .select()
+          .single();
+        if (insertError) throw insertError;
+        setSettings(newData);
+      } else {
+        setSettings(data);
+      }
     } catch (error) {
       console.error('Error fetching ad settings:', error);
       toast({
