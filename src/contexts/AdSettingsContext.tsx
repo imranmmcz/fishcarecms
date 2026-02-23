@@ -1,8 +1,12 @@
+/**
+ * AdSettingsContext - MySQL Backend API Version
+ */
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api-client';
 
 interface AdSettings {
-  id: string;
+  id: string | number;
   ad_client_id: string | null;
   header_ad_enabled: boolean;
   header_ad_slot: string | null;
@@ -30,28 +34,19 @@ export const AdSettingsProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchAdSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('ad_settings')
-        .select('*')
-        .limit(1)
-        .single();
-
-      if (error) {
-        console.error('Error fetching ad settings:', error);
-      } else {
-        setAdSettings(data);
-        
-        // Dynamically update AdSense script if client ID is set
-        if (data?.ad_client_id) {
+      const response = await apiClient.getAdSettings();
+      if (response.data?.settings) {
+        setAdSettings(response.data.settings as unknown as AdSettings);
+        if (response.data.settings.ad_client_id) {
           const scriptEl = document.getElementById('adsense-script');
           if (scriptEl) {
-            scriptEl.setAttribute('src', `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${data.ad_client_id}`);
+            scriptEl.setAttribute('src', `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${response.data.settings.ad_client_id}`);
             scriptEl.setAttribute('crossorigin', 'anonymous');
           }
         }
       }
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error fetching ad settings:', err);
     } finally {
       setLoading(false);
     }

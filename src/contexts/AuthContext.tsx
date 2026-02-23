@@ -1,6 +1,10 @@
+/**
+ * AuthContext - MySQL Backend API Version
+ * VITE_API_URL পরিবর্তন করলেই ব্যাকএন্ড পরিবর্তন হবে
+ */
+
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient, User } from "@/lib/api-client";
 
 interface AddressData {
   mobile?: string;
@@ -28,7 +32,7 @@ type UserRole = 'admin' | 'farmer' | 'customer' | 'user';
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
-  session: Session | null;
+  session: unknown | null;
   isLoading: boolean;
   isAdmin: boolean;
   isFarmer: boolean;
@@ -46,165 +50,108 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const userToProfile = (user: User | null): UserProfile | null => {
+  if (!user) return null;
+  return {
+    id: String(user.id),
+    user_id: String(user.id),
+    email: user.email,
+    full_name: user.full_name,
+    mobile: user.mobile,
+    division: user.division,
+    district: user.district,
+    upazila: user.upazila,
+    village: user.village,
+    avatar_url: user.avatar_url,
+  };
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+  const isAdmin = user?.role === 'admin';
+  const userRole: UserRole | null = user?.role ? (user.role as UserRole) : null;
+  const isFarmer = userRole === 'farmer';
+  const isCustomer = userRole === 'customer';
+  const isAuthenticated = !!user;
+  const profile = userToProfile(user);
 
-      if (error) {
-        console.error("Error fetching profile:", error);
-        return null;
-      }
-
-      return data as UserProfile;
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      return null;
-    }
-  };
-
-  const fetchUserRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId);
-
-      if (error) {
-        console.error("Error fetching user role:", error);
-        return { isAdmin: false, role: null as UserRole | null };
-      }
-
-      const roles = data?.map(r => r.role as UserRole) || [];
-      const hasAdmin = roles.includes('admin');
-      // Priority: admin > farmer > customer > user
-      const primaryRole = hasAdmin ? 'admin' : roles.includes('farmer') ? 'farmer' : roles.includes('customer') ? 'customer' : roles[0] || null;
-
-      return { isAdmin: hasAdmin, role: primaryRole };
-    } catch (error) {
-      console.error("Error fetching user role:", error);
-      return { isAdmin: false, role: null as UserRole | null };
-    }
-  };
-
+  // Check for existing session on mount
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    const checkAuth = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
         setIsLoading(false);
-
-        // Defer profile and admin check with setTimeout to prevent deadlock
-        if (session?.user) {
-          setTimeout(async () => {
-            const [profileData, roleData] = await Promise.all([
-              fetchProfile(session.user.id),
-              fetchUserRole(session.user.id),
-            ]);
-            setProfile(profileData);
-            setIsAdmin(roleData.isAdmin);
-            setUserRole(roleData.role);
-          }, 0);
+        return;
+      }
+      try {
+        const response = await apiClient.getCurrentUser();
+        if (response.data?.user) {
+          setUser(response.data.user);
         } else {
-          setProfile(null);
-          setIsAdmin(false);
-          setUserRole(null);
+          apiClient.removeToken();
         }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        apiClient.removeToken();
+      } finally {
+        setIsLoading(false);
       }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-
-      if (session?.user) {
-        const [profileData, roleData] = await Promise.all([
-          fetchProfile(session.user.id),
-          fetchUserRole(session.user.id),
-        ]);
-        setProfile(profileData);
-        setIsAdmin(roleData.isAdmin);
-        setUserRole(roleData.role);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    };
+    checkAuth();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error: error as Error | null };
+    try {
+      const response = await apiClient.signIn(email, password);
+      if (response.error) {
+        return { error: new Error(response.error) };
+      }
+      if (response.data?.user) {
+        setUser(response.data.user);
+      }
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string, addressData?: AddressData, roleType?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-          mobile: addressData?.mobile,
-          division: addressData?.division,
-          district: addressData?.district,
-          upazila: addressData?.upazila,
-          village: addressData?.village,
-          role_type: roleType || 'farmer',
-        },
-      },
-    });
-    return { error: error as Error | null };
+    try {
+      const signUpData: Record<string, unknown> = { ...addressData };
+      if (roleType) signUpData.role_type = roleType;
+      const response = await apiClient.signUp(email, password, fullName, signUpData as any);
+      if (response.error) {
+        return { error: new Error(response.error) };
+      }
+      if (response.data?.user) {
+        setUser(response.data.user);
+      }
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
-    setIsAdmin(false);
-    setUserRole(null);
+    try {
+      await apiClient.signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    } finally {
+      setUser(null);
+    }
   };
 
   const updateProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
     if (!user) return false;
-
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: data.full_name,
-          mobile: data.mobile,
-          division: data.division,
-          district: data.district,
-          upazila: data.upazila,
-          village: data.village,
-          avatar_url: data.avatar_url,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-
-      // Refresh profile
-      const updatedProfile = await fetchProfile(user.id);
-      setProfile(updatedProfile);
+      const response = await apiClient.updateUser(String(user.id), data as unknown as Partial<User>);
+      if (response.error) return false;
+      if (response.data?.user) {
+        setUser(response.data.user);
+      }
       return true;
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -214,10 +161,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updatePassword = async (currentPassword: string, newPassword: string) => {
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-      return { error: error as Error | null };
+      const response = await apiClient.updatePassword(currentPassword, newPassword);
+      if (response.error) {
+        return { error: new Error(response.error) };
+      }
+      return { error: null };
     } catch (error) {
       return { error: error as Error };
     }
@@ -226,16 +174,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const switchToFarmer = async (): Promise<boolean> => {
     if (!user) return false;
     try {
-      // Update the role from customer to farmer
-      const { error } = await supabase
-        .from("user_roles")
-        .update({ role: 'farmer' as any })
-        .eq("user_id", user.id)
-        .eq("role", 'customer' as any);
-
-      if (error) throw error;
-
-      setUserRole('farmer');
+      const response = await apiClient.updateUserRole(String(user.id), 'user');
+      if (response.error) return false;
+      // Refresh user data
+      await refreshUser();
       return true;
     } catch (error) {
       console.error("Error switching role:", error);
@@ -244,14 +186,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshUser = async () => {
-    if (user) {
-      const [profileData, roleData] = await Promise.all([
-        fetchProfile(user.id),
-        fetchUserRole(user.id),
-      ]);
-      setProfile(profileData);
-      setIsAdmin(roleData.isAdmin);
-      setUserRole(roleData.role);
+    if (!user) return;
+    try {
+      const response = await apiClient.getCurrentUser();
+      if (response.data?.user) {
+        setUser(response.data.user);
+      }
+    } catch (error) {
+      console.error('Refresh user failed:', error);
     }
   };
 
@@ -260,13 +202,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         profile,
-        session,
+        session: user ? { user } : null,
         isLoading,
         isAdmin,
-        isFarmer: userRole === 'farmer',
-        isCustomer: userRole === 'customer',
+        isFarmer,
+        isCustomer,
         userRole,
-        isAuthenticated: !!user,
+        isAuthenticated,
         signIn,
         signUp,
         signOut,
