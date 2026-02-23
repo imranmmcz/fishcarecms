@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { ShoppingCart, Package, TrendingUp, Users, Clock, CheckCircle, Truck, XCircle, DollarSign, AlertTriangle } from "lucide-react";
+import { ShoppingCart, Package, TrendingUp, Users, Clock, CheckCircle, Truck, XCircle, DollarSign, AlertTriangle, User, MapPin, Phone, Mail, CalendarDays } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DashboardStats {
   todayOrders: number;
@@ -53,12 +54,38 @@ const STATUS_LABELS: Record<string, string> = {
 
 const CHART_COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
+interface UserProfile {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  mobile: string | null;
+  division: string | null;
+  district: string | null;
+  upazila: string | null;
+  village: string | null;
+  created_at: string;
+}
+
+interface UserDashboardData {
+  totalOrders: number;
+  totalSpent: number;
+  pendingOrders: number;
+  deliveredOrders: number;
+  orders: RecentOrder[];
+  role: string;
+}
+
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [dailySalesData, setDailySalesData] = useState<any[]>([]);
   const [statusDistribution, setStatusDistribution] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedUserData, setSelectedUserData] = useState<UserDashboardData | null>(null);
+  const [isUserLoading, setIsUserLoading] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -132,19 +159,59 @@ const AdminDashboard = () => {
     }
   }, []);
 
+  // Fetch all users for dropdown
+  const fetchUsers = useCallback(async () => {
+    const { data } = await supabase.from("profiles").select("*").order("full_name");
+    setAllUsers(data || []);
+  }, []);
+
+  // Fetch selected user's dashboard data
+  const fetchUserDashboard = useCallback(async (userId: string) => {
+    setIsUserLoading(true);
+    try {
+      const [{ data: userOrders }, { data: roleData }] = await Promise.all([
+        supabase.from("orders").select("id, order_number, customer_name, total_amount, status, payment_method, payment_status, created_at").eq("user_id", userId).order("created_at", { ascending: false }),
+        supabase.from("user_roles").select("role").eq("user_id", userId).limit(1),
+      ]);
+
+      const orders = userOrders || [];
+      const byStatus: Record<string, number> = {};
+      orders.forEach(o => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
+
+      setSelectedUserData({
+        totalOrders: orders.length,
+        totalSpent: orders.reduce((s, o) => s + Number(o.total_amount), 0),
+        pendingOrders: byStatus["pending"] || 0,
+        deliveredOrders: byStatus["delivered"] || 0,
+        orders: orders.slice(0, 10),
+        role: roleData?.[0]?.role || "user",
+      });
+    } catch (err) {
+      console.error("User dashboard error:", err);
+    } finally {
+      setIsUserLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDashboardData();
+    fetchUsers();
 
-    // Realtime subscription
     const channel = supabase
       .channel("admin-dashboard-orders")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
         fetchDashboardData();
+        if (selectedUserId) fetchUserDashboard(selectedUserId);
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, fetchUsers, fetchUserDashboard, selectedUserId]);
+
+  useEffect(() => {
+    if (selectedUserId) fetchUserDashboard(selectedUserId);
+    else setSelectedUserData(null);
+  }, [selectedUserId, fetchUserDashboard]);
 
   if (isLoading) {
     return (
@@ -278,53 +345,112 @@ const AdminDashboard = () => {
           </Card>
         )}
 
-        {/* Recent Orders */}
+        {/* User Dashboard Section */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-500" />
-              সাম্প্রতিক অর্ডার
+              <Users className="h-5 w-5 text-primary" />
+              ব্যবহারকারী ড্যাশবোর্ড
             </CardTitle>
-            <CardDescription>সর্বশেষ ১০টি অর্ডার</CardDescription>
+            <CardDescription>ব্যবহারকারী নির্বাচন করে তার সম্পূর্ণ তথ্য দেখুন</CardDescription>
+            <div className="pt-2 max-w-sm">
+              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="ব্যবহারকারী নির্বাচন করুন" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allUsers.map(u => (
+                    <SelectItem key={u.user_id} value={u.user_id}>
+                      {u.full_name || u.email || "Unknown"} {u.mobile ? `(${u.mobile})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
-            {recentOrders.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="pb-2 font-medium">অর্ডার নং</th>
-                      <th className="pb-2 font-medium">গ্রাহক</th>
-                      <th className="pb-2 font-medium">পরিমাণ</th>
-                      <th className="pb-2 font-medium">পেমেন্ট</th>
-                      <th className="pb-2 font-medium">স্ট্যাটাস</th>
-                      <th className="pb-2 font-medium">তারিখ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentOrders.map(order => (
-                      <tr key={order.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="py-3 font-mono text-xs">{order.order_number}</td>
-                        <td className="py-3">{order.customer_name}</td>
-                        <td className="py-3 font-semibold">৳{Number(order.total_amount).toLocaleString()}</td>
-                        <td className="py-3">
-                          <span className="text-xs">{order.payment_method?.toUpperCase()}</span>
-                        </td>
-                        <td className="py-3">
-                          <Badge variant="outline" className={`text-xs ${STATUS_COLORS[order.status] || ""}`}>
-                            {STATUS_LABELS[order.status] || order.status}
-                          </Badge>
-                        </td>
-                        <td className="py-3 text-xs text-muted-foreground">
-                          {new Date(order.created_at).toLocaleDateString("bn-BD")}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {isUserLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-40 w-full" />
+              </div>
+            ) : selectedUserData ? (
+              <div className="space-y-5">
+                {/* User Info */}
+                {(() => {
+                  const user = allUsers.find(u => u.user_id === selectedUserId);
+                  if (!user) return null;
+                  return (
+                    <div className="flex flex-wrap gap-4 p-4 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{user.full_name || "N/A"}</span></div>
+                      <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /><span>{user.email || "N/A"}</span></div>
+                      <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /><span>{user.mobile || "N/A"}</span></div>
+                      <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" /><span>{[user.village, user.upazila, user.district, user.division].filter(Boolean).join(", ") || "N/A"}</span></div>
+                      <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-muted-foreground" /><span>{new Date(user.created_at).toLocaleDateString("bn-BD")}</span></div>
+                      <Badge variant="outline">{selectedUserData.role === "admin" ? "অ্যাডমিন" : selectedUserData.role === "farmer" ? "কৃষক" : selectedUserData.role === "customer" ? "কাস্টমার" : "ইউজার"}</Badge>
+                    </div>
+                  );
+                })()}
+
+                {/* User Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
+                    <ShoppingCart className="h-5 w-5 text-primary" />
+                    <span className="text-xl font-bold">{selectedUserData.totalOrders.toLocaleString("bn-BD")}</span>
+                    <span className="text-xs text-muted-foreground">মোট অর্ডার</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
+                    <DollarSign className="h-5 w-5 text-primary" />
+                    <span className="text-xl font-bold">৳{selectedUserData.totalSpent.toLocaleString("bn-BD")}</span>
+                    <span className="text-xs text-muted-foreground">মোট খরচ</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
+                    <Clock className="h-5 w-5 text-yellow-600" />
+                    <span className="text-xl font-bold">{selectedUserData.pendingOrders.toLocaleString("bn-BD")}</span>
+                    <span className="text-xs text-muted-foreground">পেন্ডিং</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <span className="text-xl font-bold">{selectedUserData.deliveredOrders.toLocaleString("bn-BD")}</span>
+                    <span className="text-xs text-muted-foreground">ডেলিভারড</span>
+                  </div>
+                </div>
+
+                {/* User Orders */}
+                {selectedUserData.orders.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <p className="text-sm font-medium mb-2 text-muted-foreground">সর্বশেষ অর্ডারসমূহ</p>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-left text-muted-foreground">
+                          <th className="pb-2 font-medium">অর্ডার নং</th>
+                          <th className="pb-2 font-medium">পরিমাণ</th>
+                          <th className="pb-2 font-medium">স্ট্যাটাস</th>
+                          <th className="pb-2 font-medium">তারিখ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedUserData.orders.map(order => (
+                          <tr key={order.id} className="border-b last:border-0 hover:bg-muted/30">
+                            <td className="py-2 font-mono text-xs">{order.order_number}</td>
+                            <td className="py-2 font-semibold">৳{Number(order.total_amount).toLocaleString()}</td>
+                            <td className="py-2">
+                              <Badge variant="outline" className={`text-xs ${STATUS_COLORS[order.status] || ""}`}>
+                                {STATUS_LABELS[order.status] || order.status}
+                              </Badge>
+                            </td>
+                            <td className="py-2 text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("bn-BD")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">এই ব্যবহারকারীর কোনো অর্ডার নেই</p>
+                )}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-8">কোনো অর্ডার নেই</p>
+              <p className="text-center text-muted-foreground py-8">ড্রপডাউন থেকে একজন ব্যবহারকারী নির্বাচন করুন</p>
             )}
           </CardContent>
         </Card>
