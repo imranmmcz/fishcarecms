@@ -27,3 +27,7 @@ verify_jwt = false
 [functions.steadfast-courier]
 enabled = true
 verify_jwt = false
+
+[functions.steadfast-webhook]
+enabled = true
+verify_jwt = false
