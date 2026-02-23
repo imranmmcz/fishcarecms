@@ -22,9 +22,11 @@ import {
   Trash2,
   GripVertical,
   Loader2,
-  Sliders
+  Sliders,
+  ShoppingBag
 } from "lucide-react";
 import { HeroSliderManagement } from "@/components/admin/HeroSliderManagement";
+import { HeroFeaturedProductAdmin } from "@/components/admin/HeroFeaturedProductAdmin";
 
 interface PageSection {
   id: string;
@@ -701,8 +703,9 @@ export default function AdminPageBuilder() {
           </TabsContent>
 
           {/* Hero Slider Section */}
-          <TabsContent value="hero">
+          <TabsContent value="hero" className="space-y-6">
             <HeroSliderManagement />
+            <HeroFeaturedProductAdmin />
           </TabsContent>
 
           {/* Modules Section */}

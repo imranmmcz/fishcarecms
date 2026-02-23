@@ -158,21 +158,12 @@ const Index = () => {
       {/* Header Ad */}
       <AdUnit position="header" className="py-2 container" />
 
-      {/* Hero Section with Featured Product */}
+      {/* Hero Section with Floating Featured Product */}
       <section className="relative">
-        <div className="container py-0">
-          <div className="flex flex-col lg:flex-row gap-4 lg:gap-0">
-            {/* Hero Slider - takes most space */}
-            <div className="w-full lg:flex-1 lg:min-w-0">
-              <HeroSlider />
-            </div>
-            {/* Featured Product - right side */}
-            <div className="w-full lg:w-64 xl:w-72 shrink-0 lg:relative">
-              <div className="lg:absolute lg:inset-0">
-                <HeroFeaturedProduct />
-              </div>
-            </div>
-          </div>
+        <HeroSlider />
+        {/* Floating product card - top right */}
+        <div className="absolute top-4 right-4 z-20 hidden md:block">
+          <HeroFeaturedProduct />
         </div>
       </section>
 
