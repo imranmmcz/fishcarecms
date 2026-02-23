@@ -1,12 +1,13 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { ShoppingCart, Package, TrendingUp, Users, Clock, CheckCircle, Truck, XCircle, DollarSign, AlertTriangle, User, MapPin, Phone, Mail, CalendarDays } from "lucide-react";
+import { ShoppingCart, Package, TrendingUp, Users, Clock, CheckCircle, Truck, XCircle, DollarSign, AlertTriangle, User, MapPin, Phone, Mail, CalendarDays, Search } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface DashboardStats {
   todayOrders: number;
@@ -86,6 +87,17 @@ const AdminDashboard = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedUserData, setSelectedUserData] = useState<UserDashboardData | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+
+  const filteredUsers = useMemo(() => {
+    if (!userSearchQuery.trim()) return allUsers;
+    const q = userSearchQuery.toLowerCase().trim();
+    return allUsers.filter(u =>
+      (u.full_name || "").toLowerCase().includes(q) ||
+      (u.mobile || "").includes(q) ||
+      (u.email || "").toLowerCase().includes(q)
+    );
+  }, [allUsers, userSearchQuery]);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -353,17 +365,29 @@ const AdminDashboard = () => {
               ব্যবহারকারী ড্যাশবোর্ড
             </CardTitle>
             <CardDescription>ব্যবহারকারী নির্বাচন করে তার সম্পূর্ণ তথ্য দেখুন</CardDescription>
-            <div className="pt-2 max-w-sm">
+            <div className="pt-2 flex flex-col sm:flex-row gap-2 max-w-lg">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="নাম, মোবাইল বা ইমেইল দিয়ে খুঁজুন..."
+                  value={userSearchQuery}
+                  onChange={e => setUserSearchQuery(e.target.value)}
+                  className="pl-9"
+                  maxLength={100}
+                />
+              </div>
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger>
+                <SelectTrigger className="sm:w-64">
                   <SelectValue placeholder="ব্যবহারকারী নির্বাচন করুন" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allUsers.map(u => (
+                  {filteredUsers.length > 0 ? filteredUsers.map(u => (
                     <SelectItem key={u.user_id} value={u.user_id}>
                       {u.full_name || u.email || "Unknown"} {u.mobile ? `(${u.mobile})` : ""}
                     </SelectItem>
-                  ))}
+                  )) : (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">কোনো ব্যবহারকারী পাওয়া যায়নি</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
