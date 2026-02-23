@@ -117,6 +117,105 @@ serve(async (req) => {
       }
     }
 
+    // Send email notification to customer on status change
+    if (consignment.order_id && (mappedStatus === "delivered" || mappedStatus === "cancelled" || mappedStatus === "partial_delivered")) {
+      try {
+        const { data: order } = await supabase
+          .from("orders")
+          .select("customer_email, customer_name, order_number")
+          .eq("id", consignment.order_id)
+          .single();
+
+        if (order?.customer_email) {
+          const statusLabels: Record<string, string> = {
+            delivered: "ডেলিভারড",
+            cancelled: "বাতিল",
+            partial_delivered: "আংশিক ডেলিভারড",
+          };
+
+          // Get SMTP settings
+          const { data: smtpSettings } = await supabase
+            .from("smtp_settings")
+            .select("*")
+            .limit(1)
+            .maybeSingle();
+
+          if (smtpSettings?.is_enabled && smtpSettings.smtp_host && smtpSettings.smtp_user && smtpSettings.smtp_password) {
+            const { SMTPClient } = await import("https://deno.land/x/denomailer@1.6.0/mod.ts");
+
+            const statusLabel = statusLabels[mappedStatus] || mappedStatus;
+            const subject = `অর্ডার আপডেট - ${order.order_number} - ${statusLabel}`;
+            const html = `
+              <!DOCTYPE html>
+              <html>
+              <head><meta charset="utf-8">
+              <style>
+                body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+                .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 20px; text-align: center; }
+                .content { padding: 20px; }
+                .status-box { background: #f0fdf4; padding: 15px; border-radius: 12px; margin: 15px 0; border: 2px solid #10b981; text-align: center; }
+                .status-text { font-size: 20px; font-weight: bold; color: #059669; }
+                .footer { background: #f8fafc; padding: 15px; text-align: center; font-size: 12px; color: #64748b; }
+              </style>
+              </head>
+              <body>
+                <div class="header">
+                  <h1>📦 ডেলিভারি আপডেট</h1>
+                </div>
+                <div class="content">
+                  <p>প্রিয় ${order.customer_name},</p>
+                  <p>আপনার অর্ডারের ডেলিভারি স্ট্যাটাস আপডেট হয়েছে।</p>
+                  <div class="status-box">
+                    <p><strong>অর্ডার নম্বর:</strong> ${order.order_number}</p>
+                    ${consignment.tracking_code ? `<p><strong>ট্র্যাকিং কোড:</strong> ${consignment.tracking_code}</p>` : ''}
+                    <p class="status-text">${statusLabel}</p>
+                  </div>
+                  ${mappedStatus === 'delivered' ? '<p>আপনার পণ্য সফলভাবে ডেলিভারি হয়েছে। ধন্যবাদ আমাদের সাথে থাকার জন্য! 🎉</p>' : ''}
+                  ${mappedStatus === 'cancelled' ? '<p>দুঃখিত, আপনার অর্ডার বাতিল হয়েছে। বিস্তারিত জানতে আমাদের সাথে যোগাযোগ করুন।</p>' : ''}
+                </div>
+                <div class="footer">
+                  <p>© ${new Date().getFullYear()} FishCare BD। সর্বস্বত্ব সংরক্ষিত।</p>
+                </div>
+              </body>
+              </html>
+            `;
+
+            const client = new SMTPClient({
+              connection: {
+                hostname: smtpSettings.smtp_host,
+                port: smtpSettings.smtp_port,
+                tls: smtpSettings.smtp_secure,
+                auth: { username: smtpSettings.smtp_user, password: smtpSettings.smtp_password },
+              },
+            });
+
+            await client.send({
+              from: `${smtpSettings.smtp_from_name} <${smtpSettings.smtp_from_email}>`,
+              to: order.customer_email,
+              subject,
+              content: "Please view this email in an HTML-capable email client.",
+              html,
+            });
+            await client.close();
+
+            // Log email
+            await supabase.from("email_logs").insert({
+              order_number: order.order_number,
+              recipient_email: order.customer_email,
+              subject,
+              template_type: "delivery_update",
+              status: "sent",
+              sent_at: new Date().toISOString(),
+            });
+
+            console.log(`Delivery notification email sent to ${order.customer_email}`);
+          }
+        }
+      } catch (emailError) {
+        console.error("Failed to send delivery notification email:", emailError);
+      }
+    }
+
     // Log the webhook event
     console.log(
       `Webhook processed: consignment ${consignment.consignment_id} -> ${mappedStatus}`
