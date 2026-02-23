@@ -499,7 +499,17 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
           </div>
         )}
       </div>
-      {/* বাহ্যিক লিংক ফিল্ড সরানো হয়েছে */}
+      
+      <div className="grid gap-2">
+        <Label htmlFor="link">বাহ্যিক লিংক</Label>
+        <Input
+          id="link"
+          value={formData.external_link}
+          onChange={(e) => handleChange("external_link", e.target.value)}
+          placeholder="https://fishcare.com.bd/product"
+          autoComplete="off"
+        />
+      </div>
 
       {/* SEO Section */}
       <div className="space-y-1 mt-2">
