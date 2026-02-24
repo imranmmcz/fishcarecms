@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CartSheet } from "@/components/CartSheet";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { usePageContent } from "@/hooks/usePageContent";
+import { SearchSuggestions } from "@/components/SearchSuggestions";
 
 export const Header = () => {
   const location = useLocation();
@@ -27,7 +28,7 @@ export const Header = () => {
   const { t, language } = useLanguage();
   const { wishlistCount } = useWishlist();
   const { getSectionContent } = usePageContent();
-  const [searchQuery, setSearchQuery] = useState("");
+  
 
   const headerData = getSectionContent<Record<string, any>>("header");
 
@@ -65,12 +66,6 @@ export const Header = () => {
   const userRole = isAdmin ? (language === "bn" ? "অ্যাডমিন" : "Admin") : (language === "bn" ? "ব্যবহারকারী" : "User");
   const userInitials = userName.slice(0, 2).toUpperCase();
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background border-b border-border">
@@ -92,20 +87,10 @@ export const Header = () => {
         </Link>
 
         {/* Search Bar - Desktop */}
-        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg mx-4">
-          <div className="relative w-full">
-            <Input
-              type="text"
-              placeholder={language === "bn" ? "মাছের ওষুধ, চিকিৎসা খুঁজুন..." : "Search for fish medicines, treatments..."}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pr-10 h-10 border-border bg-background text-sm rounded-md"
-            />
-            <button type="submit" className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground transition-colors">
-              <Search className="h-4 w-4" />
-            </button>
-          </div>
-        </form>
+        <SearchSuggestions
+          className="hidden md:block flex-1 max-w-lg mx-4"
+          placeholder={language === "bn" ? "মাছের ওষুধ, চিকিৎসা খুঁজুন..." : "Search for fish medicines, treatments..."}
+        />
 
         {/* Right Actions */}
         <div className="flex items-center gap-1 shrink-0">
@@ -201,18 +186,9 @@ export const Header = () => {
             <SheetContent side="right" className="w-64">
               <nav className="flex flex-col gap-4 mt-8">
                 {/* Mobile Search */}
-                <form onSubmit={handleSearch} className="relative">
-                  <Input
-                    type="text"
-                    placeholder={language === "bn" ? "খুঁজুন..." : "Search..."}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pr-10 h-10"
-                  />
-                  <button type="submit" className="absolute right-0 top-0 h-full px-3 text-muted-foreground">
-                    <Search className="h-4 w-4" />
-                  </button>
-                </form>
+                <SearchSuggestions
+                  placeholder={language === "bn" ? "খুঁজুন..." : "Search..."}
+                />
 
                 {navItems.map((item) => (
                   <Link
