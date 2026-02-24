@@ -192,7 +192,7 @@ export function HeroSlider() {
                   </div>
                   {/* Per-slide featured product */}
                   {slide.featured_product_id && (
-                    <div className="absolute top-4 right-4 z-10 hidden md:block">
+                    <div className="absolute bottom-12 right-4 z-10 md:top-4 md:bottom-auto">
                       <HeroFeaturedProduct productId={slide.featured_product_id} />
                     </div>
                   )}
