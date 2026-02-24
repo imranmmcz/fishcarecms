@@ -3,7 +3,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { cn } from "@/lib/utils";
 import {
   Droplets, Fish, Scale, Package, Pill, TrendingUp, DollarSign,
-  FileText, MessageSquare, FlaskConical, Calculator,
+  FileText, MessageSquare, FlaskConical, Calculator, Settings2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -20,6 +20,7 @@ import CostCalculator from "./CostCalculator";
 import Reports from "./Reports";
 import FishAdvice from "./FishAdvice";
 import FeedFormulaCalculator from "./FeedFormulaCalculator";
+import { CalculatorParamsEditor } from "@/components/admin/CalculatorParamsEditor";
 
 interface ModuleTab {
   id: string;
@@ -45,57 +46,81 @@ const modules: ModuleTab[] = [
 
 export default function AdminCalculators() {
   const [activeTab, setActiveTab] = useState(modules[0].id);
-  const activeModule = modules.find((m) => m.id === activeTab)!;
-  const ActiveComponent = activeModule.component;
+  const [showFormulas, setShowFormulas] = useState(false);
+
+  const activeModule = modules.find((m) => m.id === activeTab);
+  const ActiveComponent = activeModule?.component;
 
   return (
     <AdminLayout>
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Calculator className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">সমন্বিত ক্যালকুলেটর মডিউল</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calculator className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold">সমন্বিত ক্যালকুলেটর মডিউল</h1>
+          </div>
+          <button
+            onClick={() => setShowFormulas(!showFormulas)}
+            className={cn(
+              "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              showFormulas
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <Settings2 className="h-4 w-4" />
+            সূত্র সেটিংস
+          </button>
         </div>
         <p className="text-muted-foreground text-sm">
-          সকল মৎস্য চাষ ক্যালকুলেটর মডিউল এখানে একত্রে পাবেন। যেকোনো ট্যাবে ক্লিক করে ব্যবহার করুন।
+          {showFormulas
+            ? "ক্যালকুলেটরের ধ্রুবক ও প্যারামিটার পরিবর্তন করুন। পরিবর্তন সরাসরি ক্যালকুলেটরে প্রতিফলিত হবে।"
+            : "সকল মৎস্য চাষ ক্যালকুলেটর মডিউল এখানে একত্রে পাবেন। যেকোনো ট্যাবে ক্লিক করে ব্যবহার করুন।"}
         </p>
 
-        {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 border-b pb-3">
-          {modules.map((mod) => (
-            <button
-              key={mod.id}
-              onClick={() => setActiveTab(mod.id)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
-                activeTab === mod.id
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <mod.icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{mod.title}</span>
-            </button>
-          ))}
-        </div>
+        {showFormulas ? (
+          <CalculatorParamsEditor />
+        ) : (
+          <>
+            {/* Tab Navigation */}
+            <div className="flex flex-wrap gap-2 border-b pb-3">
+              {modules.map((mod) => (
+                <button
+                  key={mod.id}
+                  onClick={() => setActiveTab(mod.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                    activeTab === mod.id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <mod.icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{mod.title}</span>
+                </button>
+              ))}
+            </div>
 
-        {/* Active Module Content — hide Header, Footer, AdUnit */}
-        <div className="rounded-xl border bg-card overflow-hidden admin-calc-embed">
-          <style>{`
-            .admin-calc-embed header,
-            .admin-calc-embed footer,
-            .admin-calc-embed .ad-container {
-              display: none !important;
-            }
-            .admin-calc-embed > .min-h-screen {
-              min-height: auto !important;
-              background: transparent !important;
-            }
-            .admin-calc-embed main {
-              padding-top: 0 !important;
-            }
-          `}</style>
-          <ActiveComponent />
-        </div>
+            {/* Active Module Content */}
+            <div className="rounded-xl border bg-card overflow-hidden admin-calc-embed">
+              <style>{`
+                .admin-calc-embed header,
+                .admin-calc-embed footer,
+                .admin-calc-embed .ad-container {
+                  display: none !important;
+                }
+                .admin-calc-embed > .min-h-screen {
+                  min-height: auto !important;
+                  background: transparent !important;
+                }
+                .admin-calc-embed main {
+                  padding-top: 0 !important;
+                }
+              `}</style>
+              {ActiveComponent && <ActiveComponent />}
+            </div>
+          </>
+        )}
       </div>
     </AdminLayout>
   );
