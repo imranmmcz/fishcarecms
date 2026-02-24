@@ -169,6 +169,48 @@ export type Database = {
           },
         ]
       }
+      calculator_parameters: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          module_id: string
+          param_group: string
+          param_key: string
+          param_label: string
+          param_label_bn: string
+          param_unit: string | null
+          param_value: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          module_id: string
+          param_group?: string
+          param_key: string
+          param_label: string
+          param_label_bn: string
+          param_unit?: string | null
+          param_value?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          module_id?: string
+          param_group?: string
+          param_key?: string
+          param_label?: string
+          param_label_bn?: string
+          param_unit?: string | null
+          param_value?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
