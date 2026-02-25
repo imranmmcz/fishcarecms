@@ -62,7 +62,7 @@ const Footer = () => {
     : (language === "bn" ? "আমাদের সাথে সংযুক্ত থাকুন" : "Stay connected with us");
 
   return (
-    <footer className="bg-gradient-to-b from-cyan-900/30 via-teal-800/25 to-primary/20 border-t border-border relative overflow-hidden">
+    <footer className="border-t border-border relative overflow-hidden" style={{ backgroundColor: 'hsl(var(--footer-bg, 210 29% 18%))' }}>
       <UnderwaterEffect bubbleCount={18} fishCount={6} />
       
       <div className="container mx-auto px-4 py-12 relative z-10">
@@ -73,20 +73,21 @@ const Footer = () => {
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
                 <Fish className="w-6 h-6 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">{companyName}</span>
+              <span className="text-xl font-bold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>{companyName}</span>
             </Link>
-            <p className="text-muted-foreground text-sm leading-relaxed">{companyDesc}</p>
+            <p className="text-sm leading-relaxed" style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}>{companyDesc}</p>
           </div>
 
           {/* Column 2: Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">{quickLinksHeading}</h3>
+            <h3 className="text-lg font-semibold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>{quickLinksHeading}</h3>
             <ul className="space-y-2">
               {quickLinks.map((link: any, i: number) => (
                 <li key={i}>
                   <Link 
                     to={link.path}
-                    className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                    className="hover:text-primary transition-colors text-sm"
+                    style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
                   >
                     {language === "bn" ? link.name_bn : link.name_en}
                   </Link>
@@ -97,7 +98,7 @@ const Footer = () => {
 
           {/* Column 3: Social Media */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">{socialHeading}</h3>
+            <h3 className="text-lg font-semibold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>{socialHeading}</h3>
             <div className="flex flex-col space-y-3">
               {socialLinks.map((social: any, i: number) => {
                 const IconComponent = iconMap[social.icon] || Globe;
@@ -107,9 +108,10 @@ const Footer = () => {
                     href={social.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors text-sm group"
+                    className="flex items-center gap-3 hover:text-primary transition-colors text-sm group"
+                    style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
                   >
-                    <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                       <IconComponent className="w-4 h-4" />
                     </div>
                     <span>{social.name}</span>
@@ -117,33 +119,35 @@ const Footer = () => {
                 );
               })}
             </div>
-            <p className="text-xs text-muted-foreground pt-2">{socialSubtext}</p>
+            <p className="text-xs pt-2" style={{ color: 'hsl(var(--footer-text, 215 19% 78%) / 0.7)' }}>{socialSubtext}</p>
           </div>
 
           {/* Column 4: Contact */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">{contactHeading}</h3>
+            <h3 className="text-lg font-semibold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>{contactHeading}</h3>
             <div className="space-y-3">
               <a 
                 href={`tel:${phone.replace(/\s/g, '')}`}
-                className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors text-sm"
+                className="flex items-center gap-3 hover:text-primary transition-colors text-sm"
+                style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
               >
-                <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
                   <Phone className="w-4 h-4" />
                 </div>
                 <span>{phone}</span>
               </a>
               <a 
                 href={`mailto:${email}`}
-                className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors text-sm"
+                className="flex items-center gap-3 hover:text-primary transition-colors text-sm"
+                style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
               >
-                <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
                   <Mail className="w-4 h-4" />
                 </div>
                 <span>{email}</span>
               </a>
-              <div className="flex items-start gap-3 text-muted-foreground text-sm">
-                <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+              <div className="flex items-start gap-3 text-sm" style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}>
+                <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
@@ -157,9 +161,9 @@ const Footer = () => {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-border">
+      <div className="border-t border-white/10">
         <div className="container mx-auto px-4 py-4">
-          <p className="text-center text-xs text-muted-foreground">{bottomText}</p>
+          <p className="text-center text-xs" style={{ color: 'hsl(var(--footer-text, 215 19% 78%) / 0.7)' }}>{bottomText}</p>
         </div>
       </div>
     </footer>

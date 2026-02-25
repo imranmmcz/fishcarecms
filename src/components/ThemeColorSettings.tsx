@@ -99,11 +99,43 @@ const colorConfigs: ColorConfig[] = [
     defaultValue: "#0077B6",
   },
   {
+    key: "theme_header_utility_bg",
+    label_bn: "হেডার ইউটিলিটি বার ব্যাকগ্রাউন্ড",
+    label_en: "Header Utility Bar Background",
+    description_bn: "সবচেয়ে উপরের প্রাইমারি বারের পটভূমি",
+    description_en: "Top utility bar background color",
+    defaultValue: "#00899A",
+  },
+  {
+    key: "theme_header_utility_text",
+    label_bn: "হেডার ইউটিলিটি বার টেক্সট",
+    label_en: "Header Utility Bar Text",
+    description_bn: "ইউটিলিটি বারের লেখার রঙ",
+    description_en: "Utility bar text color",
+    defaultValue: "#FFFFFF",
+  },
+  {
     key: "theme_header_bg",
     label_bn: "হেডার ব্যাকগ্রাউন্ড",
     label_en: "Header Background",
-    description_bn: "সাইটের হেডার বার রঙ",
-    description_en: "Site header bar background color",
+    description_bn: "লোগো ও সার্চ বারের সারির পটভূমি",
+    description_en: "Logo and search bar row background",
+    defaultValue: "#FFFFFF",
+  },
+  {
+    key: "theme_header_nav_bg",
+    label_bn: "হেডার নেভিগেশন বার ব্যাকগ্রাউন্ড",
+    label_en: "Header Navigation Bar Background",
+    description_bn: "নিচের মেনু বারের পটভূমি",
+    description_en: "Bottom navigation menu bar background",
+    defaultValue: "#1E2D3D",
+  },
+  {
+    key: "theme_header_nav_text",
+    label_bn: "হেডার নেভিগেশন বার টেক্সট",
+    label_en: "Header Navigation Bar Text",
+    description_bn: "নিচের মেনু বারের লেখার রঙ",
+    description_en: "Navigation menu text color",
     defaultValue: "#FFFFFF",
   },
   {
@@ -113,6 +145,22 @@ const colorConfigs: ColorConfig[] = [
     description_bn: "সাইটের ফুটার বার রঙ",
     description_en: "Site footer bar background color",
     defaultValue: "#1E2D3D",
+  },
+  {
+    key: "theme_footer_text",
+    label_bn: "ফুটার টেক্সট কালার",
+    label_en: "Footer Text Color",
+    description_bn: "ফুটারের লেখার রঙ",
+    description_en: "Footer text color",
+    defaultValue: "#CBD5E1",
+  },
+  {
+    key: "theme_footer_heading",
+    label_bn: "ফুটার হেডিং কালার",
+    label_en: "Footer Heading Color",
+    description_bn: "ফুটারের শিরোনামের রঙ",
+    description_en: "Footer heading color",
+    defaultValue: "#FFFFFF",
   },
   {
     key: "theme_border",
@@ -200,8 +248,14 @@ const cssVarMap: Record<string, string[]> = {
   theme_button: ["--primary"],
   theme_button_hover: ["--primary-glow"],
   theme_link: ["--ring"],
+  theme_header_utility_bg: ["--header-utility-bg"],
+  theme_header_utility_text: ["--header-utility-text"],
   theme_header_bg: ["--header-bg"],
+  theme_header_nav_bg: ["--header-nav-bg"],
+  theme_header_nav_text: ["--header-nav-text"],
   theme_footer_bg: ["--footer-bg"],
+  theme_footer_text: ["--footer-text"],
+  theme_footer_heading: ["--footer-heading"],
   theme_border: ["--border", "--input"],
   theme_alert: ["--destructive"],
 };
@@ -402,12 +456,25 @@ export default function ThemeColorSettings() {
           <h4 className="font-semibold text-sm">
             {language === "bn" ? "লাইভ প্রিভিউ" : "Live Preview"}
           </h4>
-          {/* Header bar preview */}
+          {/* Utility bar preview */}
           <div className="rounded-md overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2 text-white text-sm font-medium"
-              style={{ backgroundColor: colors.theme_header_bg || "#FFFFFF", color: colors.theme_foreground || "#1E2D3D", borderBottom: `2px solid ${colors.theme_border || "#E2E8F0"}` }}>
-              <span>{language === "bn" ? "হেডার" : "Header"}</span>
-              <span className="text-xs" style={{ color: colors.theme_link || "#0077B6" }}>{language === "bn" ? "লিংক →" : "Link →"}</span>
+            <div className="flex items-center justify-between px-4 py-1.5 text-xs font-medium"
+              style={{ backgroundColor: colors.theme_header_utility_bg || "#00899A", color: colors.theme_header_utility_text || "#FFFFFF" }}>
+              <span>✉ info@fishcare.com.bd</span>
+              <span>{language === "bn" ? "আমার অ্যাকাউন্ট" : "MY ACCOUNT"}</span>
+            </div>
+            {/* Header row preview */}
+            <div className="flex items-center justify-between px-4 py-2 text-sm font-medium"
+              style={{ backgroundColor: colors.theme_header_bg || "#FFFFFF", color: colors.theme_foreground || "#1E2D3D", borderBottom: `1px solid ${colors.theme_border || "#E2E8F0"}` }}>
+              <span className="font-bold">{language === "bn" ? "🐟 লোগো" : "🐟 Logo"}</span>
+              <span className="text-xs" style={{ color: colors.theme_link || "#0077B6" }}>🔍 📞 🛒</span>
+            </div>
+            {/* Nav bar preview */}
+            <div className="flex items-center gap-4 px-4 py-1.5 text-xs font-semibold uppercase"
+              style={{ backgroundColor: colors.theme_header_nav_bg || "#1E2D3D", color: colors.theme_header_nav_text || "#FFFFFF" }}>
+              <span>{language === "bn" ? "হোম" : "Home"}</span>
+              <span>{language === "bn" ? "শপ" : "Shop"}</span>
+              <span>{language === "bn" ? "মডিউল" : "Modules"}</span>
             </div>
           </div>
           {/* Buttons & badges */}
@@ -417,10 +484,6 @@ export default function ThemeColorSettings() {
               {language === "bn" ? "বাটন" : "Button"}
             </div>
             <div className="px-4 py-2 rounded-md text-sm font-medium"
-              style={{ backgroundColor: colors.theme_button_hover || "#006E7D", color: "#fff" }}>
-              {language === "bn" ? "বাটন হোভার" : "Button Hover"}
-            </div>
-            <div className="px-4 py-2 rounded-md text-sm font-medium"
               style={{ backgroundColor: colors.theme_secondary, color: "#fff" }}>
               {language === "bn" ? "সেকেন্ডারি" : "Secondary"}
             </div>
@@ -428,25 +491,18 @@ export default function ThemeColorSettings() {
               style={{ backgroundColor: colors.theme_accent, color: "#fff" }}>
               {language === "bn" ? "অ্যাকসেন্ট" : "Accent"}
             </div>
-            <div className="px-4 py-2 rounded-md text-sm font-medium"
-              style={{ backgroundColor: colors.theme_alert || "#EF4444", color: "#fff" }}>
-              {language === "bn" ? "অ্যালার্ট" : "Alert"}
-            </div>
-          </div>
-          {/* Card preview */}
-          <div className="rounded-md p-3"
-            style={{ backgroundColor: colors.theme_card, border: `1px solid ${colors.theme_border || "#E2E8F0"}` }}>
-            <p className="text-sm font-semibold" style={{ color: colors.theme_foreground }}>
-              {language === "bn" ? "এটি একটি কার্ডের উদাহরণ।" : "This is an example card."}
-            </p>
-            <p className="text-xs mt-1" style={{ color: colors.theme_link || "#0077B6" }}>
-              {language === "bn" ? "লিংক উদাহরণ" : "Example link"}
-            </p>
           </div>
           {/* Footer preview */}
-          <div className="rounded-md px-4 py-2 text-white text-sm"
-            style={{ backgroundColor: colors.theme_footer_bg || "#1E2D3D" }}>
-            {language === "bn" ? "ফুটার এরিয়া" : "Footer Area"}
+          <div className="rounded-md overflow-hidden">
+            <div className="px-4 py-3 text-sm"
+              style={{ backgroundColor: colors.theme_footer_bg || "#1E2D3D" }}>
+              <span className="font-semibold" style={{ color: colors.theme_footer_heading || "#FFFFFF" }}>
+                {language === "bn" ? "ফুটার শিরোনাম" : "Footer Heading"}
+              </span>
+              <p className="text-xs mt-1" style={{ color: colors.theme_footer_text || "#CBD5E1" }}>
+                {language === "bn" ? "ফুটারের টেক্সট এখানে দেখাবে" : "Footer text will appear here"}
+              </p>
+            </div>
           </div>
         </div>
 
