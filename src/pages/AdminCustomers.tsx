@@ -46,7 +46,7 @@ interface CustomerOrder {
   created_at: string;
 }
 
-export default function AdminCustomers() {
+export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: React.ComponentType<{ children: React.ReactNode }> }) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -232,7 +232,7 @@ export default function AdminCustomers() {
   };
 
   return (
-    <AdminLayout>
+    <Layout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -508,6 +508,6 @@ export default function AdminCustomers() {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
+    </Layout>
   );
 }

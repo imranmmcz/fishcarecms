@@ -92,7 +92,7 @@ interface Product {
   unit: string;
 }
 
-const AdminInventory = () => {
+const AdminInventory = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<{ children: React.ReactNode }> }) => {
   const { toast } = useToast();
   const { language } = useLanguage();
   const { formatPrice } = useCurrency();
@@ -471,7 +471,7 @@ const AdminInventory = () => {
   };
 
   return (
-    <AdminLayout>
+    <Layout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -943,7 +943,7 @@ const AdminInventory = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 
