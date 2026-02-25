@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard, ShoppingCart, History, Clock, Home, MonitorSmartphone,
-  ArrowLeft,
+  ArrowLeft, Package, Warehouse, UserCheck, Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +17,10 @@ const menuItems = [
   { title: "দ্রুত বিক্রি", url: "/pos/sell", icon: ShoppingCart },
   { title: "বিক্রি ইতিহাস", url: "/pos/history", icon: History },
   { title: "শিফট ইতিহাস", url: "/pos/shifts", icon: Clock },
+  { title: "পণ্য ব্যবস্থাপনা", url: "/admin/products", icon: Package },
+  { title: "ইনভেন্টরি", url: "/admin/inventory", icon: Warehouse },
+  { title: "কাস্টমার", url: "/admin/customers", icon: UserCheck },
+  { title: "সাপ্লায়ার", url: "/admin/suppliers", icon: Building2 },
 ];
 
 interface POSLayoutProps {
