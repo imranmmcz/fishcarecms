@@ -77,6 +77,8 @@ import POSPurchaseList from "./pages/pos/POSPurchaseList";
 import POSNewPurchase from "./pages/pos/POSNewPurchase";
 import POSPurchaseReturns from "./pages/pos/POSPurchaseReturns";
 import POSPurchaseReport from "./pages/pos/POSPurchaseReport";
+import POSSalesReturns from "./pages/pos/POSSalesReturns";
+import POSSalesReport from "./pages/pos/POSSalesReport";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
 import ProductDetails from "./pages/ProductDetails";
@@ -171,6 +173,8 @@ const App = () => (
                       <Route path="/pos/purchases/new" element={<ProtectedRoute requireAdmin><POSNewPurchase /></ProtectedRoute>} />
                       <Route path="/pos/purchases/returns" element={<ProtectedRoute requireAdmin><POSPurchaseReturns /></ProtectedRoute>} />
                       <Route path="/pos/purchases/report" element={<ProtectedRoute requireAdmin><POSPurchaseReport /></ProtectedRoute>} />
+                      <Route path="/pos/sales/returns" element={<ProtectedRoute requireAdmin><POSSalesReturns /></ProtectedRoute>} />
+                      <Route path="/pos/sales/report" element={<ProtectedRoute requireAdmin><POSSalesReport /></ProtectedRoute>} />
                       <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><Profile /></ProtectedRoute>} />
                       <Route path="/install" element={<Install />} />
                       <Route path="*" element={<NotFound />} />
