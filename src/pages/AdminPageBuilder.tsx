@@ -657,6 +657,30 @@ export default function AdminPageBuilder() {
                   </div>
                 </div>
 
+                {/* Top Bar Settings */}
+                <div className="border rounded-lg p-4 space-y-4">
+                  <h4 className="font-semibold text-base">টপ বার সেটিংস</h4>
+                  <p className="text-xs text-muted-foreground">হেডারের সবচেয়ে উপরের প্রাইমারি কালার বারের তথ্য</p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>ফোন নম্বর</Label>
+                      <Input
+                        placeholder="01978865277"
+                        value={headerSection?.content.topBarPhone || ""}
+                        onChange={(e) => updateSectionContent("header", "topBarPhone", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>কল লেবেল (যেমন: Call Now / কল করুন)</Label>
+                      <Input
+                        placeholder="Call Now"
+                        value={headerSection?.content.topBarCallLabel || ""}
+                        onChange={(e) => updateSectionContent("header", "topBarCallLabel", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {/* Navigation Items */}
                 <div className="border rounded-lg p-4 space-y-4">
                   <div className="flex items-center justify-between">
