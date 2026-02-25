@@ -56,20 +56,7 @@ const ecommerceGroup: MenuGroup = {
   ],
 };
 
-const posGroup: MenuGroup = {
-  label: "POS সিস্টেম",
-  icon: MonitorSmartphone,
-  items: [
-    { title: "POS ড্যাশবোর্ড", url: "/pos", icon: LayoutDashboard, permissionKey: "admin_pos" },
-    { title: "দ্রুত বিক্রি", url: "/pos/sell", icon: ShoppingCart, permissionKey: "admin_pos" },
-    { title: "বিক্রি ইতিহাস", url: "/pos/history", icon: BarChart3, permissionKey: "admin_pos" },
-    { title: "শিফট ইতিহাস", url: "/pos/shifts", icon: Clock, permissionKey: "admin_pos" },
-    { title: "পণ্য ব্যবস্থাপনা", url: "/pos/products", icon: Package, permissionKey: "admin_pos" },
-    { title: "ইনভেন্টরি", url: "/pos/inventory", icon: Warehouse, permissionKey: "admin_pos" },
-    { title: "কাস্টমার", url: "/pos/customers", icon: UserCheck, permissionKey: "admin_pos" },
-    { title: "সাপ্লায়ার", url: "/pos/suppliers", icon: Building2, permissionKey: "admin_pos" },
-  ],
-};
+// POS is now a single link, not a group
 
 const settingsGroup: MenuGroup = {
   label: "সেটিংস",
@@ -88,7 +75,7 @@ const settingsGroup: MenuGroup = {
   ],
 };
 
-const allGroups = [cmsGroup, ecommerceGroup, posGroup, settingsGroup];
+const allGroups = [cmsGroup, ecommerceGroup, settingsGroup];
 
 // --- Collapsible Menu Group Component ---
 function SidebarMenuGroup({
@@ -280,7 +267,32 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
                 <SidebarMenuGroup group={cmsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
                 <SidebarMenuGroup group={ecommerceGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
-                <SidebarMenuGroup group={posGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
+
+                {/* POS Single Link */}
+                {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={location.pathname.startsWith("/pos")} tooltip="POS সিস্টেম">
+                          <Link
+                            to="/pos"
+                            className={cn(
+                              "flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
+                              location.pathname.startsWith("/pos")
+                                ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg"
+                                : "text-violet-200 hover:bg-white/10 hover:text-white"
+                            )}
+                          >
+                            <div className={cn("p-1.5 rounded-lg shrink-0", location.pathname.startsWith("/pos") ? "bg-white/20" : "bg-violet-800/50")}>
+                              <MonitorSmartphone className={cn("h-4 w-4", location.pathname.startsWith("/pos") ? "text-white" : "text-emerald-400")} />
+                            </div>
+                            <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">POS সিস্টেম</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                )}
 
                 <div className="h-px bg-white/10 mx-2 my-1" />
 
