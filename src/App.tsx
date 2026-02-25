@@ -63,6 +63,7 @@ import AdminSuppliers from "./pages/AdminSuppliers";
 import Profile from "./pages/Profile";
 import AdminDiseases from "./pages/AdminDiseases";
 import AdminCalculators from "./pages/AdminCalculators";
+import AdminPOS from "./pages/AdminPOS";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
 import ProductDetails from "./pages/ProductDetails";
@@ -139,6 +140,7 @@ const App = () => (
                       <Route path="/pages/:slug" element={<CustomPage />} />
                       <Route path="/admin/diseases" element={<ProtectedRoute requireAdmin><AdminDiseases /></ProtectedRoute>} />
                       <Route path="/admin/calculators" element={<ProtectedRoute requireAdmin><AdminCalculators /></ProtectedRoute>} />
+                      <Route path="/admin/pos" element={<ProtectedRoute requireAdmin><AdminPOS /></ProtectedRoute>} />
                       <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><Profile /></ProtectedRoute>} />
                       <Route path="/install" element={<Install />} />
                       <Route path="*" element={<NotFound />} />

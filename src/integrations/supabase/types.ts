@@ -1052,6 +1052,188 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_sale_items: {
+        Row: {
+          created_at: string
+          discount_percentage: number | null
+          id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          sale_id: string
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          discount_percentage?: number | null
+          id?: string
+          product_id: string
+          product_name: string
+          quantity?: number
+          sale_id: string
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          discount_percentage?: number | null
+          id?: string
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          sale_id?: string
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_sales: {
+        Row: {
+          change_amount: number
+          created_at: string
+          customer_name: string | null
+          customer_phone: string | null
+          discount_amount: number
+          id: string
+          mobile_banking_number: string | null
+          mobile_banking_provider: string | null
+          notes: string | null
+          paid_amount: number
+          payment_method: string
+          sale_number: string
+          shift_id: string | null
+          status: string
+          subtotal: number
+          total_amount: number
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          change_amount?: number
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount_amount?: number
+          id?: string
+          mobile_banking_number?: string | null
+          mobile_banking_provider?: string | null
+          notes?: string | null
+          paid_amount?: number
+          payment_method?: string
+          sale_number: string
+          shift_id?: string | null
+          status?: string
+          subtotal?: number
+          total_amount?: number
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          change_amount?: number
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount_amount?: number
+          id?: string
+          mobile_banking_number?: string | null
+          mobile_banking_provider?: string | null
+          notes?: string | null
+          paid_amount?: number
+          payment_method?: string
+          sale_number?: string
+          shift_id?: string | null
+          status?: string
+          subtotal?: number
+          total_amount?: number
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_sales_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "pos_shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_shifts: {
+        Row: {
+          cash_sales: number
+          closed_at: string | null
+          closing_amount: number | null
+          created_at: string
+          expected_amount: number | null
+          id: string
+          mobile_banking_sales: number
+          notes: string | null
+          opened_at: string
+          opening_amount: number
+          shift_number: string
+          status: string
+          total_sales: number
+          total_transactions: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cash_sales?: number
+          closed_at?: string | null
+          closing_amount?: number | null
+          created_at?: string
+          expected_amount?: number | null
+          id?: string
+          mobile_banking_sales?: number
+          notes?: string | null
+          opened_at?: string
+          opening_amount?: number
+          shift_number: string
+          status?: string
+          total_sales?: number
+          total_transactions?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cash_sales?: number
+          closed_at?: string | null
+          closing_amount?: number | null
+          created_at?: string
+          expected_amount?: number | null
+          id?: string
+          mobile_banking_sales?: number
+          notes?: string | null
+          opened_at?: string
+          opening_amount?: number
+          shift_number?: string
+          status?: string
+          total_sales?: number
+          total_transactions?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_images: {
         Row: {
           alt_text: string | null
@@ -1760,7 +1942,9 @@ export type Database = {
     }
     Functions: {
       generate_order_number: { Args: never; Returns: string }
+      generate_pos_sale_number: { Args: never; Returns: string }
       generate_purchase_order_number: { Args: never; Returns: string }
+      generate_shift_number: { Args: never; Returns: string }
       get_public_tables: {
         Args: never
         Returns: {
