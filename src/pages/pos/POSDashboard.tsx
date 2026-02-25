@@ -71,16 +71,16 @@ interface StatCardProps {
 
 function StatCard({ icon, iconBg, title, amount, subtitle, subtitle2 }: StatCardProps) {
   return (
-    <div className="relative overflow-hidden rounded-xl bg-[hsl(215,50%,15%)] border border-[hsl(215,40%,22%)] p-5 transition-all hover:border-[hsl(215,40%,30%)] hover:shadow-lg hover:shadow-[hsl(215,50%,10%)/0.3]">
+    <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-950/90 to-teal-900/90 border border-emerald-700/30 p-5 transition-all hover:border-emerald-600/50 hover:shadow-lg hover:shadow-emerald-900/30">
       <div className="flex items-start gap-4">
         <div className={`p-3 rounded-full shadow-lg ${iconBg} shrink-0`}>
           {icon}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[hsl(210,20%,60%)] mb-1">{title}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400/70 mb-1">{title}</p>
           <p className="text-2xl font-bold text-white">৳ {amount}</p>
-          {subtitle && <p className="text-[11px] text-[hsl(210,20%,55%)] mt-1.5">{subtitle}</p>}
-          {subtitle2 && <p className="text-[11px] text-[hsl(210,20%,55%)]">{subtitle2}</p>}
+          {subtitle && <p className="text-[11px] text-emerald-300/60 mt-1.5">{subtitle}</p>}
+          {subtitle2 && <p className="text-[11px] text-emerald-300/60">{subtitle2}</p>}
         </div>
       </div>
     </div>
