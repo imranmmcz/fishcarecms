@@ -79,6 +79,7 @@ import POSPurchaseReturns from "./pages/pos/POSPurchaseReturns";
 import POSPurchaseReport from "./pages/pos/POSPurchaseReport";
 import POSSalesReturns from "./pages/pos/POSSalesReturns";
 import POSSalesReport from "./pages/pos/POSSalesReport";
+import POSOnlineOrders from "./pages/pos/POSOnlineOrders";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
 import ProductDetails from "./pages/ProductDetails";
@@ -160,6 +161,7 @@ const App = () => (
                       <Route path="/pos/sell" element={<ProtectedRoute requireAdmin><AdminPOS /></ProtectedRoute>} />
                       <Route path="/pos/history" element={<ProtectedRoute requireAdmin><POSHistory /></ProtectedRoute>} />
                       <Route path="/pos/shifts" element={<ProtectedRoute requireAdmin><POSShifts /></ProtectedRoute>} />
+                      <Route path="/pos/online-orders" element={<ProtectedRoute requireAdmin><POSOnlineOrders /></ProtectedRoute>} />
                       <Route path="/pos/products" element={<ProtectedRoute requireAdmin><AdminProducts Layout={POSLayout} /></ProtectedRoute>} />
                       <Route path="/pos/inventory" element={<ProtectedRoute requireAdmin><AdminInventory Layout={POSLayout} /></ProtectedRoute>} />
                       <Route path="/pos/customers" element={<ProtectedRoute requireAdmin><AdminCustomers Layout={POSLayout} /></ProtectedRoute>} />

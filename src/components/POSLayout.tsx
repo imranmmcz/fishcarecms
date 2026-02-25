@@ -10,12 +10,13 @@ import {
   LayoutDashboard, ShoppingCart, History, Clock, Home, MonitorSmartphone,
   ArrowLeft, Package, Warehouse, UserCheck, Building2, ChevronDown,
   ArrowLeftRight, Layers, Tag, Award, Ruler,
-  ShoppingBag, FileText, RotateCcw, ListOrdered,
+  ShoppingBag, FileText, RotateCcw, ListOrdered, Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const mainMenuItems = [
   { title: "POS ড্যাশবোর্ড", url: "/pos", icon: LayoutDashboard },
+  { title: "অনলাইন অর্ডার", url: "/pos/online-orders", icon: Globe },
   { title: "শিফট ইতিহাস", url: "/pos/shifts", icon: Clock },
 ];
 
