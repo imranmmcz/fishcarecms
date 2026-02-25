@@ -128,6 +128,61 @@ const AdminEcommerceOverview = () => {
 
   const recentOrders = orders.slice(0, 10);
 
+  // Top selling products from order items
+  const [topProducts, setTopProducts] = useState<{ product_name: string; product_image: string | null; total_qty: number; total_revenue: number }[]>([]);
+
+  useEffect(() => {
+    const fetchTopProducts = async () => {
+      try {
+        const { data } = await supabase
+          .from("order_items")
+          .select("product_name, product_image, quantity, total_price, order_id");
+        
+        if (data) {
+          // Filter by orders in current date range
+          const orderIds = new Set(orders.map(o => o.id));
+          const filtered = data.filter(item => orderIds.has(item.order_id));
+          
+          const map: Record<string, { product_name: string; product_image: string | null; total_qty: number; total_revenue: number }> = {};
+          filtered.forEach(item => {
+            const key = item.product_name;
+            if (!map[key]) map[key] = { product_name: key, product_image: item.product_image, total_qty: 0, total_revenue: 0 };
+            map[key].total_qty += item.quantity;
+            map[key].total_revenue += Number(item.total_price || 0);
+          });
+          
+          const sorted = Object.values(map).sort((a, b) => b.total_revenue - a.total_revenue).slice(0, 8);
+          setTopProducts(sorted);
+        }
+      } catch (err) {
+        console.error("Error fetching top products:", err);
+      }
+    };
+    if (orders.length > 0) fetchTopProducts();
+    else setTopProducts([]);
+  }, [orders]);
+
+  // Payment method breakdown
+  const paymentBreakdown = useMemo(() => {
+    const map: Record<string, { count: number; amount: number }> = {};
+    orders.forEach(o => {
+      const method = o.payment_method || "cod";
+      if (!map[method]) map[method] = { count: 0, amount: 0 };
+      map[method].count++;
+      map[method].amount += Number(o.total_amount || 0);
+    });
+    return map;
+  }, [orders]);
+
+  const paymentMethodLabels: Record<string, string> = {
+    cod: "ক্যাশ অন ডেলিভারি",
+    bkash: "বিকাশ",
+    nagad: "নগদ",
+    rocket: "রকেট",
+    bank: "ব্যাংক",
+    online: "অনলাইন",
+  };
+
   const rangeButtons: { label: string; value: DateRange }[] = [
     { label: "আজ", value: "today" },
     { label: "এই সপ্তাহ", value: "week" },
@@ -338,6 +393,82 @@ const AdminEcommerceOverview = () => {
                   })}
                 </TableBody>
               </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Trending / Top Selling Products */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Award className="h-4 w-4 text-primary" />
+              ট্রেন্ডিং প্রোডাক্ট
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-[200px] bg-muted animate-pulse rounded" />
+            ) : topProducts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">এই সময়ে কোনো প্রোডাক্ট বিক্রি হয়নি</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>প্রোডাক্ট</TableHead>
+                    <TableHead className="text-center">বিক্রিত সংখ্যা</TableHead>
+                    <TableHead className="text-right">মোট আয়</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {topProducts.map((p, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {p.product_image ? (
+                            <img src={p.product_image} alt={p.product_name} className="h-10 w-10 rounded-lg object-cover border" />
+                          ) : (
+                            <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <span className="font-medium text-sm">{p.product_name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center font-semibold">{p.total_qty}</TableCell>
+                      <TableCell className="text-right font-semibold">৳{p.total_revenue.toLocaleString("en-IN")}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Payment Method Breakdown */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-primary" />
+              পেমেন্ট মেথড সারাংশ
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-[100px] bg-muted animate-pulse rounded" />
+            ) : Object.keys(paymentBreakdown).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">কোনো ডেটা নেই</p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {Object.entries(paymentBreakdown).map(([method, data]) => (
+                  <div key={method} className="rounded-xl border p-4 space-y-1 bg-muted/30">
+                    <p className="text-sm font-medium text-foreground">{paymentMethodLabels[method] || method}</p>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-xl font-bold text-foreground">{data.count} টি</span>
+                      <span className="text-sm font-semibold text-muted-foreground">৳{data.amount.toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
