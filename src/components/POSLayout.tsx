@@ -10,6 +10,7 @@ import {
   LayoutDashboard, ShoppingCart, History, Clock, Home, MonitorSmartphone,
   ArrowLeft, Package, Warehouse, UserCheck, Building2, ChevronDown,
   ArrowLeftRight, Layers, Tag, Award, Ruler,
+  ShoppingBag, FileText, RotateCcw, ListOrdered,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,13 @@ const productSubItems = [
   { title: "ইউনিট", url: "/pos/units", icon: Ruler },
 ];
 
+const purchaseSubItems = [
+  { title: "ক্রয় তালিকা", url: "/pos/purchases", icon: ListOrdered },
+  { title: "নতুন ক্রয়", url: "/pos/purchases/new", icon: ShoppingBag },
+  { title: "ক্রয় রিটার্ন", url: "/pos/purchases/returns", icon: RotateCcw },
+  { title: "ক্রয় রিপোর্ট", url: "/pos/purchases/report", icon: FileText },
+];
+
 const bottomMenuItems = [
   { title: "কাস্টমার", url: "/pos/customers", icon: UserCheck },
   { title: "সাপ্লায়ার", url: "/pos/suppliers", icon: Building2 },
@@ -47,7 +55,9 @@ export function POSLayout({ children }: POSLayoutProps) {
   const isStaff = userRole === "manager" || userRole === "cashier" || userRole === "delivery_staff";
   const canAccess = isAdmin || isStaff;
   const isProductSectionActive = productSubItems.some(i => location.pathname === i.url);
+  const isPurchaseSectionActive = purchaseSubItems.some(i => location.pathname === i.url);
   const [productsOpen, setProductsOpen] = useState(isProductSectionActive);
+  const [purchasesOpen, setPurchasesOpen] = useState(isPurchaseSectionActive);
 
   useEffect(() => {
     if (!isLoading && !user) navigate("/auth");
@@ -65,7 +75,7 @@ export function POSLayout({ children }: POSLayoutProps) {
 
   if (!user || !canAccess) return null;
 
-  const allItems = [...mainMenuItems, ...productSubItems, ...bottomMenuItems];
+  const allItems = [...mainMenuItems, ...productSubItems, ...purchaseSubItems, ...bottomMenuItems];
   const currentTitle = allItems.find(i => i.url === location.pathname)?.title || "POS";
 
   const renderMenuItem = (item: typeof mainMenuItems[0]) => {
@@ -139,6 +149,49 @@ export function POSLayout({ children }: POSLayoutProps) {
                     {productsOpen && (
                       <div className="ml-4 border-l border-emerald-700/50 pl-2 space-y-0.5 group-data-[collapsible=icon]:hidden">
                         {productSubItems.map((item) => {
+                          const isActive = location.pathname === item.url;
+                          return (
+                            <SidebarMenuItem key={item.url}>
+                              <Link
+                                to={item.url}
+                                className={cn(
+                                  "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm",
+                                  isActive
+                                    ? "bg-emerald-500/20 text-white font-semibold"
+                                    : "text-emerald-300 hover:bg-white/5 hover:text-white"
+                                )}
+                              >
+                                <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-emerald-300" : "text-emerald-500")} />
+                                <span>{item.title}</span>
+                              </Link>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Purchase Collapsible Group */}
+                    <SidebarMenuItem>
+                      <button
+                        onClick={() => setPurchasesOpen(!purchasesOpen)}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
+                          isPurchaseSectionActive
+                            ? "bg-emerald-800/60 text-white"
+                            : "text-emerald-200 hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        <div className={cn("p-1.5 rounded-lg shrink-0", isPurchaseSectionActive ? "bg-emerald-600/50" : "bg-emerald-800/50")}>
+                          <ShoppingBag className={cn("h-4 w-4", isPurchaseSectionActive ? "text-emerald-300" : "text-emerald-400")} />
+                        </div>
+                        <span className="font-medium text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">ক্রয় ব্যবস্থাপনা</span>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden", purchasesOpen && "rotate-180")} />
+                      </button>
+                    </SidebarMenuItem>
+
+                    {purchasesOpen && (
+                      <div className="ml-4 border-l border-emerald-700/50 pl-2 space-y-0.5 group-data-[collapsible=icon]:hidden">
+                        {purchaseSubItems.map((item) => {
                           const isActive = location.pathname === item.url;
                           return (
                             <SidebarMenuItem key={item.url}>
