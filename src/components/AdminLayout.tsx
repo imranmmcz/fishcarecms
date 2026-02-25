@@ -49,7 +49,7 @@ const ecommerceGroup: MenuGroup = {
   items: [
     { title: "পণ্য ব্যবস্থাপনা", url: "/admin/products", icon: Package, permissionKey: "admin_products" },
     { title: "অর্ডার ম্যানেজমেন্ট", url: "/admin/orders", icon: ShoppingCart, permissionKey: "admin_orders" },
-    { title: "POS বিক্রি", url: "/admin/pos", icon: MonitorSmartphone, permissionKey: "admin_pos" },
+    { title: "POS বিক্রি", url: "/pos", icon: MonitorSmartphone, permissionKey: "admin_pos" },
     { title: "ইনভেন্টরি", url: "/admin/inventory", icon: Warehouse, permissionKey: "admin_inventory" },
     { title: "কাস্টমার", url: "/admin/customers", icon: UserCheck, permissionKey: "admin_customers" },
     { title: "সাপ্লায়ার", url: "/admin/suppliers", icon: Building2, permissionKey: "admin_suppliers" },
