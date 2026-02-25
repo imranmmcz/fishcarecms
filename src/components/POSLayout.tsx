@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,17 +8,29 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard, ShoppingCart, History, Clock, Home, MonitorSmartphone,
-  ArrowLeft, Package, Warehouse, UserCheck, Building2,
+  ArrowLeft, Package, Warehouse, UserCheck, Building2, ChevronDown,
+  ArrowLeftRight, Layers, Tag, Award, Ruler,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const menuItems = [
+const mainMenuItems = [
   { title: "POS ড্যাশবোর্ড", url: "/pos", icon: LayoutDashboard },
   { title: "দ্রুত বিক্রি", url: "/pos/sell", icon: ShoppingCart },
   { title: "বিক্রি ইতিহাস", url: "/pos/history", icon: History },
   { title: "শিফট ইতিহাস", url: "/pos/shifts", icon: Clock },
-  { title: "পণ্য ব্যবস্থাপনা", url: "/pos/products", icon: Package },
+];
+
+const productSubItems = [
+  { title: "সকল পণ্য", url: "/pos/products", icon: Package },
   { title: "ইনভেন্টরি", url: "/pos/inventory", icon: Warehouse },
+  { title: "স্টক ট্রান্সফার", url: "/pos/stock-transfers", icon: ArrowLeftRight },
+  { title: "ভ্যারিয়েশন", url: "/pos/variations", icon: Layers },
+  { title: "ক্যাটাগরি", url: "/pos/categories", icon: Tag },
+  { title: "ব্র্যান্ড", url: "/pos/brands", icon: Award },
+  { title: "ইউনিট", url: "/pos/units", icon: Ruler },
+];
+
+const bottomMenuItems = [
   { title: "কাস্টমার", url: "/pos/customers", icon: UserCheck },
   { title: "সাপ্লায়ার", url: "/pos/suppliers", icon: Building2 },
 ];
@@ -34,6 +46,8 @@ export function POSLayout({ children }: POSLayoutProps) {
 
   const isStaff = userRole === "manager" || userRole === "cashier" || userRole === "delivery_staff";
   const canAccess = isAdmin || isStaff;
+  const isProductSectionActive = productSubItems.some(i => location.pathname === i.url);
+  const [productsOpen, setProductsOpen] = useState(isProductSectionActive);
 
   useEffect(() => {
     if (!isLoading && !user) navigate("/auth");
@@ -51,7 +65,32 @@ export function POSLayout({ children }: POSLayoutProps) {
 
   if (!user || !canAccess) return null;
 
-  const currentTitle = menuItems.find(i => i.url === location.pathname)?.title || "POS";
+  const allItems = [...mainMenuItems, ...productSubItems, ...bottomMenuItems];
+  const currentTitle = allItems.find(i => i.url === location.pathname)?.title || "POS";
+
+  const renderMenuItem = (item: typeof mainMenuItems[0]) => {
+    const isActive = location.pathname === item.url;
+    return (
+      <SidebarMenuItem key={item.url}>
+        <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
+          <Link
+            to={item.url}
+            className={cn(
+              "flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
+              isActive
+                ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg"
+                : "text-emerald-200 hover:bg-white/10 hover:text-white"
+            )}
+          >
+            <div className={cn("p-1.5 rounded-lg shrink-0", isActive ? "bg-white/20" : "bg-emerald-800/50")}>
+              <item.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-emerald-400")} />
+            </div>
+            <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -76,29 +115,52 @@ export function POSLayout({ children }: POSLayoutProps) {
               <SidebarGroup className="flex-1 overflow-y-auto space-y-1">
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {menuItems.map((item) => {
-                      const isActive = location.pathname === item.url;
-                      return (
-                        <SidebarMenuItem key={item.url}>
-                          <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-                            <Link
-                              to={item.url}
-                              className={cn(
-                                "flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
-                                isActive
-                                  ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg"
-                                  : "text-emerald-200 hover:bg-white/10 hover:text-white"
-                              )}
-                            >
-                              <div className={cn("p-1.5 rounded-lg shrink-0", isActive ? "bg-white/20" : "bg-emerald-800/50")}>
-                                <item.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-emerald-400")} />
-                              </div>
-                              <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">{item.title}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
+                    {mainMenuItems.map(renderMenuItem)}
+
+                    {/* Products Collapsible Group */}
+                    <SidebarMenuItem>
+                      <button
+                        onClick={() => setProductsOpen(!productsOpen)}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
+                          isProductSectionActive
+                            ? "bg-emerald-800/60 text-white"
+                            : "text-emerald-200 hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        <div className={cn("p-1.5 rounded-lg shrink-0", isProductSectionActive ? "bg-emerald-600/50" : "bg-emerald-800/50")}>
+                          <Package className={cn("h-4 w-4", isProductSectionActive ? "text-emerald-300" : "text-emerald-400")} />
+                        </div>
+                        <span className="font-medium text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">পণ্য ব্যবস্থাপনা</span>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden", productsOpen && "rotate-180")} />
+                      </button>
+                    </SidebarMenuItem>
+
+                    {productsOpen && (
+                      <div className="ml-4 border-l border-emerald-700/50 pl-2 space-y-0.5 group-data-[collapsible=icon]:hidden">
+                        {productSubItems.map((item) => {
+                          const isActive = location.pathname === item.url;
+                          return (
+                            <SidebarMenuItem key={item.url}>
+                              <Link
+                                to={item.url}
+                                className={cn(
+                                  "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm",
+                                  isActive
+                                    ? "bg-emerald-500/20 text-white font-semibold"
+                                    : "text-emerald-300 hover:bg-white/5 hover:text-white"
+                                )}
+                              >
+                                <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-emerald-300" : "text-emerald-500")} />
+                                <span>{item.title}</span>
+                              </Link>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {bottomMenuItems.map(renderMenuItem)}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
