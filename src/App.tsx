@@ -68,6 +68,11 @@ import AdminPOS from "./pages/AdminPOS";
 import POSDashboard from "./pages/pos/POSDashboard";
 import POSHistory from "./pages/pos/POSHistory";
 import POSShifts from "./pages/pos/POSShifts";
+import POSStockTransfers from "./pages/pos/POSStockTransfers";
+import POSVariations from "./pages/pos/POSVariations";
+import POSCategories from "./pages/pos/POSCategories";
+import POSBrands from "./pages/pos/POSBrands";
+import POSUnits from "./pages/pos/POSUnits";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
 import ProductDetails from "./pages/ProductDetails";
@@ -153,6 +158,11 @@ const App = () => (
                       <Route path="/pos/inventory" element={<ProtectedRoute requireAdmin><AdminInventory Layout={POSLayout} /></ProtectedRoute>} />
                       <Route path="/pos/customers" element={<ProtectedRoute requireAdmin><AdminCustomers Layout={POSLayout} /></ProtectedRoute>} />
                       <Route path="/pos/suppliers" element={<ProtectedRoute requireAdmin><AdminSuppliers Layout={POSLayout} /></ProtectedRoute>} />
+                      <Route path="/pos/stock-transfers" element={<ProtectedRoute requireAdmin><POSStockTransfers /></ProtectedRoute>} />
+                      <Route path="/pos/variations" element={<ProtectedRoute requireAdmin><POSVariations /></ProtectedRoute>} />
+                      <Route path="/pos/categories" element={<ProtectedRoute requireAdmin><POSCategories /></ProtectedRoute>} />
+                      <Route path="/pos/brands" element={<ProtectedRoute requireAdmin><POSBrands /></ProtectedRoute>} />
+                      <Route path="/pos/units" element={<ProtectedRoute requireAdmin><POSUnits /></ProtectedRoute>} />
                       <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><Profile /></ProtectedRoute>} />
                       <Route path="/install" element={<Install />} />
                       <Route path="*" element={<NotFound />} />
