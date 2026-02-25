@@ -47,11 +47,7 @@ const ecommerceGroup: MenuGroup = {
   label: "ই-কমার্স",
   icon: Store,
   items: [
-    { title: "পণ্য ব্যবস্থাপনা", url: "/admin/products", icon: Package, permissionKey: "admin_products" },
     { title: "অর্ডার ম্যানেজমেন্ট", url: "/admin/orders", icon: ShoppingCart, permissionKey: "admin_orders" },
-    { title: "ইনভেন্টরি", url: "/admin/inventory", icon: Warehouse, permissionKey: "admin_inventory" },
-    { title: "কাস্টমার", url: "/admin/customers", icon: UserCheck, permissionKey: "admin_customers" },
-    { title: "সাপ্লায়ার", url: "/admin/suppliers", icon: Building2, permissionKey: "admin_suppliers" },
     { title: "ই-কমার্স ওভারভিউ", url: "/admin/ecommerce-overview", icon: BarChart3, permissionKey: "admin_ecommerce" },
   ],
 };
