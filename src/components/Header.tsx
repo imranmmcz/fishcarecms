@@ -101,6 +101,17 @@ export const Header = () => {
   const { t, language } = useLanguage();
   const { wishlistCount } = useWishlist();
   const { getSectionContent } = usePageContent();
+  const [hideNav, setHideNav] = useState(false);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      setHideNav(window.scrollY > lastY && window.scrollY > 80);
+      lastY = window.scrollY;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const headerData = getSectionContent<Record<string, any>>("header");
 
@@ -223,7 +234,7 @@ export const Header = () => {
       </div>
 
       {/* ─── Row 3: Navigation - Desktop ─── */}
-      <nav className="hidden md:block bg-foreground">
+      <nav className={`hidden md:block bg-foreground transition-all duration-300 ${hideNav ? "max-h-0 overflow-hidden opacity-0" : "max-h-20 opacity-100"}`}>
         <div className="container flex items-center gap-1 h-10">
           {navItems.map((item) => (
             <Link
