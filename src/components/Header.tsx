@@ -45,20 +45,21 @@ const MobileSearchToggle = () => {
 const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
   const { user, isAdmin, signOut } = useAuth();
   const { t, language } = useLanguage();
+  const [showMenu, setShowMenu] = useState(false);
 
   const email = headerData?.topBarEmail || "info@fishcare.com.bd";
 
   return (
-    <div className="w-full bg-primary text-primary-foreground">
+    <div className="w-full bg-primary text-primary-foreground relative">
       <div className="container flex items-center justify-between h-8 text-xs font-medium">
         {/* Left: Mail */}
-        <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:underline">
-          <Mail className="h-3 w-3" />
-          <span>{email}</span>
+        <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:underline truncate">
+          <Mail className="h-3 w-3 shrink-0" />
+          <span className="truncate">{email}</span>
         </a>
 
-        {/* Right: Account links */}
-        <div className="flex items-center gap-4">
+        {/* Right: Desktop full links, Mobile icon toggle */}
+        <div className="hidden md:flex items-center gap-4">
           {user ? (
             <>
               {isAdmin && (
@@ -67,12 +68,8 @@ const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
                   {t.adminPanel}
                 </Link>
               )}
-              <Link to="/dashboard" className="hover:underline">
-                {t.dashboard}
-              </Link>
-              <Link to="/dashboard/profile" className="hover:underline">
-                {t.profile}
-              </Link>
+              <Link to="/dashboard" className="hover:underline">{t.dashboard}</Link>
+              <Link to="/dashboard/profile" className="hover:underline">{t.profile}</Link>
               <button onClick={signOut} className="hover:underline flex items-center gap-1">
                 <LogOut className="h-3 w-3" />
                 {t.logout}
@@ -89,7 +86,47 @@ const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
             </>
           )}
         </div>
+
+        {/* Mobile: User icon to toggle dropdown */}
+        <button
+          className="md:hidden flex items-center gap-1 hover:opacity-80"
+          onClick={() => setShowMenu((v) => !v)}
+        >
+          <User className="h-3.5 w-3.5" />
+        </button>
       </div>
+
+      {/* Mobile dropdown */}
+      {showMenu && (
+        <div className="md:hidden absolute left-0 right-0 top-full bg-primary text-primary-foreground border-t border-primary-foreground/20 z-50 shadow-lg animate-fade-in">
+          <div className="container py-2 flex flex-col gap-1.5 text-xs font-medium">
+            {user ? (
+              <>
+                {isAdmin && (
+                  <Link to="/admin" className="py-1.5 px-2 rounded hover:bg-primary-foreground/10 flex items-center gap-2" onClick={() => setShowMenu(false)}>
+                    <Shield className="h-3 w-3" /> {t.adminPanel}
+                  </Link>
+                )}
+                <Link to="/dashboard" className="py-1.5 px-2 rounded hover:bg-primary-foreground/10 flex items-center gap-2" onClick={() => setShowMenu(false)}>
+                  <LayoutDashboard className="h-3 w-3" /> {t.dashboard}
+                </Link>
+                <Link to="/dashboard/profile" className="py-1.5 px-2 rounded hover:bg-primary-foreground/10 flex items-center gap-2" onClick={() => setShowMenu(false)}>
+                  <User className="h-3 w-3" /> {t.profile}
+                </Link>
+                <button onClick={() => { signOut(); setShowMenu(false); }} className="py-1.5 px-2 rounded hover:bg-primary-foreground/10 flex items-center gap-2 text-left">
+                  <LogOut className="h-3 w-3" /> {t.logout}
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/auth" className="py-1.5 px-2 rounded hover:bg-primary-foreground/10 flex items-center gap-2" onClick={() => setShowMenu(false)}>
+                  <LogIn className="h-3 w-3" /> {language === "bn" ? "লগইন / সাইনআপ" : "Login / Signup"}
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
