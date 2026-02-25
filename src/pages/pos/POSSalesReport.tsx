@@ -4,15 +4,46 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, TrendingUp, CreditCard, Banknote, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FileText, TrendingUp, CreditCard, Banknote, Filter, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+const getDateRange = (period: string) => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  switch (period) {
+    case "today": return { from: today.toISOString().slice(0, 10), to: today.toISOString().slice(0, 10) };
+    case "week": {
+      const start = new Date(today);
+      start.setDate(start.getDate() - start.getDay());
+      return { from: start.toISOString().slice(0, 10), to: today.toISOString().slice(0, 10) };
+    }
+    case "month": {
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      return { from: start.toISOString().slice(0, 10), to: today.toISOString().slice(0, 10) };
+    }
+    default: return { from: "", to: "" };
+  }
+};
+
 export default function POSSalesReport() {
+  const [period, setPeriod] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("all");
   const [status, setStatus] = useState("all");
+
+  const handlePeriod = (p: string) => {
+    setPeriod(p);
+    if (p === "custom" || p === "all") {
+      if (p === "all") { setDateFrom(""); setDateTo(""); }
+    } else {
+      const r = getDateRange(p);
+      setDateFrom(r.from);
+      setDateTo(r.to);
+    }
+  };
 
   const { data: sales = [] } = useQuery({
     queryKey: ["pos-sales-report"],
@@ -44,6 +75,14 @@ export default function POSSalesReport() {
     { title: "মোট ডিসকাউন্ট", value: `৳${totalDiscount.toLocaleString()}`, icon: FileText, color: "text-orange-400" },
   ];
 
+  const periods = [
+    { value: "all", label: "সকল" },
+    { value: "today", label: "আজ" },
+    { value: "week", label: "এই সপ্তাহ" },
+    { value: "month", label: "এই মাস" },
+    { value: "custom", label: "কাস্টম" },
+  ];
+
   return (
     <POSLayout>
       <div className="space-y-4">
@@ -58,15 +97,29 @@ export default function POSSalesReport() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2"><Filter className="h-4 w-4" /> ফিল্টার</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {periods.map(p => (
+                <Button
+                  key={p.value}
+                  size="sm"
+                  variant={period === p.value ? "default" : "outline"}
+                  onClick={() => handlePeriod(p.value)}
+                  className="text-xs"
+                >
+                  <Calendar className="h-3 w-3 mr-1" />
+                  {p.label}
+                </Button>
+              ))}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">শুরুর তারিখ</Label>
-                <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+                <Input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPeriod("custom"); }} />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">শেষ তারিখ</Label>
-                <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                <Input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPeriod("custom"); }} />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">পেমেন্ট মেথড</Label>
