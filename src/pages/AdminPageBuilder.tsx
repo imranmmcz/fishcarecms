@@ -661,7 +661,15 @@ export default function AdminPageBuilder() {
                 <div className="border rounded-lg p-4 space-y-4">
                   <h4 className="font-semibold text-base">টপ বার সেটিংস</h4>
                   <p className="text-xs text-muted-foreground">হেডারের সবচেয়ে উপরের প্রাইমারি কালার বারের তথ্য</p>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>ইমেইল (বাম পাশে দেখাবে)</Label>
+                      <Input
+                        placeholder="info@fishcare.com.bd"
+                        value={headerSection?.content.topBarEmail || ""}
+                        onChange={(e) => updateSectionContent("header", "topBarEmail", e.target.value)}
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label>ফোন নম্বর</Label>
                       <Input
