@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Search, X, Phone } from "lucide-react";
+import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Search, X, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -46,16 +46,15 @@ const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
   const { user, isAdmin, signOut } = useAuth();
   const { t, language } = useLanguage();
 
-  const phone = headerData?.topBarPhone || "01978865277";
-  const callLabel = headerData?.topBarCallLabel || (language === "bn" ? "কল করুন" : "Call Now");
+  const email = headerData?.topBarEmail || "info@fishcare.com.bd";
 
   return (
     <div className="w-full bg-primary text-primary-foreground">
       <div className="container flex items-center justify-between h-8 text-xs font-medium">
-        {/* Left: Call Now */}
-        <a href={`tel:${phone}`} className="flex items-center gap-1.5 hover:underline">
-          <Phone className="h-3 w-3" />
-          <span>{callLabel} {phone}</span>
+        {/* Left: Mail */}
+        <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:underline">
+          <Mail className="h-3 w-3" />
+          <span>{email}</span>
         </a>
 
         {/* Right: Account links */}
@@ -168,18 +167,13 @@ export const Header = () => {
 
           {/* Right side: phone + actions */}
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            {/* Phone - desktop only */}
-            <div className="hidden lg:flex items-center gap-2 text-right mr-2">
-              <Phone className="h-5 w-5 text-primary" />
-              <div className="flex flex-col">
-                <span className="text-[10px] text-muted-foreground leading-tight uppercase tracking-wide">
-                  {language === "bn" ? "কল করুন" : "CALL US NOW"}
-                </span>
-                <span className="text-sm font-bold text-foreground leading-tight">
-                  {headerData?.topBarPhone || "01978865277"}
-                </span>
-              </div>
-            </div>
+            {/* Phone - always visible */}
+            <a href={`tel:${headerData?.topBarPhone || "01978865277"}`} className="flex items-center gap-1.5 shrink-0">
+              <Phone className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+              <span className="hidden sm:inline text-xs md:text-sm font-bold text-foreground">
+                {headerData?.topBarPhone || "01978865277"}
+              </span>
+            </a>
 
             {/* Mobile Search */}
             <MobileSearchToggle />
