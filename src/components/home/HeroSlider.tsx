@@ -163,36 +163,44 @@ export function HeroSlider() {
                   style={{ background: slide.background_value || undefined }}
                 >
                   <div className="container relative z-10">
-                    <div className="max-w-3xl mx-auto text-center space-y-6 animate-fade-in">
-                      {slide.tagline && (
-                        <div className="inline-block rounded-full bg-white/20 px-4 py-1 text-sm backdrop-blur-sm">
-                          <IconComponent className="inline h-4 w-4 mr-1" />
-                          {slide.tagline}
-                        </div>
-                      )}
-                      <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                        {slide.title}
-                      </h1>
-                      {slide.subtitle && (
-                        <p className="text-lg md:text-xl text-white/90 leading-relaxed">
-                          {slide.subtitle}
-                        </p>
-                      )}
-                      {slide.button_text && slide.button_link && (
-                        <div className="flex gap-4 justify-center flex-wrap">
-                          <Link to={slide.button_link}>
-                            <Button3D size="lg" variant={getButtonVariant(slide.button_variant)}>
-                              <IconComponent className="mr-2 h-5 w-5" />
-                              {slide.button_text}
-                            </Button3D>
-                          </Link>
+                    <div className="flex items-center gap-6">
+                      <div className="flex-1 text-center space-y-6 animate-fade-in">
+                        {slide.tagline && (
+                          <div className="inline-block rounded-full bg-white/20 px-4 py-1 text-sm backdrop-blur-sm">
+                            <IconComponent className="inline h-4 w-4 mr-1" />
+                            {slide.tagline}
+                          </div>
+                        )}
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                          {slide.title}
+                        </h1>
+                        {slide.subtitle && (
+                          <p className="text-lg md:text-xl text-white/90 leading-relaxed">
+                            {slide.subtitle}
+                          </p>
+                        )}
+                        {slide.button_text && slide.button_link && (
+                          <div className="flex gap-4 justify-center flex-wrap">
+                            <Link to={slide.button_link}>
+                              <Button3D size="lg" variant={getButtonVariant(slide.button_variant)}>
+                                <IconComponent className="mr-2 h-5 w-5" />
+                                {slide.button_text}
+                              </Button3D>
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                      {/* Desktop featured product */}
+                      {slide.featured_product_id && (
+                        <div className="hidden md:block flex-shrink-0">
+                          <HeroFeaturedProduct productId={slide.featured_product_id} />
                         </div>
                       )}
                     </div>
                   </div>
-                  {/* Per-slide featured product */}
+                  {/* Mobile featured product */}
                   {slide.featured_product_id && (
-                    <div className="absolute bottom-12 right-4 z-10 md:top-4 md:bottom-auto">
+                    <div className="md:hidden flex justify-center mt-4 relative z-10">
                       <HeroFeaturedProduct productId={slide.featured_product_id} />
                     </div>
                   )}
