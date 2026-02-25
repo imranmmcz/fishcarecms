@@ -637,7 +637,7 @@ const AdminSettings = () => {
             ) : (
               <div className="grid gap-6 md:grid-cols-2">
                 {settings
-                  .filter(s => !s.setting_key.startsWith("payment_"))
+                  .filter(s => !s.setting_key.startsWith("payment_") && !s.setting_key.startsWith("theme_"))
                   .map((setting) => (
                   <Card key={setting.id}>
                     <CardHeader>
