@@ -16,9 +16,14 @@ import { cn } from "@/lib/utils";
 
 const mainMenuItems = [
   { title: "POS ড্যাশবোর্ড", url: "/pos", icon: LayoutDashboard },
+  { title: "শিফট ইতিহাস", url: "/pos/shifts", icon: Clock },
+];
+
+const salesSubItems = [
   { title: "দ্রুত বিক্রি", url: "/pos/sell", icon: ShoppingCart },
   { title: "বিক্রি ইতিহাস", url: "/pos/history", icon: History },
-  { title: "শিফট ইতিহাস", url: "/pos/shifts", icon: Clock },
+  { title: "বিক্রি রিটার্ন", url: "/pos/sales/returns", icon: RotateCcw },
+  { title: "বিক্রি রিপোর্ট", url: "/pos/sales/report", icon: FileText },
 ];
 
 const productSubItems = [
@@ -54,8 +59,10 @@ export function POSLayout({ children }: POSLayoutProps) {
 
   const isStaff = userRole === "manager" || userRole === "cashier" || userRole === "delivery_staff";
   const canAccess = isAdmin || isStaff;
+  const isSalesSectionActive = salesSubItems.some(i => location.pathname === i.url);
   const isProductSectionActive = productSubItems.some(i => location.pathname === i.url);
   const isPurchaseSectionActive = purchaseSubItems.some(i => location.pathname === i.url);
+  const [salesOpen, setSalesOpen] = useState(isSalesSectionActive);
   const [productsOpen, setProductsOpen] = useState(isProductSectionActive);
   const [purchasesOpen, setPurchasesOpen] = useState(isPurchaseSectionActive);
 
@@ -75,7 +82,7 @@ export function POSLayout({ children }: POSLayoutProps) {
 
   if (!user || !canAccess) return null;
 
-  const allItems = [...mainMenuItems, ...productSubItems, ...purchaseSubItems, ...bottomMenuItems];
+  const allItems = [...mainMenuItems, ...salesSubItems, ...productSubItems, ...purchaseSubItems, ...bottomMenuItems];
   const currentTitle = allItems.find(i => i.url === location.pathname)?.title || "POS";
 
   const renderMenuItem = (item: typeof mainMenuItems[0]) => {
@@ -126,6 +133,49 @@ export function POSLayout({ children }: POSLayoutProps) {
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {mainMenuItems.map(renderMenuItem)}
+
+                    {/* Sales Collapsible Group */}
+                    <SidebarMenuItem>
+                      <button
+                        onClick={() => setSalesOpen(!salesOpen)}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
+                          isSalesSectionActive
+                            ? "bg-emerald-800/60 text-white"
+                            : "text-emerald-200 hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        <div className={cn("p-1.5 rounded-lg shrink-0", isSalesSectionActive ? "bg-emerald-600/50" : "bg-emerald-800/50")}>
+                          <ShoppingCart className={cn("h-4 w-4", isSalesSectionActive ? "text-emerald-300" : "text-emerald-400")} />
+                        </div>
+                        <span className="font-medium text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">বিক্রয় ব্যবস্থাপনা</span>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden", salesOpen && "rotate-180")} />
+                      </button>
+                    </SidebarMenuItem>
+
+                    {salesOpen && (
+                      <div className="ml-4 border-l border-emerald-700/50 pl-2 space-y-0.5 group-data-[collapsible=icon]:hidden">
+                        {salesSubItems.map((item) => {
+                          const isActive = location.pathname === item.url;
+                          return (
+                            <SidebarMenuItem key={item.url}>
+                              <Link
+                                to={item.url}
+                                className={cn(
+                                  "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm",
+                                  isActive
+                                    ? "bg-emerald-500/20 text-white font-semibold"
+                                    : "text-emerald-300 hover:bg-white/5 hover:text-white"
+                                )}
+                              >
+                                <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-emerald-300" : "text-emerald-500")} />
+                                <span>{item.title}</span>
+                              </Link>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </div>
+                    )}
 
                     {/* Products Collapsible Group */}
                     <SidebarMenuItem>
