@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { AdminLayout } from "@/components/AdminLayout";
+import { POSLayout } from "@/components/POSLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -312,7 +312,7 @@ export default function AdminPOS() {
   };
 
   return (
-    <AdminLayout>
+    <POSLayout>
       <div className="space-y-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -697,6 +697,6 @@ export default function AdminPOS() {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
+    </POSLayout>
   );
 }
