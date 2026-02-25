@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Users, ShoppingCart, Phone, Mail, MapPin, Eye } from "lucide-react";
+import { Search, Users, ShoppingCart, Phone, Mail, MapPin, Eye, Plus, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -21,6 +21,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Customer {
   customer_name: string;
@@ -51,6 +53,19 @@ export default function AdminCustomers() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerOrders, setCustomerOrders] = useState<CustomerOrder[]>([]);
   const [isOrdersDialogOpen, setIsOrdersDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    customer_name: "",
+    customer_phone: "",
+    customer_email: "",
+    division: "",
+    district: "",
+    upazila: "",
+    village: "",
+    shipping_address: "",
+    notes: "",
+  });
 
   useEffect(() => {
     fetchCustomers();
@@ -60,6 +75,13 @@ export default function AdminCustomers() {
     try {
       setIsLoading(true);
       
+      // Fetch from customers table
+      const { data: savedCustomers, error: savedError } = await supabase
+        .from('customers')
+        .select('*');
+      
+      if (savedError) console.error('Error fetching saved customers:', savedError);
+
       // Get unique customers from orders with aggregated data
       const { data, error } = await supabase
         .from('orders')
@@ -68,8 +90,24 @@ export default function AdminCustomers() {
 
       if (error) throw error;
 
-      // Aggregate customers by phone number (unique identifier)
+      // Aggregate customers by phone number
       const customerMap = new Map<string, Customer>();
+      
+      // Add saved customers first
+      savedCustomers?.forEach(c => {
+        customerMap.set(c.customer_phone, {
+          customer_name: c.customer_name,
+          customer_email: c.customer_email,
+          customer_phone: c.customer_phone,
+          division: c.division,
+          district: c.district,
+          upazila: c.upazila,
+          shipping_address: c.shipping_address || '',
+          total_orders: 0,
+          total_spent: 0,
+          last_order_date: c.created_at,
+        });
+      });
       
       data?.forEach(order => {
         const key = order.customer_phone;
@@ -102,6 +140,44 @@ export default function AdminCustomers() {
       toast.error('কাস্টমার লোড করতে সমস্যা হয়েছে');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAddCustomer = async () => {
+    if (!newCustomer.customer_name.trim() || !newCustomer.customer_phone.trim()) {
+      toast.error('নাম এবং ফোন নম্বর আবশ্যক');
+      return;
+    }
+    try {
+      setIsSaving(true);
+      const { error } = await supabase.from('customers').insert({
+        customer_name: newCustomer.customer_name.trim(),
+        customer_phone: newCustomer.customer_phone.trim(),
+        customer_email: newCustomer.customer_email.trim() || null,
+        division: newCustomer.division.trim() || null,
+        district: newCustomer.district.trim() || null,
+        upazila: newCustomer.upazila.trim() || null,
+        village: newCustomer.village.trim() || null,
+        shipping_address: newCustomer.shipping_address.trim() || null,
+        notes: newCustomer.notes.trim() || null,
+      });
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('এই ফোন নম্বর দিয়ে ইতিমধ্যে একটি কাস্টমার আছে');
+        } else {
+          throw error;
+        }
+        return;
+      }
+      toast.success('কাস্টমার সফলভাবে যোগ করা হয়েছে');
+      setIsAddDialogOpen(false);
+      setNewCustomer({ customer_name: "", customer_phone: "", customer_email: "", division: "", district: "", upazila: "", village: "", shipping_address: "", notes: "" });
+      fetchCustomers();
+    } catch (error) {
+      console.error('Error adding customer:', error);
+      toast.error('কাস্টমার যোগ করতে সমস্যা হয়েছে');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -163,9 +239,15 @@ export default function AdminCustomers() {
             <h1 className="text-2xl font-bold text-foreground">কাস্টমার ম্যানেজমেন্ট</h1>
             <p className="text-muted-foreground">অর্ডারকারী কাস্টমারদের তালিকা</p>
           </div>
-          <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
-            <Users className="h-5 w-5 text-primary" />
-            <span className="font-semibold text-primary">{customers.length} জন কাস্টমার</span>
+          <div className="flex items-center gap-3">
+            <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              কাস্টমার যোগ করুন
+            </Button>
+            <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
+              <Users className="h-5 w-5 text-primary" />
+              <span className="font-semibold text-primary">{customers.length} জন কাস্টমার</span>
+            </div>
           </div>
         </div>
 
@@ -328,6 +410,101 @@ export default function AdminCustomers() {
                 </Table>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Customer Dialog */}
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5" />
+                নতুন কাস্টমার যোগ করুন
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>নাম *</Label>
+                  <Input
+                    placeholder="কাস্টমারের নাম"
+                    value={newCustomer.customer_name}
+                    onChange={(e) => setNewCustomer(p => ({ ...p, customer_name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>ফোন নম্বর *</Label>
+                  <Input
+                    placeholder="01XXXXXXXXX"
+                    value={newCustomer.customer_phone}
+                    onChange={(e) => setNewCustomer(p => ({ ...p, customer_phone: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>ইমেইল</Label>
+                  <Input
+                    type="email"
+                    placeholder="email@example.com"
+                    value={newCustomer.customer_email}
+                    onChange={(e) => setNewCustomer(p => ({ ...p, customer_email: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>বিভাগ</Label>
+                  <Input
+                    placeholder="বিভাগ"
+                    value={newCustomer.division}
+                    onChange={(e) => setNewCustomer(p => ({ ...p, division: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>জেলা</Label>
+                  <Input
+                    placeholder="জেলা"
+                    value={newCustomer.district}
+                    onChange={(e) => setNewCustomer(p => ({ ...p, district: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>উপজেলা</Label>
+                  <Input
+                    placeholder="উপজেলা"
+                    value={newCustomer.upazila}
+                    onChange={(e) => setNewCustomer(p => ({ ...p, upazila: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>গ্রাম</Label>
+                  <Input
+                    placeholder="গ্রাম"
+                    value={newCustomer.village}
+                    onChange={(e) => setNewCustomer(p => ({ ...p, village: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>শিপিং ঠিকানা</Label>
+                <Textarea
+                  placeholder="সম্পূর্ণ ঠিকানা"
+                  value={newCustomer.shipping_address}
+                  onChange={(e) => setNewCustomer(p => ({ ...p, shipping_address: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>নোট</Label>
+                <Textarea
+                  placeholder="অতিরিক্ত তথ্য..."
+                  value={newCustomer.notes}
+                  onChange={(e) => setNewCustomer(p => ({ ...p, notes: e.target.value }))}
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>বাতিল</Button>
+                <Button onClick={handleAddCustomer} disabled={isSaving}>
+                  {isSaving ? "সেভ হচ্ছে..." : "কাস্টমার যোগ করুন"}
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

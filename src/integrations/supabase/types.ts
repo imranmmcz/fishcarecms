@@ -379,6 +379,51 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          district: string | null
+          division: string | null
+          id: string
+          notes: string | null
+          shipping_address: string | null
+          upazila: string | null
+          updated_at: string
+          village: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          district?: string | null
+          division?: string | null
+          id?: string
+          notes?: string | null
+          shipping_address?: string | null
+          upazila?: string | null
+          updated_at?: string
+          village?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          district?: string | null
+          division?: string | null
+          id?: string
+          notes?: string | null
+          shipping_address?: string | null
+          upazila?: string | null
+          updated_at?: string
+          village?: string | null
+        }
+        Relationships: []
+      }
       delivery_charge_rules: {
         Row: {
           charge_amount: number
