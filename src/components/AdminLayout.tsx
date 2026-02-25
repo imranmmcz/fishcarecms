@@ -76,6 +76,7 @@ const settingsGroup: MenuGroup = {
     { title: "পেমেন্ট গেটওয়ে", url: "/admin/settings?tab=payment", icon: CreditCard, permissionKey: "admin_settings" },
     { title: "ইমেইল/SMTP", url: "/admin/settings?tab=email", icon: Mail, permissionKey: "admin_settings" },
     { title: "থিম", url: "/admin/settings?tab=theme", icon: Palette, permissionKey: "admin_settings" },
+    { title: "POS প্রিন্ট", url: "/admin/settings?tab=pos-print", icon: MonitorSmartphone, permissionKey: "admin_settings" },
     { title: "ব্যবহারকারী", url: "/admin/users", icon: Users, permissionKey: "admin_users" },
     { title: "ডাটাবেজ এক্সপোর্ট", url: "/admin/database-export", icon: Database, permissionKey: "admin_backup" },
     { title: "সিস্টেম ব্যাকআপ", url: "/admin/backup", icon: CloudUpload, permissionKey: "admin_backup" },
