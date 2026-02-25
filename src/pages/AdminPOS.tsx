@@ -19,7 +19,7 @@ import {
 import {
   Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote,
   Smartphone, Receipt, Clock, DollarSign, X, Printer, PlayCircle,
-  StopCircle, History, Package,
+  StopCircle, History, Package, UserPlus, Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,6 +56,14 @@ interface Shift {
   opened_at: string;
 }
 
+interface Customer {
+  id: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string | null;
+  shipping_address: string | null;
+}
+
 export default function AdminPOS() {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -65,6 +73,15 @@ export default function AdminPOS() {
   const [paidAmount, setPaidAmount] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [newCustomerEmail, setNewCustomerEmail] = useState("");
+  const customerSearchRef = useRef<HTMLInputElement>(null);
   const [mobileBankingProvider, setMobileBankingProvider] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [discount, setDiscount] = useState(0);
@@ -85,7 +102,58 @@ export default function AdminPOS() {
   useEffect(() => {
     fetchProducts();
     fetchActiveShift();
+    fetchCustomers();
   }, []);
+
+  const fetchCustomers = async () => {
+    const { data } = await supabase
+      .from("customers")
+      .select("id, customer_name, customer_phone, customer_email, shipping_address")
+      .order("customer_name");
+    if (data) setCustomers(data);
+  };
+
+  const filteredCustomers = customers.filter(c =>
+    c.customer_name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.customer_phone.includes(customerSearch)
+  );
+
+  const selectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setCustomerName(customer.customer_name);
+    setCustomerPhone(customer.customer_phone);
+    setCustomerSearch("");
+    setShowCustomerDropdown(false);
+  };
+
+  const clearCustomer = () => {
+    setSelectedCustomer(null);
+    setCustomerName("");
+    setCustomerPhone("");
+  };
+
+  const addNewCustomer = async () => {
+    if (!newCustomerName || !newCustomerPhone) {
+      toast.error("নাম ও ফোন নম্বর আবশ্যক");
+      return;
+    }
+    const { data, error } = await supabase.from("customers").insert({
+      customer_name: newCustomerName,
+      customer_phone: newCustomerPhone,
+      customer_email: newCustomerEmail || null,
+    }).select().single();
+    if (error) {
+      toast.error("কাস্টমার যোগ করতে সমস্যা হয়েছে");
+      return;
+    }
+    toast.success("কাস্টমার যোগ হয়েছে");
+    setCustomers(prev => [...prev, data as Customer]);
+    selectCustomer(data as Customer);
+    setShowAddCustomer(false);
+    setNewCustomerName("");
+    setNewCustomerPhone("");
+    setNewCustomerEmail("");
+  };
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -282,6 +350,8 @@ export default function AdminPOS() {
       setPaidAmount("");
       setCustomerName("");
       setCustomerPhone("");
+      setSelectedCustomer(null);
+      setCustomerSearch("");
       setDiscount(0);
       setNotes("");
       setMobileBankingProvider("");
@@ -457,10 +527,95 @@ export default function AdminPOS() {
                   <Separator />
 
                   {/* Customer Info */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input placeholder="কাস্টমার নাম" value={customerName} onChange={e => setCustomerName(e.target.value)} className="h-8 text-xs" />
-                    <Input placeholder="ফোন নম্বর" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="h-8 text-xs" />
+                  <div className="space-y-2">
+                    {selectedCustomer ? (
+                      <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
+                        <Users className="h-4 w-4 text-primary shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{selectedCustomer.customer_name}</p>
+                          <p className="text-xs text-muted-foreground">{selectedCustomer.customer_phone}</p>
+                        </div>
+                        <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={clearCustomer}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <div className="flex gap-1">
+                          <div className="relative flex-1">
+                            <Users className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <Input
+                              ref={customerSearchRef}
+                              placeholder="কাস্টমার খুঁজুন (নাম/ফোন)..."
+                              value={customerSearch}
+                              onChange={e => {
+                                setCustomerSearch(e.target.value);
+                                setShowCustomerDropdown(true);
+                              }}
+                              onFocus={() => setShowCustomerDropdown(true)}
+                              className="h-8 text-xs pl-7"
+                            />
+                          </div>
+                          <Button size="icon" variant="outline" className="h-8 w-8 shrink-0" onClick={() => setShowAddCustomer(true)} title="নতুন কাস্টমার">
+                            <UserPlus className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        {showCustomerDropdown && customerSearch.length > 0 && (
+                          <div className="absolute z-50 top-full mt-1 w-full bg-popover border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                            {filteredCustomers.length > 0 ? filteredCustomers.slice(0, 8).map(c => (
+                              <button
+                                key={c.id}
+                                className="w-full text-left px-3 py-2 hover:bg-muted/50 text-xs flex justify-between items-center"
+                                onClick={() => selectCustomer(c)}
+                              >
+                                <span className="font-medium">{c.customer_name}</span>
+                                <span className="text-muted-foreground">{c.customer_phone}</span>
+                              </button>
+                            )) : (
+                              <div className="px-3 py-3 text-xs text-muted-foreground text-center">
+                                কোনো কাস্টমার পাওয়া যায়নি
+                                <Button size="sm" variant="link" className="block mx-auto mt-1 text-xs h-auto p-0" onClick={() => { setShowAddCustomer(true); setShowCustomerDropdown(false); }}>
+                                  <UserPlus className="h-3 w-3 mr-1 inline" /> নতুন কাস্টমার যোগ করুন
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {!selectedCustomer && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input placeholder="কাস্টমার নাম (ঐচ্ছিক)" value={customerName} onChange={e => setCustomerName(e.target.value)} className="h-8 text-xs" />
+                        <Input placeholder="ফোন নম্বর (ঐচ্ছিক)" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="h-8 text-xs" />
+                      </div>
+                    )}
                   </div>
+
+                  {/* Add Customer Dialog */}
+                  <Dialog open={showAddCustomer} onOpenChange={setShowAddCustomer}>
+                    <DialogContent className="max-w-sm">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <UserPlus className="h-5 w-5" /> নতুন কাস্টমার যোগ করুন
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">নাম *</Label>
+                          <Input placeholder="কাস্টমারের নাম" value={newCustomerName} onChange={e => setNewCustomerName(e.target.value)} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">ফোন নম্বর *</Label>
+                          <Input placeholder="01XXXXXXXXX" value={newCustomerPhone} onChange={e => setNewCustomerPhone(e.target.value)} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">ইমেইল (ঐচ্ছিক)</Label>
+                          <Input placeholder="email@example.com" value={newCustomerEmail} onChange={e => setNewCustomerEmail(e.target.value)} />
+                        </div>
+                        <Button className="w-full" onClick={addNewCustomer}>কাস্টমার যোগ করুন</Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
 
                   {/* Payment Method */}
                   <div className="flex gap-2">
