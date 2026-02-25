@@ -60,7 +60,7 @@ const emptySupplier: Omit<Supplier, 'id' | 'created_at'> = {
   is_active: true
 };
 
-export default function AdminSuppliers() {
+export default function AdminSuppliers({ Layout = AdminLayout }: { Layout?: React.ComponentType<{ children: React.ReactNode }> }) {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -203,7 +203,7 @@ export default function AdminSuppliers() {
   );
 
   return (
-    <AdminLayout>
+    <Layout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -449,6 +449,6 @@ export default function AdminSuppliers() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </AdminLayout>
+    </Layout>
   );
 }

@@ -64,10 +64,10 @@ const posGroup: MenuGroup = {
     { title: "দ্রুত বিক্রি", url: "/pos/sell", icon: ShoppingCart, permissionKey: "admin_pos" },
     { title: "বিক্রি ইতিহাস", url: "/pos/history", icon: BarChart3, permissionKey: "admin_pos" },
     { title: "শিফট ইতিহাস", url: "/pos/shifts", icon: Clock, permissionKey: "admin_pos" },
-    { title: "পণ্য ব্যবস্থাপনা", url: "/admin/products", icon: Package, permissionKey: "admin_products" },
-    { title: "ইনভেন্টরি", url: "/admin/inventory", icon: Warehouse, permissionKey: "admin_inventory" },
-    { title: "কাস্টমার", url: "/admin/customers", icon: UserCheck, permissionKey: "admin_customers" },
-    { title: "সাপ্লায়ার", url: "/admin/suppliers", icon: Building2, permissionKey: "admin_suppliers" },
+    { title: "পণ্য ব্যবস্থাপনা", url: "/pos/products", icon: Package, permissionKey: "admin_pos" },
+    { title: "ইনভেন্টরি", url: "/pos/inventory", icon: Warehouse, permissionKey: "admin_pos" },
+    { title: "কাস্টমার", url: "/pos/customers", icon: UserCheck, permissionKey: "admin_pos" },
+    { title: "সাপ্লায়ার", url: "/pos/suppliers", icon: Building2, permissionKey: "admin_pos" },
   ],
 };
 

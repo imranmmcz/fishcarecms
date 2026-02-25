@@ -636,7 +636,7 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
   );
 };
 
-const AdminProducts = () => {
+const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<{ children: React.ReactNode }> }) => {
   const { products, isLoading, addProduct, updateProduct, deleteProduct } = useProducts();
   const { categories, loading: categoriesLoading } = useCategories();
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -800,7 +800,7 @@ const AdminProducts = () => {
   const outOfStockProducts = products.filter(p => (p.stock_quantity || 0) === 0);
 
   return (
-    <AdminLayout>
+    <Layout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -1071,7 +1071,7 @@ const AdminProducts = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 

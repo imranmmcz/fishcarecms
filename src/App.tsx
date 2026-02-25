@@ -14,6 +14,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeLoader } from "@/components/ThemeLoader";
+import { POSLayout } from "@/components/POSLayout";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
@@ -148,6 +149,10 @@ const App = () => (
                       <Route path="/pos/sell" element={<ProtectedRoute requireAdmin><AdminPOS /></ProtectedRoute>} />
                       <Route path="/pos/history" element={<ProtectedRoute requireAdmin><POSHistory /></ProtectedRoute>} />
                       <Route path="/pos/shifts" element={<ProtectedRoute requireAdmin><POSShifts /></ProtectedRoute>} />
+                      <Route path="/pos/products" element={<ProtectedRoute requireAdmin><AdminProducts Layout={POSLayout} /></ProtectedRoute>} />
+                      <Route path="/pos/inventory" element={<ProtectedRoute requireAdmin><AdminInventory Layout={POSLayout} /></ProtectedRoute>} />
+                      <Route path="/pos/customers" element={<ProtectedRoute requireAdmin><AdminCustomers Layout={POSLayout} /></ProtectedRoute>} />
+                      <Route path="/pos/suppliers" element={<ProtectedRoute requireAdmin><AdminSuppliers Layout={POSLayout} /></ProtectedRoute>} />
                       <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><Profile /></ProtectedRoute>} />
                       <Route path="/install" element={<Install />} />
                       <Route path="*" element={<NotFound />} />

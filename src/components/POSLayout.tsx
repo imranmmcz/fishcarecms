@@ -17,10 +17,10 @@ const menuItems = [
   { title: "দ্রুত বিক্রি", url: "/pos/sell", icon: ShoppingCart },
   { title: "বিক্রি ইতিহাস", url: "/pos/history", icon: History },
   { title: "শিফট ইতিহাস", url: "/pos/shifts", icon: Clock },
-  { title: "পণ্য ব্যবস্থাপনা", url: "/admin/products", icon: Package },
-  { title: "ইনভেন্টরি", url: "/admin/inventory", icon: Warehouse },
-  { title: "কাস্টমার", url: "/admin/customers", icon: UserCheck },
-  { title: "সাপ্লায়ার", url: "/admin/suppliers", icon: Building2 },
+  { title: "পণ্য ব্যবস্থাপনা", url: "/pos/products", icon: Package },
+  { title: "ইনভেন্টরি", url: "/pos/inventory", icon: Warehouse },
+  { title: "কাস্টমার", url: "/pos/customers", icon: UserCheck },
+  { title: "সাপ্লায়ার", url: "/pos/suppliers", icon: Building2 },
 ];
 
 interface POSLayoutProps {
