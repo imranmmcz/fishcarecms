@@ -13,6 +13,7 @@ import {
 import {
   TrendingUp, ShoppingCart, PlayCircle, ArrowRight,
   Banknote, Smartphone, Filter, X, Calendar,
+  FileText, Package, RotateCcw, ArrowLeftRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,10 +60,40 @@ const quickFilterLabels: Record<QuickFilter, string> = {
   custom: "কাস্টম",
 };
 
+interface StatCardProps {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  amount: string;
+  subtitle?: string;
+  subtitle2?: string;
+}
+
+function StatCard({ icon, iconBg, title, amount, subtitle, subtitle2 }: StatCardProps) {
+  return (
+    <div className="relative overflow-hidden rounded-xl bg-[hsl(215,50%,15%)] border border-[hsl(215,40%,22%)] p-5 transition-all hover:border-[hsl(215,40%,30%)] hover:shadow-lg hover:shadow-[hsl(215,50%,10%)/0.3]">
+      <div className="flex items-start gap-4">
+        <div className={`p-3 rounded-full shadow-lg ${iconBg} shrink-0`}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[hsl(210,20%,60%)] mb-1">{title}</p>
+          <p className="text-2xl font-bold text-white">৳ {amount}</p>
+          {subtitle && <p className="text-[11px] text-[hsl(210,20%,55%)] mt-1.5">{subtitle}</p>}
+          {subtitle2 && <p className="text-[11px] text-[hsl(210,20%,55%)]">{subtitle2}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function POSDashboard() {
   const { user } = useAuth();
   const [activeShift, setActiveShift] = useState<any>(null);
-  const [todayStats, setTodayStats] = useState({ totalSales: 0, totalTransactions: 0, cashSales: 0, mobileSales: 0 });
+  const [todayStats, setTodayStats] = useState({
+    totalSales: 0, totalTransactions: 0, cashSales: 0, mobileSales: 0,
+    totalPurchase: 0, purchaseDue: 0,
+  });
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [recentShifts, setRecentShifts] = useState<any[]>([]);
 
@@ -106,12 +137,26 @@ export default function POSDashboard() {
     if (paymentFilter !== "all") q = q.eq("payment_method", paymentFilter);
 
     const { data } = await q;
+
+    // Fetch purchase data
+    const { data: purchaseData } = await supabase
+      .from("purchase_orders")
+      .select("total_amount, status")
+      .gte("created_at", from)
+      .lte("created_at", to);
+
+    const totalPurchase = purchaseData?.reduce((s, r) => s + (r.total_amount || 0), 0) || 0;
+    const purchaseDue = purchaseData?.filter(r => r.status === "pending" || r.status === "ordered")
+      .reduce((s, r) => s + (r.total_amount || 0), 0) || 0;
+
     if (data) {
       setTodayStats({
         totalSales: data.reduce((s, r) => s + (r.total_amount || 0), 0),
         totalTransactions: data.length,
         cashSales: data.filter(r => r.payment_method === "cash").reduce((s, r) => s + (r.total_amount || 0), 0),
         mobileSales: data.filter(r => r.payment_method === "mobile_banking").reduce((s, r) => s + (r.total_amount || 0), 0),
+        totalPurchase,
+        purchaseDue,
       });
     }
   };
@@ -239,52 +284,48 @@ export default function POSDashboard() {
           </Card>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-primary/10"><TrendingUp className="h-5 w-5 text-primary" /></div>
-                <div>
-                  <p className="text-xs text-muted-foreground">মোট বিক্রি</p>
-                  <p className="text-xl font-bold">৳{todayStats.totalSales.toLocaleString()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-blue-500/10"><ShoppingCart className="h-5 w-5 text-blue-500" /></div>
-                <div>
-                  <p className="text-xs text-muted-foreground">ট্রানজেকশন</p>
-                  <p className="text-xl font-bold">{todayStats.totalTransactions}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-green-500/10"><Banknote className="h-5 w-5 text-green-500" /></div>
-                <div>
-                  <p className="text-xs text-muted-foreground">নগদ বিক্রি</p>
-                  <p className="text-xl font-bold">৳{todayStats.cashSales.toLocaleString()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-purple-500/10"><Smartphone className="h-5 w-5 text-purple-500" /></div>
-                <div>
-                  <p className="text-xs text-muted-foreground">মোবাইল বিক্রি</p>
-                  <p className="text-xl font-bold">৳{todayStats.mobileSales.toLocaleString()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Cards - Reference Style */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StatCard
+            icon={<ShoppingCart className="h-6 w-6 text-white" />}
+            iconBg="bg-[hsl(187,80%,55%)]"
+            title="মোট বিক্রি"
+            amount={todayStats.totalSales.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          />
+          <StatCard
+            icon={<FileText className="h-6 w-6 text-white" />}
+            iconBg="bg-[hsl(40,85%,55%)]"
+            title="ইনভয়েস বকেয়া"
+            amount={todayStats.mobileSales.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          />
+          <StatCard
+            icon={<Banknote className="h-6 w-6 text-white" />}
+            iconBg="bg-[hsl(200,75%,55%)]"
+            title="মোট ক্রয়"
+            amount={todayStats.totalPurchase.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          />
+          <StatCard
+            icon={<TrendingUp className="h-6 w-6 text-white" />}
+            iconBg="bg-[hsl(350,75%,55%)]"
+            title="ক্রয় বকেয়া"
+            amount={todayStats.purchaseDue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          />
+          <StatCard
+            icon={<RotateCcw className="h-6 w-6 text-white" />}
+            iconBg="bg-[hsl(10,75%,55%)]"
+            title="মোট ক্রয় রিটার্ন"
+            amount="0.00"
+            subtitle="ক্রয় রিটার্ন: ৳ 0.00"
+            subtitle2="ক্রয় রিটার্ন পেইড: ৳ 0.00"
+          />
+          <StatCard
+            icon={<ArrowLeftRight className="h-6 w-6 text-white" />}
+            iconBg="bg-[hsl(340,75%,55%)]"
+            title="মোট বিক্রি রিটার্ন"
+            amount="0.00"
+            subtitle="বিক্রি রিটার্ন: ৳ 0.00"
+            subtitle2="বিক্রি রিটার্ন পেইড: ৳ 0.00"
+          />
         </div>
 
         {/* Active Shift */}
