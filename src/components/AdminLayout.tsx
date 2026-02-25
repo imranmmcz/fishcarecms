@@ -12,7 +12,7 @@ import {
   LayoutDashboard, Users, Settings, BarChart3, Home, Shield, User, Package,
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
   Building2, FileText, CloudUpload, Palette, Store, ChevronDown, CreditCard,
-  Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, type LucideIcon,
+  Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,11 +49,21 @@ const ecommerceGroup: MenuGroup = {
   items: [
     { title: "পণ্য ব্যবস্থাপনা", url: "/admin/products", icon: Package, permissionKey: "admin_products" },
     { title: "অর্ডার ম্যানেজমেন্ট", url: "/admin/orders", icon: ShoppingCart, permissionKey: "admin_orders" },
-    { title: "POS বিক্রি", url: "/pos", icon: MonitorSmartphone, permissionKey: "admin_pos" },
     { title: "ইনভেন্টরি", url: "/admin/inventory", icon: Warehouse, permissionKey: "admin_inventory" },
     { title: "কাস্টমার", url: "/admin/customers", icon: UserCheck, permissionKey: "admin_customers" },
     { title: "সাপ্লায়ার", url: "/admin/suppliers", icon: Building2, permissionKey: "admin_suppliers" },
     { title: "ই-কমার্স ওভারভিউ", url: "/admin/ecommerce-overview", icon: BarChart3, permissionKey: "admin_ecommerce" },
+  ],
+};
+
+const posGroup: MenuGroup = {
+  label: "POS সিস্টেম",
+  icon: MonitorSmartphone,
+  items: [
+    { title: "POS ড্যাশবোর্ড", url: "/pos", icon: LayoutDashboard, permissionKey: "admin_pos" },
+    { title: "দ্রুত বিক্রি", url: "/pos/sell", icon: ShoppingCart, permissionKey: "admin_pos" },
+    { title: "বিক্রি ইতিহাস", url: "/pos/history", icon: BarChart3, permissionKey: "admin_pos" },
+    { title: "শিফট ইতিহাস", url: "/pos/shifts", icon: Clock, permissionKey: "admin_pos" },
   ],
 };
 
@@ -73,7 +83,7 @@ const settingsGroup: MenuGroup = {
   ],
 };
 
-const allGroups = [cmsGroup, ecommerceGroup, settingsGroup];
+const allGroups = [cmsGroup, ecommerceGroup, posGroup, settingsGroup];
 
 // --- Collapsible Menu Group Component ---
 function SidebarMenuGroup({
@@ -265,6 +275,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
                 <SidebarMenuGroup group={cmsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
                 <SidebarMenuGroup group={ecommerceGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
+                <SidebarMenuGroup group={posGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
 
                 <div className="h-px bg-white/10 mx-2 my-1" />
 
