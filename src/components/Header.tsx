@@ -50,7 +50,7 @@ const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
   const email = headerData?.topBarEmail || "info@fishcare.com.bd";
 
   return (
-    <div className="w-full bg-primary text-primary-foreground relative">
+    <div className="w-full relative" style={{ backgroundColor: 'hsl(var(--header-utility-bg, var(--primary)))', color: 'hsl(var(--header-utility-text, var(--primary-foreground)))' }}>
       <div className="container flex items-center justify-between h-8 text-xs font-medium">
         {/* Left: Mail */}
         <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:underline truncate">
@@ -98,7 +98,7 @@ const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
 
       {/* Mobile dropdown */}
       {showMenu && (
-        <div className="md:hidden absolute left-0 right-0 top-full bg-primary text-primary-foreground border-t border-primary-foreground/20 z-50 shadow-lg animate-fade-in">
+        <div className="md:hidden absolute left-0 right-0 top-full z-50 shadow-lg animate-fade-in border-t border-white/20" style={{ backgroundColor: 'hsl(var(--header-utility-bg, var(--primary)))', color: 'hsl(var(--header-utility-text, var(--primary-foreground)))' }}>
           <div className="container py-2 flex flex-col gap-1.5 text-xs font-medium">
             {user ? (
               <>
@@ -190,7 +190,7 @@ export const Header = () => {
       <TopBar headerData={headerData} />
 
       {/* ─── Row 2: Logo + Search + Actions ─── */}
-      <div className="bg-background border-b border-border">
+      <div className="border-b border-border" style={{ backgroundColor: 'hsl(var(--header-bg, var(--background)))' }}>
         <div className="container flex h-16 md:h-20 items-center justify-between gap-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 transition-transform hover:scale-[1.02]">
@@ -271,7 +271,7 @@ export const Header = () => {
       </div>
 
       {/* ─── Row 3: Navigation - Desktop ─── */}
-      <nav className={`hidden md:block bg-foreground transition-all duration-300 ${hideNav ? "max-h-0 overflow-hidden opacity-0" : "max-h-20 opacity-100"}`}>
+      <nav className={`hidden md:block transition-all duration-300 ${hideNav ? "max-h-0 overflow-hidden opacity-0" : "max-h-20 opacity-100"}`} style={{ backgroundColor: 'hsl(var(--header-nav-bg, var(--foreground)))' }}>
         <div className="container flex items-center gap-1 h-10">
           {navItems.map((item) => (
             <Link
@@ -280,8 +280,9 @@ export const Header = () => {
               className={`text-sm font-semibold px-4 h-full flex items-center transition-colors uppercase tracking-wide ${
                 location.pathname === item.path
                   ? "bg-primary text-primary-foreground"
-                  : "text-background/80 hover:text-background hover:bg-background/10"
+                  : "hover:bg-white/10"
               }`}
+              style={location.pathname !== item.path ? { color: 'hsl(var(--header-nav-text, var(--background)) / 0.85)' } : undefined}
             >
               {item.label}
             </Link>
