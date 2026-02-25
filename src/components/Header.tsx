@@ -42,42 +42,54 @@ const MobileSearchToggle = () => {
 };
 
 /* ── Top utility bar ── */
-const TopBar = () => {
+const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
   const { user, isAdmin, signOut } = useAuth();
   const { t, language } = useLanguage();
 
+  const phone = headerData?.topBarPhone || "01978865277";
+  const callLabel = headerData?.topBarCallLabel || (language === "bn" ? "কল করুন" : "Call Now");
+
   return (
     <div className="w-full bg-primary text-primary-foreground">
-      <div className="container flex items-center justify-end gap-4 h-8 text-xs font-medium">
-        {user ? (
-          <>
-            {isAdmin && (
-              <Link to="/admin" className="hover:underline flex items-center gap-1">
-                <Shield className="h-3 w-3" />
-                {t.adminPanel}
+      <div className="container flex items-center justify-between h-8 text-xs font-medium">
+        {/* Left: Call Now */}
+        <a href={`tel:${phone}`} className="flex items-center gap-1.5 hover:underline">
+          <Phone className="h-3 w-3" />
+          <span>{callLabel} {phone}</span>
+        </a>
+
+        {/* Right: Account links */}
+        <div className="flex items-center gap-4">
+          {user ? (
+            <>
+              {isAdmin && (
+                <Link to="/admin" className="hover:underline flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  {t.adminPanel}
+                </Link>
+              )}
+              <Link to="/dashboard" className="hover:underline">
+                {t.dashboard}
               </Link>
-            )}
-            <Link to="/dashboard" className="hover:underline">
-              {t.dashboard}
-            </Link>
-            <Link to="/dashboard/profile" className="hover:underline">
-              {t.profile}
-            </Link>
-            <button onClick={signOut} className="hover:underline flex items-center gap-1">
-              <LogOut className="h-3 w-3" />
-              {t.logout}
-            </button>
-          </>
-        ) : (
-          <>
-            <Link to="/auth" className="hover:underline">
-              {language === "bn" ? "আমার অ্যাকাউন্ট" : "MY ACCOUNT"}
-            </Link>
-            <Link to="/auth" className="hover:underline">
-              {language === "bn" ? "অ্যাকাউন্ট তৈরি করুন" : "CREATE AN ACCOUNT"}
-            </Link>
-          </>
-        )}
+              <Link to="/dashboard/profile" className="hover:underline">
+                {t.profile}
+              </Link>
+              <button onClick={signOut} className="hover:underline flex items-center gap-1">
+                <LogOut className="h-3 w-3" />
+                {t.logout}
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/auth" className="hover:underline">
+                {language === "bn" ? "আমার অ্যাকাউন্ট" : "MY ACCOUNT"}
+              </Link>
+              <Link to="/auth" className="hover:underline">
+                {language === "bn" ? "অ্যাকাউন্ট তৈরি করুন" : "CREATE AN ACCOUNT"}
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -128,7 +140,7 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full">
       {/* ─── Row 1: Utility bar ─── */}
-      <TopBar />
+      <TopBar headerData={headerData} />
 
       {/* ─── Row 2: Logo + Search + Actions ─── */}
       <div className="bg-background border-b border-border">
@@ -164,7 +176,7 @@ export const Header = () => {
                   {language === "bn" ? "কল করুন" : "CALL US NOW"}
                 </span>
                 <span className="text-sm font-bold text-foreground leading-tight">
-                  {headerData?.phone || "01XXX-XXXXXX"}
+                  {headerData?.topBarPhone || "01978865277"}
                 </span>
               </div>
             </div>
