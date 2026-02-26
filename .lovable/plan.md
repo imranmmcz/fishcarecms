@@ -1,82 +1,66 @@
 
-# Supabase থেকে MySQL API-তে বাকি ফাইলগুলো কনভার্ট করার পরিকল্পনা
+লক্ষ্য: প্রোডাক্ট ডিটেইলস পেইজে মাউস কার্সরের নিচের অংশটাই লেন্সে সঠিকভাবে জুম দেখানো—এখনকার mismatch পুরোপুরি ঠিক করা।
 
-## সারসংক্ষেপ
-৬টি ফাইল থেকে সব Supabase ইম্পোর্ট রিমুভ করে `apiClient` দিয়ে প্রতিস্থাপন করা হবে এবং সব বিল্ড এরর ফিক্স করা হবে।
+বর্তমান সমস্যার নির্ণয় (root cause)
+- `src/pages/ProductDetails.tsx`-এ লেন্সের ভিতরের জুম ইমেজে `left/top` `%` হিসেবে সেট করা হয়েছে, কিন্তু ওই `%` লেন্সের নিজের বক্সের রেফারেন্সে কাজ করছে।
+- ফলে কার্সর 0%→100% গেলেও জুম ইমেজ যথেষ্ট দূরত্বে সরে না; তাই “একই জায়গা” বা “ভুল জায়গা” বেশি দেখা যায়।
+- উপরন্তু মূল ইমেজ `object-cover` হওয়ায় source image crop হয়; কিন্তু বর্তমান লেন্স ক্যালকুলেশন সেই crop geometry পুরোপুরি account করছে না।
 
-## পরিবর্তনের তালিকা
+কোথায় পরিবর্তন হবে
+- শুধুমাত্র: `src/pages/ProductDetails.tsx`
+- Backend/DB/Cloud কোন পরিবর্তন লাগবে না।
 
-### 1. `src/hooks/useReviews.ts` - সম্পূর্ণ পুনর্লিখন
-- `supabase` ইম্পোর্ট রিমুভ করে `apiClient` ব্যবহার করা হবে
-- `fetchReviews()` - `apiClient.getProductReviews()` কল করবে
-- `createReview()` - `apiClient.createReview()` কল করবে
-- `updateReview()` - `apiClient.updateReview()` কল করবে
-- `deleteReview()` - `apiClient.deleteReview()` কল করবে
-- `markHelpful()` - `apiClient.markReviewHelpful()` কল করবে
-- `user.id` কে `String()` এ কনভার্ট করার দরকার নেই - API নিজেই হ্যান্ডেল করবে
-- ReviewStats ম্যাপিং: `rating_breakdown` থেকে `rating_distribution` এ কনভার্ট
+ইমপ্লিমেন্টেশন প্ল্যান
+1) Lens math-কে percentage থেকে pixel-based mapping-এ নেওয়া  
+- `zoomPosition` শুধু `%` না রেখে mouse-এর container-relative pixel coordinateও রাখা হবে (যেমন `pointerPx` + `%` দুটোই)।
+- mouse move-এ `rect` থেকে cursor-এর `x/y` clamp করে নেব, যাতে boundary mismatch না হয়।
 
-### 2. `src/pages/DashboardMyPond.tsx` - Supabase থেকে apiClient
-- `supabase` ইম্পোর্ট রিমুভ
-- `apiClient` ইম্পোর্ট যোগ
-- `fetchPonds()`: `apiClient.getPonds(String(user.id))` ব্যবহার
-- `fetchSamplings()`: `apiClient.getSamplings(String(user.id))` ব্যবহার
-- `handleSubmit()`: `apiClient.createPond()` / `apiClient.updatePond()` ব্যবহার
-- `handleDelete()`: `apiClient.deletePond()` ব্যবহার
-- `handleSellFish()`: `apiClient.createIncome()` ব্যবহার
-- `handleAddExpense()`: `apiClient.createExpense()` ব্যবহার
-- `handleSaveSampling()`: `apiClient.createSampling()` ব্যবহার
-- `deleteSampling()`: `apiClient.deleteSampling()` ব্যবহার
-- সব `user.id` কে `String()` দিয়ে পাস করার দরকার নেই - `apiClient` numeric ID গ্রহণ করে
+2) `object-cover` অনুযায়ী rendered image geometry হিসাব করা  
+- main image load হলে `naturalWidth/naturalHeight` state-এ সংরক্ষণ করব।
+- container width/height + natural size থেকে cover scale হিসাব:
+  - `scale = max(containerW/naturalW, containerH/naturalH)`
+  - `renderW = naturalW * scale`, `renderH = naturalH * scale`
+  - crop offset: `offsetX = (containerW - renderW)/2`, `offsetY = (containerH - renderH)/2`
+- cursor point কে rendered image coordinate-এ map করব:
+  - `imgX = clamp(cursorX - offsetX, 0, renderW)`
+  - `imgY = clamp(cursorY - offsetY, 0, renderH)`
 
-### 3. `src/pages/AdminBackup.tsx` - Edge Function কল রিমুভ
-- `supabase` ইম্পোর্ট রিমুভ
-- `session?.access_token` এর বদলে `localStorage.getItem('auth_token')` ব্যবহার
-- `supabase.functions.invoke()` এর বদলে `fetch()` দিয়ে সরাসরি API কল (বা `apiClient` এ backup endpoints যোগ)
-- `supabase.from('system_settings')` এর বদলে `apiClient.getSettings()` / `apiClient.updateSetting()` ব্যবহার
-- যেহেতু Hostinger-এ Edge Functions নেই, backup/restore কলগুলো `apiClient`-এর নতুন endpoint দিয়ে হবে
+3) Lens-এর ভিতরের zoom image position সঠিকভাবে বসানো  
+- নির্দিষ্ট zoom factor (যেমন 2.5) ও lens size (বর্তমান 192px) ধরে:
+  - `zoomW = renderW * zoomFactor`, `zoomH = renderH * zoomFactor`
+  - `left = lensSize/2 - imgX * zoomFactor`
+  - `top = lensSize/2 - imgY * zoomFactor`
+- edge-এ blank space ঠেকাতে `left/top` clamp করব:
+  - `left ∈ [lensSize - zoomW, 0]`
+  - `top ∈ [lensSize - zoomH, 0]`
+- লেন্সের ভিতরের `<img>` এ px-based `width/height/left/top` বসানো হবে, `%` নয়।
 
-### 4. `src/pages/DashboardBackup.tsx` - Edge Function কল রিমুভ
-- `supabase` ইম্পোর্ট রিমুভ
-- `session?.access_token` রেফারেন্স রিমুভ, `auth_token` ব্যবহার
-- `supabase.functions.invoke()` কে API কলে রূপান্তর
-- একই backup API endpoints ব্যবহার
+4) Interaction polishing
+- `onMouseLeave` এ lens hide + state reset (প্রয়োজনে)।
+- image change (thumbnail switch) হলে lens inactive করা হবে যাতে stale position না থাকে।
+- current “click to zoom” fullscreen dialog behavior অপরিবর্তিত থাকবে।
 
-### 5. `src/pages/Profile.tsx` - `user_metadata` এরর ফিক্স
-- Line 65: `user.user_metadata?.full_name` কে `user.full_name` দিয়ে প্রতিস্থাপন (MySQL `User` টাইপে `user_metadata` নেই)
+5) Regression safety
+- product image না থাকলে existing fallback UI untouched।
+- mobile/touch-এ hover lens না দেখালেও desktop hover unaffected থাকবে।
 
-### 6. `src/pages/DashboardOrders.tsx` - Supabase expense insertion ফিক্স
-- `supabase` ইম্পোর্ট রিমুভ
-- "Add to Pond Expense" বাটনে `supabase.from("farmer_expenses")` কে `apiClient.createExpense()` দিয়ে প্রতিস্থাপন
-- `user.id` টাইপ মিসম্যাচ (number vs string) ফিক্স
+টেকনিক্যাল নোট (সংক্ষেপে)
+- Key fix: “lens-local percent movement” → “container/image geometry aware pixel translation”
+- এটাই cursor-to-zoom mapping 1:1 করার মূল সমাধান।
+- এই approach `object-cover` crop mismatch-ও ঠিক করবে, যা বর্তমান bug-এর বড় কারণ।
 
-### 7. `src/pages/Dashboard.tsx` - Line 580 `supabase` রেফারেন্স ফিক্স
-- `RecentList` কম্পোনেন্টে `supabase` কল রিমুভ করে `apiClient.getIncomes()` / `apiClient.getExpenses()` ব্যবহার
+টেস্ট প্ল্যান (এন্ড-টু-এন্ড)
+1) ডেস্কটপে `/product/:id` খুলে main image-এর
+- center, চার কোণা, চার edge—সব জায়গায় hover করে দেখব lens ঠিক ওই জায়গা magnify করছে কিনা।
+2) landscape/portrait ভিন্ন ratio-এর image দিয়ে cross-check।
+3) gallery thumbnail বদলে আবার hover টেস্ট (old position leak হচ্ছে কিনা)।
+4) click করে fullscreen zoom dialog আগের মতো খোলে কিনা যাচাই।
+5) দ্রুত mouse move করলে jitter/lag/blank area আছে কিনা চেক।
 
-### 8. `src/lib/api-client.ts` - Backup API endpoints যোগ
-নতুন মেথড যোগ:
-- `createBackup(scope)` - POST `/backup`
-- `listBackups()` - GET `/backup`
-- `restoreBackup(fileId)` - POST `/backup/restore`
-- `downloadBackup(logId)` - GET `/backup/download`
-- `getBackupStats()` - GET `/backup/stats`
-- `cleanupBackups(params)` - POST `/backup/cleanup`
-- Google Drive সংযোগ endpoints
+সম্ভাব্য ঝুঁকি ও প্রতিকার
+- ঝুঁকি: natural size initial load-এর আগে null হলে প্রথম hover mismatch হতে পারে।
+- প্রতিকার: natural size না পাওয়া পর্যন্ত lens render না করা বা safe fallback geometry ব্যবহার।
+- ঝুঁকি: edge clamp ভুল হলে lens-এ blank strip আসতে পারে।
+- প্রতিকার: strict clamp ranges + corner-case testing (চার কোণা বাধ্যতামূলক)।
 
-### 9. `hostinger-backend/routes/backup.js` - নতুন ফাইল তৈরি
-- Express রাউট যা backup/restore পরিচালনা করবে
-- Google Drive OAuth ও ফাইল আপলোড/ডাউনলোড
-- system_settings থেকে backup limit/retention পড়া
-
-## টেকনিক্যাল বিবরণ
-
-### টাইপ মিসম্যাচ সমাধান
-MySQL ব্যাকএন্ডে `id` হলো `number` (INT AUTO_INCREMENT), তাই:
-- `user.id` সরাসরি numeric হিসেবে পাঠানো হবে
-- API Client ফাংশনে `String(id)` ব্যবহার হবে URL path-এ
-
-### Backup Feature
-হোস্টিং-এ Edge Functions নেই, তাই একটি Express route তৈরি হবে যা:
-- ডাটাবেজ টেবিল ডাম্প করবে JSON হিসেবে
-- Google Drive API দিয়ে আপলোড করবে
-- Restore করলে JSON ডেটা টেবিলে insert করবে
+Approve করলে আমি এই প্ল্যান অনুযায়ী `ProductDetails.tsx`-এ targeted fix implement করব।
