@@ -2,7 +2,7 @@
  * AuthContext - Supabase/Lovable Cloud Version
  */
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -77,8 +77,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isCustomer = userRole === 'customer';
   const isAuthenticated = !!supabaseUser;
 
-  // Build compatibility User object
-  const user: User | null = supabaseUser ? {
+  // Build compatibility User object - memoized to prevent infinite re-renders
+  const user: User | null = useMemo(() => supabaseUser ? {
     id: supabaseUser.id,
     email: supabaseUser.email || '',
     full_name: profile?.full_name || supabaseUser.user_metadata?.full_name || null,
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     village: profile?.village,
     avatar_url: profile?.avatar_url,
     created_at: supabaseUser.created_at,
-  } : null;
+  } : null, [supabaseUser, profile, userRole]);
 
   const fetchProfile = async (userId: string) => {
     try {
