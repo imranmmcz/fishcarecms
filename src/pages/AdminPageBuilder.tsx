@@ -392,8 +392,6 @@ export default function AdminPageBuilder() {
   const ctaSection = getSection("cta");
   const footerSection = getSection("footer");
   const headerSection = getSection("header");
-  const authLoginSection = getSection("auth_login");
-  const authRegisterSection = getSection("auth_register");
 
   // Header Nav Item handlers
   const addNavItem = () => {
@@ -454,7 +452,7 @@ export default function AdminPageBuilder() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4 md:grid-cols-10 w-full">
+           <TabsList className="grid grid-cols-4 md:grid-cols-8 w-full">
             <TabsTrigger value="header">হেডার</TabsTrigger>
             <TabsTrigger value="hero">হিরো</TabsTrigger>
             <TabsTrigger value="modules">মডিউল</TabsTrigger>
@@ -463,8 +461,6 @@ export default function AdminPageBuilder() {
             <TabsTrigger value="stats">পরিসংখ্যান</TabsTrigger>
             <TabsTrigger value="cta">CTA</TabsTrigger>
             <TabsTrigger value="footer">ফুটার</TabsTrigger>
-            <TabsTrigger value="auth_login">লগইন</TabsTrigger>
-            <TabsTrigger value="auth_register">রেজিস্ট্রেশন</TabsTrigger>
           </TabsList>
 
           {/* Header Section */}
@@ -1438,247 +1434,6 @@ export default function AdminPageBuilder() {
             </Card>
           </TabsContent>
 
-          {/* Auth Login Section */}
-          <TabsContent value="auth_login">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Type className="h-5 w-5" />
-                      লগইন পেজ সেটিংস
-                    </CardTitle>
-                    <CardDescription>লগইন পেজের হেডিং, লেবেল, ডেমো অ্যাকাউন্ট ইত্যাদি এডিট করুন</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="p-3 bg-muted/30 rounded-lg text-sm text-muted-foreground">
-                  💡 লোগো এবং সাইটের নাম হেডার সেকশনের সেটিংস থেকে নেওয়া হয়। হেডার ট্যাব থেকে পরিবর্তন করুন।
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>হেডিং টেক্সট</Label>
-                    <Input
-                      value={authLoginSection?.content.heading || ""}
-                      onChange={(e) => updateSectionContent("auth_login", "heading", e.target.value)}
-                      placeholder="মাছ চাষ ম্যানেজমেন্ট"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>সাব-হেডিং</Label>
-                    <Input
-                      value={authLoginSection?.content.description || ""}
-                      onChange={(e) => updateSectionContent("auth_login", "description", e.target.value)}
-                      placeholder="আপনার অ্যাকাউন্টে প্রবেশ করুন"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>লগইন বাটন টেক্সট</Label>
-                    <Input
-                      value={authLoginSection?.content.buttonText || ""}
-                      onChange={(e) => updateSectionContent("auth_login", "buttonText", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>হোম বাটন টেক্সট</Label>
-                    <Input
-                      value={authLoginSection?.content.homeButtonText || ""}
-                      onChange={(e) => updateSectionContent("auth_login", "homeButtonText", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>ইমেইল লেবেল</Label>
-                    <Input
-                      value={authLoginSection?.content.emailLabel || ""}
-                      onChange={(e) => updateSectionContent("auth_login", "emailLabel", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>ইমেইল প্লেসহোল্ডার</Label>
-                    <Input
-                      value={authLoginSection?.content.emailPlaceholder || ""}
-                      onChange={(e) => updateSectionContent("auth_login", "emailPlaceholder", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>পাসওয়ার্ড লেবেল</Label>
-                    <Input
-                      value={authLoginSection?.content.passwordLabel || ""}
-                      onChange={(e) => updateSectionContent("auth_login", "passwordLabel", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>পাসওয়ার্ড প্লেসহোল্ডার</Label>
-                    <Input
-                      value={authLoginSection?.content.passwordPlaceholder || ""}
-                      onChange={(e) => updateSectionContent("auth_login", "passwordPlaceholder", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Demo Account Section */}
-                <div className="border rounded-lg p-4 space-y-4 bg-muted/20">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold">ডেমো অ্যাকাউন্ট</h4>
-                    <div className="flex items-center gap-2">
-                      <Label>দেখান</Label>
-                      <Switch
-                        checked={authLoginSection?.content.showDemoAccount !== false}
-                        onCheckedChange={(checked) => updateSectionContent("auth_login", "showDemoAccount", checked)}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>ডেমো টেক্সট</Label>
-                      <Input
-                        value={authLoginSection?.content.demoText || ""}
-                        onChange={(e) => updateSectionContent("auth_login", "demoText", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>ডেমো ইমেইল</Label>
-                      <Input
-                        value={authLoginSection?.content.demoEmail || ""}
-                        onChange={(e) => updateSectionContent("auth_login", "demoEmail", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>ডেমো পাসওয়ার্ড</Label>
-                      <Input
-                        value={authLoginSection?.content.demoPassword || ""}
-                        onChange={(e) => updateSectionContent("auth_login", "demoPassword", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Button onClick={() => saveSection("auth_login")} disabled={saving}>
-                  <Save className="h-4 w-4 mr-2" />
-                  সংরক্ষণ করুন
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Auth Register Section */}
-          <TabsContent value="auth_register">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Type className="h-5 w-5" />
-                  রেজিস্ট্রেশন পেজ সেটিংস
-                </CardTitle>
-                <CardDescription>রেজিস্ট্রেশন ফর্মের লেবেল ও প্লেসহোল্ডার এডিট করুন</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>রেজিস্ট্রেশন বাটন টেক্সট</Label>
-                    <Input
-                      value={authRegisterSection?.content.buttonText || ""}
-                      onChange={(e) => updateSectionContent("auth_register", "buttonText", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>নাম লেবেল</Label>
-                    <Input
-                      value={authRegisterSection?.content.nameLabel || ""}
-                      onChange={(e) => updateSectionContent("auth_register", "nameLabel", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>নাম প্লেসহোল্ডার</Label>
-                    <Input
-                      value={authRegisterSection?.content.namePlaceholder || ""}
-                      onChange={(e) => updateSectionContent("auth_register", "namePlaceholder", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>ইমেইল লেবেল</Label>
-                    <Input
-                      value={authRegisterSection?.content.emailLabel || ""}
-                      onChange={(e) => updateSectionContent("auth_register", "emailLabel", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>ইমেইল প্লেসহোল্ডার</Label>
-                    <Input
-                      value={authRegisterSection?.content.emailPlaceholder || ""}
-                      onChange={(e) => updateSectionContent("auth_register", "emailPlaceholder", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>পাসওয়ার্ড লেবেল</Label>
-                    <Input
-                      value={authRegisterSection?.content.passwordLabel || ""}
-                      onChange={(e) => updateSectionContent("auth_register", "passwordLabel", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>পাসওয়ার্ড প্লেসহোল্ডার</Label>
-                    <Input
-                      value={authRegisterSection?.content.passwordPlaceholder || ""}
-                      onChange={(e) => updateSectionContent("auth_register", "passwordPlaceholder", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>কনফার্ম পাসওয়ার্ড লেবেল</Label>
-                    <Input
-                      value={authRegisterSection?.content.confirmPasswordLabel || ""}
-                      onChange={(e) => updateSectionContent("auth_register", "confirmPasswordLabel", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>কনফার্ম পাসওয়ার্ড প্লেসহোল্ডার</Label>
-                    <Input
-                      value={authRegisterSection?.content.confirmPasswordPlaceholder || ""}
-                      onChange={(e) => updateSectionContent("auth_register", "confirmPasswordPlaceholder", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
-                  <div>
-                    <p className="font-medium text-sm">ঠিকানা ফিল্ড দেখান</p>
-                    <p className="text-xs text-muted-foreground">মোবাইল, বিভাগ, জেলা, উপজেলা, গ্রাম ফিল্ডগুলো</p>
-                  </div>
-                  <Switch
-                    checked={authRegisterSection?.content.showAddressFields !== false}
-                    onCheckedChange={(checked) => updateSectionContent("auth_register", "showAddressFields", checked)}
-                  />
-                </div>
-
-                <Button onClick={() => saveSection("auth_register")} disabled={saving}>
-                  <Save className="h-4 w-4 mr-2" />
-                  সংরক্ষণ করুন
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
     </AdminLayout>
