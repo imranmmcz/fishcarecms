@@ -142,9 +142,20 @@ export const Header = () => {
 
   useEffect(() => {
     let lastY = window.scrollY;
+    let ticking = false;
     const onScroll = () => {
-      setHideNav(window.scrollY > lastY && window.scrollY > 80);
-      lastY = window.scrollY;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const delta = currentY - lastY;
+        // Only toggle if scroll delta exceeds threshold to prevent jitter
+        if (Math.abs(delta) > 5) {
+          setHideNav(delta > 0 && currentY > 80);
+          lastY = currentY;
+        }
+        ticking = false;
+      });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
