@@ -90,11 +90,18 @@ const ProductDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
-  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0, pxX: 0, pxY: 0 });
   const [isLensActive, setIsLensActive] = useState(false);
+  const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const [galleryImages, setGalleryImages] = useState<{ id: string; image_url: string; is_primary: boolean; alt_text: string | null }[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  // Reset lens when image changes
+  useEffect(() => {
+    setIsLensActive(false);
+    setNaturalSize(null);
+  }, [selectedImageIndex]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -332,11 +339,13 @@ const ProductDetails = () => {
               className="aspect-square rounded-3xl overflow-hidden bg-muted cursor-zoom-in group relative"
               onClick={() => hasValidImage && setIsZoomOpen(true)}
               onMouseMove={(e) => {
-                if (!imageContainerRef.current || !hasValidImage) return;
+                if (!imageContainerRef.current || !hasValidImage || !naturalSize) return;
                 const rect = imageContainerRef.current.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                setZoomPosition({ x, y });
+                const cursorX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                const cursorY = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+                const xPct = (cursorX / rect.width) * 100;
+                const yPct = (cursorY / rect.height) * 100;
+                setZoomPosition({ x: xPct, y: yPct, pxX: cursorX, pxY: cursorY });
                 setIsLensActive(true);
               }}
               onMouseLeave={() => setIsLensActive(false)}
@@ -347,31 +356,59 @@ const ProductDetails = () => {
                     src={currentImage!}
                     alt={galleryImages[selectedImageIndex]?.alt_text || product.name}
                     className="w-full h-full object-cover transition-transform duration-300"
+                    onLoad={(e) => {
+                      const img = e.currentTarget;
+                      setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
+                    }}
                   />
                   {/* Hover lens effect */}
-                  {isLensActive && (
-                    <div 
-                      className="absolute w-48 h-48 border-2 border-white/80 rounded-full pointer-events-none shadow-lg overflow-hidden z-50"
-                      style={{
-                        left: `${zoomPosition.x}%`,
-                        top: `${zoomPosition.y}%`,
-                        transform: 'translate(-50%, -50%)',
-                      }}
-                    >
-                      <img
-                        src={currentImage!}
-                        alt=""
-                        className="absolute"
+                  {isLensActive && naturalSize && imageContainerRef.current && (() => {
+                    const LENS = 192;
+                    const ZOOM = 2.5;
+                    const cW = imageContainerRef.current!.offsetWidth;
+                    const cH = imageContainerRef.current!.offsetHeight;
+                    // object-cover geometry
+                    const scale = Math.max(cW / naturalSize.w, cH / naturalSize.h);
+                    const renderW = naturalSize.w * scale;
+                    const renderH = naturalSize.h * scale;
+                    const offsetX = (cW - renderW) / 2;
+                    const offsetY = (cH - renderH) / 2;
+                    // cursor → image-space coords
+                    const imgX = Math.max(0, Math.min(zoomPosition.pxX - offsetX, renderW));
+                    const imgY = Math.max(0, Math.min(zoomPosition.pxY - offsetY, renderH));
+                    // zoom image dimensions & position
+                    const zoomW = renderW * ZOOM;
+                    const zoomH = renderH * ZOOM;
+                    let left = LENS / 2 - imgX * ZOOM;
+                    let top = LENS / 2 - imgY * ZOOM;
+                    left = Math.max(LENS - zoomW, Math.min(0, left));
+                    top = Math.max(LENS - zoomH, Math.min(0, top));
+                    return (
+                      <div 
+                        className="absolute border-2 border-white/80 rounded-full pointer-events-none shadow-lg overflow-hidden z-50"
                         style={{
-                          width: `${imageContainerRef.current?.offsetWidth ? imageContainerRef.current.offsetWidth * 2.5 : 1000}px`,
-                          height: `${imageContainerRef.current?.offsetHeight ? imageContainerRef.current.offsetHeight * 2.5 : 1000}px`,
-                          left: `${50 - zoomPosition.x * 2.5}%`,
-                          top: `${50 - zoomPosition.y * 2.5}%`,
-                          maxWidth: 'none',
+                          width: LENS,
+                          height: LENS,
+                          left: `${zoomPosition.x}%`,
+                          top: `${zoomPosition.y}%`,
+                          transform: 'translate(-50%, -50%)',
                         }}
-                      />
-                    </div>
-                  )}
+                      >
+                        <img
+                          src={currentImage!}
+                          alt=""
+                          className="absolute"
+                          style={{
+                            width: `${zoomW}px`,
+                            height: `${zoomH}px`,
+                            left: `${left}px`,
+                            top: `${top}px`,
+                            maxWidth: 'none',
+                          }}
+                        />
+                      </div>
+                    );
+                  })()}
                   {/* Zoom hint */}
                   <div className="absolute bottom-4 left-4 bg-background/80 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                     <ZoomIn className="h-3.5 w-3.5" />
