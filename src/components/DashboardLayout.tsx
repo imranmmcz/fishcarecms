@@ -71,17 +71,23 @@ const adminSettingsGroup: MenuGroup = {
 const adminGroups = [adminCmsGroup, adminEcommerceGroup, adminSettingsGroup];
 
 // ===================== FARMER/CUSTOMER MENU DATA =====================
-const farmerMenuItems = [
+const farmerMainMenuItems = [
   { title: "dashboard", titleBn: "ড্যাশবোর্ড", url: "/dashboard", icon: LayoutDashboard, color: "bg-gradient-to-r from-purple-500 to-purple-600", iconColor: "text-purple-500", roles: ["farmer", "customer", "admin"] },
+  { title: "myPond", titleBn: "আমার পুকুর", url: "/dashboard/my-pond", icon: Waves, color: "bg-gradient-to-r from-blue-500 to-cyan-600", iconColor: "text-blue-500", roles: ["farmer", "admin"] },
   { title: "orders", titleBn: "আমার অর্ডার", url: "/dashboard/orders", icon: Package, color: "bg-gradient-to-r from-teal-500 to-emerald-600", iconColor: "text-teal-500", roles: ["farmer", "customer", "admin"] },
   { title: "income", titleBn: "আয়", url: "/dashboard/income", icon: TrendingUp, color: "bg-gradient-to-r from-emerald-500 to-green-600", iconColor: "text-emerald-500", roles: ["farmer", "admin"] },
   { title: "expense", titleBn: "ব্যয়", url: "/dashboard/expense", icon: TrendingDown, color: "bg-gradient-to-r from-rose-500 to-red-600", iconColor: "text-rose-500", roles: ["farmer", "admin"] },
-  { title: "myPond", titleBn: "আমার পুকুর", url: "/dashboard/my-pond", icon: Waves, color: "bg-gradient-to-r from-blue-500 to-cyan-600", iconColor: "text-blue-500", roles: ["farmer", "admin"] },
   { title: "reports", titleBn: "রিপোর্ট", url: "/dashboard/reports", icon: FileText, color: "bg-gradient-to-r from-amber-500 to-orange-600", iconColor: "text-amber-500", roles: ["farmer", "admin"] },
-  { title: "backup", titleBn: "ব্যাকআপ", url: "/dashboard/backup", icon: CloudUpload, color: "bg-gradient-to-r from-indigo-500 to-violet-600", iconColor: "text-indigo-500", roles: ["farmer", "admin"] },
-  { title: "profile", titleBn: "প্রোফাইল", url: "/dashboard/profile", icon: User, color: "bg-gradient-to-r from-pink-500 to-rose-600", iconColor: "text-pink-500", roles: ["farmer", "customer", "admin"] },
-  { title: "settings", titleBn: "সেটিংস", url: "/dashboard/settings", icon: Settings, color: "bg-gradient-to-r from-slate-500 to-gray-600", iconColor: "text-slate-500", roles: ["farmer", "customer", "admin"] },
 ];
+
+const farmerSettingsGroup: MenuGroup = {
+  label: "Settings", labelBn: "সেটিংস", icon: Settings, iconColor: "text-slate-400",
+  activeClass: "bg-gradient-to-r from-slate-500 to-gray-600",
+  items: [
+    { title: "Profile", titleBn: "প্রোফাইল", url: "/dashboard/profile", icon: User },
+    { title: "Backup", titleBn: "ব্যাকআপ", url: "/dashboard/backup", icon: CloudUpload },
+  ],
+};
 
 // ===================== SHARED COMPONENTS =====================
 
@@ -227,16 +233,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   // Farmer/Customer menu filtered by role
-  const filteredFarmerMenu = farmerMenuItems.filter(item => !userRole || item.roles.includes(userRole));
+  const filteredFarmerMenu = farmerMainMenuItems.filter(item => !userRole || item.roles.includes(userRole));
 
   // Current page title
   const getTitle = () => {
     if (isAdmin) {
-      const allItems = adminGroups.flatMap(g => g.items);
+      const allItems = [...adminGroups.flatMap(g => g.items)];
       const found = allItems.find(i => i.url === location.pathname);
       if (found) return isBn ? found.titleBn : found.title;
     }
-    const found = farmerMenuItems.find(i => i.url === location.pathname);
+    const allFarmerItems = [...farmerMainMenuItems, ...farmerSettingsGroup.items];
+    const found = allFarmerItems.find(i => i.url === location.pathname);
     if (found) return isBn ? found.titleBn : found.title;
     return t.dashboard;
   };
@@ -448,8 +455,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   }
 
-  // ===================== FARMER / CUSTOMER LAYOUT (Original Style) =====================
-  const FarmerMenuItemLink = ({ item, onClick }: { item: typeof farmerMenuItems[0]; onClick?: () => void }) => {
+  // ===================== FARMER / CUSTOMER LAYOUT (with Settings submenu) =====================
+  const FarmerMenuItemLink = ({ item, onClick }: { item: typeof farmerMainMenuItems[0]; onClick?: () => void }) => {
     const isActive = location.pathname === item.url;
     return (
       <Link to={item.url} onClick={onClick}
@@ -461,6 +468,42 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
         <span className="font-medium">{isBn ? item.titleBn : (t as any)[item.title] || item.title}</span>
       </Link>
+    );
+  };
+
+  // Settings collapsible for farmer sidebar
+  const FarmerSettingsCollapsible = ({ isMobile, onClose }: { isMobile?: boolean; onClose?: () => void }) => {
+    const hasActive = farmerSettingsGroup.items.some(i => location.pathname === i.url);
+    const [open, setOpen] = useState(hasActive);
+    useEffect(() => { if (hasActive) setOpen(true); }, [hasActive]);
+
+    return (
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all cursor-pointer">
+          <div className={cn("p-2 rounded-lg shrink-0", hasActive ? "bg-white/20" : "bg-slate-700/50")}>
+            <Settings className={cn("h-5 w-5", hasActive ? "text-white" : "text-slate-400")} />
+          </div>
+          <span className={cn("font-medium flex-1 text-left", !isMobile && "group-data-[collapsible=icon]:hidden")}>{isBn ? "সেটিংস" : "Settings"}</span>
+          <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform duration-300", !isMobile && "group-data-[collapsible=icon]:hidden", open && "rotate-180")} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200">
+          <div className="ml-6 pl-3 border-l-2 border-white/10 mt-1 space-y-0.5">
+            {farmerSettingsGroup.items.map(item => {
+              const isActive = location.pathname === item.url;
+              return (
+                <Link key={item.url} to={item.url} onClick={onClose}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
+                    isActive ? "bg-white/15 text-white font-medium" : "text-slate-300/80 hover:bg-white/5 hover:text-white"
+                  )}>
+                  <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-slate-400/70")} />
+                  <span className={!isMobile ? "group-data-[collapsible=icon]:hidden" : undefined}>{isBn ? item.titleBn : item.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     );
   };
 
@@ -509,6 +552,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
+
+              {/* Settings Group */}
+              <div className="px-1">
+                <FarmerSettingsCollapsible />
+              </div>
 
               {/* Switch to Farmer */}
               {isCustomer && (
@@ -560,6 +608,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       {filteredFarmerMenu.map((item) => (
                         <FarmerMenuItemLink key={item.url} item={item} onClick={() => setMobileMenuOpen(false)} />
                       ))}
+                    </div>
+                    <div className="mt-2">
+                      <FarmerSettingsCollapsible isMobile onClose={() => setMobileMenuOpen(false)} />
                     </div>
                     {isCustomer && (
                       <div className="pt-4 mt-4 border-t border-white/10">
