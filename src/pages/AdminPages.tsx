@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   FileText, Plus, Edit, Trash2, Globe, Eye, EyeOff,
-  Search, Clock, ExternalLink
+  Search, Clock, ExternalLink, Menu
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -178,6 +178,46 @@ export default function AdminPages() {
     }
   };
 
+  const addToMenu = async (page: CustomPage) => {
+    try {
+      // Fetch current header content
+      const { data, error: fetchErr } = await supabase
+        .from("page_content")
+        .select("content")
+        .eq("section_key", "header")
+        .single();
+      
+      if (fetchErr || !data) throw new Error("হেডার ডাটা পাওয়া যায়নি");
+      
+      const headerContent = data.content as Record<string, any>;
+      const navItems = headerContent.navItems || [];
+      
+      // Check if already exists
+      const pagePath = `/pages/${page.slug}`;
+      if (navItems.some((item: any) => item.path === pagePath)) {
+        toast({ title: "ইতোমধ্যে আছে", description: "এই পেজটি মেনুতে আগে থেকেই আছে" });
+        return;
+      }
+      
+      // Add to nav items
+      navItems.push({
+        label_bn: page.title_bn || page.title,
+        label_en: page.title,
+        path: pagePath,
+      });
+      
+      const { error: updateErr } = await supabase
+        .from("page_content")
+        .update({ content: { ...headerContent, navItems }, updated_at: new Date().toISOString() })
+        .eq("section_key", "header");
+      
+      if (updateErr) throw updateErr;
+      toast({ title: "সফল!", description: `"${page.title}" মেনুতে যোগ করা হয়েছে` });
+    } catch (err: any) {
+      toast({ title: "ত্রুটি", description: err.message, variant: "destructive" });
+    }
+  };
+
   const filtered = pages.filter(p =>
     p.title.toLowerCase().includes(search.toLowerCase()) ||
     p.slug.toLowerCase().includes(search.toLowerCase())
@@ -261,7 +301,13 @@ export default function AdminPages() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    {/* Add to menu */}
+                    {page.status === "published" && (
+                      <Button size="sm" variant="outline" className="gap-1" onClick={() => addToMenu(page)} title="মেনুতে যোগ করুন">
+                        <Menu className="h-3.5 w-3.5" /> মেনুতে যোগ
+                      </Button>
+                    )}
                     {/* Publish toggle */}
                     <div className="flex items-center gap-1.5">
                       {page.status === "published"
