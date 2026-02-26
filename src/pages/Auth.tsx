@@ -29,7 +29,7 @@ const signupSchema = loginSchema.extend({
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, user, isLoading: authLoading } = useAuth();
+  const { signIn, signUp, user, isAdmin, userRole, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -54,10 +54,14 @@ const Auth = () => {
   const [village, setVillage] = useState("");
 
   useEffect(() => {
-    if (user) {
-      navigate("/dashboard");
+    if (user && userRole) {
+      if (isAdmin) {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, navigate]);
+  }, [user, userRole, isAdmin, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +100,7 @@ const Auth = () => {
         title: "সফল",
         description: "লগইন সফল হয়েছে",
       });
-      navigate("/dashboard");
+      // Redirect will happen via useEffect when userRole loads
     }
   };
 
