@@ -3,6 +3,7 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
@@ -208,6 +209,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isAdmin, isCustomer, isFarmer, userRole, user, profile, signOut, switchToFarmer } = useAuth();
   const { t, language } = useLanguage();
   const isBn = language === "bn";
+  const isMobileView = useIsMobile();
 
   const [userName, setUserName] = useState("");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -299,7 +301,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="min-h-screen flex w-full bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 relative overflow-hidden">
             <AnimatedBackground />
 
-            {/* Desktop Sidebar */}
+            {/* Desktop Sidebar - only render on desktop to avoid Sidebar's internal mobile Sheet */}
+            {!isMobileView && (
             <Sidebar collapsible="icon" className="border-r-0 relative z-10 hidden md:flex">
               <div className="h-full bg-gradient-to-b from-slate-900/95 via-cyan-950/95 to-slate-900/95 backdrop-blur-md flex flex-col">
                 <div className="p-4 border-b border-white/10">
@@ -374,6 +377,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </SidebarContent>
               </div>
             </Sidebar>
+            )}
 
             <main className="flex-1 overflow-auto relative z-10">
               <div className="p-3 md:p-4 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between sticky top-0 z-20">
@@ -512,7 +516,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="min-h-screen flex w-full bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 relative overflow-hidden">
         <AnimatedBackground />
 
-        {/* Desktop Sidebar */}
+        {/* Desktop Sidebar - only render on desktop to avoid Sidebar's internal mobile Sheet */}
+        {!isMobileView && (
         <Sidebar collapsible="icon" className="border-r-0 relative z-10 hidden md:flex">
           <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
             <div className="p-4 border-b border-white/10 shrink-0">
@@ -581,6 +586,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarContent>
           </div>
         </Sidebar>
+        )}
 
         <main className="flex-1 overflow-auto relative z-10">
           <div className="p-3 md:p-4 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between sticky top-0 z-20">
