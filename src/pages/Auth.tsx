@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { AddressFields } from "@/components/AddressFields";
 import { FishLoadingAnimation } from "@/components/FishLoadingAnimation";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
+import { useAuthPageContent } from "@/hooks/useAuthPageContent";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "সঠিক ইমেইল প্রদান করুন" }),
@@ -31,6 +32,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const { signIn, signUp, user, isAdmin, userRole, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { loginContent, registerContent, siteLogoUrl, siteName } = useAuthPageContent();
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -100,7 +102,6 @@ const Auth = () => {
         title: "সফল",
         description: "লগইন সফল হয়েছে",
       });
-      // Redirect will happen via useEffect when userRole loads
     }
   };
 
@@ -163,16 +164,48 @@ const Auth = () => {
     return <FishLoadingAnimation message="অপেক্ষা করুন..." />;
   }
 
+  // Dynamic content from settings
+  const loginHeading = loginContent.heading || siteName || "মাছ চাষ ম্যানেজমেন্ট";
+  const loginDesc = loginContent.description || "আপনার অ্যাকাউন্টে প্রবেশ করুন";
+  const loginBtnText = loginContent.buttonText || "লগইন করুন";
+  const loginEmailLabel = loginContent.emailLabel || "ইমেইল";
+  const loginEmailPlaceholder = loginContent.emailPlaceholder || "your@email.com";
+  const loginPwdLabel = loginContent.passwordLabel || "পাসওয়ার্ড";
+  const loginPwdPlaceholder = loginContent.passwordPlaceholder || "••••••••";
+  const homeButtonText = loginContent.homeButtonText || "হোম পেজে যান";
+  const showDemoAccount = loginContent.showDemoAccount !== false;
+  const demoEmail = loginContent.demoEmail || "demo@fishfarm.com";
+  const demoPassword = loginContent.demoPassword || "demo123";
+  const demoText = loginContent.demoText || "ডেমো অ্যাকাউন্ট:";
+
+  const regBtnText = registerContent.buttonText || "নিবন্ধন করুন";
+  const regNameLabel = registerContent.nameLabel || "পূর্ণ নাম";
+  const regNamePlaceholder = registerContent.namePlaceholder || "আপনার নাম";
+  const regEmailLabel = registerContent.emailLabel || "ইমেইল";
+  const regEmailPlaceholder = registerContent.emailPlaceholder || "your@email.com";
+  const regPwdLabel = registerContent.passwordLabel || "পাসওয়ার্ড";
+  const regPwdPlaceholder = registerContent.passwordPlaceholder || "••••••••";
+  const regConfirmPwdLabel = registerContent.confirmPasswordLabel || "পাসওয়ার্ড নিশ্চিত করুন";
+  const regConfirmPwdPlaceholder = registerContent.confirmPasswordPlaceholder || "••••••••";
+  const showAddressFields = registerContent.showAddressFields !== false;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 p-4 relative overflow-hidden">
       <AnimatedBackground />
       <Card className="w-full max-w-md border-0 shadow-2xl bg-white/10 backdrop-blur-lg relative z-10">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 p-3 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl w-fit shadow-lg shadow-cyan-500/30">
-            <Fish className="h-8 w-8 text-white" />
+          {/* Dynamic Logo */}
+          <div className="mx-auto mb-4">
+            {siteLogoUrl ? (
+              <img src={siteLogoUrl} alt={loginHeading} className="h-16 w-16 rounded-xl object-contain shadow-lg" />
+            ) : (
+              <div className="p-3 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl w-fit mx-auto shadow-lg shadow-cyan-500/30">
+                <Fish className="h-8 w-8 text-white" />
+              </div>
+            )}
           </div>
-          <CardTitle className="text-2xl font-bold text-white">মাছ চাষ ম্যানেজমেন্ট</CardTitle>
-          <CardDescription className="text-slate-300">আপনার অ্যাকাউন্টে প্রবেশ করুন</CardDescription>
+          <CardTitle className="text-2xl font-bold text-white">{loginHeading}</CardTitle>
+          <CardDescription className="text-slate-300">{loginDesc}</CardDescription>
           <Link 
             to="/" 
             className="group relative inline-flex items-center gap-3 mt-4 px-5 py-2.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30 border border-cyan-400/30 hover:border-cyan-300/50 rounded-full text-cyan-200 hover:text-white transition-all duration-300 shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/25 hover:scale-105"
@@ -180,7 +213,7 @@ const Auth = () => {
             <span className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-400/0 via-cyan-400/10 to-cyan-400/0 opacity-0 group-hover:opacity-100 animate-pulse" />
             <Sparkles className="h-4 w-4 text-cyan-300 group-hover:text-yellow-300 transition-colors duration-300 animate-pulse" />
             <Home className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-            <span className="font-medium">হোম পেজে যান</span>
+            <span className="font-medium">{homeButtonText}</span>
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </CardHeader>
@@ -198,11 +231,11 @@ const Auth = () => {
             <TabsContent value="login" className="mt-6">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email" className="text-white">ইমেইল</Label>
+                  <Label htmlFor="login-email" className="text-white">{loginEmailLabel}</Label>
                   <Input
                     id="login-email"
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder={loginEmailPlaceholder}
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
@@ -210,12 +243,12 @@ const Auth = () => {
                   {errors.email && <p className="text-sm text-red-400">{errors.email}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password" className="text-white">পাসওয়ার্ড</Label>
+                  <Label htmlFor="login-password" className="text-white">{loginPwdLabel}</Label>
                   <div className="relative">
                     <Input
                       id="login-password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
+                      placeholder={loginPwdPlaceholder}
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 pr-10"
@@ -237,7 +270,7 @@ const Auth = () => {
                   disabled={isLoading}
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  লগইন করুন
+                  {loginBtnText}
                 </Button3D>
               </form>
             </TabsContent>
@@ -245,11 +278,11 @@ const Auth = () => {
             <TabsContent value="signup" className="mt-6">
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name" className="text-white">পূর্ণ নাম</Label>
+                  <Label htmlFor="signup-name" className="text-white">{regNameLabel}</Label>
                   <Input
                     id="signup-name"
                     type="text"
-                    placeholder="আপনার নাম"
+                    placeholder={regNamePlaceholder}
                     value={signupFullName}
                     onChange={(e) => setSignupFullName(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
@@ -257,11 +290,11 @@ const Auth = () => {
                   {errors.fullName && <p className="text-sm text-red-400">{errors.fullName}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="text-white">ইমেইল</Label>
+                  <Label htmlFor="signup-email" className="text-white">{regEmailLabel}</Label>
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder={regEmailPlaceholder}
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
@@ -269,11 +302,11 @@ const Auth = () => {
                   {errors.email && <p className="text-sm text-red-400">{errors.email}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="text-white">পাসওয়ার্ড</Label>
+                  <Label htmlFor="signup-password" className="text-white">{regPwdLabel}</Label>
                   <Input
                     id="signup-password"
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={regPwdPlaceholder}
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
@@ -281,11 +314,11 @@ const Auth = () => {
                   {errors.password && <p className="text-sm text-red-400">{errors.password}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password" className="text-white">পাসওয়ার্ড নিশ্চিত করুন</Label>
+                  <Label htmlFor="signup-confirm-password" className="text-white">{regConfirmPwdLabel}</Label>
                   <Input
                     id="signup-confirm-password"
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={regConfirmPwdPlaceholder}
                     value={signupConfirmPassword}
                     onChange={(e) => setSignupConfirmPassword(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
@@ -294,20 +327,22 @@ const Auth = () => {
                 </div>
                 
                 {/* Address Fields */}
-                <AddressFields
-                  mobile={mobile}
-                  division={division}
-                  district={district}
-                  upazila={upazila}
-                  village={village}
-                  onMobileChange={setMobile}
-                  onDivisionChange={setDivision}
-                  onDistrictChange={setDistrict}
-                  onUpazilaChange={setUpazila}
-                  onVillageChange={setVillage}
-                  errors={errors}
-                  variant="auth"
-                />
+                {showAddressFields && (
+                  <AddressFields
+                    mobile={mobile}
+                    division={division}
+                    district={district}
+                    upazila={upazila}
+                    village={village}
+                    onMobileChange={setMobile}
+                    onDivisionChange={setDivision}
+                    onDistrictChange={setDistrict}
+                    onUpazilaChange={setUpazila}
+                    onVillageChange={setVillage}
+                    errors={errors}
+                    variant="auth"
+                  />
+                )}
                 
                 <Button3D
                   type="submit"
@@ -316,21 +351,23 @@ const Auth = () => {
                   disabled={isLoading}
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  নিবন্ধন করুন
+                  {regBtnText}
                 </Button3D>
               </form>
             </TabsContent>
           </Tabs>
 
           {/* Demo User Info */}
-          <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
-            <p className="text-sm text-slate-300 font-medium mb-2">🎯 ডেমো অ্যাকাউন্ট:</p>
-            <div className="space-y-1 text-sm text-slate-400">
-              <p>ইমেইল: <span className="text-cyan-400 font-mono">demo@fishfarm.com</span></p>
-              <p>পাসওয়ার্ড: <span className="text-cyan-400 font-mono">demo123</span></p>
+          {showDemoAccount && (
+            <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
+              <p className="text-sm text-slate-300 font-medium mb-2">🎯 {demoText}</p>
+              <div className="space-y-1 text-sm text-slate-400">
+                <p>ইমেইল: <span className="text-cyan-400 font-mono">{demoEmail}</span></p>
+                <p>পাসওয়ার্ড: <span className="text-cyan-400 font-mono">{demoPassword}</span></p>
+              </div>
+              <p className="text-xs text-slate-500 mt-2">* অথবা নতুন অ্যাকাউন্ট তৈরি করুন</p>
             </div>
-            <p className="text-xs text-slate-500 mt-2">* অথবা নতুন অ্যাকাউন্ট তৈরি করুন</p>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
