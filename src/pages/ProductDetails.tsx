@@ -351,22 +351,23 @@ const ProductDetails = () => {
                   {/* Hover lens effect */}
                   {isLensActive && (
                     <div 
-                      className="absolute w-40 h-40 border-2 border-white/80 rounded-full pointer-events-none shadow-lg overflow-hidden"
+                      className="absolute w-48 h-48 border-2 border-white/80 rounded-full pointer-events-none shadow-lg overflow-hidden z-50"
                       style={{
                         left: `${zoomPosition.x}%`,
                         top: `${zoomPosition.y}%`,
                         transform: 'translate(-50%, -50%)',
                       }}
                     >
-                      <div
-                        className="absolute w-[400%] h-[400%]"
+                      <img
+                        src={currentImage!}
+                        alt=""
+                        className="absolute"
                         style={{
-                          backgroundImage: `url(${currentImage})`,
-                          backgroundSize: '100%',
-                          backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                          left: '50%',
-                          top: '50%',
-                          transform: 'translate(-50%, -50%)',
+                          width: `${imageContainerRef.current?.offsetWidth ? imageContainerRef.current.offsetWidth * 2.5 : 1000}px`,
+                          height: `${imageContainerRef.current?.offsetHeight ? imageContainerRef.current.offsetHeight * 2.5 : 1000}px`,
+                          left: `${50 - zoomPosition.x * 2.5}%`,
+                          top: `${50 - zoomPosition.y * 2.5}%`,
+                          maxWidth: 'none',
                         }}
                       />
                     </div>
