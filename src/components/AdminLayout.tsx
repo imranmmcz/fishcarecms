@@ -261,7 +261,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider defaultOpen={true}>
         <div className="min-h-screen flex w-full bg-gradient-to-br from-violet-900 via-purple-900 to-slate-900 relative overflow-hidden">
           <AnimatedBackground />
           <Sidebar collapsible="icon" className="border-r-0 relative z-10">
