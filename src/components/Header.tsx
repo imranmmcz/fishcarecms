@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Search, X, Phone, Mail } from "lucide-react";
+import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Search, X, Phone, Mail, Bell } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -236,6 +237,9 @@ export const Header = () => {
 
             {/* Mobile Search */}
             <MobileSearchToggle />
+
+            {/* Notifications */}
+            {user && <NotificationBell />}
 
             {/* Wishlist */}
             {user && (
