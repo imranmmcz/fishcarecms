@@ -93,14 +93,11 @@ const Auth = () => {
     // Check if identifier is a mobile number (not an email)
     const isEmail = emailToUse.includes("@");
     if (!isEmail) {
-      // Look up email by mobile number from profiles
-      const { data: profileData, error: lookupError } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("mobile", emailToUse)
-        .maybeSingle();
+      // Look up email by mobile number using secure RPC function
+      const { data: email, error: lookupError } = await supabase
+        .rpc("get_email_by_mobile", { mobile_number: emailToUse });
 
-      if (lookupError || !profileData?.email) {
+      if (lookupError || !email) {
         setIsLoading(false);
         toast({
           title: "লগইন ব্যর্থ",
@@ -109,7 +106,7 @@ const Auth = () => {
         });
         return;
       }
-      emailToUse = profileData.email;
+      emailToUse = email;
     }
 
     const { error } = await signIn(emailToUse, loginPassword);

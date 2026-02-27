@@ -1987,6 +1987,7 @@ export type Database = {
       generate_pos_sale_number: { Args: never; Returns: string }
       generate_purchase_order_number: { Args: never; Returns: string }
       generate_shift_number: { Args: never; Returns: string }
+      get_email_by_mobile: { Args: { mobile_number: string }; Returns: string }
       get_public_tables: {
         Args: never
         Returns: {
