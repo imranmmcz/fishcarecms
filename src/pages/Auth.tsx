@@ -14,9 +14,10 @@ import { AddressFields } from "@/components/AddressFields";
 import { FishLoadingAnimation } from "@/components/FishLoadingAnimation";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuthPageContent } from "@/hooks/useAuthPageContent";
+import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
-  email: z.string().trim().email({ message: "সঠিক ইমেইল প্রদান করুন" }),
+  identifier: z.string().trim().min(1, { message: "ইমেইল বা মোবাইল নম্বর প্রদান করুন" }),
   password: z.string().min(6, { message: "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে" }),
 });
 
@@ -39,7 +40,7 @@ const Auth = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Login form
-  const [loginEmail, setLoginEmail] = useState("");
+  const [loginIdentifier, setLoginIdentifier] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
   // Signup form
@@ -70,7 +71,7 @@ const Auth = () => {
     setErrors({});
 
     const result = loginSchema.safeParse({
-      email: loginEmail,
+      identifier: loginIdentifier,
       password: loginPassword,
     });
 
@@ -86,7 +87,32 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-    const { error } = await signIn(loginEmail, loginPassword);
+
+    let emailToUse = loginIdentifier.trim();
+
+    // Check if identifier is a mobile number (not an email)
+    const isEmail = emailToUse.includes("@");
+    if (!isEmail) {
+      // Look up email by mobile number from profiles
+      const { data: profileData, error: lookupError } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("mobile", emailToUse)
+        .maybeSingle();
+
+      if (lookupError || !profileData?.email) {
+        setIsLoading(false);
+        toast({
+          title: "লগইন ব্যর্থ",
+          description: "এই মোবাইল নম্বর দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি",
+          variant: "destructive",
+        });
+        return;
+      }
+      emailToUse = profileData.email;
+    }
+
+    const { error } = await signIn(emailToUse, loginPassword);
     setIsLoading(false);
 
     if (error) {
@@ -168,8 +194,8 @@ const Auth = () => {
   const loginHeading = loginContent.heading || siteName || "মাছ চাষ ম্যানেজমেন্ট";
   const loginDesc = loginContent.description || "আপনার অ্যাকাউন্টে প্রবেশ করুন";
   const loginBtnText = loginContent.buttonText || "লগইন করুন";
-  const loginEmailLabel = loginContent.emailLabel || "ইমেইল";
-  const loginEmailPlaceholder = loginContent.emailPlaceholder || "your@email.com";
+  const loginEmailLabel = loginContent.emailLabel || "ইমেইল / মোবাইল নম্বর";
+  const loginEmailPlaceholder = loginContent.emailPlaceholder || "ইমেইল বা মোবাইল নম্বর";
   const loginPwdLabel = loginContent.passwordLabel || "পাসওয়ার্ড";
   const loginPwdPlaceholder = loginContent.passwordPlaceholder || "••••••••";
   const homeButtonText = loginContent.homeButtonText || "হোম পেজে যান";
@@ -231,16 +257,16 @@ const Auth = () => {
             <TabsContent value="login" className="mt-6">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email" className="text-white">{loginEmailLabel}</Label>
+                  <Label htmlFor="login-identifier" className="text-white">{loginEmailLabel}</Label>
                   <Input
-                    id="login-email"
-                    type="email"
+                    id="login-identifier"
+                    type="text"
                     placeholder={loginEmailPlaceholder}
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
                   />
-                  {errors.email && <p className="text-sm text-red-400">{errors.email}</p>}
+                  {errors.identifier && <p className="text-sm text-red-400">{errors.identifier}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="login-password" className="text-white">{loginPwdLabel}</Label>
