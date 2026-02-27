@@ -13,9 +13,11 @@ const Footer = () => {
   const { getSectionContent } = usePageContent();
 
   const footerData = getSectionContent<Record<string, any>>("footer");
+  const headerData = getSectionContent<Record<string, any>>("header");
 
-  // Fallback data
-  const companyName = footerData?.companyName || "FishCare";
+  // Use header (site settings) for logo/name, fallback to footer-specific, then hardcoded
+  const siteLogoUrl = headerData?.logoUrl || footerData?.logoUrl || null;
+  const companyName = headerData?.companyName || footerData?.companyName || "FishCare";
   const companyDesc = footerData
     ? (language === "bn" ? footerData.companyDescription_bn : footerData.companyDescription_en)
     : (language === "bn"
@@ -70,9 +72,13 @@ const Footer = () => {
           {/* Column 1: Logo & Company Details */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-                <Fish className="w-6 h-6 text-primary-foreground" />
-              </div>
+              {siteLogoUrl ? (
+                <img src={siteLogoUrl} alt={companyName} className="w-10 h-10 rounded-lg object-contain" />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
+                  <Fish className="w-6 h-6 text-primary-foreground" />
+                </div>
+              )}
               <span className="text-xl font-bold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>{companyName}</span>
             </Link>
             <p className="text-sm leading-relaxed" style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}>{companyDesc}</p>
