@@ -300,12 +300,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {!isMobileView && (
           <Sidebar collapsible="icon" className="border-r-0 relative z-10 hidden md:flex">
             <div className="h-full bg-gradient-to-b from-violet-950/95 via-purple-900/95 to-violet-950/95 backdrop-blur-md flex flex-col">
-              {/* Header */}
+              {/* Header with Toggle */}
               <div className="p-4 border-b border-white/10">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl shadow-lg shadow-violet-500/25 shrink-0">
-                    <Shield className="h-5 w-5 text-white" />
-                  </div>
+                  <SidebarTrigger className="p-2 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl shadow-lg shadow-violet-500/25 shrink-0 text-white hover:from-violet-500 hover:to-purple-700 transition-all h-9 w-9 [&>svg]:h-5 [&>svg]:w-5" />
                   <div className="group-data-[collapsible=icon]:hidden overflow-hidden">
                     <h1 className="font-bold text-white text-base leading-tight truncate">{roleLabel}</h1>
                     <p className="text-[10px] text-violet-300/80">ম্যানেজমেন্ট প্যানেল</p>
@@ -357,6 +355,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </SidebarGroup>
 
                 <div className="pt-3 border-t border-white/10 mt-auto space-y-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link to="/admin/profile" className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 hover:translate-x-0.5",
+                        location.pathname === "/admin/profile"
+                          ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
+                          : "text-violet-300 hover:bg-white/10 hover:text-white"
+                      )}>
+                        <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><User className="h-[18px] w-[18px]" /></div>
+                        <span className="font-medium text-sm group-data-[collapsible=icon]:hidden truncate">প্রোফাইল</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">প্রোফাইল</TooltipContent>
+                  </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link to="/" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all duration-200 hover:translate-x-0.5">
@@ -473,7 +485,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </SheetContent>
               </Sheet>
 
-              <SidebarTrigger className="text-foreground hidden md:flex hover:bg-accent/50 transition-colors rounded-lg" />
               <div className="h-6 w-px bg-border hidden md:block" />
               <span className="text-xs md:text-sm font-medium text-muted-foreground">{currentTitle}</span>
             </div>
