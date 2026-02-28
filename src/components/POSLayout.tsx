@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   LayoutDashboard, ShoppingCart, History, Clock, Home, MonitorSmartphone,
   ArrowLeft, Package, Warehouse, UserCheck, Building2, ChevronDown,
@@ -63,38 +63,30 @@ function POSCollapsibleGroup({ label, icon: GroupIcon, items, currentPath }: {
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <CollapsibleTrigger className={cn(
-            "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all cursor-pointer",
-            hasActive ? "bg-emerald-800/60 text-white" : "text-emerald-200 hover:bg-white/10 hover:text-white"
-          )}>
-            <div className={cn("p-1.5 rounded-lg shrink-0", hasActive ? "bg-emerald-600/50" : "bg-emerald-800/50")}>
-              <GroupIcon className={cn("h-[18px] w-[18px]", hasActive ? "text-emerald-300" : "text-emerald-400")} />
-            </div>
-            <span className="font-medium text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">{label}</span>
-            <ChevronDown className={cn("h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden", open && "rotate-180")} />
-          </CollapsibleTrigger>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">{label}</TooltipContent>
-      </Tooltip>
+      <CollapsibleTrigger asChild>
+        <button type="button" className={cn(
+          "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all cursor-pointer",
+          hasActive ? "bg-emerald-800/60 text-white" : "text-emerald-200 hover:bg-white/10 hover:text-white"
+        )}>
+          <div className={cn("p-1.5 rounded-lg shrink-0", hasActive ? "bg-emerald-600/50" : "bg-emerald-800/50")}>
+            <GroupIcon className={cn("h-[18px] w-[18px]", hasActive ? "text-emerald-300" : "text-emerald-400")} />
+          </div>
+          <span className="font-medium text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">{label}</span>
+          <ChevronDown className={cn("h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden", open && "rotate-180")} />
+        </button>
+      </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out duration-200">
         <div className="ml-4 border-l-2 border-emerald-700/50 pl-2 space-y-0.5 mt-1 group-data-[collapsible=icon]:hidden">
           {items.map((item) => {
             const isActive = currentPath === item.url;
             return (
-              <Tooltip key={item.url}>
-                <TooltipTrigger asChild>
-                  <Link to={item.url} className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm",
-                    isActive ? "bg-emerald-500/20 text-white font-semibold" : "text-emerald-300 hover:bg-white/5 hover:text-white"
-                  )}>
-                    <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-emerald-300" : "text-emerald-500")} />
-                    <span>{item.title}</span>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">{item.title}</TooltipContent>
-              </Tooltip>
+              <Link key={item.url} to={item.url} className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm",
+                isActive ? "bg-emerald-500/20 text-white font-semibold" : "text-emerald-300 hover:bg-white/5 hover:text-white"
+              )}>
+                <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-emerald-300" : "text-emerald-500")} />
+                <span>{item.title}</span>
+              </Link>
             );
           })}
         </div>
@@ -248,24 +240,14 @@ export function POSLayout({ children }: POSLayoutProps) {
                 </SidebarGroup>
 
                 <div className="pt-3 border-t border-white/10 mt-auto space-y-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link to="/admin" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all">
-                        <div className="p-1.5 rounded-lg bg-emerald-800/50 shrink-0"><ArrowLeft className="h-[18px] w-[18px]" /></div>
-                        <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">অ্যাডমিন প্যানেল</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">অ্যাডমিন প্যানেল</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link to="/" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all">
-                        <div className="p-1.5 rounded-lg bg-emerald-800/50 shrink-0"><Home className="h-[18px] w-[18px]" /></div>
-                        <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">হোম পেজ</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">হোম পেজ</TooltipContent>
-                  </Tooltip>
+                  <Link to="/admin" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all">
+                    <div className="p-1.5 rounded-lg bg-emerald-800/50 shrink-0"><ArrowLeft className="h-[18px] w-[18px]" /></div>
+                    <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">অ্যাডমিন প্যানেল</span>
+                  </Link>
+                  <Link to="/" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all">
+                    <div className="p-1.5 rounded-lg bg-emerald-800/50 shrink-0"><Home className="h-[18px] w-[18px]" /></div>
+                    <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">হোম পেজ</span>
+                  </Link>
                 </div>
               </SidebarContent>
             </div>
