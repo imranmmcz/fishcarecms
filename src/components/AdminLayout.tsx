@@ -315,6 +315,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
               <SidebarContent className="px-2 py-3 flex flex-col flex-1 overflow-hidden">
                 <SidebarGroup className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                  {/* 1. Dashboard */}
                   {canSeeDashboard && (
                     <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
                       <SidebarMenuButton asChild isActive={location.pathname === "/admin"} tooltip="ড্যাশবোর্ড">
@@ -323,19 +324,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
                   )}
 
-                  {canSeeReports && (
-                    <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={location.pathname === "/admin/reports"} tooltip="রিপোর্ট">
-                        <NavItem to="/admin/reports" icon={BarChart3} label="রিপোর্ট" isActive={location.pathname === "/admin/reports"} activeClass="bg-gradient-to-r from-emerald-500 to-green-600" iconColorClass="text-emerald-400" />
-                      </SidebarMenuButton>
-                    </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
-                  )}
-
                   <div className="h-px bg-white/8 mx-2 my-1.5" />
 
+                  {/* 2. CMS */}
                   <SidebarMenuGroup group={cmsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
+
+                  {/* 3. E-Commerce */}
                   <SidebarMenuGroup group={ecommerceGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
 
+                  {/* 4. POS */}
                   {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
                     <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
                       <SidebarMenuButton asChild isActive={location.pathname.startsWith("/pos")} tooltip="POS সিস্টেম">
@@ -344,8 +341,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
                   )}
 
+                  {/* 5. Report */}
+                  {canSeeReports && (
+                    <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={location.pathname === "/admin/reports"} tooltip="রিপোর্ট">
+                        <NavItem to="/admin/reports" icon={BarChart3} label="রিপোর্ট" isActive={location.pathname === "/admin/reports"} activeClass="bg-gradient-to-r from-amber-500 to-orange-600" iconColorClass="text-amber-400" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
+                  )}
+
                   <div className="h-px bg-white/8 mx-2 my-1.5" />
 
+                  {/* 6. Settings */}
                   <SidebarMenuGroup group={settingsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
                 </SidebarGroup>
 
@@ -397,6 +404,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
                   {/* Mobile Menu Items */}
                   <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-160px)] space-y-1">
+                    {/* 1. Dashboard */}
                     {canSeeDashboard && (
                       <Link to="/admin" onClick={() => setMobileMenuOpen(false)}
                         className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
@@ -411,25 +419,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       </Link>
                     )}
 
-                    {canSeeReports && (
-                      <Link to="/admin/reports" onClick={() => setMobileMenuOpen(false)}
-                        className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
-                          location.pathname === "/admin/reports"
-                            ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg"
-                            : "text-violet-200 hover:bg-white/10 hover:text-white"
-                        )}>
-                        <div className={cn("p-2 rounded-lg shrink-0", location.pathname === "/admin/reports" ? "bg-white/20" : "bg-violet-800/40")}>
-                          <BarChart3 className={cn("h-5 w-5", location.pathname === "/admin/reports" ? "text-white" : "text-emerald-400")} />
-                        </div>
-                        <span className="font-medium">রিপোর্ট</span>
-                      </Link>
-                    )}
-
                     <div className="h-px bg-white/10 mx-2 my-2" />
 
+                    {/* 2. CMS */}
                     <MobileMenuGroup group={cmsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} onClose={() => setMobileMenuOpen(false)} />
+
+                    {/* 3. E-Commerce */}
                     <MobileMenuGroup group={ecommerceGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} onClose={() => setMobileMenuOpen(false)} />
 
+                    {/* 4. POS */}
                     {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
                       <Link to="/pos" onClick={() => setMobileMenuOpen(false)}
                         className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
@@ -444,8 +442,24 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       </Link>
                     )}
 
+                    {/* 5. Report */}
+                    {canSeeReports && (
+                      <Link to="/admin/reports" onClick={() => setMobileMenuOpen(false)}
+                        className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                          location.pathname === "/admin/reports"
+                            ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg"
+                            : "text-violet-200 hover:bg-white/10 hover:text-white"
+                        )}>
+                        <div className={cn("p-2 rounded-lg shrink-0", location.pathname === "/admin/reports" ? "bg-white/20" : "bg-violet-800/40")}>
+                          <BarChart3 className={cn("h-5 w-5", location.pathname === "/admin/reports" ? "text-white" : "text-amber-400")} />
+                        </div>
+                        <span className="font-medium">রিপোর্ট</span>
+                      </Link>
+                    )}
+
                     <div className="h-px bg-white/10 mx-2 my-2" />
 
+                    {/* 6. Settings */}
                     <MobileMenuGroup group={settingsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} onClose={() => setMobileMenuOpen(false)} />
 
                     <div className="pt-4 mt-4 border-t border-white/10">
