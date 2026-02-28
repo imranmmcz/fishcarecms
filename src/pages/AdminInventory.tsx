@@ -54,6 +54,9 @@ import {
   AlertTriangle,
   TrendingDown,
   Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 // Types
@@ -104,6 +107,8 @@ const AdminInventory = ({ Layout = AdminLayout }: { Layout?: React.ComponentType
   const [brands, setBrands] = useState<Brand[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Dialog states
   const [companyDialog, setCompanyDialog] = useState(false);
@@ -452,11 +457,43 @@ const AdminInventory = ({ Layout = AdminLayout }: { Layout?: React.ComponentType
     (p) => p.stock_quantity <= p.reorder_level
   );
 
-  const filteredProducts = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDirection === "asc" 
+      ? <ArrowUp className="h-3 w-3 ml-1" /> 
+      : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
+  const filteredProducts = products
+    .filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.category.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const dir = sortDirection === "asc" ? 1 : -1;
+      switch (sortField) {
+        case "name": return a.name.localeCompare(b.name) * dir;
+        case "category": return a.category.localeCompare(b.category) * dir;
+        case "stock_quantity": return (a.stock_quantity - b.stock_quantity) * dir;
+        case "reorder_level": return (a.reorder_level - b.reorder_level) * dir;
+        case "price": return (a.price - b.price) * dir;
+        case "status": {
+          const getStatusOrder = (p: Product) => p.stock_quantity <= 0 ? 0 : p.stock_quantity <= p.reorder_level ? 1 : 2;
+          return (getStatusOrder(a) - getStatusOrder(b)) * dir;
+        }
+        default: return 0;
+      }
+    });
 
   const getCompanyName = (id: string | null) => {
     if (!id) return "-";
@@ -539,8 +576,8 @@ const AdminInventory = ({ Layout = AdminLayout }: { Layout?: React.ComponentType
 
           {/* Stock Tab */}
           <TabsContent value="stock" className="space-y-4 mt-6">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="relative flex-1 w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder={translations.search}
@@ -549,6 +586,23 @@ const AdminInventory = ({ Layout = AdminLayout }: { Layout?: React.ComponentType
                   className="pl-10"
                 />
               </div>
+              <Select value={sortField} onValueChange={(val) => { setSortField(val); setSortDirection("asc"); }}>
+                <SelectTrigger className="w-[180px]">
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder={language === "bn" ? "সর্ট করুন" : "Sort by"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">{language === "bn" ? "নাম" : "Name"}</SelectItem>
+                  <SelectItem value="category">{language === "bn" ? "ক্যাটাগরি" : "Category"}</SelectItem>
+                  <SelectItem value="stock_quantity">{language === "bn" ? "স্টক পরিমাণ" : "Stock Qty"}</SelectItem>
+                  <SelectItem value="reorder_level">{language === "bn" ? "রিঅর্ডার লেভেল" : "Reorder Level"}</SelectItem>
+                  <SelectItem value="price">{language === "bn" ? "মূল্য" : "Price"}</SelectItem>
+                  <SelectItem value="status">{language === "bn" ? "স্ট্যাটাস" : "Status"}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="icon" onClick={() => setSortDirection(prev => prev === "asc" ? "desc" : "asc")}>
+                {sortDirection === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+              </Button>
             </div>
 
             <Card>
@@ -562,13 +616,23 @@ const AdminInventory = ({ Layout = AdminLayout }: { Layout?: React.ComponentType
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>{translations.product}</TableHead>
-                          <TableHead>{translations.category}</TableHead>
+                          <TableHead className="cursor-pointer select-none" onClick={() => handleSort("name")}>
+                            <span className="flex items-center">{translations.product}<SortIcon field="name" /></span>
+                          </TableHead>
+                          <TableHead className="cursor-pointer select-none" onClick={() => handleSort("category")}>
+                            <span className="flex items-center">{translations.category}<SortIcon field="category" /></span>
+                          </TableHead>
                           <TableHead>{translations.brands}</TableHead>
                           <TableHead>{translations.companies}</TableHead>
-                          <TableHead className="text-right">{translations.stockQty}</TableHead>
-                          <TableHead className="text-right">{translations.reorderLevel}</TableHead>
-                          <TableHead>{translations.status}</TableHead>
+                          <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("stock_quantity")}>
+                            <span className="flex items-center justify-end">{translations.stockQty}<SortIcon field="stock_quantity" /></span>
+                          </TableHead>
+                          <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("reorder_level")}>
+                            <span className="flex items-center justify-end">{translations.reorderLevel}<SortIcon field="reorder_level" /></span>
+                          </TableHead>
+                          <TableHead className="cursor-pointer select-none" onClick={() => handleSort("status")}>
+                            <span className="flex items-center">{translations.status}<SortIcon field="status" /></span>
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
