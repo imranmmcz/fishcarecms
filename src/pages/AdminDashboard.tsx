@@ -2,12 +2,25 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { ShoppingCart, Package, TrendingUp, TrendingDown, Users, Clock, CheckCircle, Truck, XCircle, DollarSign, AlertTriangle, User, MapPin, Phone, Mail, CalendarDays, Search, Waves, Fish } from "lucide-react";
+import { ShoppingCart, Package, TrendingUp, TrendingDown, Users, Clock, CheckCircle, Truck, XCircle, DollarSign, AlertTriangle, User, MapPin, Phone, Mail, CalendarDays, Search, Waves, Fish, Filter, CalendarIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
+import { bn } from "date-fns/locale";
+
+type DateFilterType = "today" | "yesterday" | "this_week" | "this_month" | "last_30" | "all" | "custom";
+
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
 
 interface DashboardStats {
   todayOrders: number;
@@ -94,6 +107,10 @@ const AdminDashboard = () => {
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
 
+  // Date filter state
+  const [dateFilter, setDateFilter] = useState<DateFilterType>("today");
+  const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
+
   const filteredUsers = useMemo(() => {
     if (!userSearchQuery.trim()) return allUsers;
     const q = userSearchQuery.toLowerCase().trim();
@@ -104,40 +121,76 @@ const AdminDashboard = () => {
     );
   }, [allUsers, userSearchQuery]);
 
+  const getDateRange = useCallback((): { start: string | null; end: string | null; label: string } => {
+    const now = new Date();
+    switch (dateFilter) {
+      case "today":
+        return { start: startOfDay(now).toISOString(), end: endOfDay(now).toISOString(), label: "আজ" };
+      case "yesterday": {
+        const y = subDays(now, 1);
+        return { start: startOfDay(y).toISOString(), end: endOfDay(y).toISOString(), label: "গতকাল" };
+      }
+      case "this_week":
+        return { start: startOfWeek(now, { weekStartsOn: 6 }).toISOString(), end: endOfDay(now).toISOString(), label: "এই সপ্তাহ" };
+      case "this_month":
+        return { start: startOfMonth(now).toISOString(), end: endOfDay(now).toISOString(), label: "এই মাস" };
+      case "last_30":
+        return { start: startOfDay(subDays(now, 30)).toISOString(), end: endOfDay(now).toISOString(), label: "গত ৩০ দিন" };
+      case "custom":
+        if (customRange.from) {
+          return {
+            start: startOfDay(customRange.from).toISOString(),
+            end: customRange.to ? endOfDay(customRange.to).toISOString() : endOfDay(customRange.from).toISOString(),
+            label: `${format(customRange.from, "dd/MM/yy")}${customRange.to ? ` - ${format(customRange.to, "dd/MM/yy")}` : ""}`,
+          };
+        }
+        return { start: null, end: null, label: "সব সময়" };
+      case "all":
+      default:
+        return { start: null, end: null, label: "সব সময়" };
+    }
+  }, [dateFilter, customRange]);
+
   const fetchDashboardData = useCallback(async () => {
     try {
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { start, end } = getDateRange();
+
+      // Build filtered orders query
+      let filteredQuery = supabase.from("orders").select("total_amount, status, created_at");
+      if (start) filteredQuery = filteredQuery.gte("created_at", start);
+      if (end) filteredQuery = filteredQuery.lte("created_at", end);
 
       const [
-        { data: allOrders },
-        { data: todayOrders },
-        { data: monthOrders },
+        { data: filteredOrders },
         { count: productCount },
         { count: userCount },
         { data: lowStock },
         { data: recent },
       ] = await Promise.all([
-        supabase.from("orders").select("total_amount, status"),
-        supabase.from("orders").select("total_amount").gte("created_at", todayStart),
-        supabase.from("orders").select("total_amount, created_at").gte("created_at", monthStart),
+        filteredQuery,
         supabase.from("products").select("*", { count: "exact", head: true }),
         supabase.from("profiles").select("*", { count: "exact", head: true }),
         supabase.from("products").select("id").lt("stock_quantity", 10),
-        supabase.from("orders").select("id, order_number, customer_name, total_amount, status, payment_method, payment_status, created_at").order("created_at", { ascending: false }).limit(10),
+        (() => {
+          let q = supabase.from("orders").select("id, order_number, customer_name, total_amount, status, payment_method, payment_status, created_at").order("created_at", { ascending: false });
+          if (start) q = q.gte("created_at", start);
+          if (end) q = q.lte("created_at", end);
+          return q.limit(10);
+        })(),
       ]);
 
+      const orders = filteredOrders || [];
       const byStatus: Record<string, number> = {};
-      allOrders?.forEach(o => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
+      orders.forEach(o => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
+      const totalSales = orders.reduce((s, o) => s + Number(o.total_amount), 0);
 
       setStats({
-        todayOrders: todayOrders?.length || 0,
-        todaySales: todayOrders?.reduce((s, o) => s + Number(o.total_amount), 0) || 0,
-        monthOrders: monthOrders?.length || 0,
-        monthSales: monthOrders?.reduce((s, o) => s + Number(o.total_amount), 0) || 0,
-        totalOrders: allOrders?.length || 0,
-        totalSales: allOrders?.reduce((s, o) => s + Number(o.total_amount), 0) || 0,
+        todayOrders: orders.length,
+        todaySales: totalSales,
+        monthOrders: orders.length,
+        monthSales: totalSales,
+        totalOrders: orders.length,
+        totalSales,
         totalProducts: productCount || 0,
         totalUsers: userCount || 0,
         lowStockProducts: lowStock?.length || 0,
@@ -150,18 +203,15 @@ const AdminDashboard = () => {
 
       setRecentOrders(recent || []);
 
-      // Daily sales for current month
+      // Daily sales chart from filtered data
       const dailyMap: Record<string, number> = {};
-      monthOrders?.forEach(o => {
-        const day = new Date(o.created_at).getDate().toString();
-        dailyMap[day] = (dailyMap[day] || 0) + Number(o.total_amount);
+      orders.forEach(o => {
+        const dateKey = format(new Date(o.created_at), "dd/MM");
+        dailyMap[dateKey] = (dailyMap[dateKey] || 0) + Number(o.total_amount);
       });
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      const dailyData = [];
-      for (let i = 1; i <= Math.min(now.getDate(), daysInMonth); i++) {
-        dailyData.push({ day: `${i}`, sales: dailyMap[i.toString()] || 0 });
-      }
-      setDailySalesData(dailyData);
+      setDailySalesData(
+        Object.entries(dailyMap).map(([day, sales]) => ({ day, sales }))
+      );
 
       setStatusDistribution(
         Object.entries(byStatus).map(([name, value]) => ({
@@ -174,8 +224,7 @@ const AdminDashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
+  }, [getDateRange]);
   // Fetch all users for dropdown
   const fetchUsers = useCallback(async () => {
     const { data } = await supabase.from("profiles").select("*").order("full_name");
@@ -265,9 +314,11 @@ const AdminDashboard = () => {
     );
   }
 
+  const { label: filterLabel } = getDateRange();
+
   const statCards = [
-    { title: "আজকের বিক্রয়", value: `৳${(stats?.todaySales || 0).toLocaleString("bn-BD")}`, sub: `${(stats?.todayOrders || 0).toLocaleString("bn-BD")} অর্ডার`, icon: DollarSign, color: "from-emerald-500 to-green-600", bg: "bg-emerald-500/10" },
-    { title: "এই মাসের বিক্রয়", value: `৳${(stats?.monthSales || 0).toLocaleString("bn-BD")}`, sub: `${(stats?.monthOrders || 0).toLocaleString("bn-BD")} অর্ডার`, icon: TrendingUp, color: "from-violet-500 to-purple-600", bg: "bg-violet-500/10" },
+    { title: `বিক্রয় (${filterLabel})`, value: `৳${(stats?.totalSales || 0).toLocaleString("bn-BD")}`, sub: `${(stats?.totalOrders || 0).toLocaleString("bn-BD")} অর্ডার`, icon: DollarSign, color: "from-emerald-500 to-green-600", bg: "bg-emerald-500/10" },
+    { title: "মোট অর্ডার", value: (stats?.totalOrders || 0).toLocaleString("bn-BD"), sub: filterLabel, icon: ShoppingCart, color: "from-violet-500 to-purple-600", bg: "bg-violet-500/10" },
     { title: "মোট পণ্য", value: (stats?.totalProducts || 0).toLocaleString("bn-BD"), sub: `${(stats?.lowStockProducts || 0).toLocaleString("bn-BD")} কম স্টক`, icon: Package, color: "from-cyan-500 to-blue-600", bg: "bg-cyan-500/10" },
     { title: "মোট ব্যবহারকারী", value: (stats?.totalUsers || 0).toLocaleString("bn-BD"), sub: "নিবন্ধিত", icon: Users, color: "from-orange-500 to-amber-600", bg: "bg-orange-500/10" },
   ];
@@ -280,13 +331,75 @@ const AdminDashboard = () => {
     { label: "বাতিল", count: stats?.cancelledOrders || 0, icon: XCircle, color: "text-red-600" },
   ];
 
+  const filterButtons: { key: DateFilterType; label: string }[] = [
+    { key: "today", label: "আজ" },
+    { key: "yesterday", label: "গতকাল" },
+    { key: "this_week", label: "এই সপ্তাহ" },
+    { key: "this_month", label: "এই মাস" },
+    { key: "last_30", label: "৩০ দিন" },
+    { key: "all", label: "সব" },
+  ];
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">অ্যাডমিন ড্যাশবোর্ড</h1>
-          <p className="text-muted-foreground">রিয়েলটাইম সেলস ও অর্ডার পরিসংখ্যান</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">অ্যাডমিন ড্যাশবোর্ড</h1>
+            <p className="text-muted-foreground">রিয়েলটাইম সেলস ও অর্ডার পরিসংখ্যান</p>
+          </div>
         </div>
+
+        {/* Date Filter Bar */}
+        <Card className="border-0 bg-muted/30">
+          <CardContent className="py-3 px-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+              {filterButtons.map(f => (
+                <Button
+                  key={f.key}
+                  variant={dateFilter === f.key ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setDateFilter(f.key)}
+                >
+                  {f.label}
+                </Button>
+              ))}
+              {/* Custom Date Range */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={dateFilter === "custom" ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 text-xs gap-1.5"
+                    onClick={() => setDateFilter("custom")}
+                  >
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dateFilter === "custom" && customRange.from
+                      ? `${format(customRange.from, "dd/MM")}${customRange.to ? ` - ${format(customRange.to, "dd/MM")}` : ""}`
+                      : "কাস্টম তারিখ"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    selected={customRange.from ? { from: customRange.from, to: customRange.to } : undefined}
+                    onSelect={(range) => {
+                      setCustomRange({ from: range?.from, to: range?.to });
+                      setDateFilter("custom");
+                    }}
+                    numberOfMonths={1}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {dateFilter !== "today" && (
+                <span className="text-xs text-muted-foreground ml-2">📊 {filterLabel}</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -333,7 +446,7 @@ const AdminDashboard = () => {
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">দৈনিক বিক্রয় (এই মাস)</CardTitle>
+              <CardTitle className="text-lg">বিক্রয় চার্ট ({filterLabel})</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
