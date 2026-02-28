@@ -314,38 +314,44 @@ const AdminDashboard = () => {
           <p className="text-sm text-muted-foreground mt-0.5">রিয়েলটাইম সেলস ও অর্ডার পরিসংখ্যান</p>
         </div>
 
-        {/* Date Filter */}
-        <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-muted/50 rounded-xl w-fit">
-          {filterButtons.map(f => (
-            <button
-              key={f.key}
-              onClick={() => setDateFilter(f.key)}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
-                dateFilter === f.key
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+        {/* Date Filter Dropdown */}
+        <div className="flex items-center gap-2 w-fit">
+          <Select
+            value={dateFilter}
+            onValueChange={(val) => {
+              if (val !== "custom") {
+                setDateFilter(val as DateFilterType);
+              }
+            }}
+          >
+            <SelectTrigger className="w-[160px] h-9 text-xs">
+              <div className="flex items-center gap-1.5">
+                <Filter className="h-3.5 w-3.5" />
+                <SelectValue placeholder="ফিল্টার" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {filterButtons.map(f => (
+                <SelectItem key={f.key} value={f.key} className="text-xs">
+                  {f.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Popover>
             <PopoverTrigger asChild>
-              <button
+              <Button
+                variant={dateFilter === "custom" ? "default" : "outline"}
+                size="sm"
+                className="h-9 text-xs gap-1.5"
                 onClick={() => setDateFilter("custom")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
-                  dateFilter === "custom"
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
               >
-                <CalendarIcon className="h-3 w-3" />
+                <CalendarIcon className="h-3.5 w-3.5" />
                 {dateFilter === "custom" && customRange.from
                   ? `${format(customRange.from, "dd/MM")}${customRange.to ? ` - ${format(customRange.to, "dd/MM")}` : ""}`
                   : "কাস্টম"}
-              </button>
+              </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
               <Calendar
