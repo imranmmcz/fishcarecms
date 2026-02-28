@@ -203,7 +203,7 @@ export const Header = () => {
 
       {/* ─── Row 2: Logo + Search + Actions ─── */}
       <div className="border-b border-border" style={{ backgroundColor: 'hsl(var(--header-bg, var(--background)))' }}>
-        <div className="container flex h-16 md:h-20 items-center justify-between gap-4">
+        <div className="container flex h-16 md:h-20 items-center justify-between gap-2 overflow-hidden">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 transition-transform hover:scale-[1.02]">
             {headerData?.logoUrl ? (
@@ -226,7 +226,7 @@ export const Header = () => {
           />
 
           {/* Right side: phone + actions */}
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+          <div className="flex items-center gap-1 md:gap-4 shrink-0">
             {/* Phone - always visible */}
             <a href={`tel:${headerData?.topBarPhone || "01978865277"}`} className="flex items-center gap-1.5 shrink-0">
               <Phone className="h-4 w-4 md:h-5 md:w-5 text-primary" />
