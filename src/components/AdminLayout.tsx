@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   LayoutDashboard, Users, Settings, BarChart3, Home, Shield, User, Package,
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
@@ -108,32 +108,28 @@ function UnifiedMenuGroup({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <CollapsibleTrigger className={cn(
-            "flex items-center gap-3 w-full px-2 rounded-xl text-violet-300 hover:bg-white/8 hover:text-white transition-all duration-200 group/trigger cursor-pointer group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "flex items-center gap-3 w-full px-2 rounded-xl text-violet-300 hover:bg-white/8 hover:text-white transition-all duration-200 cursor-pointer group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
             triggerPy
+          )}
+        >
+          <div className={cn(
+            "p-1.5 rounded-lg transition-all duration-200 shrink-0",
+            hasActive ? "bg-white/20" : "bg-violet-800/40"
           )}>
-            <div className={cn(
-              "p-1.5 rounded-lg transition-all duration-200 shrink-0",
-              hasActive ? "bg-white/20" : "bg-violet-800/40"
-            )}>
-              <group.icon className={cn(iconSize, "transition-colors", hasActive ? "text-white" : "text-violet-400")} />
-            </div>
-            <span className={cn("font-semibold text-sm flex-1 text-left", !isMobile && "group-data-[collapsible=icon]:hidden")}>{group.label}</span>
-            <ChevronDown className={cn(
-              "h-3.5 w-3.5 text-violet-400 transition-transform duration-300",
-              !isMobile && "group-data-[collapsible=icon]:hidden",
-              open && "rotate-180"
-            )} />
-          </CollapsibleTrigger>
-        </TooltipTrigger>
-        {!isMobile && (
-          <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">
-            {group.label}
-          </TooltipContent>
-        )}
-      </Tooltip>
+            <group.icon className={cn(iconSize, "transition-colors", hasActive ? "text-white" : "text-violet-400")} />
+          </div>
+          <span className={cn("font-semibold text-sm flex-1 text-left", !isMobile && "group-data-[collapsible=icon]:hidden")}>{group.label}</span>
+          <ChevronDown className={cn(
+            "h-3.5 w-3.5 text-violet-400 transition-transform duration-300",
+            !isMobile && "group-data-[collapsible=icon]:hidden",
+            open && "rotate-180"
+          )} />
+        </button>
+      </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200">
         <div className={cn("border-l-2 border-white/10 mt-1 space-y-0.5", isMobile ? "ml-6 pl-3" : "ml-4 pl-3")}>
           {visibleItems.map((item) => {
@@ -141,29 +137,21 @@ function UnifiedMenuGroup({
               ? currentFull === item.url
               : currentPath === item.url && !currentSearch;
             return (
-              <Tooltip key={item.url}>
-                <TooltipTrigger asChild>
-                  <Link
-                    to={item.url}
-                    onClick={onNavigate}
-                    className={cn(
-                      "flex items-center gap-2.5 px-3 rounded-lg text-sm transition-all duration-200",
-                      itemPy,
-                      isActive
-                        ? "bg-white/15 text-white font-medium shadow-sm"
-                        : "text-violet-300/80 hover:bg-white/5 hover:text-white hover:translate-x-0.5"
-                    )}
-                  >
-                    <item.icon className={cn(subIconSize, "shrink-0 transition-colors", isActive ? "text-white" : "text-violet-400/70")} />
-                    <span className={cn(!isMobile && "group-data-[collapsible=icon]:hidden", "truncate")}>{item.title}</span>
-                  </Link>
-                </TooltipTrigger>
-                {!isMobile && (
-                  <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">
-                    {item.title}
-                  </TooltipContent>
+              <Link
+                key={item.url}
+                to={item.url}
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 rounded-lg text-sm transition-all duration-200",
+                  itemPy,
+                  isActive
+                    ? "bg-white/15 text-white font-medium shadow-sm"
+                    : "text-violet-300/80 hover:bg-white/5 hover:text-white hover:translate-x-0.5"
                 )}
-              </Tooltip>
+              >
+                <item.icon className={cn(subIconSize, "shrink-0 transition-colors", isActive ? "text-white" : "text-violet-400/70")} />
+                <span className="truncate">{item.title}</span>
+              </Link>
             );
           })}
         </div>
@@ -183,34 +171,25 @@ function UnifiedNavItem({
   const py = isMobile ? "py-3" : "py-2.5";
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          to={to}
-          onClick={onNavigate}
-          className={cn(
-            "flex items-center gap-3 px-2 rounded-xl transition-all duration-200 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
-            py,
-            isActive
-              ? `${activeClass} text-white shadow-lg shadow-black/10 scale-[1.01]`
-              : "text-violet-200/90 hover:bg-white/10 hover:text-white hover:translate-x-0.5"
-          )}
-        >
-          <div className={cn(
-            "p-1.5 rounded-lg shrink-0 transition-all duration-200",
-            isActive ? "bg-white/20" : "bg-violet-800/40"
-          )}>
-            <Icon className={cn(iconSize, "transition-colors", isActive ? "text-white" : iconColorClass)} />
-          </div>
-          <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>{label}</span>
-        </Link>
-      </TooltipTrigger>
-      {!isMobile && (
-        <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">
-          {label}
-        </TooltipContent>
+    <Link
+      to={to}
+      onClick={onNavigate}
+      className={cn(
+        "flex items-center gap-3 px-2 rounded-xl transition-all duration-200 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
+        py,
+        isActive
+          ? `${activeClass} text-white shadow-lg shadow-black/10 scale-[1.01]`
+          : "text-violet-200/90 hover:bg-white/10 hover:text-white hover:translate-x-0.5"
       )}
-    </Tooltip>
+    >
+      <div className={cn(
+        "p-1.5 rounded-lg shrink-0 transition-all duration-200",
+        isActive ? "bg-white/20" : "bg-violet-800/40"
+      )}>
+        <Icon className={cn(iconSize, "transition-colors", isActive ? "text-white" : iconColorClass)} />
+      </div>
+      <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>{label}</span>
+    </Link>
   );
 }
 
@@ -283,37 +262,23 @@ function MenuFooter({ currentPath, onNavigate, isMobile }: {
 
   return (
     <div className="pt-3 border-t border-white/10 space-y-1">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link to="/admin/profile" onClick={onNavigate} className={cn(
-            "flex items-center gap-3 px-2 rounded-xl transition-all duration-200 hover:translate-x-0.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
-            py,
-            currentPath === "/admin/profile"
-              ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
-              : "text-violet-300 hover:bg-white/10 hover:text-white"
-          )}>
-            <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><User className={iconSize} /></div>
-            <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>প্রোফাইল</span>
-          </Link>
-        </TooltipTrigger>
-        {!isMobile && (
-          <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">প্রোফাইল</TooltipContent>
-        )}
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link to="/" onClick={onNavigate} className={cn(
-            "flex items-center gap-3 px-2 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all duration-200 hover:translate-x-0.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
-            py
-          )}>
-            <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><Home className={iconSize} /></div>
-            <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>হোম পেজে ফিরুন</span>
-          </Link>
-        </TooltipTrigger>
-        {!isMobile && (
-          <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">হোম পেজে ফিরুন</TooltipContent>
-        )}
-      </Tooltip>
+      <Link to="/admin/profile" onClick={onNavigate} className={cn(
+        "flex items-center gap-3 px-2 rounded-xl transition-all duration-200 hover:translate-x-0.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
+        py,
+        currentPath === "/admin/profile"
+          ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
+          : "text-violet-300 hover:bg-white/10 hover:text-white"
+      )}>
+        <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><User className={iconSize} /></div>
+        <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>প্রোফাইল</span>
+      </Link>
+      <Link to="/" onClick={onNavigate} className={cn(
+        "flex items-center gap-3 px-2 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all duration-200 hover:translate-x-0.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
+        py
+      )}>
+        <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><Home className={iconSize} /></div>
+        <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>হোম পেজে ফিরুন</span>
+      </Link>
     </div>
   );
 }
