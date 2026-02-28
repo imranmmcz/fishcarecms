@@ -16,9 +16,14 @@ import {
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
   Building2, FileText, CloudUpload, Palette, Store, ChevronDown, CreditCard,
   Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, type LucideIcon,
-  Menu, X,
+  Menu, X, LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // --- Menu Data ---
 interface SubMenuItem {
@@ -319,7 +324,7 @@ interface AdminLayoutProps { children: ReactNode; }
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, isLoading, userRole } = useAuth();
+  const { user, isAdmin, isLoading, userRole, signOut } = useAuth();
   const { hasPermission } = useRolePermissions();
   const isMobileView = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -447,6 +452,40 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
               <div className="h-6 w-px bg-border hidden md:block" />
               <span className="text-xs md:text-sm font-medium text-muted-foreground">{currentTitle}</span>
+              <div className="flex-1" />
+              {/* Profile Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-accent transition-colors">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                        {(user?.email?.slice(0, 2) || "AD").toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden md:inline text-sm font-medium text-foreground truncate max-w-[120px]">
+                      {(user as any)?.full_name || user?.email?.split("@")[0] || "Admin"}
+                    </span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel className="text-xs text-muted-foreground truncate">{user?.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
+                      <User className="h-4 w-4" /> প্রোফাইল
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer">
+                      <Settings className="h-4 w-4" /> সেটিংস
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="h-4 w-4" /> লগআউট
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-57px)] md:min-h-[calc(100vh-65px)]">
               {children}
