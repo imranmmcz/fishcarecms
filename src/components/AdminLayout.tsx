@@ -3,10 +3,12 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -14,7 +16,7 @@ import {
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
   Building2, FileText, CloudUpload, Palette, Store, ChevronDown, CreditCard,
   Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, type LucideIcon,
-  PanelLeftClose, PanelLeft,
+  Menu, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -75,19 +77,9 @@ const allGroups = [cmsGroup, ecommerceGroup, settingsGroup];
 
 // --- Sidebar Nav Item with Tooltip ---
 function NavItem({
-  to,
-  icon: Icon,
-  label,
-  isActive,
-  activeClass,
-  iconColorClass,
+  to, icon: Icon, label, isActive, activeClass, iconColorClass,
 }: {
-  to: string;
-  icon: LucideIcon;
-  label: string;
-  isActive: boolean;
-  activeClass: string;
-  iconColorClass: string;
+  to: string; icon: LucideIcon; label: string; isActive: boolean; activeClass: string; iconColorClass: string;
 }) {
   return (
     <Tooltip>
@@ -105,7 +97,7 @@ function NavItem({
             "p-1.5 rounded-lg shrink-0 transition-all duration-200",
             isActive ? "bg-white/20" : "bg-violet-800/40"
           )}>
-            <Icon className={cn("h-4 w-4 transition-colors", isActive ? "text-white" : iconColorClass)} />
+            <Icon className={cn("h-[18px] w-[18px] transition-colors", isActive ? "text-white" : iconColorClass)} />
           </div>
           <span className="font-medium text-sm group-data-[collapsible=icon]:hidden truncate">{label}</span>
         </Link>
@@ -117,17 +109,11 @@ function NavItem({
   );
 }
 
-// --- Collapsible Menu Group Component ---
+// --- Collapsible Menu Group Component (Desktop) ---
 function SidebarMenuGroup({
-  group,
-  currentPath,
-  currentSearch,
-  filterItem,
+  group, currentPath, currentSearch, filterItem,
 }: {
-  group: MenuGroup;
-  currentPath: string;
-  currentSearch: string;
-  filterItem: (item: SubMenuItem) => boolean;
+  group: MenuGroup; currentPath: string; currentSearch: string; filterItem: (item: SubMenuItem) => boolean;
 }) {
   const visibleItems = group.items.filter(filterItem);
   const currentFull = currentPath + currentSearch;
@@ -152,7 +138,7 @@ function SidebarMenuGroup({
               "p-1.5 rounded-lg transition-all duration-200 shrink-0",
               hasActive ? "bg-white/20" : "bg-violet-800/40"
             )}>
-              <group.icon className={cn("h-4 w-4 transition-colors", hasActive ? "text-white" : "text-violet-400")} />
+              <group.icon className={cn("h-[18px] w-[18px] transition-colors", hasActive ? "text-white" : "text-violet-400")} />
             </div>
             <span className="font-semibold text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">{group.label}</span>
             <ChevronDown className={cn(
@@ -202,26 +188,71 @@ function SidebarMenuGroup({
   );
 }
 
-// --- Main Layout ---
-interface AdminLayoutProps {
-  children: ReactNode;
+// --- Mobile Collapsible Menu Group ---
+function MobileMenuGroup({
+  group, currentPath, currentSearch, filterItem, onClose,
+}: {
+  group: MenuGroup; currentPath: string; currentSearch: string; filterItem: (item: SubMenuItem) => boolean; onClose: () => void;
+}) {
+  const visibleItems = group.items.filter(filterItem);
+  const currentFull = currentPath + currentSearch;
+  const hasActive = visibleItems.some((item) => {
+    if (item.url.includes("?")) return currentFull === item.url;
+    return currentPath === item.url && !currentSearch;
+  });
+  const [open, setOpen] = useState(hasActive);
+
+  if (visibleItems.length === 0) return null;
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-violet-300 hover:bg-white/8 hover:text-white transition-all cursor-pointer">
+        <div className={cn("p-2 rounded-lg shrink-0", hasActive ? "bg-white/20" : "bg-violet-800/40")}>
+          <group.icon className={cn("h-5 w-5", hasActive ? "text-white" : "text-violet-400")} />
+        </div>
+        <span className="font-semibold flex-1 text-left">{group.label}</span>
+        <ChevronDown className={cn("h-4 w-4 text-violet-400 transition-transform duration-300", open && "rotate-180")} />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out duration-200">
+        <div className="ml-6 pl-3 border-l-2 border-white/10 mt-1 space-y-0.5">
+          {visibleItems.map((item) => {
+            const isActive = item.url.includes("?")
+              ? currentFull === item.url
+              : currentPath === item.url && !currentSearch;
+            return (
+              <Link key={item.url} to={item.url} onClick={onClose}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
+                  isActive ? "bg-white/15 text-white font-medium" : "text-violet-300/80 hover:bg-white/5 hover:text-white"
+                )}>
+                <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-violet-400/70")} />
+                <span>{item.title}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
 }
+
+// --- Main Layout ---
+interface AdminLayoutProps { children: ReactNode; }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, isLoading, userRole } = useAuth();
   const { hasPermission } = useRolePermissions();
+  const isMobileView = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isStaff = userRole === "manager" || userRole === "cashier" || userRole === "delivery_staff";
   const canAccessAdmin = isAdmin || isStaff;
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      navigate("/auth");
-    } else if (!isLoading && user && !canAccessAdmin) {
-      navigate("/");
-    }
+    if (!isLoading && !user) navigate("/auth");
+    else if (!isLoading && user && !canAccessAdmin) navigate("/");
   }, [user, canAccessAdmin, isLoading, navigate]);
 
   if (isLoading) {
@@ -264,7 +295,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <SidebarProvider defaultOpen={true}>
         <div className="min-h-screen flex w-full bg-gradient-to-br from-violet-900 via-purple-900 to-slate-900 relative overflow-hidden">
           <AnimatedBackground />
-          <Sidebar collapsible="icon" className="border-r-0 relative z-10">
+
+          {/* Desktop Sidebar only */}
+          {!isMobileView && (
+          <Sidebar collapsible="icon" className="border-r-0 relative z-10 hidden md:flex">
             <div className="h-full bg-gradient-to-b from-violet-950/95 via-purple-900/95 to-violet-950/95 backdrop-blur-md flex flex-col">
               {/* Header */}
               <div className="p-4 border-b border-white/10">
@@ -281,44 +315,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
               <SidebarContent className="px-2 py-3 flex flex-col flex-1 overflow-hidden">
                 <SidebarGroup className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                  {/* Dashboard */}
                   {canSeeDashboard && (
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        <SidebarMenuItem>
-                          <SidebarMenuButton asChild isActive={location.pathname === "/admin"} tooltip="ড্যাশবোর্ড">
-                            <NavItem
-                              to="/admin"
-                              icon={LayoutDashboard}
-                              label="ড্যাশবোর্ড"
-                              isActive={location.pathname === "/admin"}
-                              activeClass="bg-gradient-to-r from-violet-500 to-purple-600"
-                              iconColorClass="text-violet-400"
-                            />
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      </SidebarMenu>
-                    </SidebarGroupContent>
+                    <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={location.pathname === "/admin"} tooltip="ড্যাশবোর্ড">
+                        <NavItem to="/admin" icon={LayoutDashboard} label="ড্যাশবোর্ড" isActive={location.pathname === "/admin"} activeClass="bg-gradient-to-r from-violet-500 to-purple-600" iconColorClass="text-violet-400" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
                   )}
 
-                  {/* Reports */}
                   {canSeeReports && (
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        <SidebarMenuItem>
-                          <SidebarMenuButton asChild isActive={location.pathname === "/admin/reports"} tooltip="রিপোর্ট">
-                            <NavItem
-                              to="/admin/reports"
-                              icon={BarChart3}
-                              label="রিপোর্ট"
-                              isActive={location.pathname === "/admin/reports"}
-                              activeClass="bg-gradient-to-r from-emerald-500 to-green-600"
-                              iconColorClass="text-emerald-400"
-                            />
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      </SidebarMenu>
-                    </SidebarGroupContent>
+                    <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={location.pathname === "/admin/reports"} tooltip="রিপোর্ট">
+                        <NavItem to="/admin/reports" icon={BarChart3} label="রিপোর্ট" isActive={location.pathname === "/admin/reports"} activeClass="bg-gradient-to-r from-emerald-500 to-green-600" iconColorClass="text-emerald-400" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
                   )}
 
                   <div className="h-px bg-white/8 mx-2 my-1.5" />
@@ -326,24 +336,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <SidebarMenuGroup group={cmsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
                   <SidebarMenuGroup group={ecommerceGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
 
-                  {/* POS Single Link */}
                   {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        <SidebarMenuItem>
-                          <SidebarMenuButton asChild isActive={location.pathname.startsWith("/pos")} tooltip="POS সিস্টেম">
-                            <NavItem
-                              to="/pos"
-                              icon={MonitorSmartphone}
-                              label="POS সিস্টেম"
-                              isActive={location.pathname.startsWith("/pos")}
-                              activeClass="bg-gradient-to-r from-emerald-500 to-teal-600"
-                              iconColorClass="text-emerald-400"
-                            />
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      </SidebarMenu>
-                    </SidebarGroupContent>
+                    <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={location.pathname.startsWith("/pos")} tooltip="POS সিস্টেম">
+                        <NavItem to="/pos" icon={MonitorSmartphone} label="POS সিস্টেম" isActive={location.pathname.startsWith("/pos")} activeClass="bg-gradient-to-r from-emerald-500 to-teal-600" iconColorClass="text-emerald-400" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
                   )}
 
                   <div className="h-px bg-white/8 mx-2 my-1.5" />
@@ -351,36 +349,121 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <SidebarMenuGroup group={settingsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
                 </SidebarGroup>
 
-                {/* Footer */}
                 <div className="pt-3 border-t border-white/10 mt-auto space-y-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Link
-                        to="/"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all duration-200 hover:translate-x-0.5"
-                      >
-                        <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0">
-                          <Home className="h-4 w-4" />
-                        </div>
+                      <Link to="/" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all duration-200 hover:translate-x-0.5">
+                        <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><Home className="h-[18px] w-[18px]" /></div>
                         <span className="font-medium text-sm group-data-[collapsible=icon]:hidden truncate">হোম পেজে ফিরুন</span>
                       </Link>
                     </TooltipTrigger>
-                    <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">
-                      হোম পেজে ফিরুন
-                    </TooltipContent>
+                    <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">হোম পেজে ফিরুন</TooltipContent>
                   </Tooltip>
                 </div>
               </SidebarContent>
             </div>
           </Sidebar>
+          )}
 
           <main className="flex-1 overflow-auto relative z-10">
-            <div className="p-4 border-b bg-card/80 backdrop-blur-sm flex items-center gap-4 sticky top-0 z-20">
-              <SidebarTrigger className="text-foreground hover:bg-accent/50 transition-colors rounded-lg" />
-              <div className="h-6 w-px bg-border" />
-              <span className="text-sm font-medium text-muted-foreground">{currentTitle}</span>
+            <div className="p-3 md:p-4 border-b bg-card/80 backdrop-blur-sm flex items-center gap-3 md:gap-4 sticky top-0 z-20">
+              {/* Mobile hamburger menu */}
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild className="md:hidden">
+                  <button className="p-2 rounded-lg hover:bg-accent transition-colors">
+                    <Menu className="h-5 w-5 text-foreground" />
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px] p-0 bg-gradient-to-b from-violet-950 via-purple-900 to-violet-950 border-r-0">
+                  {/* Mobile Menu Header */}
+                  <div className="p-4 border-b border-white/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl shadow-lg shadow-violet-500/25">
+                          <Shield className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <h1 className="font-bold text-white text-lg">{roleLabel}</h1>
+                          <p className="text-xs text-violet-300/80">ম্যানেজমেন্ট প্যানেল</p>
+                        </div>
+                      </div>
+                      <SheetClose asChild>
+                        <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                          <X className="h-5 w-5 text-violet-300" />
+                        </button>
+                      </SheetClose>
+                    </div>
+                  </div>
+
+                  {/* Mobile Menu Items */}
+                  <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-160px)] space-y-1">
+                    {canSeeDashboard && (
+                      <Link to="/admin" onClick={() => setMobileMenuOpen(false)}
+                        className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                          location.pathname === "/admin"
+                            ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
+                            : "text-violet-200 hover:bg-white/10 hover:text-white"
+                        )}>
+                        <div className={cn("p-2 rounded-lg shrink-0", location.pathname === "/admin" ? "bg-white/20" : "bg-violet-800/40")}>
+                          <LayoutDashboard className={cn("h-5 w-5", location.pathname === "/admin" ? "text-white" : "text-violet-400")} />
+                        </div>
+                        <span className="font-medium">ড্যাশবোর্ড</span>
+                      </Link>
+                    )}
+
+                    {canSeeReports && (
+                      <Link to="/admin/reports" onClick={() => setMobileMenuOpen(false)}
+                        className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                          location.pathname === "/admin/reports"
+                            ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg"
+                            : "text-violet-200 hover:bg-white/10 hover:text-white"
+                        )}>
+                        <div className={cn("p-2 rounded-lg shrink-0", location.pathname === "/admin/reports" ? "bg-white/20" : "bg-violet-800/40")}>
+                          <BarChart3 className={cn("h-5 w-5", location.pathname === "/admin/reports" ? "text-white" : "text-emerald-400")} />
+                        </div>
+                        <span className="font-medium">রিপোর্ট</span>
+                      </Link>
+                    )}
+
+                    <div className="h-px bg-white/10 mx-2 my-2" />
+
+                    <MobileMenuGroup group={cmsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} onClose={() => setMobileMenuOpen(false)} />
+                    <MobileMenuGroup group={ecommerceGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} onClose={() => setMobileMenuOpen(false)} />
+
+                    {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
+                      <Link to="/pos" onClick={() => setMobileMenuOpen(false)}
+                        className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                          location.pathname.startsWith("/pos")
+                            ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg"
+                            : "text-violet-200 hover:bg-white/10 hover:text-white"
+                        )}>
+                        <div className={cn("p-2 rounded-lg shrink-0", location.pathname.startsWith("/pos") ? "bg-white/20" : "bg-violet-800/40")}>
+                          <MonitorSmartphone className={cn("h-5 w-5", location.pathname.startsWith("/pos") ? "text-white" : "text-emerald-400")} />
+                        </div>
+                        <span className="font-medium">POS সিস্টেম</span>
+                      </Link>
+                    )}
+
+                    <div className="h-px bg-white/10 mx-2 my-2" />
+
+                    <MobileMenuGroup group={settingsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} onClose={() => setMobileMenuOpen(false)} />
+
+                    <div className="pt-4 mt-4 border-t border-white/10">
+                      <Link to="/" onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all">
+                        <div className="p-2 rounded-lg bg-violet-800/40 shrink-0"><Home className="h-5 w-5" /></div>
+                        <span className="font-medium">হোম পেজে ফিরুন</span>
+                      </Link>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+
+              <SidebarTrigger className="text-foreground hidden md:flex hover:bg-accent/50 transition-colors rounded-lg" />
+              <div className="h-6 w-px bg-border hidden md:block" />
+              <span className="text-xs md:text-sm font-medium text-muted-foreground">{currentTitle}</span>
             </div>
-            <div className="p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-65px)] rounded-tl-2xl">
+            <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-57px)] md:min-h-[calc(100vh-65px)] md:rounded-tl-2xl">
               {children}
             </div>
           </main>
