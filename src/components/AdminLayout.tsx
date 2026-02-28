@@ -75,45 +75,12 @@ const settingsGroup: MenuGroup = {
 
 const allGroups = [cmsGroup, ecommerceGroup, settingsGroup];
 
-// --- Sidebar Nav Item with Tooltip ---
-function NavItem({
-  to, icon: Icon, label, isActive, activeClass, iconColorClass,
+// --- Unified Collapsible Menu Group (works for both desktop & mobile) ---
+function UnifiedMenuGroup({
+  group, currentPath, currentSearch, filterItem, onNavigate, isMobile,
 }: {
-  to: string; icon: LucideIcon; label: string; isActive: boolean; activeClass: string; iconColorClass: string;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          to={to}
-          className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
-            isActive
-              ? `${activeClass} text-white shadow-lg shadow-black/10 scale-[1.01]`
-              : "text-violet-200/90 hover:bg-white/10 hover:text-white hover:translate-x-0.5"
-          )}
-        >
-          <div className={cn(
-            "p-1.5 rounded-lg shrink-0 transition-all duration-200",
-            isActive ? "bg-white/20" : "bg-violet-800/40"
-          )}>
-            <Icon className={cn("h-[18px] w-[18px] transition-colors", isActive ? "text-white" : iconColorClass)} />
-          </div>
-          <span className="font-medium text-sm group-data-[collapsible=icon]:hidden truncate">{label}</span>
-        </Link>
-      </TooltipTrigger>
-      <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">
-        {label}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-// --- Collapsible Menu Group Component (Desktop) ---
-function SidebarMenuGroup({
-  group, currentPath, currentSearch, filterItem,
-}: {
-  group: MenuGroup; currentPath: string; currentSearch: string; filterItem: (item: SubMenuItem) => boolean;
+  group: MenuGroup; currentPath: string; currentSearch: string;
+  filterItem: (item: SubMenuItem) => boolean; onNavigate?: () => void; isMobile?: boolean;
 }) {
   const visibleItems = group.items.filter(filterItem);
   const currentFull = currentPath + currentSearch;
@@ -129,30 +96,41 @@ function SidebarMenuGroup({
 
   if (visibleItems.length === 0) return null;
 
+  const iconSize = isMobile ? "h-5 w-5" : "h-[18px] w-[18px]";
+  const subIconSize = isMobile ? "h-4 w-4" : "h-3.5 w-3.5";
+  const triggerPy = isMobile ? "py-3" : "py-2.5";
+  const itemPy = isMobile ? "py-2.5" : "py-2";
+
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <CollapsibleTrigger className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-violet-300 hover:bg-white/8 hover:text-white transition-all duration-200 group/trigger cursor-pointer">
+          <CollapsibleTrigger className={cn(
+            "flex items-center gap-3 w-full px-3 rounded-xl text-violet-300 hover:bg-white/8 hover:text-white transition-all duration-200 group/trigger cursor-pointer",
+            triggerPy
+          )}>
             <div className={cn(
               "p-1.5 rounded-lg transition-all duration-200 shrink-0",
               hasActive ? "bg-white/20" : "bg-violet-800/40"
             )}>
-              <group.icon className={cn("h-[18px] w-[18px] transition-colors", hasActive ? "text-white" : "text-violet-400")} />
+              <group.icon className={cn(iconSize, "transition-colors", hasActive ? "text-white" : "text-violet-400")} />
             </div>
-            <span className="font-semibold text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">{group.label}</span>
+            <span className={cn("font-semibold text-sm flex-1 text-left", !isMobile && "group-data-[collapsible=icon]:hidden")}>{group.label}</span>
             <ChevronDown className={cn(
-              "h-3.5 w-3.5 text-violet-400 transition-transform duration-300 group-data-[collapsible=icon]:hidden",
+              "h-3.5 w-3.5 text-violet-400 transition-transform duration-300",
+              !isMobile && "group-data-[collapsible=icon]:hidden",
               open && "rotate-180"
             )} />
           </CollapsibleTrigger>
         </TooltipTrigger>
-        <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">
-          {group.label}
-        </TooltipContent>
+        {!isMobile && (
+          <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">
+            {group.label}
+          </TooltipContent>
+        )}
       </Tooltip>
-      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-up-1 data-[state=open]:slide-down-1 duration-200">
-        <div className="ml-4 pl-3 border-l-2 border-white/10 mt-1 space-y-0.5">
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200">
+        <div className={cn("border-l-2 border-white/10 mt-1 space-y-0.5", isMobile ? "ml-6 pl-3" : "ml-4 pl-3")}>
           {visibleItems.map((item) => {
             const isActive = item.url.includes("?")
               ? currentFull === item.url
@@ -162,23 +140,24 @@ function SidebarMenuGroup({
                 <TooltipTrigger asChild>
                   <Link
                     to={item.url}
+                    onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200",
+                      "flex items-center gap-2.5 px-3 rounded-lg text-sm transition-all duration-200",
+                      itemPy,
                       isActive
                         ? "bg-white/15 text-white font-medium shadow-sm"
                         : "text-violet-300/80 hover:bg-white/5 hover:text-white hover:translate-x-0.5"
                     )}
                   >
-                    <item.icon className={cn(
-                      "h-3.5 w-3.5 shrink-0 transition-colors",
-                      isActive ? "text-white" : "text-violet-400/70"
-                    )} />
-                    <span className="group-data-[collapsible=icon]:hidden truncate">{item.title}</span>
+                    <item.icon className={cn(subIconSize, "shrink-0 transition-colors", isActive ? "text-white" : "text-violet-400/70")} />
+                    <span className={cn(!isMobile && "group-data-[collapsible=icon]:hidden", "truncate")}>{item.title}</span>
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">
-                  {item.title}
-                </TooltipContent>
+                {!isMobile && (
+                  <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">
+                    {item.title}
+                  </TooltipContent>
+                )}
               </Tooltip>
             );
           })}
@@ -188,51 +167,149 @@ function SidebarMenuGroup({
   );
 }
 
-// --- Mobile Collapsible Menu Group ---
-function MobileMenuGroup({
-  group, currentPath, currentSearch, filterItem, onClose,
+// --- Unified Single Nav Item ---
+function UnifiedNavItem({
+  to, icon: Icon, label, isActive, activeClass, iconColorClass, onNavigate, isMobile,
 }: {
-  group: MenuGroup; currentPath: string; currentSearch: string; filterItem: (item: SubMenuItem) => boolean; onClose: () => void;
+  to: string; icon: LucideIcon; label: string; isActive: boolean;
+  activeClass: string; iconColorClass: string; onNavigate?: () => void; isMobile?: boolean;
 }) {
-  const visibleItems = group.items.filter(filterItem);
-  const currentFull = currentPath + currentSearch;
-  const hasActive = visibleItems.some((item) => {
-    if (item.url.includes("?")) return currentFull === item.url;
-    return currentPath === item.url && !currentSearch;
-  });
-  const [open, setOpen] = useState(hasActive);
-
-  if (visibleItems.length === 0) return null;
+  const iconSize = isMobile ? "h-5 w-5" : "h-[18px] w-[18px]";
+  const py = isMobile ? "py-3" : "py-2.5";
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-violet-300 hover:bg-white/8 hover:text-white transition-all cursor-pointer">
-        <div className={cn("p-2 rounded-lg shrink-0", hasActive ? "bg-white/20" : "bg-violet-800/40")}>
-          <group.icon className={cn("h-5 w-5", hasActive ? "text-white" : "text-violet-400")} />
-        </div>
-        <span className="font-semibold flex-1 text-left">{group.label}</span>
-        <ChevronDown className={cn("h-4 w-4 text-violet-400 transition-transform duration-300", open && "rotate-180")} />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out duration-200">
-        <div className="ml-6 pl-3 border-l-2 border-white/10 mt-1 space-y-0.5">
-          {visibleItems.map((item) => {
-            const isActive = item.url.includes("?")
-              ? currentFull === item.url
-              : currentPath === item.url && !currentSearch;
-            return (
-              <Link key={item.url} to={item.url} onClick={onClose}
-                className={cn(
-                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
-                  isActive ? "bg-white/15 text-white font-medium" : "text-violet-300/80 hover:bg-white/5 hover:text-white"
-                )}>
-                <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-violet-400/70")} />
-                <span>{item.title}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          to={to}
+          onClick={onNavigate}
+          className={cn(
+            "flex items-center gap-3 px-3 rounded-xl transition-all duration-200",
+            py,
+            isActive
+              ? `${activeClass} text-white shadow-lg shadow-black/10 scale-[1.01]`
+              : "text-violet-200/90 hover:bg-white/10 hover:text-white hover:translate-x-0.5"
+          )}
+        >
+          <div className={cn(
+            "p-1.5 rounded-lg shrink-0 transition-all duration-200",
+            isActive ? "bg-white/20" : "bg-violet-800/40"
+          )}>
+            <Icon className={cn(iconSize, "transition-colors", isActive ? "text-white" : iconColorClass)} />
+          </div>
+          <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>{label}</span>
+        </Link>
+      </TooltipTrigger>
+      {!isMobile && (
+        <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">
+          {label}
+        </TooltipContent>
+      )}
+    </Tooltip>
+  );
+}
+
+// --- Shared Menu Content (used by both desktop & mobile) ---
+function MenuContent({
+  currentPath, currentSearch, canSeeDashboard, canSeeReports,
+  isAdmin, userRole, hasPermission, filterItem, onNavigate, isMobile,
+}: {
+  currentPath: string; currentSearch: string;
+  canSeeDashboard: boolean; canSeeReports: boolean;
+  isAdmin: boolean; userRole: string | null;
+  hasPermission: (role: string, key: string) => boolean;
+  filterItem: (item: SubMenuItem) => boolean;
+  onNavigate?: () => void; isMobile?: boolean;
+}) {
+  return (
+    <>
+      {/* 1. Dashboard */}
+      {canSeeDashboard && (
+        <UnifiedNavItem to="/admin" icon={LayoutDashboard} label="ড্যাশবোর্ড"
+          isActive={currentPath === "/admin"}
+          activeClass="bg-gradient-to-r from-violet-500 to-purple-600"
+          iconColorClass="text-violet-400"
+          onNavigate={onNavigate} isMobile={isMobile} />
+      )}
+
+      <div className="h-px bg-white/8 mx-2 my-1.5" />
+
+      {/* 2. CMS */}
+      <UnifiedMenuGroup group={cmsGroup} currentPath={currentPath} currentSearch={currentSearch}
+        filterItem={filterItem} onNavigate={onNavigate} isMobile={isMobile} />
+
+      {/* 3. E-Commerce */}
+      <UnifiedMenuGroup group={ecommerceGroup} currentPath={currentPath} currentSearch={currentSearch}
+        filterItem={filterItem} onNavigate={onNavigate} isMobile={isMobile} />
+
+      {/* 4. POS */}
+      {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
+        <UnifiedNavItem to="/pos" icon={MonitorSmartphone} label="POS সিস্টেম"
+          isActive={currentPath.startsWith("/pos")}
+          activeClass="bg-gradient-to-r from-emerald-500 to-teal-600"
+          iconColorClass="text-emerald-400"
+          onNavigate={onNavigate} isMobile={isMobile} />
+      )}
+
+      {/* 5. Report */}
+      {canSeeReports && (
+        <UnifiedNavItem to="/admin/reports" icon={BarChart3} label="রিপোর্ট"
+          isActive={currentPath === "/admin/reports"}
+          activeClass="bg-gradient-to-r from-amber-500 to-orange-600"
+          iconColorClass="text-amber-400"
+          onNavigate={onNavigate} isMobile={isMobile} />
+      )}
+
+      <div className="h-px bg-white/8 mx-2 my-1.5" />
+
+      {/* 6. Settings */}
+      <UnifiedMenuGroup group={settingsGroup} currentPath={currentPath} currentSearch={currentSearch}
+        filterItem={filterItem} onNavigate={onNavigate} isMobile={isMobile} />
+    </>
+  );
+}
+
+// --- Footer Links (shared) ---
+function MenuFooter({ currentPath, onNavigate, isMobile }: {
+  currentPath: string; onNavigate?: () => void; isMobile?: boolean;
+}) {
+  const iconSize = isMobile ? "h-5 w-5" : "h-[18px] w-[18px]";
+  const py = isMobile ? "py-3" : "py-2.5";
+
+  return (
+    <div className="pt-3 border-t border-white/10 space-y-1">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link to="/admin/profile" onClick={onNavigate} className={cn(
+            "flex items-center gap-3 px-3 rounded-xl transition-all duration-200 hover:translate-x-0.5",
+            py,
+            currentPath === "/admin/profile"
+              ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
+              : "text-violet-300 hover:bg-white/10 hover:text-white"
+          )}>
+            <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><User className={iconSize} /></div>
+            <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>প্রোফাইল</span>
+          </Link>
+        </TooltipTrigger>
+        {!isMobile && (
+          <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">প্রোফাইল</TooltipContent>
+        )}
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link to="/" onClick={onNavigate} className={cn(
+            "flex items-center gap-3 px-3 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all duration-200 hover:translate-x-0.5",
+            py
+          )}>
+            <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><Home className={iconSize} /></div>
+            <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>হোম পেজে ফিরুন</span>
+          </Link>
+        </TooltipTrigger>
+        {!isMobile && (
+          <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">হোম পেজে ফিরুন</TooltipContent>
+        )}
+      </Tooltip>
+    </div>
   );
 }
 
@@ -290,13 +367,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     : userRole === "cashier" ? "ক্যাশিয়ার"
     : "স্টাফ";
 
+  const sharedMenuProps = {
+    currentPath: location.pathname,
+    currentSearch: location.search,
+    canSeeDashboard, canSeeReports, isAdmin,
+    userRole, hasPermission, filterItem,
+  };
+
   return (
     <TooltipProvider delayDuration={300}>
       <SidebarProvider defaultOpen={true}>
         <div className="min-h-screen flex w-full bg-gradient-to-br from-violet-900 via-purple-900 to-slate-900 relative overflow-hidden">
           <AnimatedBackground />
 
-          {/* Desktop Sidebar only */}
+          {/* Desktop Sidebar */}
           {!isMobileView && (
           <Sidebar collapsible="icon" className="border-r-0 relative z-10 hidden md:flex">
             <div className="h-full bg-gradient-to-b from-violet-950/95 via-purple-900/95 to-violet-950/95 backdrop-blur-md flex flex-col">
@@ -313,72 +397,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
               <SidebarContent className="px-2 py-3 flex flex-col flex-1 overflow-hidden">
                 <SidebarGroup className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                  {/* 1. Dashboard */}
-                  {canSeeDashboard && (
-                    <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={location.pathname === "/admin"} tooltip="ড্যাশবোর্ড">
-                        <NavItem to="/admin" icon={LayoutDashboard} label="ড্যাশবোর্ড" isActive={location.pathname === "/admin"} activeClass="bg-gradient-to-r from-violet-500 to-purple-600" iconColorClass="text-violet-400" />
-                      </SidebarMenuButton>
-                    </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
-                  )}
-
-                  <div className="h-px bg-white/8 mx-2 my-1.5" />
-
-                  {/* 2. CMS */}
-                  <SidebarMenuGroup group={cmsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
-
-                  {/* 3. E-Commerce */}
-                  <SidebarMenuGroup group={ecommerceGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
-
-                  {/* 4. POS */}
-                  {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
-                    <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={location.pathname.startsWith("/pos")} tooltip="POS সিস্টেম">
-                        <NavItem to="/pos" icon={MonitorSmartphone} label="POS সিস্টেম" isActive={location.pathname.startsWith("/pos")} activeClass="bg-gradient-to-r from-emerald-500 to-teal-600" iconColorClass="text-emerald-400" />
-                      </SidebarMenuButton>
-                    </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
-                  )}
-
-                  {/* 5. Report */}
-                  {canSeeReports && (
-                    <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={location.pathname === "/admin/reports"} tooltip="রিপোর্ট">
-                        <NavItem to="/admin/reports" icon={BarChart3} label="রিপোর্ট" isActive={location.pathname === "/admin/reports"} activeClass="bg-gradient-to-r from-amber-500 to-orange-600" iconColorClass="text-amber-400" />
-                      </SidebarMenuButton>
-                    </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
-                  )}
-
-                  <div className="h-px bg-white/8 mx-2 my-1.5" />
-
-                  {/* 6. Settings */}
-                  <SidebarMenuGroup group={settingsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} />
+                  <MenuContent {...sharedMenuProps} />
                 </SidebarGroup>
-
-                <div className="pt-3 border-t border-white/10 mt-auto space-y-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link to="/admin/profile" className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 hover:translate-x-0.5",
-                        location.pathname === "/admin/profile"
-                          ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
-                          : "text-violet-300 hover:bg-white/10 hover:text-white"
-                      )}>
-                        <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><User className="h-[18px] w-[18px]" /></div>
-                        <span className="font-medium text-sm group-data-[collapsible=icon]:hidden truncate">প্রোফাইল</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">প্রোফাইল</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link to="/" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all duration-200 hover:translate-x-0.5">
-                        <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><Home className="h-[18px] w-[18px]" /></div>
-                        <span className="font-medium text-sm group-data-[collapsible=icon]:hidden truncate">হোম পেজে ফিরুন</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">হোম পেজে ফিরুন</TooltipContent>
-                  </Tooltip>
-                </div>
+                <MenuFooter currentPath={location.pathname} />
               </SidebarContent>
             </div>
           </Sidebar>
@@ -386,7 +407,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
           <main className="flex-1 overflow-auto relative z-10">
             <div className="p-3 md:p-4 border-b bg-card/80 backdrop-blur-sm flex items-center gap-3 md:gap-4 sticky top-0 z-20">
-              {/* Mobile hamburger menu */}
+              {/* Mobile hamburger */}
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild className="md:hidden">
                   <button className="p-2 rounded-lg hover:bg-accent transition-colors">
@@ -394,7 +415,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   </button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] p-0 bg-gradient-to-b from-violet-950 via-purple-900 to-violet-950 border-r-0">
-                  {/* Mobile Menu Header */}
+                  {/* Mobile Header */}
                   <div className="p-4 border-b border-white/10">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -414,73 +435,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     </div>
                   </div>
 
-                  {/* Mobile Menu Items */}
-                  <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-160px)] space-y-1">
-                    {/* 1. Dashboard */}
-                    {canSeeDashboard && (
-                      <Link to="/admin" onClick={() => setMobileMenuOpen(false)}
-                        className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
-                          location.pathname === "/admin"
-                            ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
-                            : "text-violet-200 hover:bg-white/10 hover:text-white"
-                        )}>
-                        <div className={cn("p-2 rounded-lg shrink-0", location.pathname === "/admin" ? "bg-white/20" : "bg-violet-800/40")}>
-                          <LayoutDashboard className={cn("h-5 w-5", location.pathname === "/admin" ? "text-white" : "text-violet-400")} />
-                        </div>
-                        <span className="font-medium">ড্যাশবোর্ড</span>
-                      </Link>
-                    )}
-
-                    <div className="h-px bg-white/10 mx-2 my-2" />
-
-                    {/* 2. CMS */}
-                    <MobileMenuGroup group={cmsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} onClose={() => setMobileMenuOpen(false)} />
-
-                    {/* 3. E-Commerce */}
-                    <MobileMenuGroup group={ecommerceGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} onClose={() => setMobileMenuOpen(false)} />
-
-                    {/* 4. POS */}
-                    {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
-                      <Link to="/pos" onClick={() => setMobileMenuOpen(false)}
-                        className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
-                          location.pathname.startsWith("/pos")
-                            ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg"
-                            : "text-violet-200 hover:bg-white/10 hover:text-white"
-                        )}>
-                        <div className={cn("p-2 rounded-lg shrink-0", location.pathname.startsWith("/pos") ? "bg-white/20" : "bg-violet-800/40")}>
-                          <MonitorSmartphone className={cn("h-5 w-5", location.pathname.startsWith("/pos") ? "text-white" : "text-emerald-400")} />
-                        </div>
-                        <span className="font-medium">POS সিস্টেম</span>
-                      </Link>
-                    )}
-
-                    {/* 5. Report */}
-                    {canSeeReports && (
-                      <Link to="/admin/reports" onClick={() => setMobileMenuOpen(false)}
-                        className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
-                          location.pathname === "/admin/reports"
-                            ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg"
-                            : "text-violet-200 hover:bg-white/10 hover:text-white"
-                        )}>
-                        <div className={cn("p-2 rounded-lg shrink-0", location.pathname === "/admin/reports" ? "bg-white/20" : "bg-violet-800/40")}>
-                          <BarChart3 className={cn("h-5 w-5", location.pathname === "/admin/reports" ? "text-white" : "text-amber-400")} />
-                        </div>
-                        <span className="font-medium">রিপোর্ট</span>
-                      </Link>
-                    )}
-
-                    <div className="h-px bg-white/10 mx-2 my-2" />
-
-                    {/* 6. Settings */}
-                    <MobileMenuGroup group={settingsGroup} currentPath={location.pathname} currentSearch={location.search} filterItem={filterItem} onClose={() => setMobileMenuOpen(false)} />
-
-                    <div className="pt-4 mt-4 border-t border-white/10">
-                      <Link to="/" onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all">
-                        <div className="p-2 rounded-lg bg-violet-800/40 shrink-0"><Home className="h-5 w-5" /></div>
-                        <span className="font-medium">হোম পেজে ফিরুন</span>
-                      </Link>
+                  {/* Mobile Menu - same structure as desktop */}
+                  <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-160px)] space-y-1 flex flex-col">
+                    <div className="flex-1 space-y-1">
+                      <MenuContent {...sharedMenuProps} onNavigate={() => setMobileMenuOpen(false)} isMobile />
                     </div>
+                    <MenuFooter currentPath={location.pathname} onNavigate={() => setMobileMenuOpen(false)} isMobile />
                   </div>
                 </SheetContent>
               </Sheet>
