@@ -377,15 +377,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <TooltipProvider delayDuration={300}>
       <SidebarProvider defaultOpen={true}>
-        <div className="min-h-screen flex w-full bg-gradient-to-br from-violet-900 via-purple-900 to-slate-900 relative overflow-hidden">
-          <AnimatedBackground />
+        <div className="min-h-screen flex w-full relative">
+          {/* Full-screen background */}
+          <div className="fixed inset-0 bg-gradient-to-br from-violet-900 via-purple-900 to-slate-900 z-0">
+            <AnimatedBackground />
+          </div>
 
           {/* Desktop Sidebar */}
           {!isMobileView && (
-          <Sidebar collapsible="icon" className="border-r-0 relative z-10 hidden md:flex">
-            <div className="h-full bg-gradient-to-b from-violet-950/95 via-purple-900/95 to-violet-950/95 backdrop-blur-md flex flex-col overflow-hidden">
+          <Sidebar collapsible="icon" className="border-r-0 z-20">
+            <div className="h-full bg-gradient-to-b from-violet-950/95 via-purple-900/95 to-violet-950/95 backdrop-blur-md flex flex-col">
               {/* Header with Toggle */}
-              <div className="p-2 group-data-[collapsible=icon]:px-1 border-b border-white/10">
+              <div className="p-3 group-data-[collapsible=icon]:p-2 border-b border-white/10">
                 <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
                   <SidebarTrigger className="p-2 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl shadow-lg shadow-violet-500/25 shrink-0 text-white hover:from-violet-500 hover:to-purple-700 transition-all h-9 w-9 [&>svg]:h-5 [&>svg]:w-5" />
                   <div className="group-data-[collapsible=icon]:hidden overflow-hidden">
@@ -395,7 +398,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </div>
               </div>
 
-              <SidebarContent className="px-1 group-data-[collapsible=open]:px-2 py-3 flex flex-col flex-1 overflow-hidden">
+              <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1 py-3 flex flex-col flex-1">
                 <SidebarGroup className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                   <MenuContent {...sharedMenuProps} />
                 </SidebarGroup>
@@ -415,7 +418,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   </button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] p-0 bg-gradient-to-b from-violet-950 via-purple-900 to-violet-950 border-r-0">
-                  {/* Mobile Header */}
                   <div className="p-4 border-b border-white/10">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -434,8 +436,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       </SheetClose>
                     </div>
                   </div>
-
-                  {/* Mobile Menu - same structure as desktop */}
                   <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-160px)] space-y-1 flex flex-col">
                     <div className="flex-1 space-y-1">
                       <MenuContent {...sharedMenuProps} onNavigate={() => setMobileMenuOpen(false)} isMobile />
@@ -448,7 +448,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <div className="h-6 w-px bg-border hidden md:block" />
               <span className="text-xs md:text-sm font-medium text-muted-foreground">{currentTitle}</span>
             </div>
-            <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-57px)] md:min-h-[calc(100vh-65px)] md:rounded-tl-2xl">
+            <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-57px)] md:min-h-[calc(100vh-65px)]">
               {children}
             </div>
           </main>
