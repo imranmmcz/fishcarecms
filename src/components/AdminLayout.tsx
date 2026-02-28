@@ -106,7 +106,7 @@ function UnifiedMenuGroup({
       <Tooltip>
         <TooltipTrigger asChild>
           <CollapsibleTrigger className={cn(
-            "flex items-center gap-3 w-full px-3 rounded-xl text-violet-300 hover:bg-white/8 hover:text-white transition-all duration-200 group/trigger cursor-pointer",
+            "flex items-center gap-3 w-full px-2 rounded-xl text-violet-300 hover:bg-white/8 hover:text-white transition-all duration-200 group/trigger cursor-pointer group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
             triggerPy
           )}>
             <div className={cn(
@@ -184,7 +184,7 @@ function UnifiedNavItem({
           to={to}
           onClick={onNavigate}
           className={cn(
-            "flex items-center gap-3 px-3 rounded-xl transition-all duration-200",
+            "flex items-center gap-3 px-2 rounded-xl transition-all duration-200 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
             py,
             isActive
               ? `${activeClass} text-white shadow-lg shadow-black/10 scale-[1.01]`
@@ -281,7 +281,7 @@ function MenuFooter({ currentPath, onNavigate, isMobile }: {
       <Tooltip>
         <TooltipTrigger asChild>
           <Link to="/admin/profile" onClick={onNavigate} className={cn(
-            "flex items-center gap-3 px-3 rounded-xl transition-all duration-200 hover:translate-x-0.5",
+            "flex items-center gap-3 px-2 rounded-xl transition-all duration-200 hover:translate-x-0.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
             py,
             currentPath === "/admin/profile"
               ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
@@ -298,7 +298,7 @@ function MenuFooter({ currentPath, onNavigate, isMobile }: {
       <Tooltip>
         <TooltipTrigger asChild>
           <Link to="/" onClick={onNavigate} className={cn(
-            "flex items-center gap-3 px-3 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all duration-200 hover:translate-x-0.5",
+            "flex items-center gap-3 px-2 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all duration-200 hover:translate-x-0.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
             py
           )}>
             <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><Home className={iconSize} /></div>
@@ -383,10 +383,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {/* Desktop Sidebar */}
           {!isMobileView && (
           <Sidebar collapsible="icon" className="border-r-0 relative z-10 hidden md:flex">
-            <div className="h-full bg-gradient-to-b from-violet-950/95 via-purple-900/95 to-violet-950/95 backdrop-blur-md flex flex-col">
+            <div className="h-full bg-gradient-to-b from-violet-950/95 via-purple-900/95 to-violet-950/95 backdrop-blur-md flex flex-col overflow-hidden">
               {/* Header with Toggle */}
-              <div className="p-4 border-b border-white/10">
-                <div className="flex items-center gap-3">
+              <div className="p-2 group-data-[collapsible=icon]:px-1 border-b border-white/10">
+                <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
                   <SidebarTrigger className="p-2 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl shadow-lg shadow-violet-500/25 shrink-0 text-white hover:from-violet-500 hover:to-purple-700 transition-all h-9 w-9 [&>svg]:h-5 [&>svg]:w-5" />
                   <div className="group-data-[collapsible=icon]:hidden overflow-hidden">
                     <h1 className="font-bold text-white text-base leading-tight truncate">{roleLabel}</h1>
@@ -395,7 +395,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </div>
               </div>
 
-              <SidebarContent className="px-2 py-3 flex flex-col flex-1 overflow-hidden">
+              <SidebarContent className="px-1 group-data-[collapsible=open]:px-2 py-3 flex flex-col flex-1 overflow-hidden">
                 <SidebarGroup className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                   <MenuContent {...sharedMenuProps} />
                 </SidebarGroup>
