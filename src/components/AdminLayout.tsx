@@ -1,22 +1,16 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu,
-  SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
-} from "@/components/ui/sidebar";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   LayoutDashboard, Users, Settings, BarChart3, Home, Shield, User, Package,
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
   Building2, FileText, CloudUpload, Palette, Store, ChevronDown, CreditCard,
   Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, type LucideIcon,
-  Menu, X, LogOut,
+  Menu, X, LogOut, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -80,12 +74,12 @@ const settingsGroup: MenuGroup = {
 
 const allGroups = [cmsGroup, ecommerceGroup, settingsGroup];
 
-// --- Unified Collapsible Menu Group (works for both desktop & mobile) ---
-function UnifiedMenuGroup({
-  group, currentPath, currentSearch, filterItem, onNavigate, isMobile,
+// --- Collapsible Menu Group ---
+function SidebarMenuGroup({
+  group, currentPath, currentSearch, filterItem, onNavigate, collapsed,
 }: {
   group: MenuGroup; currentPath: string; currentSearch: string;
-  filterItem: (item: SubMenuItem) => boolean; onNavigate?: () => void; isMobile?: boolean;
+  filterItem: (item: SubMenuItem) => boolean; onNavigate?: () => void; collapsed?: boolean;
 }) {
   const visibleItems = group.items.filter(filterItem);
   const currentFull = currentPath + currentSearch;
@@ -101,10 +95,33 @@ function UnifiedMenuGroup({
 
   if (visibleItems.length === 0) return null;
 
-  const iconSize = isMobile ? "h-5 w-5" : "h-[18px] w-[18px]";
-  const subIconSize = isMobile ? "h-4 w-4" : "h-3.5 w-3.5";
-  const triggerPy = isMobile ? "py-3" : "py-2.5";
-  const itemPy = isMobile ? "py-2.5" : "py-2";
+  if (collapsed) {
+    return (
+      <div className="space-y-1">
+        {visibleItems.map((item) => {
+          const isActive = item.url.includes("?")
+            ? currentFull === item.url
+            : currentPath === item.url && !currentSearch;
+          return (
+            <Link
+              key={item.url}
+              to={item.url}
+              onClick={onNavigate}
+              title={item.title}
+              className={cn(
+                "flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-200",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <item.icon className="h-[18px] w-[18px]" />
+            </Link>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -112,26 +129,22 @@ function UnifiedMenuGroup({
         <button
           type="button"
           className={cn(
-            "flex items-center gap-3 w-full px-2 rounded-xl text-violet-300 hover:bg-white/8 hover:text-white transition-all duration-200 cursor-pointer group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
-            triggerPy
+            "flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer",
+            hasActive
+              ? "text-foreground bg-muted/80"
+              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
           )}
         >
-          <div className={cn(
-            "p-1.5 rounded-lg transition-all duration-200 shrink-0",
-            hasActive ? "bg-white/20" : "bg-violet-800/40"
-          )}>
-            <group.icon className={cn(iconSize, "transition-colors", hasActive ? "text-white" : "text-violet-400")} />
-          </div>
-          <span className={cn("font-semibold text-sm flex-1 text-left", !isMobile && "group-data-[collapsible=icon]:hidden")}>{group.label}</span>
+          <group.icon className={cn("h-[18px] w-[18px] shrink-0", hasActive ? "text-primary" : "text-muted-foreground")} />
+          <span className="flex-1 text-left truncate">{group.label}</span>
           <ChevronDown className={cn(
-            "h-3.5 w-3.5 text-violet-400 transition-transform duration-300",
-            !isMobile && "group-data-[collapsible=icon]:hidden",
+            "h-3.5 w-3.5 transition-transform duration-200",
             open && "rotate-180"
           )} />
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200">
-        <div className={cn("border-l-2 border-white/10 mt-1 space-y-0.5", isMobile ? "ml-6 pl-3" : "ml-4 pl-3")}>
+        <div className="ml-4 pl-3 mt-1 space-y-0.5 border-l-2 border-border">
           {visibleItems.map((item) => {
             const isActive = item.url.includes("?")
               ? currentFull === item.url
@@ -142,14 +155,13 @@ function UnifiedMenuGroup({
                 to={item.url}
                 onClick={onNavigate}
                 className={cn(
-                  "flex items-center gap-2.5 px-3 rounded-lg text-sm transition-all duration-200",
-                  itemPy,
+                  "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-all duration-200",
                   isActive
-                    ? "bg-white/15 text-white font-medium shadow-sm"
-                    : "text-violet-300/80 hover:bg-white/5 hover:text-white hover:translate-x-0.5"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
               >
-                <item.icon className={cn(subIconSize, "shrink-0 transition-colors", isActive ? "text-white" : "text-violet-400/70")} />
+                <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "text-muted-foreground/70")} />
                 <span className="truncate">{item.title}</span>
               </Link>
             );
@@ -160,126 +172,45 @@ function UnifiedMenuGroup({
   );
 }
 
-// --- Unified Single Nav Item ---
-function UnifiedNavItem({
-  to, icon: Icon, label, isActive, activeClass, iconColorClass, onNavigate, isMobile,
+// --- Single Nav Item ---
+function SidebarNavItem({
+  to, icon: Icon, label, isActive, onNavigate, collapsed,
 }: {
   to: string; icon: LucideIcon; label: string; isActive: boolean;
-  activeClass: string; iconColorClass: string; onNavigate?: () => void; isMobile?: boolean;
+  onNavigate?: () => void; collapsed?: boolean;
 }) {
-  const iconSize = isMobile ? "h-5 w-5" : "h-[18px] w-[18px]";
-  const py = isMobile ? "py-3" : "py-2.5";
+  if (collapsed) {
+    return (
+      <Link
+        to={to}
+        onClick={onNavigate}
+        title={label}
+        className={cn(
+          "flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-200",
+          isActive
+            ? "bg-primary text-primary-foreground shadow-md"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}
+      >
+        <Icon className="h-[18px] w-[18px]" />
+      </Link>
+    );
+  }
 
   return (
     <Link
       to={to}
       onClick={onNavigate}
       className={cn(
-        "flex items-center gap-3 px-2 rounded-xl transition-all duration-200 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
-        py,
+        "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200",
         isActive
-          ? `${activeClass} text-white shadow-lg shadow-black/10 scale-[1.01]`
-          : "text-violet-200/90 hover:bg-white/10 hover:text-white hover:translate-x-0.5"
+          ? "bg-primary/10 text-primary font-semibold"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
       )}
     >
-      <div className={cn(
-        "p-1.5 rounded-lg shrink-0 transition-all duration-200",
-        isActive ? "bg-white/20" : "bg-violet-800/40"
-      )}>
-        <Icon className={cn(iconSize, "transition-colors", isActive ? "text-white" : iconColorClass)} />
-      </div>
-      <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>{label}</span>
+      <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+      <span className="truncate">{label}</span>
     </Link>
-  );
-}
-
-// --- Shared Menu Content (used by both desktop & mobile) ---
-function MenuContent({
-  currentPath, currentSearch, canSeeDashboard, canSeeReports,
-  isAdmin, userRole, hasPermission, filterItem, onNavigate, isMobile,
-}: {
-  currentPath: string; currentSearch: string;
-  canSeeDashboard: boolean; canSeeReports: boolean;
-  isAdmin: boolean; userRole: string | null;
-  hasPermission: (role: string, key: string) => boolean;
-  filterItem: (item: SubMenuItem) => boolean;
-  onNavigate?: () => void; isMobile?: boolean;
-}) {
-  return (
-    <>
-      {/* 1. Dashboard */}
-      {canSeeDashboard && (
-        <UnifiedNavItem to="/admin" icon={LayoutDashboard} label="ড্যাশবোর্ড"
-          isActive={currentPath === "/admin"}
-          activeClass="bg-gradient-to-r from-violet-500 to-purple-600"
-          iconColorClass="text-violet-400"
-          onNavigate={onNavigate} isMobile={isMobile} />
-      )}
-
-      <div className="h-px bg-white/8 mx-2 my-1.5" />
-
-      {/* 2. CMS */}
-      <UnifiedMenuGroup group={cmsGroup} currentPath={currentPath} currentSearch={currentSearch}
-        filterItem={filterItem} onNavigate={onNavigate} isMobile={isMobile} />
-
-      {/* 3. E-Commerce */}
-      <UnifiedMenuGroup group={ecommerceGroup} currentPath={currentPath} currentSearch={currentSearch}
-        filterItem={filterItem} onNavigate={onNavigate} isMobile={isMobile} />
-
-      {/* 4. POS */}
-      {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
-        <UnifiedNavItem to="/pos" icon={MonitorSmartphone} label="POS সিস্টেম"
-          isActive={currentPath.startsWith("/pos")}
-          activeClass="bg-gradient-to-r from-emerald-500 to-teal-600"
-          iconColorClass="text-emerald-400"
-          onNavigate={onNavigate} isMobile={isMobile} />
-      )}
-
-      {/* 5. Report */}
-      {canSeeReports && (
-        <UnifiedNavItem to="/admin/reports" icon={BarChart3} label="রিপোর্ট"
-          isActive={currentPath === "/admin/reports"}
-          activeClass="bg-gradient-to-r from-amber-500 to-orange-600"
-          iconColorClass="text-amber-400"
-          onNavigate={onNavigate} isMobile={isMobile} />
-      )}
-
-      <div className="h-px bg-white/8 mx-2 my-1.5" />
-
-      {/* 6. Settings */}
-      <UnifiedMenuGroup group={settingsGroup} currentPath={currentPath} currentSearch={currentSearch}
-        filterItem={filterItem} onNavigate={onNavigate} isMobile={isMobile} />
-    </>
-  );
-}
-
-// --- Footer Links (shared) ---
-function MenuFooter({ currentPath, onNavigate, isMobile }: {
-  currentPath: string; onNavigate?: () => void; isMobile?: boolean;
-}) {
-  const iconSize = isMobile ? "h-5 w-5" : "h-[18px] w-[18px]";
-  const py = isMobile ? "py-3" : "py-2.5";
-
-  return (
-    <div className="pt-3 border-t border-white/10 space-y-1">
-      <Link to="/admin/profile" onClick={onNavigate} className={cn(
-        "flex items-center gap-3 px-2 rounded-xl transition-all duration-200 hover:translate-x-0.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
-        py,
-        currentPath === "/admin/profile"
-          ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg"
-          : "text-violet-300 hover:bg-white/10 hover:text-white"
-      )}>
-        <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><User className={iconSize} /></div>
-        <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>প্রোফাইল</span>
-      </Link>
-      <Link to="/" onClick={onNavigate} className={cn(
-        "flex items-center gap-3 px-2 rounded-xl text-violet-300 hover:bg-white/10 hover:text-white transition-all duration-200 hover:translate-x-0.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
-        py
-      )}>
-        <div className="p-1.5 rounded-lg bg-violet-800/40 shrink-0"><Home className={iconSize} /></div>
-        <span className={cn("font-medium text-sm truncate", !isMobile && "group-data-[collapsible=icon]:hidden")}>হোম পেজে ফিরুন</span>
-      </Link>
-    </div>
   );
 }
 
@@ -293,6 +224,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { hasPermission } = useRolePermissions();
   const isMobileView = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const isStaff = userRole === "manager" || userRole === "cashier" || userRole === "delivery_staff";
   const canAccessAdmin = isAdmin || isStaff;
@@ -304,11 +236,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-900 via-purple-900 to-slate-900 relative overflow-hidden">
-        <AnimatedBackground />
-        <div className="relative z-10 text-white flex flex-col items-center gap-3">
-          <div className="h-8 w-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          <span className="text-sm text-violet-200">লোড হচ্ছে...</span>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <span className="text-sm text-muted-foreground">লোড হচ্ছে...</span>
         </div>
       </div>
     );
@@ -337,127 +268,217 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     : userRole === "cashier" ? "ক্যাশিয়ার"
     : "স্টাফ";
 
-  const sharedMenuProps = {
+  const menuProps = {
     currentPath: location.pathname,
     currentSearch: location.search,
-    canSeeDashboard, canSeeReports, isAdmin,
-    userRole, hasPermission, filterItem,
+    filterItem,
   };
 
-  return (
-    <TooltipProvider delayDuration={300}>
-      <SidebarProvider defaultOpen={true}>
-        <div className="min-h-screen flex w-full relative">
-          {/* Full-screen background */}
-          <div className="fixed inset-0 bg-gradient-to-br from-violet-900 via-purple-900 to-slate-900 z-0">
-            <AnimatedBackground />
-          </div>
+  const renderMenu = (onNavigate?: () => void, collapsed?: boolean) => (
+    <>
+      {canSeeDashboard && (
+        <SidebarNavItem to="/admin" icon={LayoutDashboard} label="ড্যাশবোর্ড"
+          isActive={location.pathname === "/admin"}
+          onNavigate={onNavigate} collapsed={collapsed} />
+      )}
 
-          {/* Desktop Sidebar */}
-          {!isMobileView && (
-          <Sidebar collapsible="icon" className="border-r-0 z-20">
-            <div className="h-full bg-gradient-to-b from-violet-950/95 via-purple-900/95 to-violet-950/95 backdrop-blur-md flex flex-col">
-              {/* Header with Toggle */}
-              <div className="p-3 group-data-[collapsible=icon]:p-2 border-b border-white/10">
-                <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-                  <SidebarTrigger className="p-2 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl shadow-lg shadow-violet-500/25 shrink-0 text-white hover:from-violet-500 hover:to-purple-700 transition-all h-9 w-9 [&>svg]:h-5 [&>svg]:w-5" />
-                  <div className="group-data-[collapsible=icon]:hidden overflow-hidden">
-                    <h1 className="font-bold text-white text-base leading-tight truncate">{roleLabel}</h1>
-                    <p className="text-[10px] text-violet-300/80">ম্যানেজমেন্ট প্যানেল</p>
-                  </div>
+      {!collapsed && <div className="h-px bg-border mx-2 my-2" />}
+
+      <SidebarMenuGroup group={cmsGroup} {...menuProps}
+        onNavigate={onNavigate} collapsed={collapsed} />
+
+      <SidebarMenuGroup group={ecommerceGroup} {...menuProps}
+        onNavigate={onNavigate} collapsed={collapsed} />
+
+      {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
+        <SidebarNavItem to="/pos" icon={MonitorSmartphone} label="POS সিস্টেম"
+          isActive={location.pathname.startsWith("/pos")}
+          onNavigate={onNavigate} collapsed={collapsed} />
+      )}
+
+      {canSeeReports && (
+        <SidebarNavItem to="/admin/reports" icon={BarChart3} label="রিপোর্ট"
+          isActive={location.pathname === "/admin/reports"}
+          onNavigate={onNavigate} collapsed={collapsed} />
+      )}
+
+      {!collapsed && <div className="h-px bg-border mx-2 my-2" />}
+
+      <SidebarMenuGroup group={settingsGroup} {...menuProps}
+        onNavigate={onNavigate} collapsed={collapsed} />
+    </>
+  );
+
+  const renderFooter = (onNavigate?: () => void, collapsed?: boolean) => (
+    <div className={cn("border-t border-border pt-3 space-y-1", collapsed && "flex flex-col items-center")}>
+      <Link to="/admin/profile" onClick={onNavigate} title="প্রোফাইল"
+        className={cn(
+          "flex items-center rounded-xl transition-all duration-200",
+          collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2",
+          location.pathname === "/admin/profile"
+            ? collapsed ? "bg-primary text-primary-foreground shadow-md" : "bg-primary/10 text-primary font-semibold"
+            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+        )}>
+        <User className="h-[18px] w-[18px] shrink-0" />
+        {!collapsed && <span className="text-sm truncate">প্রোফাইল</span>}
+      </Link>
+      <Link to="/" onClick={onNavigate} title="হোম পেজে ফিরুন"
+        className={cn(
+          "flex items-center rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all duration-200",
+          collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2",
+        )}>
+        <Home className="h-[18px] w-[18px] shrink-0" />
+        {!collapsed && <span className="text-sm truncate">হোম পেজে ফিরুন</span>}
+      </Link>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen flex w-full bg-muted/30">
+      {/* ===== Desktop Sidebar ===== */}
+      {!isMobileView && (
+        <aside
+          className={cn(
+            "fixed inset-y-0 left-0 z-30 flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out",
+            sidebarCollapsed ? "w-[68px]" : "w-[260px]"
+          )}
+        >
+          {/* Sidebar Header */}
+          <div className={cn(
+            "flex items-center border-b border-border shrink-0",
+            sidebarCollapsed ? "justify-center p-3" : "gap-3 px-4 py-3"
+          )}>
+            {!sidebarCollapsed && (
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                <div className="p-2 bg-primary/10 rounded-xl shrink-0">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="font-bold text-foreground text-sm leading-tight truncate">{roleLabel}</h1>
+                  <p className="text-[10px] text-muted-foreground leading-tight">ম্যানেজমেন্ট প্যানেল</p>
                 </div>
               </div>
+            )}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className={cn(
+                "p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground shrink-0",
+                sidebarCollapsed && "mx-auto"
+              )}
+            >
+              {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </button>
+          </div>
 
-              <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1 py-3 flex flex-col flex-1">
-                <SidebarGroup className="flex-1 overflow-y-auto overflow-x-hidden space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                  <MenuContent {...sharedMenuProps} />
-                </SidebarGroup>
-                <MenuFooter currentPath={location.pathname} />
-              </SidebarContent>
-            </div>
-          </Sidebar>
-          )}
+          {/* Sidebar Navigation */}
+          <nav className={cn(
+            "flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent",
+            sidebarCollapsed ? "px-1.5" : "px-2.5"
+          )}>
+            {renderMenu(undefined, sidebarCollapsed)}
+          </nav>
 
-          <main className="flex-1 overflow-auto relative z-10">
-            <div className="p-3 md:p-4 border-b bg-card/80 backdrop-blur-sm flex items-center gap-3 md:gap-4 sticky top-0 z-20">
-              {/* Mobile hamburger */}
+          {/* Sidebar Footer */}
+          <div className={cn("px-2.5 pb-3", sidebarCollapsed && "px-1.5")}>
+            {renderFooter(undefined, sidebarCollapsed)}
+          </div>
+        </aside>
+      )}
+
+      {/* ===== Main Content ===== */}
+      <div className={cn(
+        "flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out",
+        !isMobileView && (sidebarCollapsed ? "ml-[68px]" : "ml-[260px]")
+      )}>
+        {/* Top Bar */}
+        <header className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b border-border">
+          <div className="flex items-center gap-3 px-4 py-2.5">
+            {/* Mobile hamburger */}
+            {isMobileView && (
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild className="md:hidden">
-                  <button className="p-2 rounded-lg hover:bg-accent transition-colors">
+                <SheetTrigger asChild>
+                  <button className="p-2 rounded-lg hover:bg-muted transition-colors">
                     <Menu className="h-5 w-5 text-foreground" />
                   </button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] p-0 bg-gradient-to-b from-violet-950 via-purple-900 to-violet-950 border-r-0">
-                  <div className="p-4 border-b border-white/10">
+                <SheetContent side="left" className="w-[280px] p-0 bg-card border-r border-border">
+                  <div className="p-4 border-b border-border">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-gradient-to-br from-violet-400 to-purple-600 rounded-xl shadow-lg shadow-violet-500/25">
-                          <Shield className="h-6 w-6 text-white" />
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-primary/10 rounded-xl">
+                          <Shield className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h1 className="font-bold text-white text-lg">{roleLabel}</h1>
-                          <p className="text-xs text-violet-300/80">ম্যানেজমেন্ট প্যানেল</p>
+                          <h1 className="font-bold text-foreground text-base">{roleLabel}</h1>
+                          <p className="text-[10px] text-muted-foreground">ম্যানেজমেন্ট প্যানেল</p>
                         </div>
                       </div>
                       <SheetClose asChild>
-                        <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                          <X className="h-5 w-5 text-violet-300" />
+                        <button className="p-2 rounded-lg hover:bg-muted transition-colors">
+                          <X className="h-5 w-5 text-muted-foreground" />
                         </button>
                       </SheetClose>
                     </div>
                   </div>
-                  <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-160px)] space-y-1 flex flex-col">
-                    <div className="flex-1 space-y-1">
-                      <MenuContent {...sharedMenuProps} onNavigate={() => setMobileMenuOpen(false)} isMobile />
+                  <div className="px-2.5 py-3 overflow-y-auto max-h-[calc(100vh-140px)] flex flex-col">
+                    <nav className="flex-1 space-y-1">
+                      {renderMenu(() => setMobileMenuOpen(false), false)}
+                    </nav>
+                    <div className="mt-3">
+                      {renderFooter(() => setMobileMenuOpen(false), false)}
                     </div>
-                    <MenuFooter currentPath={location.pathname} onNavigate={() => setMobileMenuOpen(false)} isMobile />
                   </div>
                 </SheetContent>
               </Sheet>
+            )}
 
-              <div className="h-6 w-px bg-border hidden md:block" />
-              <span className="text-xs md:text-sm font-medium text-muted-foreground">{currentTitle}</span>
-              <div className="flex-1" />
-              {/* Profile Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-accent transition-colors">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
-                        {(user?.email?.slice(0, 2) || "AD").toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden md:inline text-sm font-medium text-foreground truncate max-w-[120px]">
-                      {(user as any)?.full_name || user?.email?.split("@")[0] || "Admin"}
-                    </span>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel className="text-xs text-muted-foreground truncate">{user?.email}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
-                      <User className="h-4 w-4" /> প্রোফাইল
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer">
-                      <Settings className="h-4 w-4" /> সেটিংস
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
-                    <LogOut className="h-4 w-4" /> লগআউট
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-medium text-foreground truncate">{currentTitle}</span>
             </div>
-            <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-57px)] md:min-h-[calc(100vh-65px)]">
-              {children}
-            </div>
-          </main>
-        </div>
-      </SidebarProvider>
-    </TooltipProvider>
+
+            <div className="flex-1" />
+
+            {/* Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted transition-colors">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                      {(user?.email?.slice(0, 2) || "AD").toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden md:inline text-sm font-medium text-foreground truncate max-w-[120px]">
+                    {(user as any)?.full_name || user?.email?.split("@")[0] || "Admin"}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel className="text-xs text-muted-foreground truncate">{user?.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
+                    <User className="h-4 w-4" /> প্রোফাইল
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" /> সেটিংস
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
+                  <LogOut className="h-4 w-4" /> লগআউট
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 p-4 md:p-6">
+          {children}
+        </main>
+      </div>
+    </div>
   );
 }

@@ -3,7 +3,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { ShoppingCart, Package, TrendingUp, TrendingDown, Users, Clock, CheckCircle, Truck, XCircle, DollarSign, AlertTriangle, User, MapPin, Phone, Mail, CalendarDays, Search, Waves, Fish, Filter, CalendarIcon } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -66,7 +66,7 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "বাতিল",
 };
 
-const CHART_COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
+const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(186 100% 45%)", "hsl(35 95% 55%)", "hsl(0 84% 60%)"];
 
 interface UserProfile {
   id: string;
@@ -107,7 +107,6 @@ const AdminDashboard = () => {
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
 
-  // Date filter state
   const [dateFilter, setDateFilter] = useState<DateFilterType>("today");
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
 
@@ -154,8 +153,6 @@ const AdminDashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     try {
       const { start, end } = getDateRange();
-
-      // Build filtered orders query
       let filteredQuery = supabase.from("orders").select("total_amount, status, created_at");
       if (start) filteredQuery = filteredQuery.gte("created_at", start);
       if (end) filteredQuery = filteredQuery.lte("created_at", end);
@@ -185,14 +182,10 @@ const AdminDashboard = () => {
       const totalSales = orders.reduce((s, o) => s + Number(o.total_amount), 0);
 
       setStats({
-        todayOrders: orders.length,
-        todaySales: totalSales,
-        monthOrders: orders.length,
-        monthSales: totalSales,
-        totalOrders: orders.length,
-        totalSales,
-        totalProducts: productCount || 0,
-        totalUsers: userCount || 0,
+        todayOrders: orders.length, todaySales: totalSales,
+        monthOrders: orders.length, monthSales: totalSales,
+        totalOrders: orders.length, totalSales,
+        totalProducts: productCount || 0, totalUsers: userCount || 0,
         lowStockProducts: lowStock?.length || 0,
         pendingOrders: byStatus["pending"] || 0,
         processingOrders: byStatus["processing"] || 0,
@@ -200,47 +193,33 @@ const AdminDashboard = () => {
         deliveredOrders: byStatus["delivered"] || 0,
         cancelledOrders: byStatus["cancelled"] || 0,
       });
-
       setRecentOrders(recent || []);
 
-      // Daily sales chart from filtered data
       const dailyMap: Record<string, number> = {};
       orders.forEach(o => {
         const dateKey = format(new Date(o.created_at), "dd/MM");
         dailyMap[dateKey] = (dailyMap[dateKey] || 0) + Number(o.total_amount);
       });
-      setDailySalesData(
-        Object.entries(dailyMap).map(([day, sales]) => ({ day, sales }))
-      );
-
-      setStatusDistribution(
-        Object.entries(byStatus).map(([name, value]) => ({
-          name: STATUS_LABELS[name] || name,
-          value,
-        }))
-      );
+      setDailySalesData(Object.entries(dailyMap).map(([day, sales]) => ({ day, sales })));
+      setStatusDistribution(Object.entries(byStatus).map(([name, value]) => ({ name: STATUS_LABELS[name] || name, value })));
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {
       setIsLoading(false);
     }
   }, [getDateRange]);
-  // Fetch all users for dropdown
+
   const fetchUsers = useCallback(async () => {
     const { data } = await supabase.from("profiles").select("*").order("full_name");
     setAllUsers(data || []);
   }, []);
 
-  // Fetch selected user's dashboard data
   const fetchUserDashboard = useCallback(async (userId: string) => {
     setIsUserLoading(true);
     try {
       const [
-        { data: userOrders },
-        { data: roleData },
-        { data: pondsData },
-        { data: incomesData },
-        { data: expensesData },
+        { data: userOrders }, { data: roleData }, { data: pondsData },
+        { data: incomesData }, { data: expensesData },
       ] = await Promise.all([
         supabase.from("orders").select("id, order_number, customer_name, total_amount, status, payment_method, payment_status, created_at").eq("user_id", userId).order("created_at", { ascending: false }),
         supabase.from("user_roles").select("role").eq("user_id", userId).limit(1),
@@ -248,15 +227,10 @@ const AdminDashboard = () => {
         supabase.from("farmer_incomes").select("amount").eq("user_id", userId),
         supabase.from("farmer_expenses").select("amount").eq("user_id", userId),
       ]);
-
       const orders = userOrders || [];
       const byStatus: Record<string, number> = {};
       orders.forEach(o => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
-
       const ponds = pondsData || [];
-      const incomes = incomesData || [];
-      const expenses = expensesData || [];
-
       setSelectedUserData({
         totalOrders: orders.length,
         totalSpent: orders.reduce((s, o) => s + Number(o.total_amount), 0),
@@ -266,8 +240,8 @@ const AdminDashboard = () => {
         role: roleData?.[0]?.role || "user",
         pondCount: ponds.length,
         activePondCount: ponds.filter(p => p.status === "active").length,
-        totalIncome: incomes.reduce((s, i) => s + Number(i.amount), 0),
-        totalExpense: expenses.reduce((s, e) => s + Number(e.amount), 0),
+        totalIncome: (incomesData || []).reduce((s, i) => s + Number(i.amount), 0),
+        totalExpense: (expensesData || []).reduce((s, e) => s + Number(e.amount), 0),
         totalFishCount: ponds.reduce((s, p) => s + (p.fish_count || 0), 0),
       });
     } catch (err) {
@@ -280,7 +254,6 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchDashboardData();
     fetchUsers();
-
     const channel = supabase
       .channel("admin-dashboard-orders")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
@@ -288,7 +261,6 @@ const AdminDashboard = () => {
         if (selectedUserId) fetchUserDashboard(selectedUserId);
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [fetchDashboardData, fetchUsers, fetchUserDashboard, selectedUserId]);
 
@@ -316,21 +288,6 @@ const AdminDashboard = () => {
 
   const { label: filterLabel } = getDateRange();
 
-  const statCards = [
-    { title: `বিক্রয় (${filterLabel})`, value: `৳${(stats?.totalSales || 0).toLocaleString("bn-BD")}`, sub: `${(stats?.totalOrders || 0).toLocaleString("bn-BD")} অর্ডার`, icon: DollarSign, color: "from-emerald-500 to-green-600", bg: "bg-emerald-500/10" },
-    { title: "মোট অর্ডার", value: (stats?.totalOrders || 0).toLocaleString("bn-BD"), sub: filterLabel, icon: ShoppingCart, color: "from-violet-500 to-purple-600", bg: "bg-violet-500/10" },
-    { title: "মোট পণ্য", value: (stats?.totalProducts || 0).toLocaleString("bn-BD"), sub: `${(stats?.lowStockProducts || 0).toLocaleString("bn-BD")} কম স্টক`, icon: Package, color: "from-cyan-500 to-blue-600", bg: "bg-cyan-500/10" },
-    { title: "মোট ব্যবহারকারী", value: (stats?.totalUsers || 0).toLocaleString("bn-BD"), sub: "নিবন্ধিত", icon: Users, color: "from-orange-500 to-amber-600", bg: "bg-orange-500/10" },
-  ];
-
-  const orderStatusCards = [
-    { label: "পেন্ডিং", count: stats?.pendingOrders || 0, icon: Clock, color: "text-yellow-600" },
-    { label: "প্রসেসিং", count: stats?.processingOrders || 0, icon: Package, color: "text-blue-600" },
-    { label: "শিপড", count: stats?.shippedOrders || 0, icon: Truck, color: "text-purple-600" },
-    { label: "ডেলিভারড", count: stats?.deliveredOrders || 0, icon: CheckCircle, color: "text-green-600" },
-    { label: "বাতিল", count: stats?.cancelledOrders || 0, icon: XCircle, color: "text-red-600" },
-  ];
-
   const filterButtons: { key: DateFilterType; label: string }[] = [
     { key: "today", label: "আজ" },
     { key: "yesterday", label: "গতকাল" },
@@ -340,181 +297,235 @@ const AdminDashboard = () => {
     { key: "all", label: "সব" },
   ];
 
+  const orderStatusCards = [
+    { label: "পেন্ডিং", count: stats?.pendingOrders || 0, icon: Clock, cls: "text-yellow-600 bg-yellow-500/10" },
+    { label: "প্রসেসিং", count: stats?.processingOrders || 0, icon: Package, cls: "text-blue-600 bg-blue-500/10" },
+    { label: "শিপড", count: stats?.shippedOrders || 0, icon: Truck, cls: "text-purple-600 bg-purple-500/10" },
+    { label: "ডেলিভারড", count: stats?.deliveredOrders || 0, icon: CheckCircle, cls: "text-green-600 bg-green-500/10" },
+    { label: "বাতিল", count: stats?.cancelledOrders || 0, icon: XCircle, cls: "text-red-600 bg-red-500/10" },
+  ];
+
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">অ্যাডমিন ড্যাশবোর্ড</h1>
-            <p className="text-muted-foreground">রিয়েলটাইম সেলস ও অর্ডার পরিসংখ্যান</p>
-          </div>
+      <div className="space-y-6 max-w-[1400px] mx-auto">
+        {/* Page Header */}
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">অ্যাডমিন ড্যাশবোর্ড</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">রিয়েলটাইম সেলস ও অর্ডার পরিসংখ্যান</p>
         </div>
 
-        {/* Date Filter Bar */}
-        <Card className="border-0 bg-muted/30">
-          <CardContent className="py-3 px-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
-              {filterButtons.map(f => (
-                <Button
-                  key={f.key}
-                  variant={dateFilter === f.key ? "default" : "outline"}
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={() => setDateFilter(f.key)}
-                >
-                  {f.label}
-                </Button>
-              ))}
-              {/* Custom Date Range */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={dateFilter === "custom" ? "default" : "outline"}
-                    size="sm"
-                    className="h-8 text-xs gap-1.5"
-                    onClick={() => setDateFilter("custom")}
-                  >
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {dateFilter === "custom" && customRange.from
-                      ? `${format(customRange.from, "dd/MM")}${customRange.to ? ` - ${format(customRange.to, "dd/MM")}` : ""}`
-                      : "কাস্টম তারিখ"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="range"
-                    selected={customRange.from ? { from: customRange.from, to: customRange.to } : undefined}
-                    onSelect={(range) => {
-                      setCustomRange({ from: range?.from, to: range?.to });
-                      setDateFilter("custom");
-                    }}
-                    numberOfMonths={1}
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-              {dateFilter !== "today" && (
-                <span className="text-xs text-muted-foreground ml-2">📊 {filterLabel}</span>
+        {/* Date Filter */}
+        <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-muted/50 rounded-xl w-fit">
+          {filterButtons.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setDateFilter(f.key)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
+                dateFilter === f.key
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               )}
-            </div>
-          </CardContent>
-        </Card>
+            >
+              {f.label}
+            </button>
+          ))}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                onClick={() => setDateFilter("custom")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
+                  dateFilter === "custom"
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <CalendarIcon className="h-3 w-3" />
+                {dateFilter === "custom" && customRange.from
+                  ? `${format(customRange.from, "dd/MM")}${customRange.to ? ` - ${format(customRange.to, "dd/MM")}` : ""}`
+                  : "কাস্টম"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="range"
+                selected={customRange.from ? { from: customRange.from, to: customRange.to } : undefined}
+                onSelect={(range) => {
+                  setCustomRange({ from: range?.from, to: range?.to });
+                  setDateFilter("custom");
+                }}
+                numberOfMonths={1}
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
 
-        {/* Main Stats */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {statCards.map((s, i) => (
-            <Card key={i} className={`${s.bg} border-0`}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{s.title}</p>
-                    <p className="text-2xl font-bold">{s.value}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{s.sub}</p>
-                  </div>
-                  <div className={`p-3 rounded-xl bg-gradient-to-br ${s.color}`}>
-                    <s.icon className="h-6 w-6 text-white" />
-                  </div>
+        {/* Stat Cards */}
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          {/* Sales */}
+          <Card className="border border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium">বিক্রয় ({filterLabel})</p>
+                  <p className="text-xl font-bold text-foreground">৳{(stats?.totalSales || 0).toLocaleString("bn-BD")}</p>
+                  <p className="text-[11px] text-muted-foreground">{(stats?.totalOrders || 0).toLocaleString("bn-BD")} অর্ডার</p>
+                </div>
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <DollarSign className="h-4 w-4 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Orders */}
+          <Card className="border border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium">মোট অর্ডার</p>
+                  <p className="text-xl font-bold text-foreground">{(stats?.totalOrders || 0).toLocaleString("bn-BD")}</p>
+                  <p className="text-[11px] text-muted-foreground">{filterLabel}</p>
+                </div>
+                <div className="p-2 rounded-lg bg-secondary/10">
+                  <ShoppingCart className="h-4 w-4 text-secondary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Products */}
+          <Card className="border border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium">মোট পণ্য</p>
+                  <p className="text-xl font-bold text-foreground">{(stats?.totalProducts || 0).toLocaleString("bn-BD")}</p>
+                  <p className="text-[11px] text-muted-foreground">{(stats?.lowStockProducts || 0).toLocaleString("bn-BD")} কম স্টক</p>
+                </div>
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <Package className="h-4 w-4 text-accent" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Users */}
+          <Card className="border border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium">ব্যবহারকারী</p>
+                  <p className="text-xl font-bold text-foreground">{(stats?.totalUsers || 0).toLocaleString("bn-BD")}</p>
+                  <p className="text-[11px] text-muted-foreground">নিবন্ধিত</p>
+                </div>
+                <div className="p-2 rounded-lg bg-muted">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Order Status Strip */}
+        <div className="grid grid-cols-5 gap-3">
+          {orderStatusCards.map((s, i) => (
+            <Card key={i} className="border border-border/50">
+              <CardContent className="p-3 flex items-center gap-3">
+                <div className={cn("p-2 rounded-lg shrink-0", s.cls.split(" ").slice(1).join(" "))}>
+                  <s.icon className={cn("h-4 w-4", s.cls.split(" ")[0])} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold leading-tight">{s.count.toLocaleString("bn-BD")}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{s.label}</p>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Order Status Summary */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5 text-primary" />
-              অর্ডার স্ট্যাটাস সারাংশ
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {orderStatusCards.map((s, i) => (
-                <div key={i} className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
-                  <s.icon className={`h-6 w-6 ${s.color}`} />
-                  <span className="text-2xl font-bold">{s.count.toLocaleString("bn-BD")}</span>
-                  <span className="text-xs text-muted-foreground">{s.label}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Low Stock Alert */}
+        {(stats?.lowStockProducts || 0) > 0 && (
+          <div className="flex items-center gap-3 p-3 rounded-xl border border-yellow-300/50 bg-yellow-50/50 dark:bg-yellow-500/5">
+            <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0" />
+            <p className="text-sm text-yellow-800 dark:text-yellow-400">
+              <span className="font-semibold">{(stats?.lowStockProducts || 0).toLocaleString("bn-BD")}টি পণ্যের</span> স্টক ১০-এর কম। ইনভেন্টরি চেক করুন।
+            </p>
+          </div>
+        )}
 
         {/* Charts */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">বিক্রয় চার্ট ({filterLabel})</CardTitle>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="border border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">বিক্রয় চার্ট ({filterLabel})</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={dailySalesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" fontSize={12} />
-                  <YAxis fontSize={12} />
-                  <Tooltip formatter={(v: number) => [`৳${v.toLocaleString()}`, "বিক্রয়"]} />
-                  <Line type="monotone" dataKey="sales" stroke="#8b5cf6" strokeWidth={2} dot={false} />
-                </LineChart>
+            <CardContent className="pt-0">
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={dailySalesData}>
+                  <defs>
+                    <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(186 100% 35%)" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="hsl(186 100% 35%)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="day" fontSize={11} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis fontSize={11} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <Tooltip
+                    formatter={(v: number) => [`৳${v.toLocaleString()}`, "বিক্রয়"]}
+                    contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }}
+                  />
+                  <Area type="monotone" dataKey="sales" stroke="hsl(186 100% 35%)" strokeWidth={2} fill="url(#salesGrad)" />
+                </AreaChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">অর্ডার স্ট্যাটাস বিতরণ</CardTitle>
+          <Card className="border border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">অর্ডার স্ট্যাটাস বিতরণ</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
+            <CardContent className="pt-0">
+              <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
-                  <Pie data={statusDistribution} cx="50%" cy="50%" innerRadius={55} outerRadius={95} paddingAngle={4} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                  <Pie data={statusDistribution} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
                     {statusDistribution.map((_, i) => (
                       <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
 
-        {/* Low Stock Alert */}
-        {(stats?.lowStockProducts || 0) > 0 && (
-          <Card className="border-yellow-300 bg-yellow-500/5">
-            <CardContent className="pt-6 flex items-center gap-3">
-              <AlertTriangle className="h-6 w-6 text-yellow-600 shrink-0" />
-              <div>
-                <p className="font-semibold text-yellow-800">{(stats?.lowStockProducts || 0).toLocaleString("bn-BD")}টি পণ্যের স্টক কম!</p>
-                <p className="text-sm text-yellow-700">এই পণ্যগুলোর স্টক ১০-এর কম। ইনভেন্টরি থেকে চেক করুন।</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* User Dashboard Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+        <Card className="border border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
               ব্যবহারকারী ড্যাশবোর্ড
             </CardTitle>
-            <CardDescription>ব্যবহারকারী নির্বাচন করে তার সম্পূর্ণ তথ্য দেখুন</CardDescription>
+            <CardDescription className="text-xs">ব্যবহারকারী নির্বাচন করে তার সম্পূর্ণ তথ্য দেখুন</CardDescription>
             <div className="pt-2 flex flex-col sm:flex-row gap-2 max-w-lg">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
-                  placeholder="নাম, মোবাইল বা ইমেইল দিয়ে খুঁজুন..."
+                  placeholder="নাম, মোবাইল বা ইমেইল..."
                   value={userSearchQuery}
                   onChange={e => setUserSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 h-9 text-sm"
                   maxLength={100}
                 />
               </div>
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger className="sm:w-64">
-                  <SelectValue placeholder="ব্যবহারকারী নির্বাচন করুন" />
+                <SelectTrigger className="sm:w-56 h-9 text-sm">
+                  <SelectValue placeholder="ব্যবহারকারী নির্বাচন" />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredUsers.length > 0 ? filteredUsers.map(u => (
@@ -535,86 +546,69 @@ const AdminDashboard = () => {
                 <Skeleton className="h-40 w-full" />
               </div>
             ) : selectedUserData ? (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {/* User Info */}
                 {(() => {
                   const user = allUsers.find(u => u.user_id === selectedUserId);
                   if (!user) return null;
                   return (
-                    <div className="flex flex-wrap gap-4 p-4 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{user.full_name || "N/A"}</span></div>
-                      <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /><span>{user.email || "N/A"}</span></div>
-                      <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /><span>{user.mobile || "N/A"}</span></div>
-                      <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" /><span>{[user.village, user.upazila, user.district, user.division].filter(Boolean).join(", ") || "N/A"}</span></div>
-                      <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-muted-foreground" /><span>{new Date(user.created_at).toLocaleDateString("bn-BD")}</span></div>
-                      <Badge variant="outline">{selectedUserData.role === "admin" ? "অ্যাডমিন" : selectedUserData.role === "farmer" ? "কৃষক" : selectedUserData.role === "customer" ? "কাস্টমার" : "ইউজার"}</Badge>
+                    <div className="flex flex-wrap gap-x-5 gap-y-2 p-3 rounded-lg bg-muted/50 text-sm">
+                      <div className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-muted-foreground" /><span className="font-medium">{user.full_name || "N/A"}</span></div>
+                      <div className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 text-muted-foreground" /><span>{user.email || "N/A"}</span></div>
+                      <div className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-muted-foreground" /><span>{user.mobile || "N/A"}</span></div>
+                      <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /><span>{[user.village, user.upazila, user.district, user.division].filter(Boolean).join(", ") || "N/A"}</span></div>
+                      <Badge variant="outline" className="text-xs h-6">{selectedUserData.role === "admin" ? "অ্যাডমিন" : selectedUserData.role === "farmer" ? "কৃষক" : selectedUserData.role === "customer" ? "কাস্টমার" : "ইউজার"}</Badge>
                     </div>
                   );
                 })()}
 
-                {/* User Stats */}
+                {/* User Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
-                    <Waves className="h-5 w-5 text-primary" />
-                    <span className="text-xl font-bold">{selectedUserData.pondCount.toLocaleString("bn-BD")}</span>
-                    <span className="text-xs text-muted-foreground">মোট পুকুর ({selectedUserData.activePondCount.toLocaleString("bn-BD")} চলমান)</span>
-                  </div>
-                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
-                    <Fish className="h-5 w-5 text-primary" />
-                    <span className="text-xl font-bold">{selectedUserData.totalFishCount.toLocaleString("bn-BD")}</span>
-                    <span className="text-xs text-muted-foreground">মোট মাছ</span>
-                  </div>
-                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
-                    <TrendingUp className="h-5 w-5 text-green-600" />
-                    <span className="text-xl font-bold text-green-600">৳{selectedUserData.totalIncome.toLocaleString("bn-BD")}</span>
-                    <span className="text-xs text-muted-foreground">মোট আয়</span>
-                  </div>
-                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
-                    <TrendingDown className="h-5 w-5 text-destructive" />
-                    <span className="text-xl font-bold text-destructive">৳{selectedUserData.totalExpense.toLocaleString("bn-BD")}</span>
-                    <span className="text-xs text-muted-foreground">মোট ব্যয়</span>
-                  </div>
+                  {[
+                    { icon: Waves, label: `মোট পুকুর (${selectedUserData.activePondCount.toLocaleString("bn-BD")} চলমান)`, value: selectedUserData.pondCount.toLocaleString("bn-BD"), cls: "text-primary" },
+                    { icon: Fish, label: "মোট মাছ", value: selectedUserData.totalFishCount.toLocaleString("bn-BD"), cls: "text-primary" },
+                    { icon: TrendingUp, label: "মোট আয়", value: `৳${selectedUserData.totalIncome.toLocaleString("bn-BD")}`, cls: "text-green-600" },
+                    { icon: TrendingDown, label: "মোট ব্যয়", value: `৳${selectedUserData.totalExpense.toLocaleString("bn-BD")}`, cls: "text-destructive" },
+                  ].map((s, i) => (
+                    <div key={i} className="flex flex-col items-center p-3 rounded-lg bg-muted/40 gap-1 text-center">
+                      <s.icon className={cn("h-4 w-4", s.cls)} />
+                      <span className={cn("text-lg font-bold", s.cls)}>{s.value}</span>
+                      <span className="text-[11px] text-muted-foreground">{s.label}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Profit/Loss */}
-                <div className="p-3 rounded-lg bg-muted/50 text-center">
-                  <span className="text-sm text-muted-foreground">নিট লাভ/ক্ষতি: </span>
-                  <span className={`text-lg font-bold ${(selectedUserData.totalIncome - selectedUserData.totalExpense) >= 0 ? "text-green-600" : "text-destructive"}`}>
+                <div className="p-3 rounded-lg bg-muted/40 text-center">
+                  <span className="text-xs text-muted-foreground">নিট লাভ/ক্ষতি: </span>
+                  <span className={cn("text-base font-bold", (selectedUserData.totalIncome - selectedUserData.totalExpense) >= 0 ? "text-green-600" : "text-destructive")}>
                     ৳{(selectedUserData.totalIncome - selectedUserData.totalExpense).toLocaleString("bn-BD")}
                   </span>
                 </div>
 
                 {/* Order Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
-                    <ShoppingCart className="h-5 w-5 text-primary" />
-                    <span className="text-xl font-bold">{selectedUserData.totalOrders.toLocaleString("bn-BD")}</span>
-                    <span className="text-xs text-muted-foreground">মোট অর্ডার</span>
-                  </div>
-                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
-                    <DollarSign className="h-5 w-5 text-primary" />
-                    <span className="text-xl font-bold">৳{selectedUserData.totalSpent.toLocaleString("bn-BD")}</span>
-                    <span className="text-xs text-muted-foreground">মোট ক্রয়</span>
-                  </div>
-                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
-                    <Clock className="h-5 w-5 text-yellow-600" />
-                    <span className="text-xl font-bold">{selectedUserData.pendingOrders.toLocaleString("bn-BD")}</span>
-                    <span className="text-xs text-muted-foreground">পেন্ডিং</span>
-                  </div>
-                  <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 gap-1">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <span className="text-xl font-bold">{selectedUserData.deliveredOrders.toLocaleString("bn-BD")}</span>
-                    <span className="text-xs text-muted-foreground">ডেলিভারড</span>
-                  </div>
+                  {[
+                    { icon: ShoppingCart, label: "মোট অর্ডার", value: selectedUserData.totalOrders.toLocaleString("bn-BD"), cls: "text-primary" },
+                    { icon: DollarSign, label: "মোট ক্রয়", value: `৳${selectedUserData.totalSpent.toLocaleString("bn-BD")}`, cls: "text-primary" },
+                    { icon: Clock, label: "পেন্ডিং", value: selectedUserData.pendingOrders.toLocaleString("bn-BD"), cls: "text-yellow-600" },
+                    { icon: CheckCircle, label: "ডেলিভারড", value: selectedUserData.deliveredOrders.toLocaleString("bn-BD"), cls: "text-green-600" },
+                  ].map((s, i) => (
+                    <div key={i} className="flex flex-col items-center p-3 rounded-lg bg-muted/40 gap-1 text-center">
+                      <s.icon className={cn("h-4 w-4", s.cls)} />
+                      <span className="text-lg font-bold">{s.value}</span>
+                      <span className="text-[11px] text-muted-foreground">{s.label}</span>
+                    </div>
+                  ))}
                 </div>
 
-                {/* User Orders */}
+                {/* User Orders Table */}
                 {selectedUserData.orders.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <p className="text-sm font-medium mb-2 text-muted-foreground">সর্বশেষ অর্ডারসমূহ</p>
+                    <p className="text-xs font-medium mb-2 text-muted-foreground">সর্বশেষ অর্ডারসমূহ</p>
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b text-left text-muted-foreground">
+                        <tr className="border-b text-left text-xs text-muted-foreground">
                           <th className="pb-2 font-medium">অর্ডার নং</th>
                           <th className="pb-2 font-medium">পরিমাণ</th>
                           <th className="pb-2 font-medium">স্ট্যাটাস</th>
@@ -625,9 +619,9 @@ const AdminDashboard = () => {
                         {selectedUserData.orders.map(order => (
                           <tr key={order.id} className="border-b last:border-0 hover:bg-muted/30">
                             <td className="py-2 font-mono text-xs">{order.order_number}</td>
-                            <td className="py-2 font-semibold">৳{Number(order.total_amount).toLocaleString()}</td>
+                            <td className="py-2 font-semibold text-sm">৳{Number(order.total_amount).toLocaleString()}</td>
                             <td className="py-2">
-                              <Badge variant="outline" className={`text-xs ${STATUS_COLORS[order.status] || ""}`}>
+                              <Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[order.status] || "")}>
                                 {STATUS_LABELS[order.status] || order.status}
                               </Badge>
                             </td>
@@ -638,11 +632,11 @@ const AdminDashboard = () => {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-center text-muted-foreground py-4">এই ব্যবহারকারীর কোনো অর্ডার নেই</p>
+                  <p className="text-center text-muted-foreground py-4 text-sm">এই ব্যবহারকারীর কোনো অর্ডার নেই</p>
                 )}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-8">ড্রপডাউন থেকে একজন ব্যবহারকারী নির্বাচন করুন</p>
+              <p className="text-center text-muted-foreground py-8 text-sm">ড্রপডাউন থেকে একজন ব্যবহারকারী নির্বাচন করুন</p>
             )}
           </CardContent>
         </Card>
