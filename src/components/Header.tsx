@@ -70,6 +70,10 @@ const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
                 </Link>
               )}
               <Link to="/dashboard" className="hover:underline">{t.dashboard}</Link>
+              <Link to="/wishlist" className="hover:underline flex items-center gap-1">
+                <Heart className="h-3 w-3" />
+                {language === "bn" ? "উইশলিস্ট" : "Wishlist"}
+              </Link>
               <Link to="/dashboard/profile" className="hover:underline">{t.profile}</Link>
               <button onClick={signOut} className="hover:underline flex items-center gap-1">
                 <LogOut className="h-3 w-3" />
@@ -110,6 +114,9 @@ const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
                 )}
                 <Link to="/dashboard" className="py-1.5 px-2 rounded hover:bg-primary-foreground/10 flex items-center gap-2" onClick={() => setShowMenu(false)}>
                   <LayoutDashboard className="h-3 w-3" /> {t.dashboard}
+                </Link>
+                <Link to="/wishlist" className="py-1.5 px-2 rounded hover:bg-primary-foreground/10 flex items-center gap-2" onClick={() => setShowMenu(false)}>
+                  <Heart className="h-3 w-3" /> {language === "bn" ? "উইশলিস্ট" : "Wishlist"}
                 </Link>
                 <Link to="/dashboard/profile" className="py-1.5 px-2 rounded hover:bg-primary-foreground/10 flex items-center gap-2" onClick={() => setShowMenu(false)}>
                   <User className="h-3 w-3" /> {t.profile}
@@ -241,19 +248,6 @@ export const Header = () => {
             {/* Notifications */}
             {user && <NotificationBell />}
 
-            {/* Wishlist */}
-            {user && (
-              <Link to="/wishlist">
-                <Button variant="ghost" size="icon" className="relative">
-                  <Heart className={`h-5 w-5 ${wishlistCount > 0 ? "text-destructive fill-destructive" : ""}`} />
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </Button>
-              </Link>
-            )}
 
             {/* Cart */}
             <CartSheet />
