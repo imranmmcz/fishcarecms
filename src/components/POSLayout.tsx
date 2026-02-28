@@ -2,15 +2,19 @@ import { ReactNode, useEffect, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   LayoutDashboard, ShoppingCart, History, Clock, Home, MonitorSmartphone,
   ArrowLeft, Package, Warehouse, UserCheck, Building2, ChevronDown,
   ArrowLeftRight, Layers, Tag, Award, Ruler,
-  ShoppingBag, FileText, RotateCcw, ListOrdered, Globe,
+  ShoppingBag, FileText, RotateCcw, ListOrdered, Globe, Menu, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,23 +53,107 @@ const bottomMenuItems = [
   { title: "সাপ্লায়ার", url: "/pos/suppliers", icon: Building2 },
 ];
 
-interface POSLayoutProps {
-  children: ReactNode;
+// --- Collapsible Group for Desktop ---
+function POSCollapsibleGroup({ label, icon: GroupIcon, items, currentPath }: {
+  label: string; icon: any; items: typeof salesSubItems; currentPath: string;
+}) {
+  const hasActive = items.some(i => currentPath === i.url);
+  const [open, setOpen] = useState(hasActive);
+  useEffect(() => { if (hasActive) setOpen(true); }, [hasActive]);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <CollapsibleTrigger className={cn(
+            "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all cursor-pointer",
+            hasActive ? "bg-emerald-800/60 text-white" : "text-emerald-200 hover:bg-white/10 hover:text-white"
+          )}>
+            <div className={cn("p-1.5 rounded-lg shrink-0", hasActive ? "bg-emerald-600/50" : "bg-emerald-800/50")}>
+              <GroupIcon className={cn("h-[18px] w-[18px]", hasActive ? "text-emerald-300" : "text-emerald-400")} />
+            </div>
+            <span className="font-medium text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">{label}</span>
+            <ChevronDown className={cn("h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden", open && "rotate-180")} />
+          </CollapsibleTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">{label}</TooltipContent>
+      </Tooltip>
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out duration-200">
+        <div className="ml-4 border-l-2 border-emerald-700/50 pl-2 space-y-0.5 mt-1 group-data-[collapsible=icon]:hidden">
+          {items.map((item) => {
+            const isActive = currentPath === item.url;
+            return (
+              <Tooltip key={item.url}>
+                <TooltipTrigger asChild>
+                  <Link to={item.url} className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm",
+                    isActive ? "bg-emerald-500/20 text-white font-semibold" : "text-emerald-300 hover:bg-white/5 hover:text-white"
+                  )}>
+                    <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-emerald-300" : "text-emerald-500")} />
+                    <span>{item.title}</span>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">{item.title}</TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
 }
+
+// --- Collapsible Group for Mobile ---
+function MobilePOSCollapsibleGroup({ label, icon: GroupIcon, items, currentPath, onClose }: {
+  label: string; icon: any; items: typeof salesSubItems; currentPath: string; onClose: () => void;
+}) {
+  const hasActive = items.some(i => currentPath === i.url);
+  const [open, setOpen] = useState(hasActive);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className={cn(
+        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer",
+        hasActive ? "bg-emerald-800/60 text-white" : "text-emerald-200 hover:bg-white/10 hover:text-white"
+      )}>
+        <div className={cn("p-2 rounded-lg shrink-0", hasActive ? "bg-emerald-600/50" : "bg-emerald-800/50")}>
+          <GroupIcon className={cn("h-5 w-5", hasActive ? "text-emerald-300" : "text-emerald-400")} />
+        </div>
+        <span className="font-semibold flex-1 text-left">{label}</span>
+        <ChevronDown className={cn("h-4 w-4 text-emerald-400 transition-transform duration-300", open && "rotate-180")} />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out duration-200">
+        <div className="ml-6 pl-3 border-l-2 border-emerald-700/50 mt-1 space-y-0.5">
+          {items.map((item) => {
+            const isActive = currentPath === item.url;
+            return (
+              <Link key={item.url} to={item.url} onClick={onClose}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all",
+                  isActive ? "bg-emerald-500/20 text-white font-medium" : "text-emerald-300/80 hover:bg-white/5 hover:text-white"
+                )}>
+                <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-emerald-300" : "text-emerald-500")} />
+                <span>{item.title}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+interface POSLayoutProps { children: ReactNode; }
 
 export function POSLayout({ children }: POSLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, isLoading, userRole } = useAuth();
+  const isMobileView = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isStaff = userRole === "manager" || userRole === "cashier" || userRole === "delivery_staff";
   const canAccess = isAdmin || isStaff;
-  const isSalesSectionActive = salesSubItems.some(i => location.pathname === i.url);
-  const isProductSectionActive = productSubItems.some(i => location.pathname === i.url);
-  const isPurchaseSectionActive = purchaseSubItems.some(i => location.pathname === i.url);
-  const [salesOpen, setSalesOpen] = useState(isSalesSectionActive);
-  const [productsOpen, setProductsOpen] = useState(isProductSectionActive);
-  const [purchasesOpen, setPurchasesOpen] = useState(isPurchaseSectionActive);
 
   useEffect(() => {
     if (!isLoading && !user) navigate("/auth");
@@ -76,7 +164,10 @@ export function POSLayout({ children }: POSLayoutProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 relative overflow-hidden">
         <AnimatedBackground />
-        <div className="relative z-10 text-white">লোড হচ্ছে...</div>
+        <div className="relative z-10 text-white flex flex-col items-center gap-3">
+          <div className="h-8 w-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <span className="text-sm text-emerald-200">লোড হচ্ছে...</span>
+        </div>
       </div>
     );
   }
@@ -86,22 +177,17 @@ export function POSLayout({ children }: POSLayoutProps) {
   const allItems = [...mainMenuItems, ...salesSubItems, ...productSubItems, ...purchaseSubItems, ...bottomMenuItems];
   const currentTitle = allItems.find(i => i.url === location.pathname)?.title || "POS";
 
-  const renderMenuItem = (item: typeof mainMenuItems[0]) => {
+  const renderDesktopMenuItem = (item: typeof mainMenuItems[0]) => {
     const isActive = location.pathname === item.url;
     return (
       <SidebarMenuItem key={item.url}>
         <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-          <Link
-            to={item.url}
-            className={cn(
-              "flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
-              isActive
-                ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg"
-                : "text-emerald-200 hover:bg-white/10 hover:text-white"
-            )}
-          >
+          <Link to={item.url} className={cn(
+            "flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
+            isActive ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg" : "text-emerald-200 hover:bg-white/10 hover:text-white"
+          )}>
             <div className={cn("p-1.5 rounded-lg shrink-0", isActive ? "bg-white/20" : "bg-emerald-800/50")}>
-              <item.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-emerald-400")} />
+              <item.icon className={cn("h-[18px] w-[18px]", isActive ? "text-white" : "text-emerald-400")} />
             </div>
             <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">{item.title}</span>
           </Link>
@@ -110,200 +196,150 @@ export function POSLayout({ children }: POSLayoutProps) {
     );
   };
 
+  const renderMobileMenuItem = (item: typeof mainMenuItems[0]) => {
+    const isActive = location.pathname === item.url;
+    return (
+      <Link key={item.url} to={item.url} onClick={() => setMobileMenuOpen(false)}
+        className={cn(
+          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+          isActive ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg" : "text-emerald-200 hover:bg-white/10 hover:text-white"
+        )}>
+        <div className={cn("p-2 rounded-lg shrink-0", isActive ? "bg-white/20" : "bg-emerald-800/50")}>
+          <item.icon className={cn("h-5 w-5", isActive ? "text-white" : "text-emerald-400")} />
+        </div>
+        <span className="font-medium">{item.title}</span>
+      </Link>
+    );
+  };
+
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 relative overflow-hidden">
-        <AnimatedBackground />
-        <Sidebar collapsible="icon" className="border-r-0 relative z-10">
-          <div className="h-full bg-gradient-to-b from-emerald-950/95 via-teal-900/95 to-emerald-950/95 backdrop-blur-sm">
-            {/* Header */}
-            <div className="p-4 border-b border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl shadow-lg shadow-emerald-500/30">
-                  <MonitorSmartphone className="h-5 w-5 text-white" />
-                </div>
-                <div className="group-data-[collapsible=icon]:hidden">
-                  <h1 className="font-bold text-white text-base leading-tight">POS সিস্টেম</h1>
-                  <p className="text-[10px] text-emerald-300">পয়েন্ট অফ সেল</p>
+    <TooltipProvider delayDuration={300}>
+      <SidebarProvider defaultOpen={true}>
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 relative overflow-hidden">
+          <AnimatedBackground />
+
+          {/* Desktop Sidebar only */}
+          {!isMobileView && (
+          <Sidebar collapsible="icon" className="border-r-0 relative z-10 hidden md:flex">
+            <div className="h-full bg-gradient-to-b from-emerald-950/95 via-teal-900/95 to-emerald-950/95 backdrop-blur-sm flex flex-col">
+              <div className="p-4 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl shadow-lg shadow-emerald-500/30">
+                    <MonitorSmartphone className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="group-data-[collapsible=icon]:hidden">
+                    <h1 className="font-bold text-white text-base leading-tight">POS সিস্টেম</h1>
+                    <p className="text-[10px] text-emerald-300">পয়েন্ট অফ সেল</p>
+                  </div>
                 </div>
               </div>
+
+              <SidebarContent className="px-2 py-3 flex flex-col h-[calc(100%-72px)]">
+                <SidebarGroup className="flex-1 overflow-y-auto space-y-1">
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {mainMenuItems.map(renderDesktopMenuItem)}
+                      <POSCollapsibleGroup label="বিক্রয় ব্যবস্থাপনা" icon={ShoppingCart} items={salesSubItems} currentPath={location.pathname} />
+                      <POSCollapsibleGroup label="পণ্য ব্যবস্থাপনা" icon={Package} items={productSubItems} currentPath={location.pathname} />
+                      <POSCollapsibleGroup label="ক্রয় ব্যবস্থাপনা" icon={ShoppingBag} items={purchaseSubItems} currentPath={location.pathname} />
+                      {bottomMenuItems.map(renderDesktopMenuItem)}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+
+                <div className="pt-3 border-t border-white/10 mt-auto space-y-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link to="/admin" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all">
+                        <div className="p-1.5 rounded-lg bg-emerald-800/50 shrink-0"><ArrowLeft className="h-[18px] w-[18px]" /></div>
+                        <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">অ্যাডমিন প্যানেল</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">অ্যাডমিন প্যানেল</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link to="/" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all">
+                        <div className="p-1.5 rounded-lg bg-emerald-800/50 shrink-0"><Home className="h-[18px] w-[18px]" /></div>
+                        <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">হোম পেজ</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="group-data-[collapsible=open]:hidden">হোম পেজ</TooltipContent>
+                  </Tooltip>
+                </div>
+              </SidebarContent>
             </div>
+          </Sidebar>
+          )}
 
-            <SidebarContent className="px-2 py-3 flex flex-col h-[calc(100%-72px)]">
-              <SidebarGroup className="flex-1 overflow-y-auto space-y-1">
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {mainMenuItems.map(renderMenuItem)}
-
-                    {/* Sales Collapsible Group */}
-                    <SidebarMenuItem>
-                      <button
-                        onClick={() => setSalesOpen(!salesOpen)}
-                        className={cn(
-                          "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
-                          isSalesSectionActive
-                            ? "bg-emerald-800/60 text-white"
-                            : "text-emerald-200 hover:bg-white/10 hover:text-white"
-                        )}
-                      >
-                        <div className={cn("p-1.5 rounded-lg shrink-0", isSalesSectionActive ? "bg-emerald-600/50" : "bg-emerald-800/50")}>
-                          <ShoppingCart className={cn("h-4 w-4", isSalesSectionActive ? "text-emerald-300" : "text-emerald-400")} />
+          <main className="flex-1 overflow-auto relative z-10">
+            <div className="p-3 md:p-4 border-b bg-card/80 backdrop-blur-sm flex items-center gap-3 md:gap-4 sticky top-0 z-20">
+              {/* Mobile hamburger */}
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild className="md:hidden">
+                  <button className="p-2 rounded-lg hover:bg-accent transition-colors">
+                    <Menu className="h-5 w-5 text-foreground" />
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px] p-0 bg-gradient-to-b from-emerald-950 via-teal-900 to-emerald-950 border-r-0">
+                  <div className="p-4 border-b border-white/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl shadow-lg shadow-emerald-500/30">
+                          <MonitorSmartphone className="h-6 w-6 text-white" />
                         </div>
-                        <span className="font-medium text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">বিক্রয় ব্যবস্থাপনা</span>
-                        <ChevronDown className={cn("h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden", salesOpen && "rotate-180")} />
-                      </button>
-                    </SidebarMenuItem>
-
-                    {salesOpen && (
-                      <div className="ml-4 border-l border-emerald-700/50 pl-2 space-y-0.5 group-data-[collapsible=icon]:hidden">
-                        {salesSubItems.map((item) => {
-                          const isActive = location.pathname === item.url;
-                          return (
-                            <SidebarMenuItem key={item.url}>
-                              <Link
-                                to={item.url}
-                                className={cn(
-                                  "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm",
-                                  isActive
-                                    ? "bg-emerald-500/20 text-white font-semibold"
-                                    : "text-emerald-300 hover:bg-white/5 hover:text-white"
-                                )}
-                              >
-                                <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-emerald-300" : "text-emerald-500")} />
-                                <span>{item.title}</span>
-                              </Link>
-                            </SidebarMenuItem>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Products Collapsible Group */}
-                    <SidebarMenuItem>
-                      <button
-                        onClick={() => setProductsOpen(!productsOpen)}
-                        className={cn(
-                          "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
-                          isProductSectionActive
-                            ? "bg-emerald-800/60 text-white"
-                            : "text-emerald-200 hover:bg-white/10 hover:text-white"
-                        )}
-                      >
-                        <div className={cn("p-1.5 rounded-lg shrink-0", isProductSectionActive ? "bg-emerald-600/50" : "bg-emerald-800/50")}>
-                          <Package className={cn("h-4 w-4", isProductSectionActive ? "text-emerald-300" : "text-emerald-400")} />
+                        <div>
+                          <h1 className="font-bold text-white text-lg">POS সিস্টেম</h1>
+                          <p className="text-xs text-emerald-300">পয়েন্ট অফ সেল</p>
                         </div>
-                        <span className="font-medium text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">পণ্য ব্যবস্থাপনা</span>
-                        <ChevronDown className={cn("h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden", productsOpen && "rotate-180")} />
-                      </button>
-                    </SidebarMenuItem>
-
-                    {productsOpen && (
-                      <div className="ml-4 border-l border-emerald-700/50 pl-2 space-y-0.5 group-data-[collapsible=icon]:hidden">
-                        {productSubItems.map((item) => {
-                          const isActive = location.pathname === item.url;
-                          return (
-                            <SidebarMenuItem key={item.url}>
-                              <Link
-                                to={item.url}
-                                className={cn(
-                                  "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm",
-                                  isActive
-                                    ? "bg-emerald-500/20 text-white font-semibold"
-                                    : "text-emerald-300 hover:bg-white/5 hover:text-white"
-                                )}
-                              >
-                                <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-emerald-300" : "text-emerald-500")} />
-                                <span>{item.title}</span>
-                              </Link>
-                            </SidebarMenuItem>
-                          );
-                        })}
                       </div>
-                    )}
-
-                    {/* Purchase Collapsible Group */}
-                    <SidebarMenuItem>
-                      <button
-                        onClick={() => setPurchasesOpen(!purchasesOpen)}
-                        className={cn(
-                          "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all",
-                          isPurchaseSectionActive
-                            ? "bg-emerald-800/60 text-white"
-                            : "text-emerald-200 hover:bg-white/10 hover:text-white"
-                        )}
-                      >
-                        <div className={cn("p-1.5 rounded-lg shrink-0", isPurchaseSectionActive ? "bg-emerald-600/50" : "bg-emerald-800/50")}>
-                          <ShoppingBag className={cn("h-4 w-4", isPurchaseSectionActive ? "text-emerald-300" : "text-emerald-400")} />
-                        </div>
-                        <span className="font-medium text-sm flex-1 text-left group-data-[collapsible=icon]:hidden">ক্রয় ব্যবস্থাপনা</span>
-                        <ChevronDown className={cn("h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden", purchasesOpen && "rotate-180")} />
-                      </button>
-                    </SidebarMenuItem>
-
-                    {purchasesOpen && (
-                      <div className="ml-4 border-l border-emerald-700/50 pl-2 space-y-0.5 group-data-[collapsible=icon]:hidden">
-                        {purchaseSubItems.map((item) => {
-                          const isActive = location.pathname === item.url;
-                          return (
-                            <SidebarMenuItem key={item.url}>
-                              <Link
-                                to={item.url}
-                                className={cn(
-                                  "flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm",
-                                  isActive
-                                    ? "bg-emerald-500/20 text-white font-semibold"
-                                    : "text-emerald-300 hover:bg-white/5 hover:text-white"
-                                )}
-                              >
-                                <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-emerald-300" : "text-emerald-500")} />
-                                <span>{item.title}</span>
-                              </Link>
-                            </SidebarMenuItem>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {bottomMenuItems.map(renderMenuItem)}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-
-              <div className="pt-3 border-t border-white/10 mt-auto space-y-1">
-                <Link
-                  to="/admin"
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all"
-                >
-                  <div className="p-1.5 rounded-lg bg-emerald-800/50 shrink-0">
-                    <ArrowLeft className="h-4 w-4" />
+                      <SheetClose asChild>
+                        <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                          <X className="h-5 w-5 text-emerald-300" />
+                        </button>
+                      </SheetClose>
+                    </div>
                   </div>
-                  <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">অ্যাডমিন প্যানেল</span>
-                </Link>
-                <Link
-                  to="/"
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all"
-                >
-                  <div className="p-1.5 rounded-lg bg-emerald-800/50 shrink-0">
-                    <Home className="h-4 w-4" />
-                  </div>
-                  <span className="font-medium text-sm group-data-[collapsible=icon]:hidden">হোম পেজ</span>
-                </Link>
-              </div>
-            </SidebarContent>
-          </div>
-        </Sidebar>
 
-        <main className="flex-1 overflow-auto relative z-10">
-          <div className="p-4 border-b bg-card/80 backdrop-blur-sm flex items-center gap-4">
-            <SidebarTrigger className="text-foreground" />
-            <div className="h-6 w-px bg-border" />
-            <span className="text-sm text-muted-foreground">{currentTitle}</span>
-          </div>
-          <div className="p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-65px)] rounded-tl-2xl">
-            {children}
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+                  <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-160px)] space-y-1">
+                    {mainMenuItems.map(renderMobileMenuItem)}
+
+                    <div className="h-px bg-white/10 mx-2 my-2" />
+
+                    <MobilePOSCollapsibleGroup label="বিক্রয় ব্যবস্থাপনা" icon={ShoppingCart} items={salesSubItems} currentPath={location.pathname} onClose={() => setMobileMenuOpen(false)} />
+                    <MobilePOSCollapsibleGroup label="পণ্য ব্যবস্থাপনা" icon={Package} items={productSubItems} currentPath={location.pathname} onClose={() => setMobileMenuOpen(false)} />
+                    <MobilePOSCollapsibleGroup label="ক্রয় ব্যবস্থাপনা" icon={ShoppingBag} items={purchaseSubItems} currentPath={location.pathname} onClose={() => setMobileMenuOpen(false)} />
+
+                    <div className="h-px bg-white/10 mx-2 my-2" />
+
+                    {bottomMenuItems.map(renderMobileMenuItem)}
+
+                    <div className="pt-4 mt-4 border-t border-white/10 space-y-1">
+                      <Link to="/admin" onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all">
+                        <div className="p-2 rounded-lg bg-emerald-800/50 shrink-0"><ArrowLeft className="h-5 w-5" /></div>
+                        <span className="font-medium">অ্যাডমিন প্যানেল</span>
+                      </Link>
+                      <Link to="/" onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all">
+                        <div className="p-2 rounded-lg bg-emerald-800/50 shrink-0"><Home className="h-5 w-5" /></div>
+                        <span className="font-medium">হোম পেজ</span>
+                      </Link>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+
+              <SidebarTrigger className="text-foreground hidden md:flex hover:bg-accent/50 transition-colors rounded-lg" />
+              <div className="h-6 w-px bg-border hidden md:block" />
+              <span className="text-xs md:text-sm font-medium text-muted-foreground">{currentTitle}</span>
+            </div>
+            <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-57px)] md:min-h-[calc(100vh-65px)] md:rounded-tl-2xl">
+              {children}
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }
