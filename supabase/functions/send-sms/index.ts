@@ -51,6 +51,25 @@ serve(async (req) => {
       });
     }
 
+    // Check if this specific message type is enabled
+    if (message_type === "order_status_update" && !settings.order_status_update_enabled) {
+      await supabase.from("sms_logs").insert({
+        recipient_phone: phone, message, status: "skipped", message_type, order_number, provider: settings.provider,
+      });
+      return new Response(JSON.stringify({ success: false, reason: "Order status update SMS disabled" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (message_type === "order_confirmation" && !settings.order_confirmation_enabled) {
+      await supabase.from("sms_logs").insert({
+        recipient_phone: phone, message, status: "skipped", message_type, order_number, provider: settings.provider,
+      });
+      return new Response(JSON.stringify({ success: false, reason: "Order confirmation SMS disabled" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!settings.api_key || !settings.api_url) {
       throw new Error("SMS API key or URL not configured");
     }
