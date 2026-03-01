@@ -17,7 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Search, Banknote, Smartphone, Clock, AlertCircle, CheckCircle, HandCoins,
+  Search, Banknote, Smartphone, Clock, AlertCircle, CheckCircle, HandCoins, MessageCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,6 +57,25 @@ export default function POSDueCollections() {
   const [transactionId, setTransactionId] = useState("");
   const [paymentNotes, setPaymentNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSendingWA, setIsSendingWA] = useState<string | null>(null);
+
+  const sendWhatsAppReminder = async (sale: DueSale) => {
+    if (!sale.customer_phone) return;
+    setIsSendingWA(sale.id);
+    try {
+      const message = `প্রিয় ${sale.customer_name || "গ্রাহক"},\n\nআপনার বিক্রয় (${sale.sale_number}) এ বাকি আছে: ৳${sale.due_amount.toLocaleString()}\nমোট বিল: ৳${sale.total_amount.toLocaleString()}\nপ্রদত্ত: ৳${sale.paid_amount.toLocaleString()}\n\nঅনুগ্রহ করে যত দ্রুত সম্ভব বাকি পরিশোধ করুন।\n\nধন্যবাদ।`;
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { action: "send_text", phone: sale.customer_phone, text_message: message },
+      });
+      if (error) throw error;
+      if (data?.success) toast.success("WhatsApp মেসেজ পাঠানো হয়েছে");
+      else toast.error(data?.message || data?.error || "মেসেজ পাঠাতে ব্যর্থ");
+    } catch {
+      toast.error("WhatsApp মেসেজ পাঠাতে সমস্যা হয়েছে");
+    } finally {
+      setIsSendingWA(null);
+    }
+  };
 
   useEffect(() => {
     fetchDueSales();
@@ -218,9 +237,18 @@ export default function POSDueCollections() {
                     <TableCell className="text-right font-bold text-destructive">৳{sale.due_amount.toLocaleString()}</TableCell>
                     <TableCell className="text-xs">{new Date(sale.created_at).toLocaleDateString('bn-BD')}</TableCell>
                     <TableCell className="text-center">
-                      <Button size="sm" variant="default" className="gap-1" onClick={() => openPaymentDialog(sale)}>
-                        <HandCoins className="h-3.5 w-3.5" /> আদায়
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button size="sm" variant="default" className="gap-1" onClick={() => openPaymentDialog(sale)}>
+                          <HandCoins className="h-3.5 w-3.5" /> আদায়
+                        </Button>
+                        {sale.customer_phone && (
+                          <Button size="sm" variant="outline" className="gap-1 text-green-600 hover:text-green-700"
+                            onClick={() => sendWhatsAppReminder(sale)}
+                            disabled={isSendingWA === sale.id}>
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

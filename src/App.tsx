@@ -81,6 +81,7 @@ import POSSalesReturns from "./pages/pos/POSSalesReturns";
 import POSSalesReport from "./pages/pos/POSSalesReport";
 import POSOnlineOrders from "./pages/pos/POSOnlineOrders";
 import POSDueCollections from "./pages/pos/POSDueCollections";
+import POSCustomerDueReport from "./pages/pos/POSCustomerDueReport";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
 import ProductDetails from "./pages/ProductDetails";
@@ -179,6 +180,7 @@ const App = () => (
                       <Route path="/pos/sales/returns" element={<ProtectedRoute requireAdmin><POSSalesReturns /></ProtectedRoute>} />
                       <Route path="/pos/sales/report" element={<ProtectedRoute requireAdmin><POSSalesReport /></ProtectedRoute>} />
                       <Route path="/pos/due-collections" element={<ProtectedRoute requireAdmin><POSDueCollections /></ProtectedRoute>} />
+                      <Route path="/pos/customer-due-report" element={<ProtectedRoute requireAdmin><POSCustomerDueReport /></ProtectedRoute>} />
                       <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><Profile /></ProtectedRoute>} />
                       <Route path="/install" element={<Install />} />
                       <Route path="*" element={<NotFound />} />
