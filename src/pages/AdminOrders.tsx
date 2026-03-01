@@ -208,6 +208,7 @@ const AdminOrders = () => {
 
       if (error) throw error;
 
+      // Send email notification
       if (selectedOrder.customer_email) {
         sendOrderStatusEmail(
           selectedOrder.customer_email,
@@ -215,6 +216,27 @@ const AdminOrders = () => {
           selectedOrder.order_number,
           newStatus
         ).catch(console.error);
+      }
+
+      // Send SMS notification automatically
+      if (selectedOrder.customer_phone) {
+        const statusLabel = statusConfig[newStatus]?.label?.bn || newStatus;
+        const smsMessage = `প্রিয় ${selectedOrder.customer_name}, আপনার অর্ডার ${selectedOrder.order_number} এর স্ট্যাটাস আপডেট হয়েছে: ${statusLabel}। ধন্যবাদ!`;
+        
+        supabase.functions.invoke("send-sms", {
+          body: {
+            phone: selectedOrder.customer_phone,
+            message: smsMessage,
+            message_type: "order_status_update",
+            order_number: selectedOrder.order_number,
+          },
+        }).then(({ data, error: smsError }) => {
+          if (smsError) {
+            console.error("SMS send error:", smsError);
+          } else if (data?.success) {
+            console.log("SMS sent successfully for order:", selectedOrder.order_number);
+          }
+        }).catch(console.error);
       }
 
       toast.success(language === "bn" ? "স্ট্যাটাস আপডেট হয়েছে" : "Status updated");
