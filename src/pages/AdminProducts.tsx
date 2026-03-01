@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle, FolderOpen, ImagePlus, Upload, Link2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Loader2, Eye, AlertTriangle, FolderOpen, ImagePlus, Upload, Link2, Search, Download, FileUp } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -795,9 +795,131 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
     setIsAddOpen(true);
   };
 
+  const [isImporting, setIsImporting] = useState(false);
+
   // Calculate stats
   const lowStockProducts = products.filter(p => (p.stock_quantity || 0) <= (p.reorder_level || 10) && (p.stock_quantity || 0) > 0);
   const outOfStockProducts = products.filter(p => (p.stock_quantity || 0) === 0);
+
+  const handleExportCSV = () => {
+    if (products.length === 0) {
+      toast.error("এক্সপোর্ট করার মতো কোনো পণ্য নেই");
+      return;
+    }
+    const headers = ["নাম", "SKU", "ক্যাটাগরি", "ক্রয় মূল্য", "বিক্রয় মূল্য", "ডিসকাউন্ট %", "স্টক", "একক", "রিঅর্ডার লেভেল", "ওজন (কেজি)", "বিবরণ", "ইমেজ URL"];
+    const csvRows = [headers.join(",")];
+    products.forEach((p: any) => {
+      const row = [
+        `"${(p.name || "").replace(/"/g, '""')}"`,
+        `"${p.sku || ""}"`,
+        `"${p.category || ""}"`,
+        p.cost_price || 0,
+        p.price || 0,
+        p.discount_percentage || 0,
+        p.stock_quantity || 0,
+        `"${p.unit || "pcs"}"`,
+        p.reorder_level || 10,
+        p.weight_kg || 0,
+        `"${(p.description || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+        `"${p.image_url || ""}"`,
+      ];
+      csvRows.push(row.join(","));
+    });
+    const csvContent = "\uFEFF" + csvRows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `products_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${products.length}টি পণ্য এক্সপোর্ট হয়েছে`);
+  };
+
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    try {
+      const text = await file.text();
+      const lines = text.split("\n").filter(l => l.trim());
+      if (lines.length < 2) {
+        toast.error("CSV ফাইলে কোনো ডেটা নেই");
+        setIsImporting(false);
+        return;
+      }
+      // Skip header row
+      const dataLines = lines.slice(1);
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const line of dataLines) {
+        try {
+          // Parse CSV properly handling quoted fields
+          const fields: string[] = [];
+          let current = "";
+          let inQuotes = false;
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+              if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+              else { inQuotes = !inQuotes; }
+            } else if (ch === ',' && !inQuotes) {
+              fields.push(current.trim()); current = "";
+            } else {
+              current += ch;
+            }
+          }
+          fields.push(current.trim());
+
+          const [name, sku, category, costPrice, price, discount, stock, unit, reorder, weight, description, imageUrl] = fields;
+          if (!name || !parseFloat(price)) continue;
+
+          const { error } = await supabase.from("products").insert({
+            name,
+            sku: sku || null,
+            category: category || "medicine",
+            cost_price: parseFloat(costPrice) || 0,
+            price: parseFloat(price) || 0,
+            discount_percentage: parseFloat(discount) || 0,
+            stock_quantity: parseInt(stock) || 0,
+            unit: unit || "pcs",
+            reorder_level: parseInt(reorder) || 10,
+            weight_kg: parseFloat(weight) || 0,
+            description: description || null,
+            image_url: imageUrl || null,
+          });
+          if (error) { errorCount++; } else { successCount++; }
+        } catch { errorCount++; }
+      }
+
+      if (successCount > 0) {
+        toast.success(`${successCount}টি পণ্য সফলভাবে ইমপোর্ট হয়েছে`);
+        window.location.reload();
+      }
+      if (errorCount > 0) {
+        toast.error(`${errorCount}টি পণ্য ইমপোর্ট করতে সমস্যা হয়েছে`);
+      }
+    } catch (err) {
+      toast.error("CSV ফাইল পড়তে সমস্যা হয়েছে");
+    }
+    setIsImporting(false);
+    e.target.value = "";
+  };
+
+  const handleDownloadTemplate = () => {
+    const headers = ["নাম", "SKU", "ক্যাটাগরি", "ক্রয় মূল্য", "বিক্রয় মূল্য", "ডিসকাউন্ট %", "স্টক", "একক", "রিঅর্ডার লেভেল", "ওজন (কেজি)", "বিবরণ", "ইমেজ URL"];
+    const example = ['"ফিশ মেডিসিন"', '"SKU-001"', '"medicine"', '100', '150', '0', '50', '"pcs"', '10', '0.5', '"পণ্যের বিবরণ"', '""'];
+    const csvContent = "\uFEFF" + headers.join(",") + "\n" + example.join(",");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "product_import_template.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("টেমপ্লেট ডাউনলোড হয়েছে");
+  };
 
   return (
     <Layout>
@@ -807,29 +929,71 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
             <h1 className="text-2xl font-bold">পণ্য ব্যবস্থাপনা</h1>
             <p className="text-muted-foreground">শপের সকল পণ্য পরিচালনা করুন</p>
           </div>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button3D variant="success" onClick={handleOpenAddDialog}>
-                <Plus className="h-4 w-4" />
-                নতুন পণ্য যোগ করুন
-              </Button3D>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>নতুন পণ্য যোগ করুন</DialogTitle>
-              </DialogHeader>
-              <ProductForm
-                formData={formData}
-                onFormChange={handleFormChange}
-                onSubmit={handleAdd}
-                submitLabel="পণ্য যোগ করুন"
-                isSubmitting={isSubmitting}
-                companies={companies}
-                brands={brands}
-                categories={categories}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex flex-wrap gap-2">
+            <Button3D variant="primary" onClick={handleExportCSV}>
+              <Download className="h-4 w-4" />
+              এক্সপোর্ট
+            </Button3D>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button3D variant="purple">
+                  <FileUp className="h-4 w-4" />
+                  ইমপোর্ট
+                </Button3D>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>পণ্য ইমপোর্ট (CSV)</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <p className="text-sm text-muted-foreground">
+                    CSV ফাইল থেকে পণ্য ইমপোর্ট করুন। প্রথমে টেমপ্লেট ডাউনলোড করে ফরম্যাট দেখুন।
+                  </p>
+                  <Button3D variant="primary" onClick={handleDownloadTemplate} className="w-full">
+                    <Download className="h-4 w-4" />
+                    টেমপ্লেট ডাউনলোড করুন
+                  </Button3D>
+                  <Separator />
+                  <Label>CSV ফাইল নির্বাচন করুন</Label>
+                  <Input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleImportCSV}
+                    disabled={isImporting}
+                  />
+                  {isImporting && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      ইমপোর্ট হচ্ছে...
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
+                <Button3D variant="success" onClick={handleOpenAddDialog}>
+                  <Plus className="h-4 w-4" />
+                  নতুন পণ্য যোগ করুন
+                </Button3D>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>নতুন পণ্য যোগ করুন</DialogTitle>
+                </DialogHeader>
+                <ProductForm
+                  formData={formData}
+                  onFormChange={handleFormChange}
+                  onSubmit={handleAdd}
+                  submitLabel="পণ্য যোগ করুন"
+                  isSubmitting={isSubmitting}
+                  companies={companies}
+                  brands={brands}
+                  categories={categories}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Tabs for Products and Categories */}
