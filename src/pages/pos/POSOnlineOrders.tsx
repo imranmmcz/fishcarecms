@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Globe, Search, Eye, Loader2, ShoppingCart, Clock, Truck, CheckCircle2, XCircle, Package } from "lucide-react";
+import { Globe, Search, Eye, Loader2, ShoppingCart, Clock, Truck, CheckCircle2, XCircle, Package, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -45,6 +45,7 @@ export default function POSOnlineOrders() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
 
   // View modal
   const [viewOpen, setViewOpen] = useState(false);
@@ -94,6 +95,31 @@ export default function POSOnlineOrders() {
     await fetchOrderItems(order.id);
   };
 
+  const getDateRange = (filter: string): { start: Date; end: Date } | null => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    switch (filter) {
+      case "today":
+        return { start: today, end: now };
+      case "yesterday": {
+        const y = new Date(today); y.setDate(y.getDate() - 1);
+        return { start: y, end: today };
+      }
+      case "last7":
+        return { start: new Date(today.getTime() - 7 * 86400000), end: now };
+      case "last30":
+        return { start: new Date(today.getTime() - 30 * 86400000), end: now };
+      case "thisMonth":
+        return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now };
+      case "lastMonth": {
+        const s = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const e = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { start: s, end: e };
+      }
+      default: return null;
+    }
+  };
+
   const filtered = orders.filter(o => {
     const matchesSearch =
       (o.order_number || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -101,7 +127,12 @@ export default function POSOnlineOrders() {
       (o.customer_phone || "").includes(search);
     const matchesStatus = statusFilter === "all" || o.status === statusFilter;
     const matchesPayment = paymentFilter === "all" || o.payment_status === paymentFilter;
-    return matchesSearch && matchesStatus && matchesPayment;
+    const dateRange = getDateRange(dateFilter);
+    const matchesDate = !dateRange || (() => {
+      const d = new Date(o.created_at);
+      return d >= dateRange.start && d <= dateRange.end;
+    })();
+    return matchesSearch && matchesStatus && matchesPayment && matchesDate;
   });
 
   // Stats
@@ -170,6 +201,21 @@ export default function POSOnlineOrders() {
               <SelectItem value="all">সকল পেমেন্ট</SelectItem>
               <SelectItem value="paid">পেইড</SelectItem>
               <SelectItem value="pending">পেন্ডিং</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={dateFilter} onValueChange={setDateFilter}>
+            <SelectTrigger className="w-[160px]">
+              <CalendarDays className="h-4 w-4 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder="তারিখ" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">সকল তারিখ</SelectItem>
+              <SelectItem value="today">আজ</SelectItem>
+              <SelectItem value="yesterday">গতকাল</SelectItem>
+              <SelectItem value="last7">গত ৭ দিন</SelectItem>
+              <SelectItem value="last30">গত ৩০ দিন</SelectItem>
+              <SelectItem value="thisMonth">এই মাস</SelectItem>
+              <SelectItem value="lastMonth">গত মাস</SelectItem>
             </SelectContent>
           </Select>
         </div>
