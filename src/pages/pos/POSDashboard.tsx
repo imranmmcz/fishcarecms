@@ -13,7 +13,7 @@ import {
 import {
   TrendingUp, ShoppingCart, PlayCircle, ArrowRight,
   Banknote, Smartphone, Filter, X, Calendar,
-  FileText, Package, RotateCcw, ArrowLeftRight,
+  FileText, Package, RotateCcw, ArrowLeftRight, HandCoins,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -92,7 +92,7 @@ export default function POSDashboard() {
   const [activeShift, setActiveShift] = useState<any>(null);
   const [todayStats, setTodayStats] = useState({
     totalSales: 0, totalTransactions: 0, cashSales: 0, mobileSales: 0,
-    totalPurchase: 0, purchaseDue: 0,
+    totalPurchase: 0, purchaseDue: 0, totalSalesDue: 0, totalSalesDueCount: 0,
   });
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [recentShifts, setRecentShifts] = useState<any[]>([]);
@@ -130,7 +130,7 @@ export default function POSDashboard() {
     const { from, to } = getDateRange(quickFilter, customFrom, customTo);
     let q = supabase
       .from("pos_sales")
-      .select("total_amount, payment_method")
+      .select("total_amount, payment_method, due_amount")
       .gte("created_at", from)
       .lte("created_at", to);
 
@@ -145,9 +145,19 @@ export default function POSDashboard() {
       .gte("created_at", from)
       .lte("created_at", to);
 
+    // Fetch ALL due sales (not filtered by date - total outstanding)
+    const { data: allDueSales } = await supabase
+      .from("pos_sales")
+      .select("due_amount")
+      .eq("payment_type", "due")
+      .gt("due_amount", 0);
+
     const totalPurchase = purchaseData?.reduce((s, r) => s + (r.total_amount || 0), 0) || 0;
     const purchaseDue = purchaseData?.filter(r => r.status === "pending" || r.status === "ordered")
       .reduce((s, r) => s + (r.total_amount || 0), 0) || 0;
+
+    const totalSalesDue = allDueSales?.reduce((s, r) => s + (r.due_amount || 0), 0) || 0;
+    const totalSalesDueCount = allDueSales?.length || 0;
 
     if (data) {
       setTodayStats({
@@ -157,6 +167,8 @@ export default function POSDashboard() {
         mobileSales: data.filter(r => r.payment_method === "mobile_banking").reduce((s, r) => s + (r.total_amount || 0), 0),
         totalPurchase,
         purchaseDue,
+        totalSalesDue,
+        totalSalesDueCount,
       });
     }
   };
@@ -266,10 +278,11 @@ export default function POSDashboard() {
                   <label className="text-xs font-medium text-muted-foreground">পেমেন্ট মেথড</label>
                   <Select value={paymentFilter} onValueChange={setPaymentFilter}>
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                     <SelectContent>
                       <SelectItem value="all">সব</SelectItem>
                       <SelectItem value="cash">ক্যাশ</SelectItem>
                       <SelectItem value="mobile_banking">মোবাইল ব্যাংকিং</SelectItem>
+                      <SelectItem value="due">বাকি</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -310,6 +323,16 @@ export default function POSDashboard() {
             title="ক্রয় বকেয়া"
             amount={todayStats.purchaseDue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           />
+          <Link to="/pos/due-collections" className="block">
+            <StatCard
+              icon={<HandCoins className="h-6 w-6 text-white" />}
+              iconBg="bg-[hsl(0,75%,55%)]"
+              title="মোট বাকি বিক্রয়"
+              amount={todayStats.totalSalesDue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              subtitle={`বাকি বিক্রয় সংখ্যা: ${todayStats.totalSalesDueCount}`}
+              subtitle2="ক্লিক করে আদায় করুন →"
+            />
+          </Link>
           <StatCard
             icon={<RotateCcw className="h-6 w-6 text-white" />}
             iconBg="bg-[hsl(10,75%,55%)]"
@@ -373,8 +396,8 @@ export default function POSDashboard() {
                     <TableRow key={sale.id}>
                       <TableCell className="font-mono text-xs">{sale.sale_number}</TableCell>
                       <TableCell>
-                        <Badge variant={sale.payment_method === "cash" ? "default" : "secondary"} className="text-[10px]">
-                          {sale.payment_method === "cash" ? "ক্যাশ" : "মোবাইল"}
+                        <Badge variant={sale.payment_method === "cash" ? "default" : sale.payment_method === "due" ? "destructive" : "secondary"} className="text-[10px]">
+                          {sale.payment_method === "cash" ? "ক্যাশ" : sale.payment_method === "due" ? "বাকি" : "মোবাইল"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-bold text-sm">৳{sale.total_amount}</TableCell>
