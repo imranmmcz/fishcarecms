@@ -30,6 +30,8 @@ export default function POSNewPurchase() {
   const [selectedProduct, setSelectedProduct] = useState("");
   const [qty, setQty] = useState("1");
   const [unitCost, setUnitCost] = useState("");
+  const [discountType, setDiscountType] = useState<"flat" | "percent">("flat");
+  const [discountValue, setDiscountValue] = useState("");
 
   const { data: companies = [] } = useQuery({
     queryKey: ["pos-companies-suppliers"],
@@ -62,6 +64,10 @@ export default function POSNewPurchase() {
   const removeItem = (productId: string) => setItems(items.filter(i => i.product_id !== productId));
 
   const subtotal = items.reduce((s, i) => s + i.total_cost, 0);
+  const discountAmount = discountType === "percent" 
+    ? subtotal * (parseFloat(discountValue) || 0) / 100 
+    : parseFloat(discountValue) || 0;
+  const totalAmount = Math.max(0, subtotal - discountAmount);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -75,7 +81,7 @@ export default function POSNewPurchase() {
         order_number: orderNumber,
         company_id: companyId || null,
         subtotal,
-        total_amount: subtotal,
+        total_amount: totalAmount,
         notes: notes || null,
         created_by: user?.id,
         status: "pending",
@@ -188,9 +194,25 @@ export default function POSNewPurchase() {
                   <Label>নোট (ঐচ্ছিক)</Label>
                   <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="অতিরিক্ত তথ্য..." />
                 </div>
+                <div className="space-y-2">
+                  <Label>ডিসকাউন্ট</Label>
+                  <div className="flex gap-2">
+                    <Select value={discountType} onValueChange={(v: "flat" | "percent") => setDiscountType(v)}>
+                      <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="flat">৳ ফ্ল্যাট</SelectItem>
+                        <SelectItem value="percent">% শতাংশ</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input type="number" value={discountValue} onChange={e => setDiscountValue(e.target.value)} placeholder="0" min="0" />
+                  </div>
+                </div>
                 <div className="pt-3 border-t space-y-2">
                   <div className="flex justify-between text-sm"><span>সাবটোটাল:</span><span className="font-semibold">৳ {subtotal.toLocaleString("en-IN")}</span></div>
-                  <div className="flex justify-between text-lg font-bold"><span>মোট:</span><span>৳ {subtotal.toLocaleString("en-IN")}</span></div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-destructive"><span>ডিসকাউন্ট:</span><span>- ৳ {discountAmount.toLocaleString("en-IN")}</span></div>
+                  )}
+                  <div className="flex justify-between text-lg font-bold"><span>মোট:</span><span>৳ {totalAmount.toLocaleString("en-IN")}</span></div>
                 </div>
                 <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || items.length === 0} className="w-full bg-emerald-600 hover:bg-emerald-700">
                   {saveMutation.isPending ? "সেভ হচ্ছে..." : "ক্রয় অর্ডার তৈরি করুন"}
