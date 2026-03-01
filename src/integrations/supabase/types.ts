@@ -2007,6 +2007,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      manage_backup_cron: {
+        Args: { _action: string; _backup_scope?: string; _schedule?: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:
