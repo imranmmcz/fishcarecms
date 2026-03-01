@@ -11,7 +11,8 @@ import {
   ArrowLeft, Package, Warehouse, UserCheck, Building2, ChevronDown,
   ArrowLeftRight, Layers, Tag, Award, Ruler,
   ShoppingBag, FileText, RotateCcw, ListOrdered, Globe, Menu, X,
-  ChevronLeft, ChevronRight, HandCoins, Users,
+  ChevronLeft, ChevronRight, HandCoins, Users, BarChart3,
+  DollarSign, Clock as ClockIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,13 @@ const purchaseSubItems = [
   { title: "নতুন ক্রয়", url: "/pos/purchases/new", icon: ShoppingBag },
   { title: "ক্রয় রিটার্ন", url: "/pos/purchases/returns", icon: RotateCcw },
   { title: "ক্রয় রিপোর্ট", url: "/pos/purchases/report", icon: FileText },
+];
+
+const reportSubItems = [
+  { title: "সকল রিপোর্ট", url: "/pos/reports", icon: BarChart3 },
+  { title: "বিক্রি রিপোর্ট", url: "/pos/sales/report", icon: FileText },
+  { title: "ক্রয় রিপোর্ট", url: "/pos/purchases/report", icon: FileText },
+  { title: "কাস্টমার বাকি রিপোর্ট", url: "/pos/customer-due-report", icon: Users },
 ];
 
 const bottomMenuItems = [
@@ -178,7 +186,7 @@ export function POSLayout({ children }: POSLayoutProps) {
 
   if (!user || !canAccess) return null;
 
-  const allItems = [...mainMenuItems, ...salesSubItems, ...productSubItems, ...purchaseSubItems, ...bottomMenuItems];
+  const allItems = [...mainMenuItems, ...salesSubItems, ...productSubItems, ...purchaseSubItems, ...reportSubItems, ...bottomMenuItems];
   const currentTitle = allItems.find(i => i.url === location.pathname)?.title || "POS";
 
   const renderMenu = (onNavigate?: () => void, collapsed?: boolean) => (
@@ -195,6 +203,8 @@ export function POSLayout({ children }: POSLayoutProps) {
       <POSCollapsibleGroup label="পণ্য ব্যবস্থাপনা" icon={Package} items={productSubItems}
         currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} />
       <POSCollapsibleGroup label="ক্রয় ব্যবস্থাপনা" icon={ShoppingBag} items={purchaseSubItems}
+        currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} />
+      <POSCollapsibleGroup label="রিপোর্ট" icon={BarChart3} items={reportSubItems}
         currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} />
 
       {!collapsed && <div className="h-px bg-white/10 mx-2 my-2" />}
