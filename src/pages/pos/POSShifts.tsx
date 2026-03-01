@@ -42,7 +42,7 @@ export default function POSShifts() {
                   <TableHead>শিফট নং</TableHead>
                   <TableHead>স্ট্যাটাস</TableHead>
                   <TableHead className="text-right">প্রারম্ভিক</TableHead>
-                  <TableHead className="text-right">নগদ বিক্রি</TableHead>
+                  <TableHead className="text-right">ক্যাশ বিক্রি</TableHead>
                   <TableHead className="text-right">মোবাইল বিক্রি</TableHead>
                   <TableHead className="text-right">মোট বিক্রি</TableHead>
                   <TableHead className="text-center">ট্রানজেকশন</TableHead>

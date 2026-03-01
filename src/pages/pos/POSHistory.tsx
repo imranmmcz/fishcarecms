@@ -272,7 +272,7 @@ export default function POSHistory() {
                     <TableCell className="text-xs">{sale.customer_phone || "-"}</TableCell>
                     <TableCell>
                       <Badge variant={sale.payment_method === "cash" ? "default" : "secondary"}>
-                        {sale.payment_method === "cash" ? "নগদ" : "মোবাইল"}
+                        {sale.payment_method === "cash" ? "ক্যাশ" : "মোবাইল"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">৳{sale.subtotal}</TableCell>
@@ -327,7 +327,7 @@ export default function POSHistory() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">কাস্টমার:</span> <span className="font-medium">{selectedSale.customer_name || "-"}</span></div>
                 <div><span className="text-muted-foreground">ফোন:</span> <span className="font-medium">{selectedSale.customer_phone || "-"}</span></div>
-                <div><span className="text-muted-foreground">পেমেন্ট:</span> <Badge variant="outline">{selectedSale.payment_method === "cash" ? "নগদ" : "মোবাইল ব্যাংকিং"}</Badge></div>
+                <div><span className="text-muted-foreground">পেমেন্ট:</span> <Badge variant="outline">{selectedSale.payment_method === "cash" ? "ক্যাশ" : "মোবাইল ব্যাংকিং"}</Badge></div>
                 <div><span className="text-muted-foreground">তারিখ:</span> <span className="font-medium">{formatDate(selectedSale.created_at)}</span></div>
                 {selectedSale.mobile_banking_provider && (
                   <div><span className="text-muted-foreground">প্রোভাইডার:</span> <span className="font-medium">{selectedSale.mobile_banking_provider}</span></div>
@@ -494,7 +494,7 @@ export default function POSHistory() {
                 <tr><td className="small">ডিসকাউন্ট</td><td className="small right" style={{ textAlign: "right" }}>-৳{selectedSale?.discount_amount}</td></tr>
               )}
               <tr><td className="bold">সর্বমোট</td><td className="bold right" style={{ textAlign: "right" }}>৳{selectedSale?.total_amount}</td></tr>
-              <tr><td className="small">প্রদান ({selectedSale?.payment_method === "cash" ? "নগদ" : "মোবাইল"})</td><td className="small right" style={{ textAlign: "right" }}>৳{selectedSale?.paid_amount}</td></tr>
+              <tr><td className="small">প্রদান ({selectedSale?.payment_method === "cash" ? "ক্যাশ" : "মোবাইল"})</td><td className="small right" style={{ textAlign: "right" }}>৳{selectedSale?.paid_amount}</td></tr>
               {selectedSale?.change_amount > 0 && (
                 <tr><td className="small">ফেরত</td><td className="small right" style={{ textAlign: "right" }}>৳{selectedSale?.change_amount}</td></tr>
               )}

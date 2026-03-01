@@ -268,7 +268,7 @@ export default function POSDashboard() {
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">সব</SelectItem>
-                      <SelectItem value="cash">নগদ</SelectItem>
+                      <SelectItem value="cash">ক্যাশ</SelectItem>
                       <SelectItem value="mobile_banking">মোবাইল ব্যাংকিং</SelectItem>
                     </SelectContent>
                   </Select>
@@ -374,7 +374,7 @@ export default function POSDashboard() {
                       <TableCell className="font-mono text-xs">{sale.sale_number}</TableCell>
                       <TableCell>
                         <Badge variant={sale.payment_method === "cash" ? "default" : "secondary"} className="text-[10px]">
-                          {sale.payment_method === "cash" ? "নগদ" : "মোবাইল"}
+                          {sale.payment_method === "cash" ? "ক্যাশ" : "মোবাইল"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-bold text-sm">৳{sale.total_amount}</TableCell>

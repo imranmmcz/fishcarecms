@@ -70,7 +70,7 @@ export default function POSSalesReport() {
 
   const stats = [
     { title: "মোট বিক্রি", value: `৳${totalSales.toLocaleString()}`, icon: TrendingUp, color: "text-emerald-400" },
-    { title: "নগদ বিক্রি", value: `৳${cashSales.toLocaleString()}`, icon: Banknote, color: "text-green-400" },
+    { title: "ক্যাশ বিক্রি", value: `৳${cashSales.toLocaleString()}`, icon: Banknote, color: "text-green-400" },
     { title: "মোবাইল ব্যাংকিং", value: `৳${mobileSales.toLocaleString()}`, icon: CreditCard, color: "text-blue-400" },
     { title: "মোট ডিসকাউন্ট", value: `৳${totalDiscount.toLocaleString()}`, icon: FileText, color: "text-orange-400" },
   ];
@@ -127,7 +127,7 @@ export default function POSSalesReport() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">সকল</SelectItem>
-                    <SelectItem value="cash">নগদ</SelectItem>
+                    <SelectItem value="cash">ক্যাশ</SelectItem>
                     <SelectItem value="mobile_banking">মোবাইল ব্যাংকিং</SelectItem>
                   </SelectContent>
                 </Select>

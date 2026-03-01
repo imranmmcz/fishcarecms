@@ -437,7 +437,7 @@ export default function AdminPOS() {
                 </Card>
                 <Card>
                   <CardContent className="p-3 text-center">
-                    <p className="text-xs text-muted-foreground">নগদ</p>
+                    <p className="text-xs text-muted-foreground">ক্যাশ</p>
                     <p className="text-lg font-bold text-green-600">৳{activeShift.cash_sales.toLocaleString()}</p>
                   </CardContent>
                 </Card>
@@ -620,7 +620,7 @@ export default function AdminPOS() {
                   {/* Payment Method */}
                   <div className="flex gap-2">
                     <Button size="sm" variant={paymentMethod === "cash" ? "default" : "outline"} className="flex-1 gap-1" onClick={() => setPaymentMethod("cash")}>
-                      <Banknote className="h-3.5 w-3.5" /> নগদ
+                      <Banknote className="h-3.5 w-3.5" /> ক্যাশ
                     </Button>
                     <Button size="sm" variant={paymentMethod === "mobile_banking" ? "default" : "outline"} className="flex-1 gap-1" onClick={() => setPaymentMethod("mobile_banking")}>
                       <Smartphone className="h-3.5 w-3.5" /> মোবাইল
@@ -734,7 +734,7 @@ export default function AdminPOS() {
               <div className="space-y-4">
                 <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
                   <div className="flex justify-between"><span>প্রারম্ভিক টাকা:</span><span className="font-bold">৳{activeShift.opening_amount.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span>নগদ বিক্রি:</span><span className="font-bold text-green-600">৳{activeShift.cash_sales.toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span>ক্যাশ বিক্রি:</span><span className="font-bold text-green-600">৳{activeShift.cash_sales.toLocaleString()}</span></div>
                   <div className="flex justify-between"><span>মোবাইল বিক্রি:</span><span className="font-bold text-blue-600">৳{activeShift.mobile_banking_sales.toLocaleString()}</span></div>
                   <Separator />
                   <div className="flex justify-between font-bold text-base"><span>প্রত্যাশিত ক্যাশ:</span><span>৳{(activeShift.opening_amount + activeShift.cash_sales).toLocaleString()}</span></div>
@@ -798,7 +798,7 @@ export default function AdminPOS() {
                   <div className="flex justify-between"><span>সাবটোটাল:</span><span>৳{lastSale.subtotal}</span></div>
                   {lastSale.discount_amount > 0 && <div className="flex justify-between text-red-500"><span>ডিসকাউন্ট:</span><span>-৳{lastSale.discount_amount}</span></div>}
                   <div className="flex justify-between font-bold text-base"><span>মোট:</span><span>৳{lastSale.total_amount}</span></div>
-                  <div className="flex justify-between"><span>প্রদান ({lastSale.payment_method === 'cash' ? 'নগদ' : 'মোবাইল'}):</span><span>৳{lastSale.paid_amount}</span></div>
+                  <div className="flex justify-between"><span>প্রদান ({lastSale.payment_method === 'cash' ? 'ক্যাশ' : 'মোবাইল'}):</span><span>৳{lastSale.paid_amount}</span></div>
                   {lastSale.change_amount > 0 && <div className="flex justify-between"><span>ফেরত:</span><span>৳{lastSale.change_amount}</span></div>}
                 </div>
                 <div className="text-center text-xs text-muted-foreground border-t pt-2">
@@ -837,7 +837,7 @@ export default function AdminPOS() {
                     <TableCell>{sale.customer_name || '-'}</TableCell>
                     <TableCell>
                       <Badge variant={sale.payment_method === 'cash' ? 'default' : 'secondary'}>
-                        {sale.payment_method === 'cash' ? 'নগদ' : 'মোবাইল'}
+                        {sale.payment_method === 'cash' ? 'ক্যাশ' : 'মোবাইল'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-bold">৳{sale.total_amount}</TableCell>
