@@ -11,9 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   CloudUpload, HardDrive, Loader2, CheckCircle, 
   RefreshCw, Trash2, Clock, FileJson,
-  Database, Shield, DownloadCloud, Settings, BarChart3, Mail
+  Database, Shield, DownloadCloud, Settings, BarChart3, Mail, Timer, Play, Pause
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const AdminBackup = () => {
   const { toast } = useToast();
@@ -27,7 +28,10 @@ const AdminBackup = () => {
   const [retentionDays, setRetentionDays] = useState(30);
   const [emailNotification, setEmailNotification] = useState(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
-
+  const [cronEnabled, setCronEnabled] = useState(false);
+  const [cronSchedule, setCronSchedule] = useState('0 2 * * *');
+  const [isSavingCron, setIsSavingCron] = useState(false);
+  const [cronStatus, setCronStatus] = useState<{ active: boolean; schedule: string | null } | null>(null);
   const loadBackupLogs = useCallback(async () => {
     setIsLoadingLogs(true);
     try {
@@ -50,10 +54,19 @@ const AdminBackup = () => {
       if (findVal('backup_max_size_mb')) setMaxSizeMB(parseInt(findVal('backup_max_size_mb')!));
       if (findVal('backup_retention_days')) setRetentionDays(parseInt(findVal('backup_retention_days')!));
       if (findVal('backup_email_notification')) setEmailNotification(findVal('backup_email_notification') !== 'false');
+      if (findVal('backup_cron_enabled')) setCronEnabled(findVal('backup_cron_enabled') === 'true');
+      if (findVal('backup_cron_schedule')) setCronSchedule(findVal('backup_cron_schedule')!);
     } catch (e) { console.error(e); }
   }, []);
 
-  useEffect(() => { loadBackupLogs(); loadSettings(); }, [loadBackupLogs, loadSettings]);
+  const loadCronStatus = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('manage_backup_cron', { _action: 'status' });
+      if (!error && data) setCronStatus(data as any);
+    } catch (e) { console.error(e); }
+  }, []);
+
+  useEffect(() => { loadBackupLogs(); loadSettings(); loadCronStatus(); }, [loadBackupLogs, loadSettings, loadCronStatus]);
 
   const createBackup = async () => {
     setIsBackingUp(true);
@@ -87,6 +100,35 @@ const AdminBackup = () => {
     } catch (e: any) {
       toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
     } finally { setIsSavingSettings(false); }
+  };
+
+  const saveCronSettings = async () => {
+    setIsSavingCron(true);
+    try {
+      const action = cronEnabled ? 'create' : 'disable';
+      const { data, error } = await supabase.rpc('manage_backup_cron', { 
+        _action: action, 
+        _schedule: cronSchedule,
+        _backup_scope: 'system'
+      });
+      if (error) throw error;
+      toast({ title: "সফল", description: cronEnabled ? `স্বয়ংক্রিয় ব্যাকআপ সক্রিয় হয়েছে (${getCronLabel(cronSchedule)})` : "স্বয়ংক্রিয় ব্যাকআপ বন্ধ হয়েছে" });
+      loadCronStatus();
+    } catch (e: any) {
+      toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
+    } finally { setIsSavingCron(false); }
+  };
+
+  const getCronLabel = (cron: string) => {
+    const labels: Record<string, string> = {
+      '0 2 * * *': 'প্রতিদিন রাত ২:০০',
+      '0 3 * * 0': 'প্রতি রবিবার রাত ৩:০০',
+      '0 2 1,15 * *': 'মাসে ২ বার (১ ও ১৫ তারিখ)',
+      '0 2 1 * *': 'মাসে ১ বার (১ তারিখ)',
+      '0 */6 * * *': 'প্রতি ৬ ঘণ্টায়',
+      '0 */12 * * *': 'প্রতি ১২ ঘণ্টায়',
+    };
+    return labels[cron] || cron;
   };
 
   const formatSize = (bytes: number) => {
@@ -131,6 +173,52 @@ const AdminBackup = () => {
             </div>
             <div className="flex items-center gap-3"><Switch checked={emailNotification} onCheckedChange={setEmailNotification} /><Label className="flex items-center gap-2"><Mail className="h-4 w-4" />ইমেইল নোটিফিকেশন</Label></div>
             <Button onClick={saveSettings} disabled={isSavingSettings}>{isSavingSettings ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}সেটিংস সেভ করুন</Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Timer className="h-5 w-5 text-primary" />স্বয়ংক্রিয় ব্যাকআপ (Cron Job)</CardTitle>
+            <CardDescription>নির্ধারিত সময়ে স্বয়ংক্রিয়ভাবে ব্যাকআপ নেওয়া হবে</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Switch checked={cronEnabled} onCheckedChange={setCronEnabled} />
+              <Label className="flex items-center gap-2">
+                {cronEnabled ? <Play className="h-4 w-4 text-green-500" /> : <Pause className="h-4 w-4 text-muted-foreground" />}
+                {cronEnabled ? 'স্বয়ংক্রিয় ব্যাকআপ সক্রিয়' : 'স্বয়ংক্রিয় ব্যাকআপ বন্ধ'}
+              </Label>
+            </div>
+            {cronEnabled && (
+              <div className="space-y-2">
+                <Label>শিডিউল নির্বাচন করুন</Label>
+                <Select value={cronSchedule} onValueChange={setCronSchedule}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0 */6 * * *">প্রতি ৬ ঘণ্টায়</SelectItem>
+                    <SelectItem value="0 */12 * * *">প্রতি ১২ ঘণ্টায়</SelectItem>
+                    <SelectItem value="0 2 * * *">প্রতিদিন রাত ২:০০</SelectItem>
+                    <SelectItem value="0 3 * * 0">প্রতি রবিবার রাত ৩:০০</SelectItem>
+                    <SelectItem value="0 2 1,15 * *">মাসে ২ বার (১ ও ১৫ তারিখ)</SelectItem>
+                    <SelectItem value="0 2 1 * *">মাসে ১ বার (১ তারিখ)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {cronStatus && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">বর্তমান স্ট্যাটাস:</span>
+                {cronStatus.active ? (
+                  <Badge className="bg-green-500/20 text-green-700"><CheckCircle className="h-3 w-3 mr-1" />সক্রিয় — {getCronLabel(cronStatus.schedule || '')}</Badge>
+                ) : (
+                  <Badge variant="outline">নিষ্ক্রিয়</Badge>
+                )}
+              </div>
+            )}
+            <Button onClick={saveCronSettings} disabled={isSavingCron}>
+              {isSavingCron ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Timer className="h-4 w-4 mr-2" />}
+              Cron Job সেভ করুন
+            </Button>
           </CardContent>
         </Card>
 
