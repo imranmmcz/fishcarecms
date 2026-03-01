@@ -796,6 +796,7 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
   };
 
   const [isImporting, setIsImporting] = useState(false);
+  const [duplicateAction, setDuplicateAction] = useState<"skip" | "update">("skip");
 
   // Calculate stats
   const lowStockProducts = products.filter(p => (p.stock_quantity || 0) <= (p.reorder_level || 10) && (p.stock_quantity || 0) > 0);
@@ -852,10 +853,11 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
       const dataLines = lines.slice(1);
       let successCount = 0;
       let errorCount = 0;
+      let skippedCount = 0;
+      let updatedCount = 0;
 
       for (const line of dataLines) {
         try {
-          // Parse CSV properly handling quoted fields
           const fields: string[] = [];
           let current = "";
           let inQuotes = false;
@@ -875,7 +877,7 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
           const [name, sku, category, costPrice, price, discount, stock, unit, reorder, weight, description, imageUrl] = fields;
           if (!name || !parseFloat(price)) continue;
 
-          const { error } = await supabase.from("products").insert({
+          const productData = {
             name,
             sku: sku || null,
             category: category || "medicine",
@@ -888,13 +890,47 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
             weight_kg: parseFloat(weight) || 0,
             description: description || null,
             image_url: imageUrl || null,
-          });
+          };
+
+          // Check for duplicate by SKU
+          if (sku) {
+            const { data: existing } = await supabase
+              .from("products")
+              .select("id")
+              .eq("sku", sku)
+              .maybeSingle();
+
+            if (existing) {
+              if (duplicateAction === "skip") {
+                skippedCount++;
+                continue;
+              } else {
+                // Update existing product
+                const { error } = await supabase
+                  .from("products")
+                  .update(productData)
+                  .eq("id", existing.id);
+                if (error) { errorCount++; } else { updatedCount++; }
+                continue;
+              }
+            }
+          }
+
+          const { error } = await supabase.from("products").insert(productData);
           if (error) { errorCount++; } else { successCount++; }
         } catch { errorCount++; }
       }
 
       if (successCount > 0) {
         toast.success(`${successCount}টি পণ্য সফলভাবে ইমপোর্ট হয়েছে`);
+        window.location.reload();
+      }
+      const messages: string[] = [];
+      if (successCount > 0) messages.push(`${successCount}টি নতুন যোগ`);
+      if (updatedCount > 0) messages.push(`${updatedCount}টি আপডেট`);
+      if (skippedCount > 0) messages.push(`${skippedCount}টি স্কিপ (ডুপ্লিকেট)`);
+      if (messages.length > 0) {
+        toast.success(messages.join(", "));
         window.location.reload();
       }
       if (errorCount > 0) {
@@ -954,6 +990,19 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
                     টেমপ্লেট ডাউনলোড করুন
                   </Button3D>
                   <Separator />
+                  <div className="space-y-2">
+                    <Label>ডুপ্লিকেট SKU পাওয়া গেলে</Label>
+                    <Select value={duplicateAction} onValueChange={(v: "skip" | "update") => setDuplicateAction(v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="skip">স্কিপ করুন (ডুপ্লিকেট বাদ দিন)</SelectItem>
+                        <SelectItem value="update">আপডেট করুন (বিদ্যমান পণ্য আপডেট)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">একই SKU থাকলে কী করবে সেটি নির্বাচন করুন</p>
+                  </div>
                   <Label>CSV ফাইল নির্বাচন করুন</Label>
                   <Input
                     type="file"
