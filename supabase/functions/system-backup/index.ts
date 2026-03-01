@@ -351,6 +351,13 @@ serve(async (req) => {
       });
     }
 
+    const { action, backup_scope, file_id, max_backups, max_size_mb } = await req.json();
+    const adminSupabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+
+    // Try to get user from token - may fail for cron/anon calls
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
@@ -358,27 +365,31 @@ serve(async (req) => {
     );
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !userData?.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-    const userId = userData.user.id;
-
-    const { action, backup_scope, file_id, max_backups, max_size_mb } = await req.json();
-    const adminSupabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
-
-    const { data: roleData } = await adminSupabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin');
+    const { data: userData } = await supabase.auth.getUser(token);
+    const userId = userData?.user?.id;
     
-    const isAdmin = roleData && roleData.length > 0;
+    let isAdmin = false;
+    let isCronCall = false;
+
+    if (userId) {
+      const { data: roleData } = await adminSupabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin');
+      isAdmin = roleData && roleData.length > 0;
+    } else {
+      // No user - this is a cron/system call via anon key
+      // Only allow system backup scope
+      if (backup_scope === 'system' && action === 'create_backup') {
+        isCronCall = true;
+        isAdmin = true; // Allow system backup for cron
+      } else {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
 
     if (action === 'create_backup') {
       const scope = backup_scope || (isAdmin ? 'system' : 'user');
@@ -392,12 +403,12 @@ serve(async (req) => {
       const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
       const fileName = scope === 'system' 
         ? `system_backup_${dateStr}.json` 
-        : `user_${userId.substring(0, 8)}_backup_${dateStr}.json`;
+        : `user_${(userId || 'cron').substring(0, 8)}_backup_${dateStr}.json`;
 
       const { data: logEntry, error: logError } = await adminSupabase
         .from('backup_logs')
         .insert({
-          backup_type: 'manual',
+          backup_type: isCronCall ? 'scheduled' : 'manual',
           backup_scope: scope,
           status: 'in_progress',
           file_name: fileName,
