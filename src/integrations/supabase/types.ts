@@ -1730,6 +1730,90 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_logs: {
+        Row: {
+          api_response: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          message: string
+          message_type: string
+          order_number: string | null
+          provider: string | null
+          recipient_phone: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          api_response?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message: string
+          message_type?: string
+          order_number?: string | null
+          provider?: string | null
+          recipient_phone: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          api_response?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          message_type?: string
+          order_number?: string | null
+          provider?: string | null
+          recipient_phone?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      sms_settings: {
+        Row: {
+          api_key: string | null
+          api_url: string | null
+          created_at: string
+          due_reminder_enabled: boolean | null
+          id: string
+          is_enabled: boolean
+          order_confirmation_enabled: boolean | null
+          order_status_update_enabled: boolean | null
+          provider: string
+          sender_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string | null
+          api_url?: string | null
+          created_at?: string
+          due_reminder_enabled?: boolean | null
+          id?: string
+          is_enabled?: boolean
+          order_confirmation_enabled?: boolean | null
+          order_status_update_enabled?: boolean | null
+          provider?: string
+          sender_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string | null
+          api_url?: string | null
+          created_at?: string
+          due_reminder_enabled?: boolean | null
+          id?: string
+          is_enabled?: boolean
+          order_confirmation_enabled?: boolean | null
+          order_status_update_enabled?: boolean | null
+          provider?: string
+          sender_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       smtp_settings: {
         Row: {
           created_at: string
