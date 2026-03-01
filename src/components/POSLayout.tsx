@@ -11,7 +11,7 @@ import {
   ArrowLeft, Package, Warehouse, UserCheck, Building2, ChevronDown,
   ArrowLeftRight, Layers, Tag, Award, Ruler,
   ShoppingBag, FileText, RotateCcw, ListOrdered, Globe, Menu, X,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, HandCoins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ const mainMenuItems = [
 const salesSubItems = [
   { title: "দ্রুত বিক্রি", url: "/pos/sell", icon: ShoppingCart },
   { title: "বিক্রি ইতিহাস", url: "/pos/history", icon: History },
+  { title: "বাকি আদায়", url: "/pos/due-collections", icon: HandCoins },
   { title: "বিক্রি রিটার্ন", url: "/pos/sales/returns", icon: RotateCcw },
   { title: "বিক্রি রিপোর্ট", url: "/pos/sales/report", icon: FileText },
 ];

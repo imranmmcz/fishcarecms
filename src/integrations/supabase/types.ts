@@ -1094,6 +1094,50 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_due_payments: {
+        Row: {
+          amount: number
+          collected_by: string | null
+          created_at: string
+          id: string
+          mobile_banking_provider: string | null
+          notes: string | null
+          payment_method: string
+          sale_id: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount?: number
+          collected_by?: string | null
+          created_at?: string
+          id?: string
+          mobile_banking_provider?: string | null
+          notes?: string | null
+          payment_method?: string
+          sale_id: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          collected_by?: string | null
+          created_at?: string
+          id?: string
+          mobile_banking_provider?: string | null
+          notes?: string | null
+          payment_method?: string
+          sale_id?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_due_payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pos_sale_items: {
         Row: {
           created_at: string
@@ -1152,12 +1196,14 @@ export type Database = {
           customer_name: string | null
           customer_phone: string | null
           discount_amount: number
+          due_amount: number
           id: string
           mobile_banking_number: string | null
           mobile_banking_provider: string | null
           notes: string | null
           paid_amount: number
           payment_method: string
+          payment_type: string
           sale_number: string
           shift_id: string | null
           status: string
@@ -1173,12 +1219,14 @@ export type Database = {
           customer_name?: string | null
           customer_phone?: string | null
           discount_amount?: number
+          due_amount?: number
           id?: string
           mobile_banking_number?: string | null
           mobile_banking_provider?: string | null
           notes?: string | null
           paid_amount?: number
           payment_method?: string
+          payment_type?: string
           sale_number: string
           shift_id?: string | null
           status?: string
@@ -1194,12 +1242,14 @@ export type Database = {
           customer_name?: string | null
           customer_phone?: string | null
           discount_amount?: number
+          due_amount?: number
           id?: string
           mobile_banking_number?: string | null
           mobile_banking_provider?: string | null
           notes?: string | null
           paid_amount?: number
           payment_method?: string
+          payment_type?: string
           sale_number?: string
           shift_id?: string | null
           status?: string

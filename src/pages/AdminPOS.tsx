@@ -282,11 +282,18 @@ export default function AdminPOS() {
       toast.error("পর্যাপ্ত টাকা দেওয়া হয়নি");
       return;
     }
+    if (paymentMethod === "due" && !customerName && !selectedCustomer) {
+      toast.error("বাকি বিক্রয়ের জন্য কাস্টমার নির্বাচন করুন");
+      return;
+    }
 
     setIsProcessing(true);
     try {
       const { data: numData } = await supabase.rpc("generate_pos_sale_number");
       const saleNumber = numData || `POS-${Date.now()}`;
+
+      const dueAmount = paymentMethod === "due" ? Math.max(0, totalAmount - paid) : 0;
+      const actualPaid = paymentMethod === "due" ? paid : (paymentMethod === "cash" ? paid : totalAmount);
 
       const { data: sale, error: saleError } = await supabase.from("pos_sales").insert({
         sale_number: saleNumber,
@@ -294,11 +301,13 @@ export default function AdminPOS() {
         user_id: user.id,
         customer_name: customerName || null,
         customer_phone: customerPhone || null,
-        payment_method: paymentMethod,
+        payment_method: paymentMethod === "due" ? "due" : paymentMethod,
+        payment_type: paymentMethod === "due" ? "due" : "full",
         subtotal,
         discount_amount: discount,
         total_amount: totalAmount,
-        paid_amount: paymentMethod === "cash" ? paid : totalAmount,
+        paid_amount: actualPaid,
+        due_amount: dueAmount,
         change_amount: paymentMethod === "cash" ? Math.max(0, changeAmount) : 0,
         mobile_banking_provider: paymentMethod === "mobile_banking" ? mobileBankingProvider : null,
         transaction_id: paymentMethod === "mobile_banking" ? transactionId : null,
@@ -327,7 +336,7 @@ export default function AdminPOS() {
       }
 
       // Update shift totals
-      const cashAdd = paymentMethod === "cash" ? totalAmount : 0;
+      const cashAdd = paymentMethod === "cash" ? totalAmount : (paymentMethod === "due" ? paid : 0);
       const mobileAdd = paymentMethod === "mobile_banking" ? totalAmount : 0;
       await supabase.from("pos_shifts").update({
         cash_sales: activeShift.cash_sales + cashAdd,
@@ -344,7 +353,7 @@ export default function AdminPOS() {
         total_transactions: prev.total_transactions + 1,
       } : null);
 
-      setLastSale({ ...sale, items: cart, saleNumber });
+      setLastSale({ ...sale, items: cart, saleNumber, dueAmount: paymentMethod === "due" ? Math.max(0, totalAmount - paid) : 0 });
       setShowReceipt(true);
       setCart([]);
       setPaidAmount("");
@@ -625,6 +634,9 @@ export default function AdminPOS() {
                     <Button size="sm" variant={paymentMethod === "mobile_banking" ? "default" : "outline"} className="flex-1 gap-1" onClick={() => setPaymentMethod("mobile_banking")}>
                       <Smartphone className="h-3.5 w-3.5" /> মোবাইল
                     </Button>
+                    <Button size="sm" variant={paymentMethod === "due" ? "default" : "outline"} className="flex-1 gap-1" onClick={() => setPaymentMethod("due")}>
+                      <Clock className="h-3.5 w-3.5" /> বাকি
+                    </Button>
                   </div>
 
                   {paymentMethod === "mobile_banking" && (
@@ -680,6 +692,27 @@ export default function AdminPOS() {
                         <div className="flex justify-between bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 rounded-lg p-2 font-bold">
                           <span>ফেরত:</span>
                           <span>৳{changeAmount.toFixed(0)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Due Sale - partial payment */}
+                  {paymentMethod === "due" && (
+                    <div className="space-y-2">
+                      {!customerName && !selectedCustomer && (
+                        <div className="bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 rounded-lg p-2 text-xs">
+                          ⚠️ বাকি বিক্রয়ের জন্য কাস্টমার নির্বাচন করুন
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs shrink-0">আগাম প্রদান:</Label>
+                        <Input type="number" value={paidAmount} onChange={e => setPaidAmount(e.target.value)} className="h-9 text-base font-bold" placeholder="০ (সম্পূর্ণ বাকি)" />
+                      </div>
+                      {totalAmount > 0 && (
+                        <div className="flex justify-between bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 rounded-lg p-2 font-bold">
+                          <span>বাকি থাকবে:</span>
+                          <span>৳{Math.max(0, totalAmount - paid).toFixed(0)}</span>
                         </div>
                       )}
                     </div>
@@ -798,8 +831,14 @@ export default function AdminPOS() {
                   <div className="flex justify-between"><span>সাবটোটাল:</span><span>৳{lastSale.subtotal}</span></div>
                   {lastSale.discount_amount > 0 && <div className="flex justify-between text-red-500"><span>ডিসকাউন্ট:</span><span>-৳{lastSale.discount_amount}</span></div>}
                   <div className="flex justify-between font-bold text-base"><span>মোট:</span><span>৳{lastSale.total_amount}</span></div>
-                  <div className="flex justify-between"><span>প্রদান ({lastSale.payment_method === 'cash' ? 'ক্যাশ' : 'মোবাইল'}):</span><span>৳{lastSale.paid_amount}</span></div>
+                  <div className="flex justify-between"><span>প্রদান ({lastSale.payment_method === 'cash' ? 'ক্যাশ' : lastSale.payment_method === 'due' ? 'বাকি' : 'মোবাইল'}):</span><span>৳{lastSale.paid_amount}</span></div>
                   {lastSale.change_amount > 0 && <div className="flex justify-between"><span>ফেরত:</span><span>৳{lastSale.change_amount}</span></div>}
+                  {(lastSale.dueAmount > 0 || lastSale.due_amount > 0) && (
+                    <div className="flex justify-between font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded p-1">
+                      <span>বাকি:</span>
+                      <span>৳{(lastSale.dueAmount || lastSale.due_amount || 0).toFixed ? (lastSale.dueAmount || lastSale.due_amount).toFixed(0) : (lastSale.dueAmount || lastSale.due_amount)}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="text-center text-xs text-muted-foreground border-t pt-2">
                   ধন্যবাদ! আবার আসবেন।
@@ -836,8 +875,8 @@ export default function AdminPOS() {
                     <TableCell className="font-mono text-xs">{sale.sale_number}</TableCell>
                     <TableCell>{sale.customer_name || '-'}</TableCell>
                     <TableCell>
-                      <Badge variant={sale.payment_method === 'cash' ? 'default' : 'secondary'}>
-                        {sale.payment_method === 'cash' ? 'ক্যাশ' : 'মোবাইল'}
+                      <Badge variant={sale.payment_method === 'cash' ? 'default' : sale.payment_method === 'due' ? 'destructive' : 'secondary'}>
+                        {sale.payment_method === 'cash' ? 'ক্যাশ' : sale.payment_method === 'due' ? 'বাকি' : 'মোবাইল'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-bold">৳{sale.total_amount}</TableCell>
