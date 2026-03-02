@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   FileText, Plus, Edit, Trash2, Globe, Eye, EyeOff,
-  Search, Clock, ExternalLink, Menu, LogIn, UserPlus, Save, Loader2
+  Search, Clock, ExternalLink, Menu, LogIn, UserPlus, Save, Loader2,
+  Navigation, X, Home, ShoppingBag, LayoutGrid, TrendingUp, CheckCircle
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -44,6 +45,12 @@ interface AuthPageContent {
   content: Record<string, any>;
 }
 
+interface NavItem {
+  label_bn: string;
+  label_en: string;
+  path: string;
+}
+
 const emptyForm = {
   title: "",
   title_bn: "",
@@ -53,6 +60,7 @@ const emptyForm = {
   meta_title: "",
   meta_description: "",
   status: "draft" as "draft" | "published",
+  addToMenu: false,
 };
 
 function slugify(text: string) {
@@ -75,6 +83,10 @@ export default function AdminPages() {
   const [form, setForm] = useState(emptyForm);
   const [slugManual, setSlugManual] = useState(false);
 
+  // Nav items (menu pages) state
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
+  const [headerContent, setHeaderContent] = useState<Record<string, any> | null>(null);
+
   // Auth page editing state
   const [authPages, setAuthPages] = useState<AuthPageContent[]>([]);
   const [editingAuthPage, setEditingAuthPage] = useState<AuthPageContent | null>(null);
@@ -84,12 +96,18 @@ export default function AdminPages() {
 
   const fetchPages = useCallback(async () => {
     setLoading(true);
-    const [pagesRes, authRes] = await Promise.all([
+    const [pagesRes, authRes, headerRes] = await Promise.all([
       supabase.from("custom_pages").select("*").order("created_at", { ascending: false }),
       supabase.from("page_content").select("section_key, section_name, content").in("section_key", ["auth_login", "auth_register"]),
+      supabase.from("page_content").select("content").eq("section_key", "header").single(),
     ]);
     if (!pagesRes.error && pagesRes.data) setPages(pagesRes.data as CustomPage[]);
     if (!authRes.error && authRes.data) setAuthPages(authRes.data as AuthPageContent[]);
+    if (!headerRes.error && headerRes.data) {
+      const hContent = headerRes.data.content as Record<string, any>;
+      setHeaderContent(hContent);
+      setNavItems((hContent.navItems || []) as NavItem[]);
+    }
     setLoading(false);
   }, []);
 
@@ -104,6 +122,8 @@ export default function AdminPages() {
 
   const openEdit = (page: CustomPage) => {
     setEditingPage(page);
+    const pagePath = `/pages/${page.slug}`;
+    const isInMenu = navItems.some((item) => item.path === pagePath);
     setForm({
       title: page.title,
       title_bn: page.title_bn || "",
@@ -113,6 +133,7 @@ export default function AdminPages() {
       meta_title: page.meta_title || "",
       meta_description: page.meta_description || "",
       status: page.status as "draft" | "published",
+      addToMenu: isInMenu,
     });
     setSlugManual(true);
     setDialogOpen(true);
@@ -161,6 +182,24 @@ export default function AdminPages() {
       }
 
       if (error) throw error;
+
+      // Handle menu add/remove
+      if (form.addToMenu && form.status === "published" && headerContent) {
+        const pagePath = `/pages/${form.slug.trim()}`;
+        const currentNavItems = [...(headerContent.navItems || [])];
+        if (!currentNavItems.some((item: any) => item.path === pagePath)) {
+          currentNavItems.push({
+            label_bn: form.title_bn.trim() || form.title.trim(),
+            label_en: form.title.trim(),
+            path: pagePath,
+          });
+          await supabase
+            .from("page_content")
+            .update({ content: { ...headerContent, navItems: currentNavItems }, updated_at: new Date().toISOString() })
+            .eq("section_key", "header");
+        }
+      }
+
       toast({ title: "সফল!", description: editingPage ? "পেজ আপডেট হয়েছে" : "নতুন পেজ তৈরি হয়েছে" });
       setDialogOpen(false);
       fetchPages();
@@ -197,23 +236,49 @@ export default function AdminPages() {
       const { data, error: fetchErr } = await supabase
         .from("page_content").select("content").eq("section_key", "header").single();
       if (fetchErr || !data) throw new Error("হেডার ডাটা পাওয়া যায়নি");
-      const headerContent = data.content as Record<string, any>;
-      const navItems = headerContent.navItems || [];
+      const hContent = data.content as Record<string, any>;
+      const items = hContent.navItems || [];
       const pagePath = `/pages/${page.slug}`;
-      if (navItems.some((item: any) => item.path === pagePath)) {
+      if (items.some((item: any) => item.path === pagePath)) {
         toast({ title: "ইতোমধ্যে আছে", description: "এই পেজটি মেনুতে আগে থেকেই আছে" });
         return;
       }
-      navItems.push({ label_bn: page.title_bn || page.title, label_en: page.title, path: pagePath });
+      items.push({ label_bn: page.title_bn || page.title, label_en: page.title, path: pagePath });
       const { error: updateErr } = await supabase
         .from("page_content")
-        .update({ content: { ...headerContent, navItems }, updated_at: new Date().toISOString() })
+        .update({ content: { ...hContent, navItems: items }, updated_at: new Date().toISOString() })
         .eq("section_key", "header");
       if (updateErr) throw updateErr;
       toast({ title: "সফল!", description: `"${page.title}" মেনুতে যোগ করা হয়েছে` });
+      fetchPages();
     } catch (err: any) {
       toast({ title: "ত্রুটি", description: err.message, variant: "destructive" });
     }
+  };
+
+  const removeFromMenu = async (path: string) => {
+    if (!headerContent) return;
+    try {
+      const updatedNavItems = (headerContent.navItems || []).filter((item: any) => item.path !== path);
+      const { error } = await supabase
+        .from("page_content")
+        .update({ content: { ...headerContent, navItems: updatedNavItems }, updated_at: new Date().toISOString() })
+        .eq("section_key", "header");
+      if (error) throw error;
+      toast({ title: "সফল!", description: "মেনু থেকে সরানো হয়েছে" });
+      fetchPages();
+    } catch (err: any) {
+      toast({ title: "ত্রুটি", description: err.message, variant: "destructive" });
+    }
+  };
+
+  // Get icon for known system paths
+  const getNavIcon = (path: string) => {
+    if (path === "/") return Home;
+    if (path === "/modules") return LayoutGrid;
+    if (path === "/shop") return ShoppingBag;
+    if (path === "/market-price") return TrendingUp;
+    return Navigation;
   };
 
   // Auth page edit handlers
@@ -326,7 +391,56 @@ export default function AdminPages() {
           </div>
         </div>
 
-        {/* Search */}
+        {/* Menu Pages (Nav Items) */}
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wider flex items-center gap-2">
+            <Navigation className="h-3.5 w-3.5" /> মেনু পেজসমূহ
+          </h2>
+          <p className="text-xs text-muted-foreground mb-3">
+            বর্তমানে মেনু বারে যে পেজগুলো প্রদর্শিত হচ্ছে। নতুন পেজ তৈরি করে "মেনুতে যোগ করুন" চেক করলে স্বয়ংক্রিয়ভাবে যুক্ত হবে।
+          </p>
+          <div className="grid gap-2">
+            {navItems.map((item, index) => {
+              const IconComp = getNavIcon(item.path);
+              const isSystemPage = !item.path.startsWith("/pages/");
+              return (
+                <Card key={index} className="hover:shadow-sm transition-shadow">
+                  <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 px-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
+                        <IconComp className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-medium text-sm text-foreground">{item.label_bn}</h3>
+                          <span className="text-xs text-muted-foreground">({item.label_en})</span>
+                          {isSystemPage && <Badge variant="secondary" className="text-[10px] py-0">সিস্টেম</Badge>}
+                          <Badge variant="outline" className="text-[10px] py-0 gap-1">
+                            <CheckCircle className="h-2.5 w-2.5" /> মেনুতে আছে
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+                          <ExternalLink className="h-3 w-3" /> {item.path}
+                        </div>
+                      </div>
+                    </div>
+                    {!isSystemPage && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 text-destructive hover:text-destructive hover:border-destructive text-xs"
+                        onClick={() => removeFromMenu(item.path)}
+                      >
+                        <X className="h-3 w-3" /> মেনু থেকে সরান
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wider">কাস্টম পেজ</h2>
           <div className="relative max-w-sm mb-3">
@@ -360,9 +474,9 @@ export default function AdminPages() {
               <Card key={page.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
                   <div className="flex items-start gap-3 min-w-0">
-                    <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${page.status === "published" ? "bg-emerald-500/10" : "bg-muted"}`}>
+                    <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${page.status === "published" ? "bg-primary/10" : "bg-muted"}`}>
                       {page.status === "published"
-                        ? <Globe className="h-4 w-4 text-emerald-500" />
+                        ? <Globe className="h-4 w-4 text-primary" />
                         : <Clock className="h-4 w-4 text-muted-foreground" />}
                     </div>
                     <div className="min-w-0">
@@ -389,7 +503,7 @@ export default function AdminPages() {
                     )}
                     <div className="flex items-center gap-1.5">
                       {page.status === "published"
-                        ? <Eye className="h-3.5 w-3.5 text-emerald-500" />
+                        ? <Eye className="h-3.5 w-3.5 text-primary" />
                         : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
                       <Switch checked={page.status === "published"} onCheckedChange={() => toggleStatus(page)} className="scale-75" />
                     </div>
@@ -462,11 +576,27 @@ export default function AdminPages() {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`text-sm font-medium ${form.status === "published" ? "text-emerald-500" : "text-muted-foreground"}`}>
+                <span className={`text-sm font-medium ${form.status === "published" ? "text-primary" : "text-muted-foreground"}`}>
                   {form.status === "published" ? "প্রকাশিত" : "ড্রাফট"}
                 </span>
                 <Switch checked={form.status === "published"} onCheckedChange={v => setForm(f => ({ ...f, status: v ? "published" : "draft" }))} />
               </div>
+            </div>
+            {/* Add to Menu option */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+              <div>
+                <p className="font-medium text-sm flex items-center gap-2">
+                  <Navigation className="h-4 w-4 text-primary" />
+                  মেনু বারে যোগ করুন
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  এই পেজটি সাইটের হেডার নেভিগেশন মেনুতে দেখাবে
+                </p>
+              </div>
+              <Switch
+                checked={form.addToMenu}
+                onCheckedChange={v => setForm(f => ({ ...f, addToMenu: v }))}
+              />
             </div>
           </div>
           <DialogFooter className="gap-2">
