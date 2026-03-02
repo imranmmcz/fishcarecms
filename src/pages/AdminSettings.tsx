@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search, FileText, Truck, MessageCircle, Printer, MessageSquare } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search, FileText, Truck, MessageCircle, Printer, MessageSquare, Bot } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
@@ -27,6 +27,7 @@ import { SteadfastCourierSettings } from "@/components/admin/SteadfastCourierSet
 import { WhatsAppSettings } from "@/components/admin/WhatsAppSettings";
 import POSPrintSettings from "@/components/admin/POSPrintSettings";
 import SmsSettings from "@/components/admin/SmsSettings";
+import ChatbotSettings from "@/components/admin/ChatbotSettings";
 
 interface SystemSetting {
   id: string;
@@ -286,6 +287,10 @@ const AdminSettings = () => {
             <TabsTrigger value="pos-print" className="flex items-center gap-2">
               <Printer className="h-4 w-4" />
               {language === "bn" ? "POS প্রিন্ট" : "POS Print"}
+            </TabsTrigger>
+            <TabsTrigger value="chatbot" className="flex items-center gap-2">
+              <Bot className="h-4 w-4" />
+              {language === "bn" ? "চ্যাটবট" : "Chatbot"}
             </TabsTrigger>
           </TabsList>
 
@@ -726,6 +731,11 @@ const AdminSettings = () => {
           {/* POS Print Settings Tab */}
           <TabsContent value="pos-print" className="space-y-6 mt-6">
             <POSPrintSettings />
+          </TabsContent>
+
+          {/* Chatbot Settings Tab */}
+          <TabsContent value="chatbot" className="space-y-6 mt-6">
+            <ChatbotSettings />
           </TabsContent>
         </Tabs>
       </div>
