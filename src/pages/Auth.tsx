@@ -290,6 +290,14 @@ const Auth = () => {
                   </div>
                   {errors.password && <p className="text-sm text-red-400">{errors.password}</p>}
                 </div>
+                <div className="flex justify-end">
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                  >
+                    পাসওয়ার্ড ভুলে গেছেন?
+                  </Link>
+                </div>
                 <Button3D
                   type="submit"
                   variant="primary"
