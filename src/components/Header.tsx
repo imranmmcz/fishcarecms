@@ -210,7 +210,7 @@ export const Header = () => {
 
       {/* ─── Row 2: Logo + Search + Actions ─── */}
       <div className="border-b border-border relative z-[101]" style={{ backgroundColor: 'hsl(var(--header-bg, var(--background)))' }}>
-        <div className="container flex h-16 md:h-20 items-center justify-between gap-2 overflow-hidden">
+        <div className="container flex h-16 md:h-20 items-center justify-between gap-2">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 transition-transform hover:scale-[1.02]">
             {headerData?.logoUrl ? (
