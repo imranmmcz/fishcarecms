@@ -453,16 +453,16 @@ export default function AdminPageBuilder() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-           <TabsList className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 w-full">
-            <TabsTrigger value="header">হেডার</TabsTrigger>
-            <TabsTrigger value="hero">হিরো</TabsTrigger>
-            <TabsTrigger value="modules">মডিউল</TabsTrigger>
-            <TabsTrigger value="benefits">সুবিধা</TabsTrigger>
-            <TabsTrigger value="faq">FAQ</TabsTrigger>
-            <TabsTrigger value="stats">পরিসংখ্যান</TabsTrigger>
-            <TabsTrigger value="cta">CTA</TabsTrigger>
-            <TabsTrigger value="footer">ফুটার</TabsTrigger>
-            <TabsTrigger value="adsense">AdSense</TabsTrigger>
+           <TabsList className="flex flex-wrap h-auto gap-1 p-1 w-full">
+            <TabsTrigger value="header" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">হেডার</TabsTrigger>
+            <TabsTrigger value="hero" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">হিরো</TabsTrigger>
+            <TabsTrigger value="modules" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">মডিউল</TabsTrigger>
+            <TabsTrigger value="benefits" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">সুবিধা</TabsTrigger>
+            <TabsTrigger value="faq" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">FAQ</TabsTrigger>
+            <TabsTrigger value="stats" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">পরিসংখ্যান</TabsTrigger>
+            <TabsTrigger value="cta" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">CTA</TabsTrigger>
+            <TabsTrigger value="footer" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">ফুটার</TabsTrigger>
+            <TabsTrigger value="adsense" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">AdSense</TabsTrigger>
           </TabsList>
 
           {/* Header Section */}
