@@ -1,4 +1,5 @@
 import { ReactNode, useState, useEffect } from "react";
+import { InactivityWarningBanner } from "@/components/InactivityWarningBanner";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/contexts/AuthContext";
@@ -450,6 +451,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <ProfileDropdown />
               </div>
               <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-57px)] md:min-h-[calc(100vh-65px)] md:rounded-tl-2xl">
+                <InactivityWarningBanner />
                 {children}
               </div>
             </main>
@@ -704,6 +706,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-6">
+          <InactivityWarningBanner />
           {children}
         </main>
       </div>
