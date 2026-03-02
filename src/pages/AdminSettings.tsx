@@ -17,6 +17,7 @@ import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContex
 import SmtpSettingsTab from "@/components/SmtpSettingsTab";
 import EmailLogsViewer from "@/components/EmailLogsViewer";
 import ThemeColorSettings from "@/components/ThemeColorSettings";
+import LoadingAnimationSettings from "@/components/LoadingAnimationSettings";
 import LanguageFontSettings from "@/components/LanguageFontSettings";
 import GlobalSeoSettings from "@/components/admin/GlobalSeoSettings";
 import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
@@ -291,6 +292,7 @@ const AdminSettings = () => {
           {/* Theme Color Settings Tab */}
           <TabsContent value="theme" className="space-y-6 mt-6">
             <ThemeColorSettings />
+            <LoadingAnimationSettings />
           </TabsContent>
 
           {/* Language Settings Tab */}
