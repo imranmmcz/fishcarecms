@@ -103,7 +103,7 @@ const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
 
       {/* Mobile dropdown */}
       {showMenu && (
-        <div className="md:hidden absolute left-0 right-0 top-full z-50 shadow-lg animate-fade-in border-t border-white/20" style={{ backgroundColor: 'hsl(var(--header-utility-bg, var(--primary)))', color: 'hsl(var(--header-utility-text, var(--primary-foreground)))' }}>
+        <div className="md:hidden absolute left-0 right-0 top-full z-[200] shadow-lg animate-fade-in border-t border-white/20" style={{ backgroundColor: 'hsl(var(--header-utility-bg, var(--primary)))', color: 'hsl(var(--header-utility-text, var(--primary-foreground)))' }}>
           <div className="container py-2 flex flex-col gap-1.5 text-xs font-medium">
             {user ? (
               <>
@@ -233,7 +233,7 @@ export const Header = () => {
           />
 
           {/* Right side: phone + actions */}
-          <div className="flex items-center gap-1 md:gap-4 shrink-0">
+          <div className="flex items-center gap-0 md:gap-4 shrink-0">
             {/* Phone - always visible */}
             <a href={`tel:${headerData?.topBarPhone || "01978865277"}`} className="flex items-center gap-1.5 shrink-0">
               <Phone className="h-4 w-4 md:h-5 md:w-5 text-primary" />
