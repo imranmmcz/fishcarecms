@@ -14,6 +14,7 @@ interface LoadingConfig {
   color: string;
   bg: string;
   fullscreen: boolean;
+  customImage: string;
 }
 
 const defaultConfig: LoadingConfig = {
@@ -22,6 +23,7 @@ const defaultConfig: LoadingConfig = {
   color: "#22D3EE",
   bg: "#0C1929",
   fullscreen: true,
+  customImage: "",
 };
 
 export const FishLoadingAnimation = ({ 
@@ -48,6 +50,7 @@ export const FishLoadingAnimation = ({
             if (d.setting_key === "loading_animation_color") c.color = d.setting_value;
             if (d.setting_key === "loading_animation_bg") c.bg = d.setting_value;
             if (d.setting_key === "loading_animation_fullscreen") c.fullscreen = d.setting_value === "true";
+            if (d.setting_key === "loading_animation_custom_image") c.customImage = d.setting_value;
           });
           setConfig(c);
         }
@@ -124,6 +127,18 @@ export const FishLoadingAnimation = ({
               style={{ backgroundColor: config.color }}
             />
           </div>
+        );
+
+      case "custom_image":
+        return config.customImage ? (
+          <img 
+            src={config.customImage} 
+            alt="Loading" 
+            className={`${sizeClasses[size]} object-contain`}
+            style={{ filter: `drop-shadow(0 0 10px ${config.color}80)` }}
+          />
+        ) : (
+          <Loader2 className={`${sizeClasses[size]} animate-spin`} style={{ color: config.color }} />
         );
 
       case "fish":

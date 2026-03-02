@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Save, Eye } from "lucide-react";
+import { Loader2, Save, Eye, Upload, X, ImageIcon } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Fish } from "lucide-react";
 
@@ -17,6 +17,7 @@ const ANIMATION_TYPES = [
   { value: "dots", label_bn: "বাউন্সিং ডট", label_en: "Bouncing Dots" },
   { value: "wave", label_bn: "ওয়েভ", label_en: "Wave" },
   { value: "pulse", label_bn: "পালস", label_en: "Pulse" },
+  { value: "custom_image", label_bn: "কাস্টম ইমেজ/GIF", label_en: "Custom Image/GIF" },
 ];
 
 interface LoadingSettings {
@@ -25,6 +26,7 @@ interface LoadingSettings {
   loading_animation_color: string;
   loading_animation_bg: string;
   loading_animation_fullscreen: string;
+  loading_animation_custom_image: string;
 }
 
 const defaultSettings: LoadingSettings = {
@@ -33,6 +35,7 @@ const defaultSettings: LoadingSettings = {
   loading_animation_color: "#22D3EE",
   loading_animation_bg: "#0C1929",
   loading_animation_fullscreen: "true",
+  loading_animation_custom_image: "",
 };
 
 export function LoadingAnimationSettings() {
@@ -41,6 +44,70 @@ export function LoadingAnimationSettings() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error(language === "bn" ? "শুধুমাত্র PNG, JPG, GIF, WebP, SVG ফাইল অনুমোদিত" : "Only PNG, JPG, GIF, WebP, SVG files allowed");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(language === "bn" ? "ফাইল সাইজ ৫MB এর বেশি হতে পারবে না" : "File size must be under 5MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+      const fileName = `loading-animation-${Date.now()}.${ext}`;
+
+      // Delete old file if exists
+      if (settings.loading_animation_custom_image) {
+        try {
+          const oldPath = settings.loading_animation_custom_image.split('/product-images/')[1];
+          if (oldPath) {
+            await supabase.storage.from('product-images').remove([oldPath]);
+          }
+        } catch {}
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(`loading/${fileName}`, file, { contentType: file.type, upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(`loading/${fileName}`);
+
+      handleChange("loading_animation_custom_image", urlData.publicUrl);
+      toast.success(language === "bn" ? "ইমেজ আপলোড সফল হয়েছে" : "Image uploaded successfully");
+    } catch (err) {
+      console.error("Upload error:", err);
+      toast.error(language === "bn" ? "আপলোড ব্যর্থ হয়েছে" : "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const removeCustomImage = async () => {
+    if (settings.loading_animation_custom_image) {
+      try {
+        const oldPath = settings.loading_animation_custom_image.split('/product-images/')[1];
+        if (oldPath) {
+          await supabase.storage.from('product-images').remove([oldPath]);
+        }
+      } catch {}
+    }
+    handleChange("loading_animation_custom_image", "");
+  };
 
   useEffect(() => {
     loadSettings();
@@ -140,7 +207,75 @@ export function LoadingAnimationSettings() {
           </Select>
         </div>
 
-        {/* Loading Text */}
+        {/* Custom Image Upload - shown when custom_image type selected */}
+        {settings.loading_animation_type === "custom_image" && (
+          <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <Label className="font-semibold flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-primary" />
+              {language === "bn" ? "কাস্টম ইমেজ / GIF আপলোড" : "Custom Image / GIF Upload"}
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {language === "bn" 
+                ? "PNG, JPG, GIF, WebP, SVG ফাইল আপলোড করুন (সর্বোচ্চ ৫MB)। GIF ফাইল এনিমেটেড হিসেবে দেখানো হবে।" 
+                : "Upload PNG, JPG, GIF, WebP, SVG files (max 5MB). GIF files will be displayed animated."}
+            </p>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+
+            {settings.loading_animation_custom_image ? (
+              <div className="flex items-center gap-4">
+                <div className="relative w-24 h-24 rounded-lg border border-border overflow-hidden bg-background">
+                  <img
+                    src={settings.loading_animation_custom_image}
+                    alt="Custom loading"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                    {language === "bn" ? "পরিবর্তন করুন" : "Change"}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={removeCustomImage}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    {language === "bn" ? "মুছে ফেলুন" : "Remove"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="border-dashed border-2 h-24 w-full"
+              >
+                {uploading ? (
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                ) : (
+                  <Upload className="h-6 w-6 mr-2 text-muted-foreground" />
+                )}
+                <span className="text-muted-foreground">
+                  {language === "bn" ? "ক্লিক করে ইমেজ বা GIF আপলোড করুন" : "Click to upload image or GIF"}
+                </span>
+              </Button>
+            )}
+          </div>
+        )}
         <div className="space-y-2">
           <Label className="font-semibold">
             {language === "bn" ? "লোডিং টেক্সট" : "Loading Text"}
@@ -221,7 +356,7 @@ export function LoadingAnimationSettings() {
               }}
             >
               <div className="flex flex-col items-center justify-center h-full gap-4">
-                <AnimationPreview type={settings.loading_animation_type} color={settings.loading_animation_color} />
+                <AnimationPreview type={settings.loading_animation_type} color={settings.loading_animation_color} customImage={settings.loading_animation_custom_image} />
                 <p className="text-sm font-medium" style={{ color: settings.loading_animation_color }}>
                   {settings.loading_animation_text}
                 </p>
@@ -242,8 +377,17 @@ export function LoadingAnimationSettings() {
   );
 }
 
-function AnimationPreview({ type, color }: { type: string; color: string }) {
+function AnimationPreview({ type, color, customImage }: { type: string; color: string; customImage?: string }) {
   switch (type) {
+    case "custom_image":
+      return customImage ? (
+        <img src={customImage} alt="Custom loading" className="h-16 w-auto object-contain animate-pulse" />
+      ) : (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <ImageIcon className="h-10 w-10" />
+          <span className="text-sm">No image uploaded</span>
+        </div>
+      );
     case "fish":
       return (
         <div className="relative w-48 h-16">
