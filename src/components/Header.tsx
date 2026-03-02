@@ -280,24 +280,29 @@ export const Header = () => {
       </div>
 
       {/* ─── Row 3: Navigation - Desktop ─── */}
-      <nav className={`hidden md:block transition-all duration-300 ${hideNav ? "max-h-0 overflow-hidden opacity-0" : "max-h-20 opacity-100"}`} style={{ backgroundColor: 'hsl(var(--header-nav-bg, var(--foreground)))' }}>
-        <div className="container flex items-center gap-1 h-10">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`text-sm font-semibold px-4 h-full flex items-center transition-colors uppercase tracking-wide ${
-                location.pathname === item.path
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-white/10"
-              }`}
-              style={location.pathname !== item.path ? { color: 'hsl(var(--header-nav-text, var(--background)) / 0.85)' } : undefined}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      </nav>
+      <div className="hidden md:block h-10 overflow-hidden">
+        <nav
+          className={`transition-transform duration-300 ease-in-out ${hideNav ? "-translate-y-full" : "translate-y-0"}`}
+          style={{ backgroundColor: 'hsl(var(--header-nav-bg, var(--foreground)))' }}
+        >
+          <div className="container flex items-center gap-1 h-10">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`text-sm font-semibold px-4 h-full flex items-center transition-colors uppercase tracking-wide ${
+                  location.pathname === item.path
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-white/10"
+                }`}
+                style={location.pathname !== item.path ? { color: 'hsl(var(--header-nav-text, var(--background)) / 0.85)' } : undefined}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      </div>
     </header>
   );
 };
