@@ -133,19 +133,21 @@ const Footer = () => {
               if (!fbLink) return null;
               const fbUrl = fbLink.url;
               return (
-                <div className="mt-4 rounded-lg overflow-hidden bg-white/5 p-2">
+                <div className="mt-4 rounded-lg overflow-hidden p-3" style={{ backgroundColor: 'hsl(var(--footer-bg, 210 29% 18%) / 0.8)', border: '1px solid hsl(var(--footer-text, 215 19% 78%) / 0.15)' }}>
                   <p className="text-xs mb-2 font-medium" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
                     {language === "bn" ? "আমাদের সাথে যুক্ত থাকুন" : "Stay Connected"}
                   </p>
-                  <iframe
-                    src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(fbUrl)}&tabs=&width=280&height=130&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true&appId`}
-                    width="280"
-                    height="130"
-                    style={{ border: 'none', overflow: 'hidden', borderRadius: '8px' }}
-                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                    loading="lazy"
-                    title="Facebook Page"
-                  />
+                  <div className="rounded-md overflow-hidden" style={{ colorScheme: 'light' }}>
+                    <iframe
+                      src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(fbUrl)}&tabs=&width=280&height=130&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true&appId`}
+                      width="100%"
+                      height="130"
+                      style={{ border: 'none', overflow: 'hidden', borderRadius: '6px' }}
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                      loading="lazy"
+                      title="Facebook Page"
+                    />
+                  </div>
                 </div>
               );
             })()}
