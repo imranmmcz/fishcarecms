@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { HeroSliderManagement } from "@/components/admin/HeroSliderManagement";
 import { HeroFeaturedProductAdmin } from "@/components/admin/HeroFeaturedProductAdmin";
+import { AdSenseSettings } from "@/components/admin/AdSenseSettings";
 
 interface PageSection {
   id: string;
@@ -452,7 +453,7 @@ export default function AdminPageBuilder() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-           <TabsList className="grid grid-cols-4 md:grid-cols-8 w-full">
+           <TabsList className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 w-full">
             <TabsTrigger value="header">হেডার</TabsTrigger>
             <TabsTrigger value="hero">হিরো</TabsTrigger>
             <TabsTrigger value="modules">মডিউল</TabsTrigger>
@@ -461,6 +462,7 @@ export default function AdminPageBuilder() {
             <TabsTrigger value="stats">পরিসংখ্যান</TabsTrigger>
             <TabsTrigger value="cta">CTA</TabsTrigger>
             <TabsTrigger value="footer">ফুটার</TabsTrigger>
+            <TabsTrigger value="adsense">AdSense</TabsTrigger>
           </TabsList>
 
           {/* Header Section */}
@@ -1432,6 +1434,11 @@ export default function AdminPageBuilder() {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* AdSense Section */}
+          <TabsContent value="adsense">
+            <AdSenseSettings />
           </TabsContent>
 
         </Tabs>
