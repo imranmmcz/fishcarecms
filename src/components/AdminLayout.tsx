@@ -1,8 +1,10 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAdminTranslations } from "@/data/adminTranslations";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -10,7 +12,7 @@ import {
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
   Building2, FileText, CloudUpload, Palette, Store, ChevronDown, CreditCard,
   Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, type LucideIcon,
-  Menu, X, LogOut, ChevronLeft, ChevronRight,
+  Menu, X, LogOut, ChevronLeft, ChevronRight, Languages,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -32,47 +34,6 @@ interface MenuGroup {
   icon: LucideIcon;
   items: SubMenuItem[];
 }
-
-const cmsGroup: MenuGroup = {
-  label: "সিএমএস",
-  icon: Palette,
-  items: [
-    { title: "পেজ ম্যানেজমেন্ট", url: "/admin/pages", icon: FileText, permissionKey: "admin_pages" },
-    { title: "পেজ বিল্ডার", url: "/admin/page-builder", icon: Layout, permissionKey: "admin_pages" },
-    { title: "বিজ্ঞাপন", url: "/admin/ads", icon: Megaphone, permissionKey: "admin_ads" },
-    { title: "বাজার দর", url: "/admin/market-prices", icon: TrendingUp, permissionKey: "admin_market_prices" },
-    { title: "রোগ ব্যবস্থাপনা", url: "/admin/diseases", icon: Stethoscope, permissionKey: "admin_pages" },
-    { title: "ক্যালকুলেটর মডিউল", url: "/admin/calculators", icon: Calculator, permissionKey: "admin_pages" },
-  ],
-};
-
-const ecommerceGroup: MenuGroup = {
-  label: "ই-কমার্স",
-  icon: Store,
-  items: [
-    { title: "অর্ডার ম্যানেজমেন্ট", url: "/admin/orders", icon: ShoppingCart, permissionKey: "admin_orders" },
-    { title: "ই-কমার্স ওভারভিউ", url: "/admin/ecommerce-overview", icon: BarChart3, permissionKey: "admin_ecommerce" },
-  ],
-};
-
-const settingsGroup: MenuGroup = {
-  label: "সেটিংস",
-  icon: Settings,
-  items: [
-    { title: "সাধারণ সেটিংস", url: "/admin/settings", icon: Sliders, permissionKey: "admin_settings" },
-    { title: "SEO সেটিংস", url: "/admin/settings?tab=seo", icon: Globe, permissionKey: "admin_settings" },
-    { title: "পেমেন্ট গেটওয়ে", url: "/admin/settings?tab=payment", icon: CreditCard, permissionKey: "admin_settings" },
-    { title: "ইমেইল/SMTP", url: "/admin/settings?tab=email", icon: Mail, permissionKey: "admin_settings" },
-    { title: "থিম", url: "/admin/settings?tab=theme", icon: Palette, permissionKey: "admin_settings" },
-    { title: "POS প্রিন্ট", url: "/admin/settings?tab=pos-print", icon: MonitorSmartphone, permissionKey: "admin_settings" },
-    { title: "ব্যবহারকারী", url: "/admin/users", icon: Users, permissionKey: "admin_users" },
-    { title: "ডাটাবেজ এক্সপোর্ট", url: "/admin/database-export", icon: Database, permissionKey: "admin_backup" },
-    { title: "সিস্টেম ব্যাকআপ", url: "/admin/backup", icon: CloudUpload, permissionKey: "admin_backup" },
-    { title: "প্রোফাইল", url: "/admin/profile", icon: User },
-  ],
-};
-
-const allGroups = [cmsGroup, ecommerceGroup, settingsGroup];
 
 // --- Collapsible Menu Group ---
 function SidebarMenuGroup({
@@ -224,6 +185,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, isLoading, userRole, signOut } = useAuth();
+  const { language, setLanguage } = useLanguage();
+  const at = useAdminTranslations(language);
   const { hasPermission } = useRolePermissions();
   const isMobileView = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -231,6 +194,48 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const isStaff = userRole === "manager" || userRole === "cashier" || userRole === "delivery_staff";
   const canAccessAdmin = isAdmin || isStaff;
+
+  // Build menu groups with translations
+  const cmsGroup: MenuGroup = {
+    label: at.cms,
+    icon: Palette,
+    items: [
+      { title: at.pageManagement, url: "/admin/pages", icon: FileText, permissionKey: "admin_pages" },
+      { title: at.pageBuilder, url: "/admin/page-builder", icon: Layout, permissionKey: "admin_pages" },
+      { title: at.ads, url: "/admin/ads", icon: Megaphone, permissionKey: "admin_ads" },
+      { title: at.marketPrices, url: "/admin/market-prices", icon: TrendingUp, permissionKey: "admin_market_prices" },
+      { title: at.diseaseManagement, url: "/admin/diseases", icon: Stethoscope, permissionKey: "admin_pages" },
+      { title: at.calculatorModules, url: "/admin/calculators", icon: Calculator, permissionKey: "admin_pages" },
+    ],
+  };
+
+  const ecommerceGroup: MenuGroup = {
+    label: at.ecommerce,
+    icon: Store,
+    items: [
+      { title: at.orderManagement, url: "/admin/orders", icon: ShoppingCart, permissionKey: "admin_orders" },
+      { title: at.ecommerceOverview, url: "/admin/ecommerce-overview", icon: BarChart3, permissionKey: "admin_ecommerce" },
+    ],
+  };
+
+  const settingsGroup: MenuGroup = {
+    label: at.settingsGroup,
+    icon: Settings,
+    items: [
+      { title: at.generalSettings, url: "/admin/settings", icon: Sliders, permissionKey: "admin_settings" },
+      { title: at.seoSettings, url: "/admin/settings?tab=seo", icon: Globe, permissionKey: "admin_settings" },
+      { title: at.paymentGateway, url: "/admin/settings?tab=payment", icon: CreditCard, permissionKey: "admin_settings" },
+      { title: at.emailSmtp, url: "/admin/settings?tab=email", icon: Mail, permissionKey: "admin_settings" },
+      { title: at.theme, url: "/admin/settings?tab=theme", icon: Palette, permissionKey: "admin_settings" },
+      { title: at.posPrint, url: "/admin/settings?tab=pos-print", icon: MonitorSmartphone, permissionKey: "admin_settings" },
+      { title: at.users, url: "/admin/users", icon: Users, permissionKey: "admin_users" },
+      { title: at.databaseExport, url: "/admin/database-export", icon: Database, permissionKey: "admin_backup" },
+      { title: at.systemBackup, url: "/admin/backup", icon: CloudUpload, permissionKey: "admin_backup" },
+      { title: at.profile, url: "/admin/profile", icon: User },
+    ],
+  };
+
+  const allGroups = [cmsGroup, ecommerceGroup, settingsGroup];
 
   useEffect(() => {
     if (!isLoading && !user) navigate("/auth");
@@ -242,7 +247,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-          <span className="text-sm text-muted-foreground">লোড হচ্ছে...</span>
+          <span className="text-sm text-muted-foreground">{at.loading}</span>
         </div>
       </div>
     );
@@ -262,14 +267,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const currentTitle = allGroups
     .flatMap((g) => g.items)
     .find((i) => i.url === location.pathname)?.title
-    || (location.pathname === "/admin" ? "ড্যাশবোর্ড"
-      : location.pathname === "/admin/reports" ? "রিপোর্ট"
-      : "অ্যাডমিন");
+    || (location.pathname === "/admin" ? at.dashboard
+      : location.pathname === "/admin/reports" ? at.reports
+      : at.admin);
 
-  const roleLabel = isAdmin ? "অ্যাডমিন"
-    : userRole === "manager" ? "ম্যানেজার"
-    : userRole === "cashier" ? "ক্যাশিয়ার"
-    : "স্টাফ";
+  const roleLabel = isAdmin ? at.admin
+    : userRole === "manager" ? at.manager
+    : userRole === "cashier" ? at.cashier
+    : at.staff;
 
   const menuProps = {
     currentPath: location.pathname,
@@ -280,7 +285,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const renderMenu = (onNavigate?: () => void, collapsed?: boolean) => (
     <>
       {canSeeDashboard && (
-        <SidebarNavItem to="/admin" icon={LayoutDashboard} label="ড্যাশবোর্ড"
+        <SidebarNavItem to="/admin" icon={LayoutDashboard} label={at.dashboard}
           isActive={location.pathname === "/admin"}
           onNavigate={onNavigate} collapsed={collapsed} />
       )}
@@ -294,13 +299,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         onNavigate={onNavigate} collapsed={collapsed} />
 
       {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
-        <SidebarNavItem to="/pos" icon={MonitorSmartphone} label="POS সিস্টেম"
+        <SidebarNavItem to="/pos" icon={MonitorSmartphone} label={at.posSystem}
           isActive={location.pathname.startsWith("/pos")}
           onNavigate={onNavigate} collapsed={collapsed} />
       )}
 
       {canSeeReports && (
-        <SidebarNavItem to="/admin/reports" icon={BarChart3} label="রিপোর্ট"
+        <SidebarNavItem to="/admin/reports" icon={BarChart3} label={at.reports}
           isActive={location.pathname === "/admin/reports"}
           onNavigate={onNavigate} collapsed={collapsed} />
       )}
@@ -314,7 +319,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const renderFooter = (onNavigate?: () => void, collapsed?: boolean) => (
     <div className={cn("pt-3 space-y-1", collapsed && "flex flex-col items-center")} style={{ borderTop: '1px solid hsl(var(--sidebar-border))' }}>
-      <Link to="/admin/profile" onClick={onNavigate} title="প্রোফাইল"
+      {/* Language Switcher */}
+      <button
+        onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
+        title={at.language}
+        className={cn(
+          "flex items-center rounded-xl transition-all duration-200 hover:bg-white/8",
+          collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2 w-full",
+        )}
+        style={{ color: 'hsl(var(--sidebar-text-muted))' }}
+      >
+        <Languages className="h-[18px] w-[18px] shrink-0" />
+        {!collapsed && <span className="text-sm truncate">{language === "bn" ? "English" : "বাংলা"}</span>}
+      </button>
+      <Link to="/admin/profile" onClick={onNavigate} title={at.profile}
         className={cn(
           "flex items-center rounded-xl transition-all duration-200",
           collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2",
@@ -324,16 +342,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         )}
         style={location.pathname !== "/admin/profile" ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined}>
         <User className="h-[18px] w-[18px] shrink-0" />
-        {!collapsed && <span className="text-sm truncate">প্রোফাইল</span>}
+        {!collapsed && <span className="text-sm truncate">{at.profile}</span>}
       </Link>
-      <Link to="/" onClick={onNavigate} title="হোম পেজে ফিরুন"
+      <Link to="/" onClick={onNavigate} title={at.returnHome}
         className={cn(
           "flex items-center rounded-xl transition-all duration-200 hover:bg-white/8",
           collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2",
         )}
         style={{ color: 'hsl(var(--sidebar-text-muted))' }}>
         <Home className="h-[18px] w-[18px] shrink-0" />
-        {!collapsed && <span className="text-sm truncate">হোম পেজে ফিরুন</span>}
+        {!collapsed && <span className="text-sm truncate">{at.returnHome}</span>}
       </Link>
     </div>
   );
@@ -361,7 +379,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </div>
                 <div className="min-w-0">
                   <h1 className="font-bold text-sm leading-tight truncate" style={{ color: 'hsl(var(--sidebar-text))' }}>{roleLabel}</h1>
-                  <p className="text-[10px] leading-tight" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>ম্যানেজমেন্ট প্যানেল</p>
+                  <p className="text-[10px] leading-tight" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>{at.managementPanel}</p>
                 </div>
               </div>
             )}
@@ -417,7 +435,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         </div>
                         <div>
                           <h1 className="font-bold text-base" style={{ color: 'hsl(var(--sidebar-text))' }}>{roleLabel}</h1>
-                          <p className="text-[10px]" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>ম্যানেজমেন্ট প্যানেল</p>
+                          <p className="text-[10px]" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>{at.managementPanel}</p>
                         </div>
                       </div>
                       <SheetClose asChild>
@@ -445,6 +463,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
             <div className="flex-1" />
 
+            {/* Language toggle in top bar */}
+            <button
+              onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-muted transition-colors text-sm text-muted-foreground"
+              title={at.language}
+            >
+              <Languages className="h-4 w-4" />
+              <span className="hidden sm:inline text-xs font-medium">{language === "bn" ? "EN" : "বাং"}</span>
+            </button>
+
             {/* Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -464,17 +492,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
-                    <User className="h-4 w-4" /> প্রোফাইল
+                    <User className="h-4 w-4" /> {at.profile}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer">
-                    <Settings className="h-4 w-4" /> সেটিংস
+                    <Settings className="h-4 w-4" /> {at.settings}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="h-4 w-4" /> লগআউট
+                  <LogOut className="h-4 w-4" /> {at.logout}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
