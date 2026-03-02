@@ -83,7 +83,7 @@ export function AddressFields({
       <div className="space-y-2">
         <Label htmlFor="mobile" className={`flex items-center gap-2 ${labelClass}`}>
           <Phone className="h-4 w-4" />
-          মোবাইল নম্বর
+          মোবাইল নম্বর <span className="text-red-400">*</span>
         </Label>
         <Input
           id="mobile"

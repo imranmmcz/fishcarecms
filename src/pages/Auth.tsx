@@ -21,9 +21,12 @@ const loginSchema = z.object({
   password: z.string().min(6, { message: "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে" }),
 });
 
-const signupSchema = loginSchema.extend({
+const signupSchema = z.object({
+  identifier: z.string().trim().min(1, { message: "ইমেইল প্রদান করুন" }),
+  password: z.string().min(6, { message: "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে" }),
   fullName: z.string().trim().min(2, { message: "নাম কমপক্ষে ২ অক্ষরের হতে হবে" }),
   confirmPassword: z.string(),
+  mobile: z.string().trim().min(11, { message: "সঠিক মোবাইল নম্বর প্রদান করুন (কমপক্ষে ১১ সংখ্যা)" }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "পাসওয়ার্ড মিলছে না",
   path: ["confirmPassword"],
@@ -133,10 +136,11 @@ const Auth = () => {
     setErrors({});
 
     const result = signupSchema.safeParse({
-      email: signupEmail,
+      identifier: signupEmail,
       password: signupPassword,
       confirmPassword: signupConfirmPassword,
       fullName: signupFullName,
+      mobile: mobile,
     });
 
     if (!result.success) {
