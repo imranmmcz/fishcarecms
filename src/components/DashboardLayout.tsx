@@ -18,8 +18,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/s
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard, TrendingUp, TrendingDown, Waves, FileText, Home, Fish,
-  CloudUpload, User, Settings, Shield, LogOut, ChevronDown, Menu, X, Package,
-  RefreshCw, Store, MonitorSmartphone, BarChart3, Palette, type LucideIcon,
+  CloudUpload, User, Settings, Shield, LogOut, ChevronDown, ChevronLeft, ChevronRight,
+  Menu, X, Package, RefreshCw, Store, MonitorSmartphone, BarChart3, Palette, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -511,144 +511,193 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   };
 
+  const [farmerSidebarCollapsed, setFarmerSidebarCollapsed] = useState(false);
+
+  // Farmer menu rendering for desktop sidebar
+  const renderFarmerMenu = (onNavigate?: () => void, collapsed?: boolean) => (
+    <>
+      {filteredFarmerMenu.map((item) => {
+        const isActive = location.pathname === item.url;
+        if (collapsed) {
+          return (
+            <Link key={item.url} to={item.url} onClick={onNavigate} title={isBn ? item.titleBn : item.title}
+              className={cn(
+                "flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-200",
+                isActive ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}>
+              <item.icon className="h-[18px] w-[18px]" />
+            </Link>
+          );
+        }
+        return (
+          <Link key={item.url} to={item.url} onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200",
+              isActive ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            )}>
+            <item.icon className={cn("h-[18px] w-[18px] shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+            <span className="truncate">{isBn ? item.titleBn : (t as any)[item.title] || item.title}</span>
+          </Link>
+        );
+      })}
+
+      {!collapsed && <div className="h-px bg-border mx-2 my-2" />}
+
+      {/* Settings Group */}
+      {collapsed ? (
+        farmerSettingsGroup.items.map((item) => {
+          const isActive = location.pathname === item.url;
+          return (
+            <Link key={item.url} to={item.url} onClick={onNavigate} title={isBn ? item.titleBn : item.title}
+              className={cn(
+                "flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-200",
+                isActive ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}>
+              <item.icon className="h-[18px] w-[18px]" />
+            </Link>
+          );
+        })
+      ) : (
+        <FarmerSettingsCollapsible />
+      )}
+
+      {isCustomer && !collapsed && (
+        <button onClick={() => { onNavigate?.(); handleSwitchToFarmer(); }} disabled={isSwitching}
+          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all w-full">
+          <RefreshCw className={cn("h-[18px] w-[18px] shrink-0", isSwitching && "animate-spin")} />
+          <span className="truncate">{isBn ? "কৃষক হিসেবে যোগ দিন" : "Switch to Farmer"}</span>
+        </button>
+      )}
+    </>
+  );
+
+  const renderFarmerFooter = (onNavigate?: () => void, collapsed?: boolean) => (
+    <div className={cn("border-t border-border pt-3 space-y-1", collapsed && "flex flex-col items-center")}>
+      <Link to="/" onClick={onNavigate} title={isBn ? "হোম পেজে ফিরুন" : "Back to Home"}
+        className={cn(
+          "flex items-center rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all duration-200",
+          collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2",
+        )}>
+        <Home className="h-[18px] w-[18px] shrink-0" />
+        {!collapsed && <span className="text-sm truncate">{isBn ? "হোম পেজে ফিরুন" : "Back to Home"}</span>}
+      </Link>
+    </div>
+  );
+
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 relative overflow-hidden">
-        <AnimatedBackground />
-
-        {/* Desktop Sidebar - only render on desktop to avoid Sidebar's internal mobile Sheet */}
-        {!isMobileView && (
-        <Sidebar collapsible="icon" className="border-r-0 relative z-10 hidden md:flex">
-          <div className="h-full flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-            <div className="p-4 border-b border-white/10 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30">
-                  <Fish className="h-6 w-6 text-white" />
+    <div className="min-h-screen flex w-full bg-muted/30">
+      {/* ===== Desktop Sidebar (Fixed, same as AdminLayout) ===== */}
+      {!isMobileView && (
+        <aside
+          className={cn(
+            "fixed inset-y-0 left-0 z-30 flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out",
+            farmerSidebarCollapsed ? "w-[68px]" : "w-[260px]"
+          )}
+        >
+          {/* Sidebar Header */}
+          <div className={cn(
+            "flex items-center border-b border-border shrink-0",
+            farmerSidebarCollapsed ? "justify-center p-3" : "gap-3 px-4 py-3"
+          )}>
+            {!farmerSidebarCollapsed && (
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                <div className="p-2 bg-primary/10 rounded-xl shrink-0">
+                  <Fish className="h-5 w-5 text-primary" />
                 </div>
-                <div className="group-data-[collapsible=icon]:hidden">
-                  <h1 className="font-bold text-white text-lg">{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
-                  <p className="text-xs text-slate-400">{roleLabel}</p>
+                <div className="min-w-0">
+                  <h1 className="font-bold text-foreground text-sm leading-tight truncate">{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
+                  <p className="text-[10px] text-muted-foreground leading-tight">{roleLabel}</p>
                 </div>
               </div>
-            </div>
-
-            <SidebarContent className="px-3 py-4">
-              <SidebarGroup>
-                <SidebarGroupContent>
-                  <SidebarMenu className="space-y-2">
-                    {filteredFarmerMenu.map((item) => {
-                      const isActive = location.pathname === item.url;
-                      return (
-                        <SidebarMenuItem key={item.url}>
-                          <SidebarMenuButton asChild isActive={isActive} tooltip={isBn ? item.titleBn : (t as any)[item.title] || item.title}>
-                            <Link to={item.url}
-                              className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300",
-                                isActive ? `${item.color} text-white shadow-lg` : "text-slate-300 hover:bg-white/10 hover:text-white"
-                              )}>
-                              <div className={cn("p-2 rounded-lg transition-all shrink-0", isActive ? "bg-white/20" : "bg-slate-700/50")}>
-                                <item.icon className={cn("h-5 w-5", isActive ? "text-white" : item.iconColor)} />
-                              </div>
-                              <span className="font-medium group-data-[collapsible=icon]:hidden">{isBn ? item.titleBn : (t as any)[item.title] || item.title}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-
-              {/* Settings Group */}
-              <div className="px-1">
-                <FarmerSettingsCollapsible />
-              </div>
-
-              {/* Switch to Farmer */}
-              {isCustomer && (
-                <div className="pt-4 border-t border-white/10">
-                  <button onClick={handleSwitchToFarmer} disabled={isSwitching}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-emerald-300 hover:bg-emerald-500/20 hover:text-white transition-all w-full">
-                    <div className="p-2 rounded-lg bg-emerald-600/50 shrink-0">
-                      <RefreshCw className={cn("h-5 w-5 text-emerald-300", isSwitching && "animate-spin")} />
-                    </div>
-                    <span className="font-medium group-data-[collapsible=icon]:hidden">{isBn ? "কৃষক হিসেবে যোগ দিন" : "Switch to Farmer"}</span>
-                  </button>
-                </div>
+            )}
+            <button
+              onClick={() => setFarmerSidebarCollapsed(!farmerSidebarCollapsed)}
+              className={cn(
+                "p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground shrink-0",
+                farmerSidebarCollapsed && "mx-auto"
               )}
-
-              {/* Home */}
-              <div className="pt-4 border-t border-white/10">
-                <Link to="/" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all">
-                  <div className="p-2 rounded-lg bg-slate-700/50 shrink-0"><Home className="h-5 w-5" /></div>
-                  <span className="font-medium group-data-[collapsible=icon]:hidden">{isBn ? "হোম পেজে ফিরুন" : "Back to Home"}</span>
-                </Link>
-              </div>
-            </SidebarContent>
+            >
+              {farmerSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </button>
           </div>
-        </Sidebar>
-        )}
 
-        <main className="flex-1 overflow-auto relative z-10">
-          <div className="p-3 md:p-4 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between sticky top-0 z-20">
-            <div className="flex items-center gap-2 md:gap-4">
-              {/* Mobile Menu */}
+          {/* Sidebar Navigation */}
+          <nav className={cn(
+            "flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent",
+            farmerSidebarCollapsed ? "px-1.5" : "px-2.5"
+          )}>
+            {renderFarmerMenu(undefined, farmerSidebarCollapsed)}
+          </nav>
+
+          {/* Sidebar Footer */}
+          <div className={cn("px-2.5 pb-3", farmerSidebarCollapsed && "px-1.5")}>
+            {renderFarmerFooter(undefined, farmerSidebarCollapsed)}
+          </div>
+        </aside>
+      )}
+
+      {/* ===== Main Content ===== */}
+      <div className={cn(
+        "flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out",
+        !isMobileView && (farmerSidebarCollapsed ? "ml-[68px]" : "ml-[260px]")
+      )}>
+        {/* Top Bar */}
+        <header className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b border-border">
+          <div className="flex items-center gap-3 px-4 py-2.5">
+            {/* Mobile hamburger */}
+            {isMobileView && (
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild className="md:hidden">
-                  <button className="p-2 rounded-lg hover:bg-accent transition-colors"><Menu className="h-5 w-5 text-foreground" /></button>
+                <SheetTrigger asChild>
+                  <button className="p-2 rounded-lg hover:bg-muted transition-colors">
+                    <Menu className="h-5 w-5 text-foreground" />
+                  </button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[280px] p-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r-0">
-                  <div className="p-4 border-b border-white/10">
+                <SheetContent side="left" className="w-[280px] p-0 bg-card border-r border-border">
+                  <div className="p-4 border-b border-border">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30"><Fish className="h-6 w-6 text-white" /></div>
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-primary/10 rounded-xl">
+                          <Fish className="h-5 w-5 text-primary" />
+                        </div>
                         <div>
-                          <h1 className="font-bold text-white text-lg">{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
-                          <p className="text-xs text-slate-400">{roleLabel}</p>
+                          <h1 className="font-bold text-foreground text-base">{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
+                          <p className="text-[10px] text-muted-foreground">{roleLabel}</p>
                         </div>
                       </div>
-                      <SheetClose asChild><button className="p-2 rounded-lg hover:bg-white/10 transition-colors"><X className="h-5 w-5 text-slate-400" /></button></SheetClose>
+                      <SheetClose asChild>
+                        <button className="p-2 rounded-lg hover:bg-muted transition-colors">
+                          <X className="h-5 w-5 text-muted-foreground" />
+                        </button>
+                      </SheetClose>
                     </div>
                   </div>
-                  <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-180px)]">
-                    <div className="space-y-1.5">
-                      {filteredFarmerMenu.map((item) => (
-                        <FarmerMenuItemLink key={item.url} item={item} onClick={() => setMobileMenuOpen(false)} />
-                      ))}
-                    </div>
-                    <div className="mt-2">
-                      <FarmerSettingsCollapsible isMobile onClose={() => setMobileMenuOpen(false)} />
-                    </div>
-                    {isCustomer && (
-                      <div className="pt-4 mt-4 border-t border-white/10">
-                        <button onClick={() => { setMobileMenuOpen(false); handleSwitchToFarmer(); }} disabled={isSwitching}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl text-emerald-300 hover:bg-emerald-500/20 hover:text-white transition-all w-full">
-                          <div className="p-2 rounded-lg bg-emerald-600/50 shrink-0">
-                            <RefreshCw className={cn("h-5 w-5 text-emerald-300", isSwitching && "animate-spin")} />
-                          </div>
-                          <span className="font-medium">{isBn ? "কৃষক হিসেবে যোগ দিন" : "Switch to Farmer"}</span>
-                        </button>
-                      </div>
-                    )}
-                    <div className="pt-4 mt-4 border-t border-white/10">
-                      <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all">
-                        <div className="p-2 rounded-lg bg-slate-700/50 shrink-0"><Home className="h-5 w-5" /></div>
-                        <span className="font-medium">{isBn ? "হোম পেজে ফিরুন" : "Back to Home"}</span>
-                      </Link>
+                  <div className="px-2.5 py-3 overflow-y-auto max-h-[calc(100vh-140px)] flex flex-col">
+                    <nav className="flex-1 space-y-1">
+                      {renderFarmerMenu(() => setMobileMenuOpen(false), false)}
+                    </nav>
+                    <div className="mt-3">
+                      {renderFarmerFooter(() => setMobileMenuOpen(false), false)}
                     </div>
                   </div>
                 </SheetContent>
               </Sheet>
-              <SidebarTrigger className="text-foreground hidden md:flex" />
-              <div className="h-6 w-px bg-border hidden md:block" />
-              <span className="text-xs md:text-sm text-muted-foreground line-clamp-1">{getTitle()}</span>
+            )}
+
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-medium text-foreground truncate">{getTitle()}</span>
             </div>
+
+            <div className="flex-1" />
+
             <ProfileDropdown />
           </div>
-          <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-57px)] md:min-h-[calc(100vh-65px)] md:rounded-tl-2xl">
-            {children}
-          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 p-4 md:p-6">
+          {children}
         </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
