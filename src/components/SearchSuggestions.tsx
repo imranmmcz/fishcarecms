@@ -110,7 +110,7 @@ export const SearchSuggestions = ({ placeholder, className, inputClassName }: Se
       </form>
 
       {showSuggestions && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-[60] max-h-80 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-[100] max-h-80 overflow-y-auto">
           {isLoading ? (
             <div className="p-3 text-center text-sm text-muted-foreground">
               {language === "bn" ? "খুঁজছে..." : "Searching..."}
