@@ -216,6 +216,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
+  const [farmerSidebarCollapsed, setFarmerSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -515,7 +516,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   };
 
-  const [farmerSidebarCollapsed, setFarmerSidebarCollapsed] = useState(false);
+  // farmerSidebarCollapsed moved to top of component
 
   // Farmer menu rendering for desktop sidebar
   const renderFarmerMenu = (onNavigate?: () => void, collapsed?: boolean) => (
