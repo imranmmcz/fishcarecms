@@ -21,13 +21,31 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Fetch chatbot settings
+    const { data: settingsData } = await supabase
+      .from("system_settings")
+      .select("setting_key, setting_value")
+      .like("setting_key", "chatbot_%");
+
+    const chatSettings: Record<string, string> = {};
+    (settingsData || []).forEach((s: any) => {
+      if (s.setting_value !== null) chatSettings[s.setting_key] = s.setting_value;
+    });
+
+    const botName = chatSettings.chatbot_name || "FishCare Smart AI";
+    const companyName = chatSettings.chatbot_company_name || "FishCare BD";
+    const companyInfo = chatSettings.chatbot_company_info || "Bangladesh's leading aquaculture e-commerce platform. Located in Jessore. Payment: bKash, Nagad, Rocket, COD. Delivery: 2-5 business days. Return: 7-day policy. Support: 9 AM – 10 PM daily.";
+    const aiModel = chatSettings.chatbot_model || "google/gemini-3-flash-preview";
+    const maxProducts = parseInt(chatSettings.chatbot_max_products || "50", 10);
+    const customPrompt = chatSettings.chatbot_system_prompt || "";
+
     // Fetch products
     const { data: products } = await supabase
       .from("products")
       .select("id, name, price, discount_percentage, category, image_url, stock_quantity, description, unit")
       .gt("stock_quantity", 0)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(maxProducts);
 
     const productCatalog = (products || []).map(p => {
       const discountedPrice = p.discount_percentage > 0
@@ -36,7 +54,7 @@ serve(async (req) => {
       return `- ID: ${p.id} | নাম: ${p.name} | দাম: ৳${discountedPrice}${p.discount_percentage > 0 ? ` (${p.discount_percentage}% ছাড়, আসল ৳${p.price})` : ''} | ক্যাটাগরি: ${p.category} | স্টক: ${p.stock_quantity} ${p.unit || 'pcs'}`;
     }).join("\n");
 
-    // Check if user is asking about an order - look for order number patterns
+    // Check if user is asking about an order
     const lastUserMessage = messages[messages.length - 1]?.content || "";
     const orderNumberMatch = lastUserMessage.match(/ORD-\d{8}-\d{4}/i);
     let orderInfo = "";
@@ -51,21 +69,13 @@ serve(async (req) => {
 
       if (order) {
         const statusMap: Record<string, string> = {
-          pending: "অপেক্ষমান",
-          processing: "প্রসেসিং",
-          shipped: "শিপ করা হয়েছে",
-          delivered: "ডেলিভারি সম্পন্ন",
-          cancelled: "বাতিল",
-          confirmed: "নিশ্চিত",
+          pending: "অপেক্ষমান", processing: "প্রসেসিং", shipped: "শিপ করা হয়েছে",
+          delivered: "ডেলিভারি সম্পন্ন", cancelled: "বাতিল", confirmed: "নিশ্চিত",
         };
         const paymentStatusMap: Record<string, string> = {
-          pending: "অপেক্ষমান",
-          paid: "পেইড",
-          failed: "ব্যর্থ",
-          refunded: "রিফান্ড",
+          pending: "অপেক্ষমান", paid: "পেইড", failed: "ব্যর্থ", refunded: "রিফান্ড",
         };
 
-        // Fetch order items
         const { data: items } = await supabase
           .from("order_items")
           .select("product_name, quantity, unit_price, total_price")
@@ -96,21 +106,15 @@ Then add a brief summary in Bengali about the order status.`;
       }
     }
 
-    const systemPrompt = `You are "FishCare Smart AI", the intelligent customer support chatbot for FishCare BD (ফিশকেয়ার বিডি) — https://fishcare.com.bd/
+    const systemPrompt = `You are "${botName}", the intelligent customer support chatbot for ${companyName}.
 
 ## Your Identity
-- Name: FishCare Smart AI
+- Name: ${botName}
 - Role: Sales assistant, customer support, and aquaculture advisor
 - Tone: Friendly, professional, helpful, always in Bengali unless user writes in English
 
 ## Company Info
-- FishCare BD is Bangladesh's leading aquaculture e-commerce platform
-- Located in Jessore, Bangladesh
-- Sells: fish feed, medicines, vitamins, aquarium products, farming equipment & supplies
-- Payment: bKash, Nagad, Rocket, bank transfer, Cash on Delivery (COD)
-- Delivery: 2-5 business days nationwide
-- Return: 7-day return policy
-- Support hours: 9 AM – 10 PM daily
+${companyInfo}
 
 ## Current Page Context
 The user is currently on: ${currentPage || "/"}
@@ -136,21 +140,13 @@ ${orderInfo}
 6. **Checkout Rescue**: Help complete orders on checkout page
 7. **Upsell**: Suggest complementary products
 
-## Quick Keyword Responses
-- দাম/মূল্য/price → Show product cards
-- মাছের খাবার/feed → Ask fish type, show feed cards
-- ডেলিভারি/delivery → 2-5 business days
-- রিটার্ন/return → 7-day return policy
-- পেমেন্ট/payment → bKash, Nagad, Rocket, bank transfer
-- অর্ডার ট্র্যাক/track → Ask for order number (ORD-XXXXXXXX-XXXX)
-- স্টক/available → Check catalog, show cards
-
 ## Rules
 - ALWAYS respond in the same language as the user
 - Keep responses concise (2-4 sentences)
 - Use PRODUCT_CARD for products, ORDER_TRACK for orders
 - Never make up order statuses or product info
-- For order tracking without a number, ask: "আপনার অর্ডার নম্বরটি দিন (যেমন: ORD-20260222-0001)"`;
+- For order tracking without a number, ask: "আপনার অর্ডার নম্বরটি দিন (যেমন: ORD-20260222-0001)"
+${customPrompt ? `\n## Additional Instructions\n${customPrompt}` : ''}`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -161,7 +157,7 @@ ${orderInfo}
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: aiModel,
           messages: [
             { role: "system", content: systemPrompt },
             ...messages,

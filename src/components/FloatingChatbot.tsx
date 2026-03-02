@@ -383,40 +383,68 @@ const FloatingChatbot = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPulse, setShowPulse] = useState(true);
   const [autoMessageShown, setAutoMessageShown] = useState(false);
+  const [chatbotEnabled, setChatbotEnabled] = useState(true);
+  const [chatbotGreeting, setChatbotGreeting] = useState("");
+  const [chatbotName, setChatbotName] = useState("FishCare Smart AI");
+  const [autoOpenDelay, setAutoOpenDelay] = useState(20);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { language } = useLanguage();
   const location = useLocation();
   const autoTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
+  // Load chatbot settings
+  useEffect(() => {
+    const loadChatbotSettings = async () => {
+      try {
+        const { data } = await supabase
+          .from("system_settings")
+          .select("setting_key, setting_value")
+          .in("setting_key", ["chatbot_enabled", "chatbot_greeting", "chatbot_name", "chatbot_auto_open_delay"]);
+
+        (data || []).forEach((s) => {
+          if (!s.setting_value) return;
+          if (s.setting_key === "chatbot_enabled") setChatbotEnabled(s.setting_value === "true");
+          if (s.setting_key === "chatbot_greeting") setChatbotGreeting(s.setting_value);
+          if (s.setting_key === "chatbot_name") setChatbotName(s.setting_value);
+          if (s.setting_key === "chatbot_auto_open_delay") setAutoOpenDelay(parseInt(s.setting_value, 10) || 20);
+        });
+      } catch (err) {
+        // use defaults
+      }
+    };
+    loadChatbotSettings();
+  }, []);
+
   // Save messages
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  // Auto-open after 20s idle
+  // Auto-open after delay
   useEffect(() => {
-    if (isOpen || autoMessageShown) return;
+    if (isOpen || autoMessageShown || autoOpenDelay <= 0) return;
     autoTimerRef.current = setTimeout(() => {
       if (!isOpen && !autoMessageShown) {
         setShowPulse(true);
         setAutoMessageShown(true);
       }
-    }, 20000);
+    }, autoOpenDelay * 1000);
     return () => clearTimeout(autoTimerRef.current);
-  }, [isOpen, autoMessageShown, location.pathname]);
+  }, [isOpen, autoMessageShown, location.pathname, autoOpenDelay]);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(() => { scrollToBottom(); }, [messages]);
   useEffect(() => { if (isOpen && inputRef.current) inputRef.current.focus(); }, [isOpen]);
 
   const getGreeting = useCallback(() => {
+    if (chatbotGreeting) return chatbotGreeting;
     const path = location.pathname;
     if (PAGE_GREETINGS[path]) return PAGE_GREETINGS[path];
     if (path.startsWith("/product/")) return "🔍 এই পণ্য সম্পর্কে কিছু জানতে চান?";
     if (path.startsWith("/category/")) return "📂 এই ক্যাটাগরির পণ্য সম্পর্কে প্রশ্ন করুন!";
-    return "👋 আমি FishCare Smart AI! আপনাকে কিভাবে সাহায্য করতে পারি?";
-  }, [location.pathname]);
+    return `👋 আমি ${chatbotName}! আপনাকে কিভাবে সাহায্য করতে পারি?`;
+  }, [location.pathname, chatbotGreeting, chatbotName]);
 
   const getQuickReplies = useCallback(() => {
     const path = location.pathname;
@@ -471,6 +499,8 @@ const FloatingChatbot = () => {
     setMessages([]);
     localStorage.removeItem(STORAGE_KEY);
   };
+
+  if (!chatbotEnabled) return null;
 
   return (
     <>
