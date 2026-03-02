@@ -126,6 +126,29 @@ const Footer = () => {
               })}
             </div>
             <p className="text-xs pt-2" style={{ color: 'hsl(var(--footer-text, 215 19% 78%) / 0.7)' }}>{socialSubtext}</p>
+            
+            {/* Facebook Page Like Widget */}
+            {(() => {
+              const fbLink = socialLinks.find((s: any) => s.icon === "Facebook");
+              if (!fbLink) return null;
+              const fbUrl = fbLink.url;
+              return (
+                <div className="mt-4 rounded-lg overflow-hidden bg-white/5 p-2">
+                  <p className="text-xs mb-2 font-medium" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
+                    {language === "bn" ? "আমাদের সাথে যুক্ত থাকুন" : "Stay Connected"}
+                  </p>
+                  <iframe
+                    src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(fbUrl)}&tabs=&width=280&height=130&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true&appId`}
+                    width="280"
+                    height="130"
+                    style={{ border: 'none', overflow: 'hidden', borderRadius: '8px' }}
+                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    loading="lazy"
+                    title="Facebook Page"
+                  />
+                </div>
+              );
+            })()}
           </div>
 
           {/* Column 4: Contact */}
