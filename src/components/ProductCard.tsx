@@ -312,9 +312,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       {/* Product Info */}
       <div className="p-5 space-y-3">
         <div>
-          <h3 className="text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-            {product.name}
-          </h3>
+          {product.isFromDatabase ? (
+            <Link to={`/product/${product.id}`}>
+              <h3 className="text-lg font-bold text-foreground line-clamp-1 hover:text-primary transition-colors cursor-pointer">
+                {product.name}
+              </h3>
+            </Link>
+          ) : (
+            <h3 className="text-lg font-bold text-foreground line-clamp-1">
+              {product.name}
+            </h3>
+          )}
           {product.nameEn && (
             <p className="text-xs text-muted-foreground mt-0.5">{product.nameEn}</p>
           )}
