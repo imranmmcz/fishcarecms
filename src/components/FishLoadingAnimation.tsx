@@ -1,4 +1,6 @@
-import { Fish } from "lucide-react";
+import { Fish, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FishLoadingAnimationProps {
   message?: string;
@@ -6,108 +8,187 @@ interface FishLoadingAnimationProps {
   fullScreen?: boolean;
 }
 
+interface LoadingConfig {
+  type: string;
+  text: string;
+  color: string;
+  bg: string;
+  fullscreen: boolean;
+}
+
+const defaultConfig: LoadingConfig = {
+  type: "fish",
+  text: "লোড হচ্ছে...",
+  color: "#22D3EE",
+  bg: "#0C1929",
+  fullscreen: true,
+};
+
 export const FishLoadingAnimation = ({ 
-  message = "লোড হচ্ছে...", 
+  message, 
   size = "md",
-  fullScreen = true 
+  fullScreen 
 }: FishLoadingAnimationProps) => {
+  const [config, setConfig] = useState<LoadingConfig>(defaultConfig);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data } = await supabase
+          .from("system_settings")
+          .select("setting_key, setting_value")
+          .like("setting_key", "loading_animation_%");
+
+        if (data && data.length > 0) {
+          const c = { ...defaultConfig };
+          data.forEach((d) => {
+            if (!d.setting_value) return;
+            if (d.setting_key === "loading_animation_type") c.type = d.setting_value;
+            if (d.setting_key === "loading_animation_text") c.text = d.setting_value;
+            if (d.setting_key === "loading_animation_color") c.color = d.setting_value;
+            if (d.setting_key === "loading_animation_bg") c.bg = d.setting_value;
+            if (d.setting_key === "loading_animation_fullscreen") c.fullscreen = d.setting_value === "true";
+          });
+          setConfig(c);
+        }
+      } catch (err) {
+        // use defaults
+      }
+    };
+    load();
+  }, []);
+
+  const displayText = message || config.text;
+  const isFullScreen = fullScreen !== undefined ? fullScreen : config.fullscreen;
+
   const sizeClasses = {
     sm: "h-6 w-6",
     md: "h-10 w-10",
     lg: "h-14 w-14"
   };
 
-  const containerClasses = fullScreen 
-    ? "min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900"
+  const containerClasses = isFullScreen 
+    ? "min-h-screen flex items-center justify-center"
     : "flex items-center justify-center py-8";
 
-  return (
-    <div className={containerClasses}>
-      <div className="relative flex flex-col items-center gap-6">
-        {/* Animated water bubbles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute rounded-full bg-cyan-400/20 animate-bounce"
-              style={{
-                width: `${Math.random() * 12 + 6}px`,
-                height: `${Math.random() * 12 + 6}px`,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${i * 0.2}s`,
-                animationDuration: `${1.5 + Math.random()}s`,
-              }}
-            />
-          ))}
-        </div>
+  const renderAnimation = () => {
+    switch (config.type) {
+      case "spinner":
+        return (
+          <div
+            className={`${sizeClasses[size]} rounded-full border-4 border-t-transparent animate-spin`}
+            style={{ borderColor: `${config.color}33`, borderTopColor: config.color }}
+          />
+        );
 
-        {/* Swimming fish container */}
-        <div className="relative w-48 h-24">
-          {/* Main swimming fish */}
-          <div 
-            className="absolute animate-[swim_2s_ease-in-out_infinite]"
-            style={{
-              left: '0%',
-            }}
-          >
-            <div className="relative">
-              <Fish 
-                className={`${sizeClasses[size]} text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]`}
-                style={{ transform: 'scaleX(-1)' }}
+      case "dots":
+        return (
+          <div className="flex gap-2">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-3 h-3 rounded-full animate-bounce shadow-lg"
+                style={{ backgroundColor: config.color, animationDelay: `${i * 0.15}s` }}
               />
-              {/* Tail wave effect */}
-              <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-cyan-400/30 rounded-full animate-ping" />
+            ))}
+          </div>
+        );
+
+      case "wave":
+        return (
+          <div className="flex items-end gap-1 h-12">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="w-2 rounded-full animate-pulse"
+                style={{
+                  backgroundColor: config.color,
+                  height: `${20 + Math.sin(i * 1.2) * 15}px`,
+                  animationDelay: `${i * 0.1}s`,
+                  animationDuration: "0.8s",
+                }}
+              />
+            ))}
+          </div>
+        );
+
+      case "pulse":
+        return (
+          <div className="relative flex items-center justify-center">
+            <div
+              className="h-12 w-12 rounded-full animate-ping absolute opacity-30"
+              style={{ backgroundColor: config.color }}
+            />
+            <div
+              className="h-12 w-12 rounded-full"
+              style={{ backgroundColor: config.color }}
+            />
+          </div>
+        );
+
+      case "fish":
+      default:
+        return (
+          <div className="relative w-48 h-24">
+            <div className="absolute animate-[swim_2s_ease-in-out_infinite]" style={{ left: 0 }}>
+              <div className="relative">
+                <Fish 
+                  className={`${sizeClasses[size]} drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]`}
+                  style={{ color: config.color, transform: 'scaleX(-1)' }}
+                />
+                <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full animate-ping" style={{ backgroundColor: `${config.color}4D` }} />
+              </div>
+            </div>
+            <div 
+              className="absolute animate-[swim_2.5s_ease-in-out_infinite]"
+              style={{ left: '-10%', top: '60%', animationDelay: '0.3s' }}
+            >
+              <Fish className="h-6 w-6 opacity-70" style={{ color: config.color, transform: 'scaleX(-1)' }} />
+            </div>
+            <div 
+              className="absolute animate-[swim_3s_ease-in-out_infinite]"
+              style={{ left: '-5%', top: '20%', animationDelay: '0.6s' }}
+            >
+              <Fish className="h-4 w-4 opacity-60" style={{ color: config.color, transform: 'scaleX(-1)' }} />
             </div>
           </div>
+        );
+    }
+  };
 
-          {/* Secondary smaller fish */}
-          <div 
-            className="absolute animate-[swim_2.5s_ease-in-out_infinite]"
-            style={{
-              left: '-10%',
-              top: '60%',
-              animationDelay: '0.3s',
-            }}
-          >
-            <Fish 
-              className="h-6 w-6 text-blue-300/70 drop-shadow-[0_0_8px_rgba(96,165,250,0.4)]"
-              style={{ transform: 'scaleX(-1)' }}
-            />
+  return (
+    <div className={containerClasses} style={{ backgroundColor: isFullScreen ? config.bg : undefined }}>
+      <div className="relative flex flex-col items-center gap-6">
+        {/* Bubbles */}
+        {isFullScreen && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full animate-bounce"
+                style={{
+                  backgroundColor: `${config.color}33`,
+                  width: `${Math.random() * 12 + 6}px`,
+                  height: `${Math.random() * 12 + 6}px`,
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animationDelay: `${i * 0.2}s`,
+                  animationDuration: `${1.5 + Math.random()}s`,
+                }}
+              />
+            ))}
           </div>
+        )}
 
-          {/* Third tiny fish */}
-          <div 
-            className="absolute animate-[swim_3s_ease-in-out_infinite]"
-            style={{
-              left: '-5%',
-              top: '20%',
-              animationDelay: '0.6s',
-            }}
-          >
-            <Fish 
-              className="h-4 w-4 text-teal-300/60 drop-shadow-[0_0_6px_rgba(94,234,212,0.3)]"
-              style={{ transform: 'scaleX(-1)' }}
-            />
-          </div>
+        {renderAnimation()}
 
-          {/* Water ripple effects */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div className="w-20 h-20 rounded-full border border-cyan-400/20 animate-[ripple_2s_ease-out_infinite]" />
-            <div className="absolute inset-0 w-20 h-20 rounded-full border border-cyan-400/20 animate-[ripple_2s_ease-out_infinite_0.5s]" />
-          </div>
-        </div>
-
-        {/* Loading text with wave animation */}
-        <div className="flex items-center gap-1 text-white font-medium text-lg">
-          {message.split('').map((char, i) => (
+        {/* Loading text */}
+        <div className="flex items-center gap-1 font-medium text-lg" style={{ color: config.color }}>
+          {displayText.split('').map((char, i) => (
             <span
               key={i}
               className="animate-bounce inline-block"
-              style={{ 
-                animationDelay: `${i * 0.05}s`,
-                animationDuration: '1s'
-              }}
+              style={{ animationDelay: `${i * 0.05}s`, animationDuration: '1s' }}
             >
               {char === ' ' ? '\u00A0' : char}
             </span>
@@ -119,42 +200,20 @@ export const FishLoadingAnimation = ({
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 animate-bounce shadow-lg shadow-cyan-500/50"
-              style={{ animationDelay: `${i * 0.15}s` }}
+              className="w-2.5 h-2.5 rounded-full animate-bounce shadow-lg"
+              style={{ backgroundColor: config.color, animationDelay: `${i * 0.15}s` }}
             />
           ))}
         </div>
       </div>
 
-      {/* CSS for custom animations */}
       <style>{`
         @keyframes swim {
-          0%, 100% {
-            transform: translateX(0) translateY(0) rotate(0deg);
-          }
-          25% {
-            transform: translateX(40px) translateY(-8px) rotate(-5deg);
-          }
-          50% {
-            transform: translateX(80px) translateY(0) rotate(0deg);
-          }
-          75% {
-            transform: translateX(120px) translateY(8px) rotate(5deg);
-          }
-          100% {
-            transform: translateX(160px) translateY(0) rotate(0deg);
-          }
-        }
-        
-        @keyframes ripple {
-          0% {
-            transform: scale(0.5);
-            opacity: 0.8;
-          }
-          100% {
-            transform: scale(2);
-            opacity: 0;
-          }
+          0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
+          25% { transform: translateX(40px) translateY(-8px) rotate(-5deg); }
+          50% { transform: translateX(80px) translateY(0) rotate(0deg); }
+          75% { transform: translateX(120px) translateY(8px) rotate(5deg); }
+          100% { transform: translateX(160px) translateY(0) rotate(0deg); }
         }
       `}</style>
     </div>
