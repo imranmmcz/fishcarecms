@@ -109,6 +109,7 @@ const AdminOrders = () => {
   const [statusNote, setStatusNote] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [datePreset, setDatePreset] = useState("all");
 
   const translations = {
     orderManagement: language === "bn" ? "অর্ডার ব্যবস্থাপনা" : "Order Management",
@@ -401,31 +402,77 @@ const AdminOrders = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={translations.searchOrders}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{translations.allOrders}</SelectItem>
-                {Object.entries(statusConfig).map(([key, config]) => (
-                  <SelectItem key={key} value={key}>
-                    {language === "bn" ? config.label.bn : config.label.en}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={translations.searchOrders}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{translations.allOrders}</SelectItem>
+              {Object.entries(statusConfig).map(([key, config]) => (
+                <SelectItem key={key} value={key}>
+                  {language === "bn" ? config.label.bn : config.label.en}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={datePreset} onValueChange={(val) => {
+            setDatePreset(val);
+            const now = new Date();
+            if (val === "all") {
+              setDateFrom(undefined);
+              setDateTo(undefined);
+            } else if (val === "today") {
+              setDateFrom(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+              setDateTo(now);
+            } else if (val === "yesterday") {
+              const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+              setDateFrom(y);
+              setDateTo(y);
+            } else if (val === "7days") {
+              setDateFrom(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6));
+              setDateTo(now);
+            } else if (val === "30days") {
+              setDateFrom(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29));
+              setDateTo(now);
+            } else if (val === "this_month") {
+              setDateFrom(new Date(now.getFullYear(), now.getMonth(), 1));
+              setDateTo(now);
+            } else if (val === "last_month") {
+              setDateFrom(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+              setDateTo(new Date(now.getFullYear(), now.getMonth(), 0));
+            } else if (val === "custom") {
+              // keep current dateFrom/dateTo, user picks via calendars below
+            }
+          }}>
+            <SelectTrigger className="w-full sm:w-48">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              <SelectValue placeholder={language === "bn" ? "তারিখ ফিল্টার" : "Date Filter"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{language === "bn" ? "সকল তারিখ" : "All Dates"}</SelectItem>
+              <SelectItem value="today">{language === "bn" ? "আজ" : "Today"}</SelectItem>
+              <SelectItem value="yesterday">{language === "bn" ? "গতকাল" : "Yesterday"}</SelectItem>
+              <SelectItem value="7days">{language === "bn" ? "গত ৭ দিন" : "Last 7 Days"}</SelectItem>
+              <SelectItem value="30days">{language === "bn" ? "গত ৩০ দিন" : "Last 30 Days"}</SelectItem>
+              <SelectItem value="this_month">{language === "bn" ? "এই মাস" : "This Month"}</SelectItem>
+              <SelectItem value="last_month">{language === "bn" ? "গত মাস" : "Last Month"}</SelectItem>
+              <SelectItem value="custom">{language === "bn" ? "কাস্টম রেঞ্জ" : "Custom Range"}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Custom Date Range Pickers */}
+        {datePreset === "custom" && (
           <div className="flex flex-wrap items-center gap-3">
             <Popover>
               <PopoverTrigger asChild>
@@ -463,11 +510,11 @@ const AdminOrders = () => {
             </Popover>
             {(dateFrom || dateTo) && (
               <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
-                <X className="h-3.5 w-3.5" /> {language === "bn" ? "তারিখ রিসেট" : "Reset dates"}
+                <X className="h-3.5 w-3.5" /> {language === "bn" ? "রিসেট" : "Reset"}
               </Button>
             )}
           </div>
-        </div>
+        )}
 
         {/* Orders Table */}
         {isLoading ? (
