@@ -281,6 +281,43 @@ export default function AdminPages() {
     return Navigation;
   };
 
+  // Menu item edit state
+  const [editingNavIndex, setEditingNavIndex] = useState<number | null>(null);
+  const [navEditForm, setNavEditForm] = useState({ label_bn: "", label_en: "", path: "" });
+  const [navEditDialogOpen, setNavEditDialogOpen] = useState(false);
+  const [navEditSaving, setNavEditSaving] = useState(false);
+
+  const openNavEdit = (item: NavItem, index: number) => {
+    setEditingNavIndex(index);
+    setNavEditForm({ label_bn: item.label_bn, label_en: item.label_en, path: item.path });
+    setNavEditDialogOpen(true);
+  };
+
+  const handleNavEditSave = async () => {
+    if (editingNavIndex === null || !headerContent) return;
+    if (!navEditForm.label_bn.trim() || !navEditForm.path.trim()) {
+      toast({ title: "ত্রুটি", description: "লেবেল ও পাথ আবশ্যক", variant: "destructive" });
+      return;
+    }
+    setNavEditSaving(true);
+    try {
+      const updatedNavItems = [...(headerContent.navItems || [])];
+      updatedNavItems[editingNavIndex] = { ...navEditForm };
+      const { error } = await supabase
+        .from("page_content")
+        .update({ content: { ...headerContent, navItems: updatedNavItems }, updated_at: new Date().toISOString() })
+        .eq("section_key", "header");
+      if (error) throw error;
+      toast({ title: "সফল!", description: "মেনু আইটেম আপডেট হয়েছে" });
+      setNavEditDialogOpen(false);
+      fetchPages();
+    } catch (err: any) {
+      toast({ title: "ত্রুটি", description: err.message, variant: "destructive" });
+    } finally {
+      setNavEditSaving(false);
+    }
+  };
+
   // Auth page edit handlers
   const openAuthEdit = (ap: AuthPageContent) => {
     setEditingAuthPage(ap);
@@ -424,16 +461,26 @@ export default function AdminPages() {
                         </div>
                       </div>
                     </div>
-                    {!isSystemPage && (
+                    <div className="flex items-center gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1 text-destructive hover:text-destructive hover:border-destructive text-xs"
-                        onClick={() => removeFromMenu(item.path)}
+                        className="gap-1 text-xs"
+                        onClick={() => openNavEdit(item, index)}
                       >
-                        <X className="h-3 w-3" /> মেনু থেকে সরান
+                        <Edit className="h-3 w-3" /> সম্পাদনা
                       </Button>
-                    )}
+                      {!isSystemPage && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1 text-destructive hover:text-destructive hover:border-destructive text-xs"
+                          onClick={() => removeFromMenu(item.path)}
+                        >
+                          <X className="h-3 w-3" /> সরান
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -752,6 +799,36 @@ export default function AdminPages() {
             <Button onClick={handleAuthSave} disabled={authSaving} className="gap-2">
               {authSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {authSaving ? "সংরক্ষণ হচ্ছে..." : "আপডেট করুন"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Nav Item Edit Dialog */}
+      <Dialog open={navEditDialogOpen} onOpenChange={setNavEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>মেনু আইটেম সম্পাদনা</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>বাংলা লেবেল</Label>
+              <Input value={navEditForm.label_bn} onChange={e => setNavEditForm(f => ({ ...f, label_bn: e.target.value }))} placeholder="বাংলা নাম" />
+            </div>
+            <div className="space-y-2">
+              <Label>English Label</Label>
+              <Input value={navEditForm.label_en} onChange={e => setNavEditForm(f => ({ ...f, label_en: e.target.value }))} placeholder="English name" />
+            </div>
+            <div className="space-y-2">
+              <Label>পাথ (URL)</Label>
+              <Input value={navEditForm.path} onChange={e => setNavEditForm(f => ({ ...f, path: e.target.value }))} placeholder="/path" />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setNavEditDialogOpen(false)}>বাতিল</Button>
+            <Button onClick={handleNavEditSave} disabled={navEditSaving} className="gap-2">
+              {navEditSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {navEditSaving ? "সংরক্ষণ হচ্ছে..." : "আপডেট করুন"}
             </Button>
           </DialogFooter>
         </DialogContent>
