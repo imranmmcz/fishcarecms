@@ -1518,11 +1518,13 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           dashboard_settings: Json | null
+          deletion_warning_sent_at: string | null
           district: string | null
           division: string | null
           email: string | null
           full_name: string | null
           id: string
+          last_sign_in_at: string | null
           mobile: string | null
           upazila: string | null
           updated_at: string
@@ -1533,11 +1535,13 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           dashboard_settings?: Json | null
+          deletion_warning_sent_at?: string | null
           district?: string | null
           division?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          last_sign_in_at?: string | null
           mobile?: string | null
           upazila?: string | null
           updated_at?: string
@@ -1548,11 +1552,13 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           dashboard_settings?: Json | null
+          deletion_warning_sent_at?: string | null
           district?: string | null
           division?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          last_sign_in_at?: string | null
           mobile?: string | null
           upazila?: string | null
           updated_at?: string
