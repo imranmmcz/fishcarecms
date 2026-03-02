@@ -111,9 +111,10 @@ function SidebarMenuGroup({
               className={cn(
                 "flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-200",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
+                  : "hover:bg-white/10"
               )}
+              style={!isActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined}
             >
               <item.icon className="h-[18px] w-[18px]" />
             </Link>
@@ -129,22 +130,21 @@ function SidebarMenuGroup({
         <button
           type="button"
           className={cn(
-            "flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer",
-            hasActive
-              ? "text-foreground bg-muted/80"
-              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            "flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer hover:bg-white/8",
+            hasActive ? "bg-white/10" : ""
           )}
+          style={{ color: hasActive ? 'hsl(var(--sidebar-text))' : 'hsl(var(--sidebar-text-muted))' }}
         >
-          <group.icon className={cn("h-[18px] w-[18px] shrink-0", hasActive ? "text-primary" : "text-muted-foreground")} />
+          <group.icon className={cn("h-[18px] w-[18px] shrink-0", hasActive ? "text-primary" : "")} style={!hasActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined} />
           <span className="flex-1 text-left truncate">{group.label}</span>
           <ChevronDown className={cn(
             "h-3.5 w-3.5 transition-transform duration-200",
             open && "rotate-180"
-          )} />
+          )} style={{ color: 'hsl(var(--sidebar-accent))' }} />
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200">
-        <div className="ml-4 pl-3 mt-1 space-y-0.5 border-l-2 border-border">
+        <div className="ml-4 pl-3 mt-1 space-y-0.5" style={{ borderLeft: '2px solid hsl(var(--sidebar-border))' }}>
           {visibleItems.map((item) => {
             const isActive = item.url.includes("?")
               ? currentFull === item.url
@@ -157,11 +157,12 @@ function SidebarMenuGroup({
                 className={cn(
                   "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-all duration-200",
                   isActive
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    ? "bg-primary/20 text-primary font-medium"
+                    : "hover:bg-white/5"
                 )}
+                style={!isActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined}
               >
-                <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "text-muted-foreground/70")} />
+                <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "")} style={!isActive ? { color: 'hsl(var(--sidebar-text-muted) / 0.7)' } : undefined} />
                 <span className="truncate">{item.title}</span>
               </Link>
             );
@@ -188,9 +189,10 @@ function SidebarNavItem({
         className={cn(
           "flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-200",
           isActive
-            ? "bg-primary text-primary-foreground shadow-md"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
+            : "hover:bg-white/10"
         )}
+        style={!isActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined}
       >
         <Icon className="h-[18px] w-[18px]" />
       </Link>
@@ -204,11 +206,12 @@ function SidebarNavItem({
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200",
         isActive
-          ? "bg-primary/10 text-primary font-semibold"
-          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+          ? "bg-primary/15 text-primary font-semibold"
+          : "hover:bg-white/8"
       )}
+      style={!isActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined}
     >
-      <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+      <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive ? "text-primary" : "")} style={!isActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined} />
       <span className="truncate">{label}</span>
     </Link>
   );
@@ -282,7 +285,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           onNavigate={onNavigate} collapsed={collapsed} />
       )}
 
-      {!collapsed && <div className="h-px bg-border mx-2 my-2" />}
+      {!collapsed && <div className="h-px mx-2 my-2" style={{ background: 'hsl(var(--sidebar-border))' }} />}
 
       <SidebarMenuGroup group={cmsGroup} {...menuProps}
         onNavigate={onNavigate} collapsed={collapsed} />
@@ -302,7 +305,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           onNavigate={onNavigate} collapsed={collapsed} />
       )}
 
-      {!collapsed && <div className="h-px bg-border mx-2 my-2" />}
+      {!collapsed && <div className="h-px mx-2 my-2" style={{ background: 'hsl(var(--sidebar-border))' }} />}
 
       <SidebarMenuGroup group={settingsGroup} {...menuProps}
         onNavigate={onNavigate} collapsed={collapsed} />
@@ -310,23 +313,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   const renderFooter = (onNavigate?: () => void, collapsed?: boolean) => (
-    <div className={cn("border-t border-border pt-3 space-y-1", collapsed && "flex flex-col items-center")}>
+    <div className={cn("pt-3 space-y-1", collapsed && "flex flex-col items-center")} style={{ borderTop: '1px solid hsl(var(--sidebar-border))' }}>
       <Link to="/admin/profile" onClick={onNavigate} title="প্রোফাইল"
         className={cn(
           "flex items-center rounded-xl transition-all duration-200",
           collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2",
           location.pathname === "/admin/profile"
-            ? collapsed ? "bg-primary text-primary-foreground shadow-md" : "bg-primary/10 text-primary font-semibold"
-            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-        )}>
+            ? collapsed ? "bg-primary text-primary-foreground shadow-md shadow-primary/30" : "bg-primary/15 text-primary font-semibold"
+            : "hover:bg-white/8"
+        )}
+        style={location.pathname !== "/admin/profile" ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined}>
         <User className="h-[18px] w-[18px] shrink-0" />
         {!collapsed && <span className="text-sm truncate">প্রোফাইল</span>}
       </Link>
       <Link to="/" onClick={onNavigate} title="হোম পেজে ফিরুন"
         className={cn(
-          "flex items-center rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all duration-200",
+          "flex items-center rounded-xl transition-all duration-200 hover:bg-white/8",
           collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2",
-        )}>
+        )}
+        style={{ color: 'hsl(var(--sidebar-text-muted))' }}>
         <Home className="h-[18px] w-[18px] shrink-0" />
         {!collapsed && <span className="text-sm truncate">হোম পেজে ফিরুন</span>}
       </Link>
@@ -339,32 +344,34 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {!isMobileView && (
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-30 flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out",
+            "fixed inset-y-0 left-0 z-30 flex flex-col border-r transition-all duration-300 ease-in-out",
             sidebarCollapsed ? "w-[68px]" : "w-[260px]"
           )}
+          style={{ background: 'var(--gradient-sidebar)', borderColor: 'hsl(var(--sidebar-border))' }}
         >
           {/* Sidebar Header */}
           <div className={cn(
-            "flex items-center border-b border-border shrink-0",
+            "flex items-center shrink-0",
             sidebarCollapsed ? "justify-center p-3" : "gap-3 px-4 py-3"
-          )}>
+          )} style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}>
             {!sidebarCollapsed && (
               <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                <div className="p-2 bg-primary/10 rounded-xl shrink-0">
-                  <Shield className="h-5 w-5 text-primary" />
+                <div className="p-2 rounded-xl shrink-0 bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
+                  <Shield className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="font-bold text-foreground text-sm leading-tight truncate">{roleLabel}</h1>
-                  <p className="text-[10px] text-muted-foreground leading-tight">ম্যানেজমেন্ট প্যানেল</p>
+                  <h1 className="font-bold text-sm leading-tight truncate" style={{ color: 'hsl(var(--sidebar-text))' }}>{roleLabel}</h1>
+                  <p className="text-[10px] leading-tight" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>ম্যানেজমেন্ট প্যানেল</p>
                 </div>
               </div>
             )}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className={cn(
-                "p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground shrink-0",
+                "p-1.5 rounded-lg transition-colors shrink-0",
                 sidebarCollapsed && "mx-auto"
               )}
+              style={{ color: 'hsl(var(--sidebar-text-muted))' }}
             >
               {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
@@ -372,7 +379,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
           {/* Sidebar Navigation */}
           <nav className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent",
+            "flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent",
             sidebarCollapsed ? "px-1.5" : "px-2.5"
           )}>
             {renderMenu(undefined, sidebarCollapsed)}
@@ -401,21 +408,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     <Menu className="h-5 w-5 text-foreground" />
                   </button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[280px] p-0 bg-card border-r border-border">
-                  <div className="p-4 border-b border-border">
+                <SheetContent side="left" className="w-[280px] p-0 border-r-0" style={{ background: 'var(--gradient-sidebar)' }}>
+                  <div className="p-4" style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-primary/10 rounded-xl">
-                          <Shield className="h-5 w-5 text-primary" />
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
+                          <Shield className="h-5 w-5 text-primary-foreground" />
                         </div>
                         <div>
-                          <h1 className="font-bold text-foreground text-base">{roleLabel}</h1>
-                          <p className="text-[10px] text-muted-foreground">ম্যানেজমেন্ট প্যানেল</p>
+                          <h1 className="font-bold text-base" style={{ color: 'hsl(var(--sidebar-text))' }}>{roleLabel}</h1>
+                          <p className="text-[10px]" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>ম্যানেজমেন্ট প্যানেল</p>
                         </div>
                       </div>
                       <SheetClose asChild>
-                        <button className="p-2 rounded-lg hover:bg-muted transition-colors">
-                          <X className="h-5 w-5 text-muted-foreground" />
+                        <button className="p-2 rounded-lg hover:bg-white/10 transition-colors" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>
+                          <X className="h-5 w-5" />
                         </button>
                       </SheetClose>
                     </div>

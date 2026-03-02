@@ -483,25 +483,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
     return (
       <Collapsible open={open} onOpenChange={setOpen}>
-        <CollapsibleTrigger className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all cursor-pointer">
-          <div className={cn("p-2 rounded-lg shrink-0", hasActive ? "bg-white/20" : "bg-slate-700/50")}>
-            <Settings className={cn("h-5 w-5", hasActive ? "text-white" : "text-slate-400")} />
-          </div>
-          <span className={cn("font-medium flex-1 text-left", !isMobile && "group-data-[collapsible=icon]:hidden")}>{isBn ? "সেটিংস" : "Settings"}</span>
-          <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform duration-300", !isMobile && "group-data-[collapsible=icon]:hidden", open && "rotate-180")} />
+        <CollapsibleTrigger
+          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer hover:bg-white/8"
+          style={{ color: hasActive ? 'hsl(var(--sidebar-text))' : 'hsl(var(--sidebar-text-muted))' }}
+        >
+          <Settings className={cn("h-[18px] w-[18px] shrink-0", hasActive ? "text-primary" : "")} style={!hasActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined} />
+          <span className="flex-1 text-left">{isBn ? "সেটিংস" : "Settings"}</span>
+          <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-300", open && "rotate-180")} style={{ color: 'hsl(var(--sidebar-accent))' }} />
         </CollapsibleTrigger>
         <CollapsibleContent className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200">
-          <div className="ml-6 pl-3 border-l-2 border-white/10 mt-1 space-y-0.5">
+          <div className="ml-4 pl-3 mt-1 space-y-0.5" style={{ borderLeft: '2px solid hsl(var(--sidebar-border))' }}>
             {farmerSettingsGroup.items.map(item => {
               const isActive = location.pathname === item.url;
               return (
                 <Link key={item.url} to={item.url} onClick={onClose}
                   className={cn(
-                    "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
-                    isActive ? "bg-white/15 text-white font-medium" : "text-slate-300/80 hover:bg-white/5 hover:text-white"
-                  )}>
-                  <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-slate-400/70")} />
-                  <span className={!isMobile ? "group-data-[collapsible=icon]:hidden" : undefined}>{isBn ? item.titleBn : item.title}</span>
+                    "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-all duration-200",
+                    isActive ? "bg-primary/20 text-primary font-medium" : "hover:bg-white/5"
+                  )}
+                  style={!isActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined}>
+                  <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "")} style={!isActive ? { color: 'hsl(var(--sidebar-text-muted) / 0.7)' } : undefined} />
+                  <span>{isBn ? item.titleBn : item.title}</span>
                 </Link>
               );
             })}
@@ -523,8 +525,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <Link key={item.url} to={item.url} onClick={onNavigate} title={isBn ? item.titleBn : item.title}
               className={cn(
                 "flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-200",
-                isActive ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}>
+                isActive ? "bg-primary text-primary-foreground shadow-md shadow-primary/30" : "hover:bg-white/10"
+              )}
+              style={!isActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined}>
               <item.icon className="h-[18px] w-[18px]" />
             </Link>
           );
@@ -533,15 +536,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <Link key={item.url} to={item.url} onClick={onNavigate}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200",
-              isActive ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-            )}>
-            <item.icon className={cn("h-[18px] w-[18px] shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+              isActive ? "bg-primary/15 text-primary font-semibold" : "hover:bg-white/8"
+            )}
+            style={!isActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined}>
+            <item.icon className={cn("h-[18px] w-[18px] shrink-0", isActive ? "text-primary" : "")} style={!isActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined} />
             <span className="truncate">{isBn ? item.titleBn : (t as any)[item.title] || item.title}</span>
           </Link>
         );
       })}
 
-      {!collapsed && <div className="h-px bg-border mx-2 my-2" />}
+      {!collapsed && <div className="h-px mx-2 my-2" style={{ background: 'hsl(var(--sidebar-border))' }} />}
 
       {/* Settings Group */}
       {collapsed ? (
@@ -551,8 +555,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <Link key={item.url} to={item.url} onClick={onNavigate} title={isBn ? item.titleBn : item.title}
               className={cn(
                 "flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-200",
-                isActive ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}>
+                isActive ? "bg-primary text-primary-foreground shadow-md shadow-primary/30" : "hover:bg-white/10"
+              )}
+              style={!isActive ? { color: 'hsl(var(--sidebar-text-muted))' } : undefined}>
               <item.icon className="h-[18px] w-[18px]" />
             </Link>
           );
@@ -563,7 +568,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {isCustomer && !collapsed && (
         <button onClick={() => { onNavigate?.(); handleSwitchToFarmer(); }} disabled={isSwitching}
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all w-full">
+          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm hover:bg-white/8 transition-all w-full"
+          style={{ color: 'hsl(var(--sidebar-accent))' }}>
           <RefreshCw className={cn("h-[18px] w-[18px] shrink-0", isSwitching && "animate-spin")} />
           <span className="truncate">{isBn ? "কৃষক হিসেবে যোগ দিন" : "Switch to Farmer"}</span>
         </button>
@@ -572,12 +578,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   );
 
   const renderFarmerFooter = (onNavigate?: () => void, collapsed?: boolean) => (
-    <div className={cn("border-t border-border pt-3 space-y-1", collapsed && "flex flex-col items-center")}>
+    <div className={cn("pt-3 space-y-1", collapsed && "flex flex-col items-center")} style={{ borderTop: '1px solid hsl(var(--sidebar-border))' }}>
       <Link to="/" onClick={onNavigate} title={isBn ? "হোম পেজে ফিরুন" : "Back to Home"}
         className={cn(
-          "flex items-center rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all duration-200",
+          "flex items-center rounded-xl transition-all duration-200 hover:bg-white/8",
           collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2",
-        )}>
+        )}
+        style={{ color: 'hsl(var(--sidebar-text-muted))' }}>
         <Home className="h-[18px] w-[18px] shrink-0" />
         {!collapsed && <span className="text-sm truncate">{isBn ? "হোম পেজে ফিরুন" : "Back to Home"}</span>}
       </Link>
@@ -590,32 +597,34 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {!isMobileView && (
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-30 flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out",
+            "fixed inset-y-0 left-0 z-30 flex flex-col border-r transition-all duration-300 ease-in-out",
             farmerSidebarCollapsed ? "w-[68px]" : "w-[260px]"
           )}
+          style={{ background: 'var(--gradient-sidebar)', borderColor: 'hsl(var(--sidebar-border))' }}
         >
           {/* Sidebar Header */}
           <div className={cn(
-            "flex items-center border-b border-border shrink-0",
+            "flex items-center shrink-0",
             farmerSidebarCollapsed ? "justify-center p-3" : "gap-3 px-4 py-3"
-          )}>
+          )} style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}>
             {!farmerSidebarCollapsed && (
               <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                <div className="p-2 bg-primary/10 rounded-xl shrink-0">
-                  <Fish className="h-5 w-5 text-primary" />
+                <div className="p-2 rounded-xl shrink-0 bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
+                  <Fish className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="font-bold text-foreground text-sm leading-tight truncate">{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
-                  <p className="text-[10px] text-muted-foreground leading-tight">{roleLabel}</p>
+                  <h1 className="font-bold text-sm leading-tight truncate" style={{ color: 'hsl(var(--sidebar-text))' }}>{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
+                  <p className="text-[10px] leading-tight" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>{roleLabel}</p>
                 </div>
               </div>
             )}
             <button
               onClick={() => setFarmerSidebarCollapsed(!farmerSidebarCollapsed)}
               className={cn(
-                "p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground shrink-0",
+                "p-1.5 rounded-lg transition-colors shrink-0",
                 farmerSidebarCollapsed && "mx-auto"
               )}
+              style={{ color: 'hsl(var(--sidebar-text-muted))' }}
             >
               {farmerSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
@@ -623,7 +632,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* Sidebar Navigation */}
           <nav className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent",
+            "flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent",
             farmerSidebarCollapsed ? "px-1.5" : "px-2.5"
           )}>
             {renderFarmerMenu(undefined, farmerSidebarCollapsed)}
@@ -652,21 +661,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Menu className="h-5 w-5 text-foreground" />
                   </button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[280px] p-0 bg-card border-r border-border">
-                  <div className="p-4 border-b border-border">
+                <SheetContent side="left" className="w-[280px] p-0 border-r-0" style={{ background: 'var(--gradient-sidebar)' }}>
+                  <div className="p-4" style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-primary/10 rounded-xl">
-                          <Fish className="h-5 w-5 text-primary" />
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
+                          <Fish className="h-5 w-5 text-primary-foreground" />
                         </div>
                         <div>
-                          <h1 className="font-bold text-foreground text-base">{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
-                          <p className="text-[10px] text-muted-foreground">{roleLabel}</p>
+                          <h1 className="font-bold text-base" style={{ color: 'hsl(var(--sidebar-text))' }}>{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
+                          <p className="text-[10px]" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>{roleLabel}</p>
                         </div>
                       </div>
                       <SheetClose asChild>
-                        <button className="p-2 rounded-lg hover:bg-muted transition-colors">
-                          <X className="h-5 w-5 text-muted-foreground" />
+                        <button className="p-2 rounded-lg hover:bg-white/10 transition-colors" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>
+                          <X className="h-5 w-5" />
                         </button>
                       </SheetClose>
                     </div>
