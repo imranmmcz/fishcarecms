@@ -13,7 +13,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
-import { bn } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useAdminTranslations } from "@/data/adminTranslations";
 
 type DateFilterType = "today" | "yesterday" | "this_week" | "this_month" | "last_30" | "all" | "custom";
 
@@ -50,22 +51,6 @@ interface RecentOrder {
   created_at: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-yellow-500/10 text-yellow-700 border-yellow-300",
-  processing: "bg-blue-500/10 text-blue-700 border-blue-300",
-  shipped: "bg-purple-500/10 text-purple-700 border-purple-300",
-  delivered: "bg-green-500/10 text-green-700 border-green-300",
-  cancelled: "bg-red-500/10 text-red-700 border-red-300",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: "পেন্ডিং",
-  processing: "প্রসেসিং",
-  shipped: "শিপড",
-  delivered: "ডেলিভারড",
-  cancelled: "বাতিল",
-};
-
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(186 100% 45%)", "hsl(35 95% 55%)", "hsl(0 84% 60%)"];
 
 interface UserProfile {
@@ -96,6 +81,26 @@ interface UserDashboardData {
 }
 
 const AdminDashboard = () => {
+  const { language } = useLanguage();
+  const at = useAdminTranslations(language);
+  const locale = language === "bn" ? "bn-BD" : "en-US";
+
+  const STATUS_COLORS: Record<string, string> = {
+    pending: "bg-yellow-500/10 text-yellow-700 border-yellow-300",
+    processing: "bg-blue-500/10 text-blue-700 border-blue-300",
+    shipped: "bg-purple-500/10 text-purple-700 border-purple-300",
+    delivered: "bg-green-500/10 text-green-700 border-green-300",
+    cancelled: "bg-red-500/10 text-red-700 border-red-300",
+  };
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending: at.pending,
+    processing: at.processing,
+    shipped: at.shipped,
+    delivered: at.delivered,
+    cancelled: at.cancelled,
+  };
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [dailySalesData, setDailySalesData] = useState<any[]>([]);
@@ -124,17 +129,17 @@ const AdminDashboard = () => {
     const now = new Date();
     switch (dateFilter) {
       case "today":
-        return { start: startOfDay(now).toISOString(), end: endOfDay(now).toISOString(), label: "আজ" };
+        return { start: startOfDay(now).toISOString(), end: endOfDay(now).toISOString(), label: at.today };
       case "yesterday": {
         const y = subDays(now, 1);
-        return { start: startOfDay(y).toISOString(), end: endOfDay(y).toISOString(), label: "গতকাল" };
+        return { start: startOfDay(y).toISOString(), end: endOfDay(y).toISOString(), label: at.yesterday };
       }
       case "this_week":
-        return { start: startOfWeek(now, { weekStartsOn: 6 }).toISOString(), end: endOfDay(now).toISOString(), label: "এই সপ্তাহ" };
+        return { start: startOfWeek(now, { weekStartsOn: 6 }).toISOString(), end: endOfDay(now).toISOString(), label: at.thisWeek };
       case "this_month":
-        return { start: startOfMonth(now).toISOString(), end: endOfDay(now).toISOString(), label: "এই মাস" };
+        return { start: startOfMonth(now).toISOString(), end: endOfDay(now).toISOString(), label: at.thisMonth };
       case "last_30":
-        return { start: startOfDay(subDays(now, 30)).toISOString(), end: endOfDay(now).toISOString(), label: "গত ৩০ দিন" };
+        return { start: startOfDay(subDays(now, 30)).toISOString(), end: endOfDay(now).toISOString(), label: at.last30Days };
       case "custom":
         if (customRange.from) {
           return {
@@ -143,12 +148,12 @@ const AdminDashboard = () => {
             label: `${format(customRange.from, "dd/MM/yy")}${customRange.to ? ` - ${format(customRange.to, "dd/MM/yy")}` : ""}`,
           };
         }
-        return { start: null, end: null, label: "সব সময়" };
+        return { start: null, end: null, label: at.allTime };
       case "all":
       default:
-        return { start: null, end: null, label: "সব সময়" };
+        return { start: null, end: null, label: at.allTime };
     }
-  }, [dateFilter, customRange]);
+  }, [dateFilter, customRange, at]);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -289,29 +294,36 @@ const AdminDashboard = () => {
   const { label: filterLabel } = getDateRange();
 
   const filterButtons: { key: DateFilterType; label: string }[] = [
-    { key: "today", label: "আজ" },
-    { key: "yesterday", label: "গতকাল" },
-    { key: "this_week", label: "এই সপ্তাহ" },
-    { key: "this_month", label: "এই মাস" },
-    { key: "last_30", label: "৩০ দিন" },
-    { key: "all", label: "সব" },
+    { key: "today", label: at.today },
+    { key: "yesterday", label: at.yesterday },
+    { key: "this_week", label: at.thisWeek },
+    { key: "this_month", label: at.thisMonth },
+    { key: "last_30", label: at.last30Days },
+    { key: "all", label: at.all },
   ];
 
   const orderStatusCards = [
-    { label: "পেন্ডিং", count: stats?.pendingOrders || 0, icon: Clock, cls: "text-yellow-600 bg-yellow-500/10" },
-    { label: "প্রসেসিং", count: stats?.processingOrders || 0, icon: Package, cls: "text-blue-600 bg-blue-500/10" },
-    { label: "শিপড", count: stats?.shippedOrders || 0, icon: Truck, cls: "text-purple-600 bg-purple-500/10" },
-    { label: "ডেলিভারড", count: stats?.deliveredOrders || 0, icon: CheckCircle, cls: "text-green-600 bg-green-500/10" },
-    { label: "বাতিল", count: stats?.cancelledOrders || 0, icon: XCircle, cls: "text-red-600 bg-red-500/10" },
+    { label: at.pending, count: stats?.pendingOrders || 0, icon: Clock, cls: "text-yellow-600 bg-yellow-500/10" },
+    { label: at.processing, count: stats?.processingOrders || 0, icon: Package, cls: "text-blue-600 bg-blue-500/10" },
+    { label: at.shipped, count: stats?.shippedOrders || 0, icon: Truck, cls: "text-purple-600 bg-purple-500/10" },
+    { label: at.delivered, count: stats?.deliveredOrders || 0, icon: CheckCircle, cls: "text-green-600 bg-green-500/10" },
+    { label: at.cancelled, count: stats?.cancelledOrders || 0, icon: XCircle, cls: "text-red-600 bg-red-500/10" },
   ];
+
+  const getRoleLabel = (role: string) => {
+    if (role === "admin") return at.admin;
+    if (role === "farmer") return at.farmer;
+    if (role === "customer") return at.customer;
+    return at.user;
+  };
 
   return (
     <AdminLayout>
       <div className="space-y-6 max-w-[1400px] mx-auto">
         {/* Page Header */}
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">অ্যাডমিন ড্যাশবোর্ড</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">রিয়েলটাইম সেলস ও অর্ডার পরিসংখ্যান</p>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">{at.adminDashboard}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{at.realtimeStats}</p>
         </div>
 
         {/* Date Filter Dropdown */}
@@ -327,7 +339,7 @@ const AdminDashboard = () => {
             <SelectTrigger className="w-[160px] h-9 text-xs">
               <div className="flex items-center gap-1.5">
                 <Filter className="h-3.5 w-3.5" />
-                <SelectValue placeholder="ফিল্টার" />
+                <SelectValue placeholder={at.filter} />
               </div>
             </SelectTrigger>
             <SelectContent>
@@ -350,7 +362,7 @@ const AdminDashboard = () => {
                 <CalendarIcon className="h-3.5 w-3.5" />
                 {dateFilter === "custom" && customRange.from
                   ? `${format(customRange.from, "dd/MM")}${customRange.to ? ` - ${format(customRange.to, "dd/MM")}` : ""}`
-                  : "কাস্টম"}
+                  : at.custom}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
@@ -370,14 +382,13 @@ const AdminDashboard = () => {
 
         {/* Stat Cards */}
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          {/* Sales */}
           <Card className="border border-border/50">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">বিক্রয় ({filterLabel})</p>
-                  <p className="text-xl font-bold text-foreground">৳{(stats?.totalSales || 0).toLocaleString("bn-BD")}</p>
-                  <p className="text-[11px] text-muted-foreground">{(stats?.totalOrders || 0).toLocaleString("bn-BD")} অর্ডার</p>
+                  <p className="text-xs text-muted-foreground font-medium">{at.sales} ({filterLabel})</p>
+                  <p className="text-xl font-bold text-foreground">৳{(stats?.totalSales || 0).toLocaleString(locale)}</p>
+                  <p className="text-[11px] text-muted-foreground">{(stats?.totalOrders || 0).toLocaleString(locale)} {at.orders}</p>
                 </div>
                 <div className="p-2 rounded-lg bg-primary/10">
                   <DollarSign className="h-4 w-4 text-primary" />
@@ -386,13 +397,12 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Orders */}
           <Card className="border border-border/50">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">মোট অর্ডার</p>
-                  <p className="text-xl font-bold text-foreground">{(stats?.totalOrders || 0).toLocaleString("bn-BD")}</p>
+                  <p className="text-xs text-muted-foreground font-medium">{at.totalOrders}</p>
+                  <p className="text-xl font-bold text-foreground">{(stats?.totalOrders || 0).toLocaleString(locale)}</p>
                   <p className="text-[11px] text-muted-foreground">{filterLabel}</p>
                 </div>
                 <div className="p-2 rounded-lg bg-secondary/10">
@@ -402,14 +412,13 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Products */}
           <Card className="border border-border/50">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">মোট পণ্য</p>
-                  <p className="text-xl font-bold text-foreground">{(stats?.totalProducts || 0).toLocaleString("bn-BD")}</p>
-                  <p className="text-[11px] text-muted-foreground">{(stats?.lowStockProducts || 0).toLocaleString("bn-BD")} কম স্টক</p>
+                  <p className="text-xs text-muted-foreground font-medium">{at.totalProducts}</p>
+                  <p className="text-xl font-bold text-foreground">{(stats?.totalProducts || 0).toLocaleString(locale)}</p>
+                  <p className="text-[11px] text-muted-foreground">{(stats?.lowStockProducts || 0).toLocaleString(locale)} {at.lowStock}</p>
                 </div>
                 <div className="p-2 rounded-lg bg-accent/10">
                   <Package className="h-4 w-4 text-accent" />
@@ -418,14 +427,13 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Users */}
           <Card className="border border-border/50">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">ব্যবহারকারী</p>
-                  <p className="text-xl font-bold text-foreground">{(stats?.totalUsers || 0).toLocaleString("bn-BD")}</p>
-                  <p className="text-[11px] text-muted-foreground">নিবন্ধিত</p>
+                  <p className="text-xs text-muted-foreground font-medium">{at.usersLabel}</p>
+                  <p className="text-xl font-bold text-foreground">{(stats?.totalUsers || 0).toLocaleString(locale)}</p>
+                  <p className="text-[11px] text-muted-foreground">{at.registered}</p>
                 </div>
                 <div className="p-2 rounded-lg bg-muted">
                   <Users className="h-4 w-4 text-muted-foreground" />
@@ -444,7 +452,7 @@ const AdminDashboard = () => {
                   <s.icon className={cn("h-4 w-4", s.cls.split(" ")[0])} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg font-bold leading-tight">{s.count.toLocaleString("bn-BD")}</p>
+                  <p className="text-lg font-bold leading-tight">{s.count.toLocaleString(locale)}</p>
                   <p className="text-[11px] text-muted-foreground truncate">{s.label}</p>
                 </div>
               </CardContent>
@@ -457,7 +465,7 @@ const AdminDashboard = () => {
           <div className="flex items-center gap-3 p-3 rounded-xl border border-yellow-300/50 bg-yellow-50/50 dark:bg-yellow-500/5">
             <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0" />
             <p className="text-sm text-yellow-800 dark:text-yellow-400">
-              <span className="font-semibold">{(stats?.lowStockProducts || 0).toLocaleString("bn-BD")}টি পণ্যের</span> স্টক ১০-এর কম। ইনভেন্টরি চেক করুন।
+              <span className="font-semibold">{(stats?.lowStockProducts || 0).toLocaleString(locale)}</span>{at.lowStockAlert}
             </p>
           </div>
         )}
@@ -466,7 +474,7 @@ const AdminDashboard = () => {
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="border border-border/50">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">বিক্রয় চার্ট ({filterLabel})</CardTitle>
+              <CardTitle className="text-sm font-semibold">{at.salesChart} ({filterLabel})</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <ResponsiveContainer width="100%" height={260}>
@@ -481,7 +489,7 @@ const AdminDashboard = () => {
                   <XAxis dataKey="day" fontSize={11} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                   <YAxis fontSize={11} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                   <Tooltip
-                    formatter={(v: number) => [`৳${v.toLocaleString()}`, "বিক্রয়"]}
+                    formatter={(v: number) => [`৳${v.toLocaleString()}`, at.sales]}
                     contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }}
                   />
                   <Area type="monotone" dataKey="sales" stroke="hsl(186 100% 35%)" strokeWidth={2} fill="url(#salesGrad)" />
@@ -492,7 +500,7 @@ const AdminDashboard = () => {
 
           <Card className="border border-border/50">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">অর্ডার স্ট্যাটাস বিতরণ</CardTitle>
+              <CardTitle className="text-sm font-semibold">{at.orderStatusDistribution}</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <ResponsiveContainer width="100%" height={260}>
@@ -515,14 +523,14 @@ const AdminDashboard = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
-              ব্যবহারকারী ড্যাশবোর্ড
+              {at.userDashboard}
             </CardTitle>
-            <CardDescription className="text-xs">ব্যবহারকারী নির্বাচন করে তার সম্পূর্ণ তথ্য দেখুন</CardDescription>
+            <CardDescription className="text-xs">{at.selectUserDesc}</CardDescription>
             <div className="pt-2 flex flex-col sm:flex-row gap-2 max-w-lg">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
-                  placeholder="নাম, মোবাইল বা ইমেইল..."
+                  placeholder={at.searchPlaceholder}
                   value={userSearchQuery}
                   onChange={e => setUserSearchQuery(e.target.value)}
                   className="pl-9 h-9 text-sm"
@@ -531,7 +539,7 @@ const AdminDashboard = () => {
               </div>
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                 <SelectTrigger className="sm:w-56 h-9 text-sm">
-                  <SelectValue placeholder="ব্যবহারকারী নির্বাচন" />
+                  <SelectValue placeholder={at.selectUser} />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredUsers.length > 0 ? filteredUsers.map(u => (
@@ -539,7 +547,7 @@ const AdminDashboard = () => {
                       {u.full_name || u.email || "Unknown"} {u.mobile ? `(${u.mobile})` : ""}
                     </SelectItem>
                   )) : (
-                    <div className="px-3 py-2 text-sm text-muted-foreground">কোনো ব্যবহারকারী পাওয়া যায়নি</div>
+                    <div className="px-3 py-2 text-sm text-muted-foreground">{at.noUserFound}</div>
                   )}
                 </SelectContent>
               </Select>
@@ -563,7 +571,7 @@ const AdminDashboard = () => {
                       <div className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 text-muted-foreground" /><span>{user.email || "N/A"}</span></div>
                       <div className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-muted-foreground" /><span>{user.mobile || "N/A"}</span></div>
                       <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /><span>{[user.village, user.upazila, user.district, user.division].filter(Boolean).join(", ") || "N/A"}</span></div>
-                      <Badge variant="outline" className="text-xs h-6">{selectedUserData.role === "admin" ? "অ্যাডমিন" : selectedUserData.role === "farmer" ? "কৃষক" : selectedUserData.role === "customer" ? "কাস্টমার" : "ইউজার"}</Badge>
+                      <Badge variant="outline" className="text-xs h-6">{getRoleLabel(selectedUserData.role)}</Badge>
                     </div>
                   );
                 })()}
@@ -571,10 +579,10 @@ const AdminDashboard = () => {
                 {/* User Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { icon: Waves, label: `মোট পুকুর (${selectedUserData.activePondCount.toLocaleString("bn-BD")} চলমান)`, value: selectedUserData.pondCount.toLocaleString("bn-BD"), cls: "text-primary" },
-                    { icon: Fish, label: "মোট মাছ", value: selectedUserData.totalFishCount.toLocaleString("bn-BD"), cls: "text-primary" },
-                    { icon: TrendingUp, label: "মোট আয়", value: `৳${selectedUserData.totalIncome.toLocaleString("bn-BD")}`, cls: "text-green-600" },
-                    { icon: TrendingDown, label: "মোট ব্যয়", value: `৳${selectedUserData.totalExpense.toLocaleString("bn-BD")}`, cls: "text-destructive" },
+                    { icon: Waves, label: `${at.totalPonds} (${selectedUserData.activePondCount.toLocaleString(locale)} ${at.active})`, value: selectedUserData.pondCount.toLocaleString(locale), cls: "text-primary" },
+                    { icon: Fish, label: at.totalFish, value: selectedUserData.totalFishCount.toLocaleString(locale), cls: "text-primary" },
+                    { icon: TrendingUp, label: at.totalIncome, value: `৳${selectedUserData.totalIncome.toLocaleString(locale)}`, cls: "text-green-600" },
+                    { icon: TrendingDown, label: at.totalExpense, value: `৳${selectedUserData.totalExpense.toLocaleString(locale)}`, cls: "text-destructive" },
                   ].map((s, i) => (
                     <div key={i} className="flex flex-col items-center p-3 rounded-lg bg-muted/40 gap-1 text-center">
                       <s.icon className={cn("h-4 w-4", s.cls)} />
@@ -586,19 +594,19 @@ const AdminDashboard = () => {
 
                 {/* Profit/Loss */}
                 <div className="p-3 rounded-lg bg-muted/40 text-center">
-                  <span className="text-xs text-muted-foreground">নিট লাভ/ক্ষতি: </span>
+                  <span className="text-xs text-muted-foreground">{at.netProfitLoss}: </span>
                   <span className={cn("text-base font-bold", (selectedUserData.totalIncome - selectedUserData.totalExpense) >= 0 ? "text-green-600" : "text-destructive")}>
-                    ৳{(selectedUserData.totalIncome - selectedUserData.totalExpense).toLocaleString("bn-BD")}
+                    ৳{(selectedUserData.totalIncome - selectedUserData.totalExpense).toLocaleString(locale)}
                   </span>
                 </div>
 
                 {/* Order Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { icon: ShoppingCart, label: "মোট অর্ডার", value: selectedUserData.totalOrders.toLocaleString("bn-BD"), cls: "text-primary" },
-                    { icon: DollarSign, label: "মোট ক্রয়", value: `৳${selectedUserData.totalSpent.toLocaleString("bn-BD")}`, cls: "text-primary" },
-                    { icon: Clock, label: "পেন্ডিং", value: selectedUserData.pendingOrders.toLocaleString("bn-BD"), cls: "text-yellow-600" },
-                    { icon: CheckCircle, label: "ডেলিভারড", value: selectedUserData.deliveredOrders.toLocaleString("bn-BD"), cls: "text-green-600" },
+                    { icon: ShoppingCart, label: at.totalOrders, value: selectedUserData.totalOrders.toLocaleString(locale), cls: "text-primary" },
+                    { icon: DollarSign, label: at.totalPurchase, value: `৳${selectedUserData.totalSpent.toLocaleString(locale)}`, cls: "text-primary" },
+                    { icon: Clock, label: at.pending, value: selectedUserData.pendingOrders.toLocaleString(locale), cls: "text-yellow-600" },
+                    { icon: CheckCircle, label: at.delivered, value: selectedUserData.deliveredOrders.toLocaleString(locale), cls: "text-green-600" },
                   ].map((s, i) => (
                     <div key={i} className="flex flex-col items-center p-3 rounded-lg bg-muted/40 gap-1 text-center">
                       <s.icon className={cn("h-4 w-4", s.cls)} />
@@ -611,14 +619,14 @@ const AdminDashboard = () => {
                 {/* User Orders Table */}
                 {selectedUserData.orders.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <p className="text-xs font-medium mb-2 text-muted-foreground">সর্বশেষ অর্ডারসমূহ</p>
+                    <p className="text-xs font-medium mb-2 text-muted-foreground">{at.recentOrders}</p>
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b text-left text-xs text-muted-foreground">
-                          <th className="pb-2 font-medium">অর্ডার নং</th>
-                          <th className="pb-2 font-medium">পরিমাণ</th>
-                          <th className="pb-2 font-medium">স্ট্যাটাস</th>
-                          <th className="pb-2 font-medium">তারিখ</th>
+                          <th className="pb-2 font-medium">{at.orderNo}</th>
+                          <th className="pb-2 font-medium">{at.amount}</th>
+                          <th className="pb-2 font-medium">{at.status}</th>
+                          <th className="pb-2 font-medium">{at.date}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -631,18 +639,18 @@ const AdminDashboard = () => {
                                 {STATUS_LABELS[order.status] || order.status}
                               </Badge>
                             </td>
-                            <td className="py-2 text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("bn-BD")}</td>
+                            <td className="py-2 text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString(locale)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <p className="text-center text-muted-foreground py-4 text-sm">এই ব্যবহারকারীর কোনো অর্ডার নেই</p>
+                  <p className="text-center text-muted-foreground py-4 text-sm">{at.noOrders}</p>
                 )}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-8 text-sm">ড্রপডাউন থেকে একজন ব্যবহারকারী নির্বাচন করুন</p>
+              <p className="text-center text-muted-foreground py-8 text-sm">{at.selectFromDropdown}</p>
             )}
           </CardContent>
         </Card>
