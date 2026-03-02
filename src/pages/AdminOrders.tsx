@@ -22,13 +22,20 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { bn } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import {
-  Package, Eye, Loader2, ShoppingBag, Calendar, MapPin, Phone, Clock,
+  Package, Eye, Loader2, ShoppingBag, Calendar, CalendarIcon, MapPin, Phone, Clock,
   Truck, CheckCircle, XCircle, AlertCircle, TrendingUp,
-  Search, RefreshCw, AlertTriangle, Users,
+  Search, RefreshCw, AlertTriangle, Users, X,
 } from "lucide-react";
 import { ShipmentTrackingForm } from "@/components/ShipmentTrackingForm";
 import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
@@ -100,6 +107,8 @@ const AdminOrders = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [statusNote, setStatusNote] = useState("");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const translations = {
     orderManagement: language === "bn" ? "অর্ডার ব্যবস্থাপনা" : "Order Management",
@@ -132,6 +141,16 @@ const AdminOrders = () => {
         query = query.eq("status", statusFilter);
       }
 
+      if (dateFrom) {
+        const fromISO = new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate()).toISOString();
+        query = query.gte("created_at", fromISO);
+      }
+
+      if (dateTo) {
+        const toISO = new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate(), 23, 59, 59).toISOString();
+        query = query.lte("created_at", toISO);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       setOrders((data as Order[]) || []);
@@ -141,7 +160,7 @@ const AdminOrders = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [statusFilter, language]);
+  }, [statusFilter, dateFrom, dateTo, language]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -382,29 +401,72 @@ const AdminOrders = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={translations.searchOrders}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={translations.searchOrders}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{translations.allOrders}</SelectItem>
+                {Object.entries(statusConfig).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>
+                    {language === "bn" ? config.label.bn : config.label.en}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{translations.allOrders}</SelectItem>
-              {Object.entries(statusConfig).map(([key, config]) => (
-                <SelectItem key={key} value={key}>
-                  {language === "bn" ? config.label.bn : config.label.en}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-3">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-[180px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFrom ? format(dateFrom, "dd MMM yyyy", { locale: language === "bn" ? bn : undefined }) : (language === "bn" ? "শুরুর তারিখ" : "From date")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={setDateFrom}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-[180px] justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateTo ? format(dateTo, "dd MMM yyyy", { locale: language === "bn" ? bn : undefined }) : (language === "bn" ? "শেষ তারিখ" : "To date")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            {(dateFrom || dateTo) && (
+              <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                <X className="h-3.5 w-3.5" /> {language === "bn" ? "তারিখ রিসেট" : "Reset dates"}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Orders Table */}
