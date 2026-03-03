@@ -183,11 +183,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    
+    if (!error && data?.user) {
+      // Check if user is blocked
+      const { data: blockData } = await supabase.rpc("is_user_blocked", { check_user_id: data.user.id });
+      if (blockData === true) {
+        await supabase.auth.signOut();
+        return { error: new Error("আপনার অ্যাকাউন্ট ব্লক করা হয়েছে। অ্যাডমিনের সাথে যোগাযোগ করুন।") };
+      }
+
+      // Log login activity
+      try {
+        await supabase.from("user_activity_logs").insert({
+          user_id: data.user.id,
+          activity_type: "login",
+          description: "ইউজার লগইন করেছেন",
+        } as any);
+      } catch {}
+    }
+    
     return { error: error as Error | null };
   };
 
   const signUp = async (email: string, password: string, fullName: string, addressData?: AddressData, roleType?: string) => {
+    // Check duplicate mobile
+    if (addressData?.mobile) {
+      const { data: mobileAvailable } = await supabase.rpc("is_mobile_available", { mobile_number: addressData.mobile });
+      if (mobileAvailable === false) {
+        return { error: new Error("এই মোবাইল নম্বর দিয়ে ইতোমধ্যে অ্যাকাউন্ট আছে। অন্য নম্বর ব্যবহার করুন।") };
+      }
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,

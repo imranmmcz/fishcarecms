@@ -1516,6 +1516,9 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          block_reason: string | null
+          blocked_by: string | null
+          blocked_until: string | null
           created_at: string
           dashboard_settings: Json | null
           deletion_warning_sent_at: string | null
@@ -1524,6 +1527,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_blocked: boolean
           last_sign_in_at: string | null
           mobile: string | null
           upazila: string | null
@@ -1533,6 +1537,9 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          block_reason?: string | null
+          blocked_by?: string | null
+          blocked_until?: string | null
           created_at?: string
           dashboard_settings?: Json | null
           deletion_warning_sent_at?: string | null
@@ -1541,6 +1548,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_blocked?: boolean
           last_sign_in_at?: string | null
           mobile?: string | null
           upazila?: string | null
@@ -1550,6 +1558,9 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          block_reason?: string | null
+          blocked_by?: string | null
+          blocked_until?: string | null
           created_at?: string
           dashboard_settings?: Json | null
           deletion_warning_sent_at?: string | null
@@ -1558,6 +1569,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_blocked?: boolean
           last_sign_in_at?: string | null
           mobile?: string | null
           upazila?: string | null
@@ -1676,6 +1688,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      registration_attempts: {
+        Row: {
+          attempted_at: string
+          email: string | null
+          id: string
+          ip_address: string
+        }
+        Insert: {
+          attempted_at?: string
+          email?: string | null
+          id?: string
+          ip_address: string
+        }
+        Update: {
+          attempted_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string
+        }
+        Relationships: []
       }
       review_helpful_votes: {
         Row: {
@@ -2004,6 +2037,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity_logs: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string | null
+          id: string
+          ip_address: string | null
+          page_path: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          ip_address?: string | null
+          page_path?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          ip_address?: string | null
+          page_path?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2123,6 +2189,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_registration_rate_limit: {
+        Args: { client_ip: string }
+        Returns: boolean
+      }
       generate_order_number: { Args: never; Returns: string }
       generate_pos_sale_number: { Args: never; Returns: string }
       generate_purchase_order_number: { Args: never; Returns: string }
@@ -2147,6 +2217,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_mobile_available: { Args: { mobile_number: string }; Returns: boolean }
+      is_user_blocked: { Args: { check_user_id: string }; Returns: boolean }
       manage_backup_cron: {
         Args: { _action: string; _backup_scope?: string; _schedule?: string }
         Returns: Json
