@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRolePermissions, PERMISSION_LABELS, ALL_PERMISSION_KEYS, ROLE_LABELS, STAFF_ROLES } from "@/hooks/useRolePermissions";
-import { Users, Search, Shield, User, Trash2, Loader2, MapPin, Filter, X, UserPlus, Settings2, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Users, Search, Shield, User, Trash2, Loader2, MapPin, Filter, X, UserPlus, Settings2, Eye, EyeOff, CheckCircle, Ban, Activity } from "lucide-react";
 import { divisions, districtsByDivision, upazilasByDistrict } from "@/data/bangladeshLocationData";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
@@ -20,6 +20,8 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import { UserBlockDialog } from "@/components/admin/UserBlockDialog";
+import { UserActivityLog } from "@/components/admin/UserActivityLog";
 
 interface UserProfile {
   id: string;
@@ -33,6 +35,9 @@ interface UserProfile {
   village: string | null;
   created_at: string;
   role?: string;
+  is_blocked?: boolean;
+  blocked_until?: string | null;
+  block_reason?: string | null;
 }
 
 const AdminUsers = () => {
@@ -52,6 +57,10 @@ const AdminUsers = () => {
     email: "", password: "", full_name: "", mobile: "", role: "cashier" as string,
   });
   const [showPassword, setShowPassword] = useState(false);
+
+  // Block/Activity dialogs
+  const [blockDialogUser, setBlockDialogUser] = useState<UserProfile | null>(null);
+  const [activityLogUser, setActivityLogUser] = useState<UserProfile | null>(null);
 
   // Role permissions
   const { permissions, isLoading: permLoading, getPermissionsForRole, updatePermission, refetch: refetchPerms } = useRolePermissions();
@@ -392,6 +401,13 @@ const AdminUsers = () => {
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-semibold">{user.full_name || "নাম নেই"}</p>
                               {getRoleBadge(user.role || "user")}
+                              {user.is_blocked && (
+                                <Badge variant="destructive" className="gap-1">
+                                  <Ban className="h-3 w-3" />
+                                  ব্লকড
+                                  {user.blocked_until && ` (${new Date(user.blocked_until).toLocaleDateString("bn-BD")} পর্যন্ত)`}
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-sm text-muted-foreground">{user.email}</p>
                             {user.mobile && <p className="text-sm text-muted-foreground">{user.mobile}</p>}
@@ -403,13 +419,27 @@ const AdminUsers = () => {
                                 </p>
                               </div>
                             )}
+                            {user.block_reason && user.is_blocked && (
+                              <p className="text-xs text-destructive mt-1">কারণ: {user.block_reason}</p>
+                            )}
                             <p className="text-xs text-muted-foreground mt-1">
                               যোগদান: {new Date(user.created_at).toLocaleDateString("bn-BD")}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                          <Button variant="outline" size="icon" title="অ্যাক্টিভিটি লগ" onClick={() => setActivityLogUser(user)}>
+                            <Activity className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={user.is_blocked ? "default" : "outline"}
+                            size="icon"
+                            title={user.is_blocked ? "আনব্লক করুন" : "ব্লক করুন"}
+                            onClick={() => setBlockDialogUser(user)}
+                          >
+                            <Ban className="h-4 w-4" />
+                          </Button>
                           <Select value={user.role} onValueChange={(value) => updateUserRole(user.user_id, value)} disabled={updatingUserId === user.user_id}>
                             <SelectTrigger className="w-40">
                               <SelectValue />
@@ -438,7 +468,7 @@ const AdminUsers = () => {
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>বাতিল</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => deleteUser(user.user_id)} className="bg-red-500 hover:bg-red-600">
+                                <AlertDialogAction onClick={() => deleteUser(user.user_id)} className="bg-destructive hover:bg-destructive/90">
                                   মুছে ফেলুন
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -534,6 +564,28 @@ const AdminUsers = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Block Dialog */}
+        {blockDialogUser && (
+          <UserBlockDialog
+            open={!!blockDialogUser}
+            onOpenChange={(open) => !open && setBlockDialogUser(null)}
+            userId={blockDialogUser.user_id}
+            userName={blockDialogUser.full_name || blockDialogUser.email || "ইউজার"}
+            isCurrentlyBlocked={!!blockDialogUser.is_blocked}
+            onSuccess={fetchUsers}
+          />
+        )}
+
+        {/* Activity Log Dialog */}
+        {activityLogUser && (
+          <UserActivityLog
+            open={!!activityLogUser}
+            onOpenChange={(open) => !open && setActivityLogUser(null)}
+            userId={activityLogUser.user_id}
+            userName={activityLogUser.full_name || activityLogUser.email || "ইউজার"}
+          />
+        )}
       </div>
     </AdminLayout>
   );
