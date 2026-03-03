@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -16,53 +17,64 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const mainMenuItems = [
-  { title: "POS ড্যাশবোর্ড", url: "/pos", icon: LayoutDashboard },
-  { title: "অনলাইন অর্ডার", url: "/pos/online-orders", icon: Globe },
-  { title: "শিফট ইতিহাস", url: "/pos/shifts", icon: Clock },
+interface MenuItem {
+  title_bn: string;
+  title_en: string;
+  url: string;
+  icon: any;
+}
+
+const mainMenuItems: MenuItem[] = [
+  { title_bn: "POS ড্যাশবোর্ড", title_en: "POS Dashboard", url: "/pos", icon: LayoutDashboard },
+  { title_bn: "অনলাইন অর্ডার", title_en: "Online Orders", url: "/pos/online-orders", icon: Globe },
+  { title_bn: "শিফট ইতিহাস", title_en: "Shift History", url: "/pos/shifts", icon: Clock },
 ];
 
-const salesSubItems = [
-  { title: "দ্রুত বিক্রি", url: "/pos/sell", icon: ShoppingCart },
-  { title: "বিক্রি ইতিহাস", url: "/pos/history", icon: History },
-  { title: "বাকি আদায়", url: "/pos/due-collections", icon: HandCoins },
-  { title: "বিক্রি রিটার্ন", url: "/pos/sales/returns", icon: RotateCcw },
-  { title: "বিক্রি রিপোর্ট", url: "/pos/sales/report", icon: FileText },
-  { title: "কাস্টমার বাকি রিপোর্ট", url: "/pos/customer-due-report", icon: Users },
+const salesSubItems: MenuItem[] = [
+  { title_bn: "দ্রুত বিক্রি", title_en: "Quick Sale", url: "/pos/sell", icon: ShoppingCart },
+  { title_bn: "বিক্রি ইতিহাস", title_en: "Sales History", url: "/pos/history", icon: History },
+  { title_bn: "বাকি আদায়", title_en: "Due Collections", url: "/pos/due-collections", icon: HandCoins },
+  { title_bn: "বিক্রি রিটার্ন", title_en: "Sales Returns", url: "/pos/sales/returns", icon: RotateCcw },
+  { title_bn: "বিক্রি রিপোর্ট", title_en: "Sales Report", url: "/pos/sales/report", icon: FileText },
+  { title_bn: "কাস্টমার বাকি রিপোর্ট", title_en: "Customer Due Report", url: "/pos/customer-due-report", icon: Users },
 ];
 
-const productSubItems = [
-  { title: "সকল পণ্য", url: "/pos/products", icon: Package },
-  { title: "ইনভেন্টরি", url: "/pos/inventory", icon: Warehouse },
-  { title: "স্টক ট্রান্সফার", url: "/pos/stock-transfers", icon: ArrowLeftRight },
-  { title: "ভ্যারিয়েশন", url: "/pos/variations", icon: Layers },
-  { title: "ক্যাটাগরি", url: "/pos/categories", icon: Tag },
-  { title: "ব্র্যান্ড", url: "/pos/brands", icon: Award },
-  { title: "ইউনিট", url: "/pos/units", icon: Ruler },
+const productSubItems: MenuItem[] = [
+  { title_bn: "সকল পণ্য", title_en: "All Products", url: "/pos/products", icon: Package },
+  { title_bn: "ইনভেন্টরি", title_en: "Inventory", url: "/pos/inventory", icon: Warehouse },
+  { title_bn: "স্টক ট্রান্সফার", title_en: "Stock Transfer", url: "/pos/stock-transfers", icon: ArrowLeftRight },
+  { title_bn: "ভ্যারিয়েশন", title_en: "Variations", url: "/pos/variations", icon: Layers },
+  { title_bn: "ক্যাটাগরি", title_en: "Categories", url: "/pos/categories", icon: Tag },
+  { title_bn: "ব্র্যান্ড", title_en: "Brands", url: "/pos/brands", icon: Award },
+  { title_bn: "ইউনিট", title_en: "Units", url: "/pos/units", icon: Ruler },
 ];
 
-const purchaseSubItems = [
-  { title: "ক্রয় তালিকা", url: "/pos/purchases", icon: ListOrdered },
-  { title: "নতুন ক্রয়", url: "/pos/purchases/new", icon: ShoppingBag },
-  { title: "ক্রয় রিটার্ন", url: "/pos/purchases/returns", icon: RotateCcw },
-  { title: "ক্রয় রিপোর্ট", url: "/pos/purchases/report", icon: FileText },
+const purchaseSubItems: MenuItem[] = [
+  { title_bn: "ক্রয় তালিকা", title_en: "Purchase List", url: "/pos/purchases", icon: ListOrdered },
+  { title_bn: "নতুন ক্রয়", title_en: "New Purchase", url: "/pos/purchases/new", icon: ShoppingBag },
+  { title_bn: "ক্রয় রিটার্ন", title_en: "Purchase Returns", url: "/pos/purchases/returns", icon: RotateCcw },
+  { title_bn: "ক্রয় রিপোর্ট", title_en: "Purchase Report", url: "/pos/purchases/report", icon: FileText },
 ];
 
-const reportSubItems = [
-  { title: "সকল রিপোর্ট", url: "/pos/reports", icon: BarChart3 },
-  { title: "বিক্রি রিপোর্ট", url: "/pos/sales/report", icon: FileText },
-  { title: "ক্রয় রিপোর্ট", url: "/pos/purchases/report", icon: FileText },
-  { title: "কাস্টমার বাকি রিপোর্ট", url: "/pos/customer-due-report", icon: Users },
+const reportSubItems: MenuItem[] = [
+  { title_bn: "সকল রিপোর্ট", title_en: "All Reports", url: "/pos/reports", icon: BarChart3 },
+  { title_bn: "বিক্রি রিপোর্ট", title_en: "Sales Report", url: "/pos/sales/report", icon: FileText },
+  { title_bn: "ক্রয় রিপোর্ট", title_en: "Purchase Report", url: "/pos/purchases/report", icon: FileText },
+  { title_bn: "কাস্টমার বাকি রিপোর্ট", title_en: "Customer Due Report", url: "/pos/customer-due-report", icon: Users },
 ];
 
-const bottomMenuItems = [
-  { title: "কাস্টমার", url: "/pos/customers", icon: UserCheck },
-  { title: "সাপ্লায়ার", url: "/pos/suppliers", icon: Building2 },
+const bottomMenuItems: MenuItem[] = [
+  { title_bn: "কাস্টমার", title_en: "Customers", url: "/pos/customers", icon: UserCheck },
+  { title_bn: "সাপ্লায়ার", title_en: "Suppliers", url: "/pos/suppliers", icon: Building2 },
 ];
+
+function getTitle(item: MenuItem, lang: string) {
+  return lang === "bn" ? item.title_bn : item.title_en;
+}
 
 // --- Collapsible Group ---
-function POSCollapsibleGroup({ label, icon: GroupIcon, items, currentPath, onNavigate, collapsed }: {
-  label: string; icon: any; items: typeof salesSubItems; currentPath: string; onNavigate?: () => void; collapsed?: boolean;
+function POSCollapsibleGroup({ label, icon: GroupIcon, items, currentPath, onNavigate, collapsed, lang }: {
+  label: string; icon: any; items: MenuItem[]; currentPath: string; onNavigate?: () => void; collapsed?: boolean; lang: string;
 }) {
   const hasActive = items.some(i => currentPath === i.url);
   const [open, setOpen] = useState(hasActive);
@@ -73,8 +85,9 @@ function POSCollapsibleGroup({ label, icon: GroupIcon, items, currentPath, onNav
       <div className="space-y-1">
         {items.map((item) => {
           const isActive = currentPath === item.url;
+          const title = getTitle(item, lang);
           return (
-            <Link key={item.url} to={item.url} onClick={onNavigate} title={item.title}
+            <Link key={item.url} to={item.url} onClick={onNavigate} title={title}
               className={cn(
                 "flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-200",
                 isActive
@@ -112,7 +125,7 @@ function POSCollapsibleGroup({ label, icon: GroupIcon, items, currentPath, onNav
                   isActive ? "bg-emerald-500/20 text-white font-medium" : "text-emerald-300 hover:bg-white/5 hover:text-white"
                 )}>
                 <item.icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-emerald-300" : "text-emerald-500")} />
-                <span className="truncate">{item.title}</span>
+                <span className="truncate">{getTitle(item, lang)}</span>
               </Link>
             );
           })}
@@ -160,9 +173,13 @@ export function POSLayout({ children }: POSLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, isLoading, userRole } = useAuth();
+  const { language } = useLanguage();
   const isMobileView = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const lang = language;
+  const t = (bn: string, en: string) => lang === "bn" ? bn : en;
 
   const isStaff = userRole === "manager" || userRole === "cashier" || userRole === "delivery_staff";
   const canAccess = isAdmin || isStaff;
@@ -178,7 +195,7 @@ export function POSLayout({ children }: POSLayoutProps) {
         <AnimatedBackground />
         <div className="relative z-10 text-white flex flex-col items-center gap-3">
           <div className="h-8 w-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          <span className="text-sm text-emerald-200">লোড হচ্ছে...</span>
+          <span className="text-sm text-emerald-200">{t("লোড হচ্ছে...", "Loading...")}</span>
         </div>
       </div>
     );
@@ -187,30 +204,33 @@ export function POSLayout({ children }: POSLayoutProps) {
   if (!user || !canAccess) return null;
 
   const allItems = [...mainMenuItems, ...salesSubItems, ...productSubItems, ...purchaseSubItems, ...reportSubItems, ...bottomMenuItems];
-  const currentTitle = allItems.find(i => i.url === location.pathname)?.title || "POS";
+  const currentTitle = (() => {
+    const found = allItems.find(i => i.url === location.pathname);
+    return found ? getTitle(found, lang) : "POS";
+  })();
 
   const renderMenu = (onNavigate?: () => void, collapsed?: boolean) => (
     <>
       {mainMenuItems.map(item => (
-        <POSNavItem key={item.url} to={item.url} icon={item.icon} label={item.title}
+        <POSNavItem key={item.url} to={item.url} icon={item.icon} label={getTitle(item, lang)}
           isActive={location.pathname === item.url} onNavigate={onNavigate} collapsed={collapsed} />
       ))}
 
       {!collapsed && <div className="h-px bg-white/10 mx-2 my-2" />}
 
-      <POSCollapsibleGroup label="বিক্রয় ব্যবস্থাপনা" icon={ShoppingCart} items={salesSubItems}
-        currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} />
-      <POSCollapsibleGroup label="পণ্য ব্যবস্থাপনা" icon={Package} items={productSubItems}
-        currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} />
-      <POSCollapsibleGroup label="ক্রয় ব্যবস্থাপনা" icon={ShoppingBag} items={purchaseSubItems}
-        currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} />
-      <POSCollapsibleGroup label="রিপোর্ট" icon={BarChart3} items={reportSubItems}
-        currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} />
+      <POSCollapsibleGroup label={t("বিক্রয় ব্যবস্থাপনা", "Sales Management")} icon={ShoppingCart} items={salesSubItems}
+        currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} lang={lang} />
+      <POSCollapsibleGroup label={t("পণ্য ব্যবস্থাপনা", "Product Management")} icon={Package} items={productSubItems}
+        currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} lang={lang} />
+      <POSCollapsibleGroup label={t("ক্রয় ব্যবস্থাপনা", "Purchase Management")} icon={ShoppingBag} items={purchaseSubItems}
+        currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} lang={lang} />
+      <POSCollapsibleGroup label={t("রিপোর্ট", "Reports")} icon={BarChart3} items={reportSubItems}
+        currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} lang={lang} />
 
       {!collapsed && <div className="h-px bg-white/10 mx-2 my-2" />}
 
       {bottomMenuItems.map(item => (
-        <POSNavItem key={item.url} to={item.url} icon={item.icon} label={item.title}
+        <POSNavItem key={item.url} to={item.url} icon={item.icon} label={getTitle(item, lang)}
           isActive={location.pathname === item.url} onNavigate={onNavigate} collapsed={collapsed} />
       ))}
     </>
@@ -218,21 +238,21 @@ export function POSLayout({ children }: POSLayoutProps) {
 
   const renderFooter = (onNavigate?: () => void, collapsed?: boolean) => (
     <div className={cn("border-t border-white/10 pt-3 space-y-1", collapsed && "flex flex-col items-center")}>
-      <Link to="/admin" onClick={onNavigate} title="অ্যাডমিন প্যানেল"
+      <Link to="/admin" onClick={onNavigate} title={t("অ্যাডমিন প্যানেল", "Admin Panel")}
         className={cn(
           "flex items-center rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all duration-200",
           collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2",
         )}>
         <ArrowLeft className="h-[18px] w-[18px] shrink-0" />
-        {!collapsed && <span className="text-sm truncate">অ্যাডমিন প্যানেল</span>}
+        {!collapsed && <span className="text-sm truncate">{t("অ্যাডমিন প্যানেল", "Admin Panel")}</span>}
       </Link>
-      <Link to="/" onClick={onNavigate} title="হোম পেজ"
+      <Link to="/" onClick={onNavigate} title={t("হোম পেজ", "Home Page")}
         className={cn(
           "flex items-center rounded-xl text-emerald-300 hover:bg-white/10 hover:text-white transition-all duration-200",
           collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2",
         )}>
         <Home className="h-[18px] w-[18px] shrink-0" />
-        {!collapsed && <span className="text-sm truncate">হোম পেজ</span>}
+        {!collapsed && <span className="text-sm truncate">{t("হোম পেজ", "Home Page")}</span>}
       </Link>
     </div>
   );
@@ -260,8 +280,8 @@ export function POSLayout({ children }: POSLayoutProps) {
                       <MonitorSmartphone className="h-5 w-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <h1 className="font-bold text-white text-sm leading-tight truncate">POS সিস্টেম</h1>
-                      <p className="text-[10px] text-emerald-300 leading-tight">পয়েন্ট অফ সেল</p>
+                      <h1 className="font-bold text-white text-sm leading-tight truncate">{t("POS সিস্টেম", "POS System")}</h1>
+                      <p className="text-[10px] text-emerald-300 leading-tight">{t("পয়েন্ট অফ সেল", "Point of Sale")}</p>
                     </div>
                   </div>
                 )}
@@ -316,8 +336,8 @@ export function POSLayout({ children }: POSLayoutProps) {
                             <MonitorSmartphone className="h-6 w-6 text-white" />
                           </div>
                           <div>
-                            <h1 className="font-bold text-white text-lg">POS সিস্টেম</h1>
-                            <p className="text-xs text-emerald-300">পয়েন্ট অফ সেল</p>
+                            <h1 className="font-bold text-white text-lg">{t("POS সিস্টেম", "POS System")}</h1>
+                            <p className="text-xs text-emerald-300">{t("পয়েন্ট অফ সেল", "Point of Sale")}</p>
                           </div>
                         </div>
                         <SheetClose asChild>

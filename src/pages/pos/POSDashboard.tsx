@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 
 type QuickFilter = "today" | "yesterday" | "last7" | "last30" | "custom";
@@ -52,14 +53,6 @@ function getDateRange(filter: QuickFilter, customFrom: string, customTo: string)
   }
 }
 
-const quickFilterLabels: Record<QuickFilter, string> = {
-  today: "আজ",
-  yesterday: "গতকাল",
-  last7: "শেষ ৭ দিন",
-  last30: "শেষ ৩০ দিন",
-  custom: "কাস্টম",
-};
-
 interface StatCardProps {
   icon: React.ReactNode;
   iconBg: string;
@@ -89,6 +82,17 @@ function StatCard({ icon, iconBg, title, amount, subtitle, subtitle2 }: StatCard
 
 export default function POSDashboard() {
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const t = (bn: string, en: string) => language === "bn" ? bn : en;
+
+  const quickFilterLabels: Record<QuickFilter, string> = {
+    today: t("আজ", "Today"),
+    yesterday: t("গতকাল", "Yesterday"),
+    last7: t("শেষ ৭ দিন", "Last 7 Days"),
+    last30: t("শেষ ৩০ দিন", "Last 30 Days"),
+    custom: t("কাস্টম", "Custom"),
+  };
+
   const [activeShift, setActiveShift] = useState<any>(null);
   const [todayStats, setTodayStats] = useState({
     totalSales: 0, totalTransactions: 0, cashSales: 0, mobileSales: 0,
@@ -138,14 +142,12 @@ export default function POSDashboard() {
 
     const { data } = await q;
 
-    // Fetch purchase data
     const { data: purchaseData } = await supabase
       .from("purchase_orders")
       .select("total_amount, status")
       .gte("created_at", from)
       .lte("created_at", to);
 
-    // Fetch ALL due sales (not filtered by date - total outstanding)
     const { data: allDueSales } = await supabase
       .from("pos_sales")
       .select("due_amount")
@@ -215,24 +217,24 @@ export default function POSDashboard() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">POS ড্যাশবোর্ড</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t("POS ড্যাশবোর্ড", "POS Dashboard")}</h1>
             <p className="text-muted-foreground text-sm">
-              {quickFilterLabels[quickFilter]} — বিক্রি সারসংক্ষেপ ও কার্যকলাপ
+              {quickFilterLabels[quickFilter]} — {t("বিক্রি সারসংক্ষেপ ও কার্যকলাপ", "Sales summary & activities")}
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
             {activeShift && (
               <Badge variant="default" className="gap-1 py-1.5 text-sm">
-                <PlayCircle className="h-3.5 w-3.5" /> শিফট চলছে: {activeShift.shift_number}
+                <PlayCircle className="h-3.5 w-3.5" /> {t("শিফট চলছে", "Shift Active")}: {activeShift.shift_number}
               </Badge>
             )}
             <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="gap-1.5">
-              <Filter className="h-4 w-4" /> ফিল্টার
+              <Filter className="h-4 w-4" /> {t("ফিল্টার", "Filter")}
               {isFiltered && <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px]">ON</Badge>}
             </Button>
             <Button asChild>
               <Link to="/pos/sell" className="gap-2">
-                <ShoppingCart className="h-4 w-4" /> বিক্রি শুরু করুন <ArrowRight className="h-4 w-4" />
+                <ShoppingCart className="h-4 w-4" /> {t("বিক্রি শুরু করুন", "Start Selling")} <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -244,7 +246,7 @@ export default function POSDashboard() {
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-3 items-end flex-wrap">
                 <div className="space-y-1 min-w-[140px]">
-                  <label className="text-xs font-medium text-muted-foreground">সময়কাল</label>
+                  <label className="text-xs font-medium text-muted-foreground">{t("সময়কাল", "Period")}</label>
                   <Select value={quickFilter} onValueChange={(v) => setQuickFilter(v as QuickFilter)}>
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -258,14 +260,14 @@ export default function POSDashboard() {
                 {quickFilter === "custom" && (
                   <>
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">শুরু তারিখ</label>
+                      <label className="text-xs font-medium text-muted-foreground">{t("শুরু তারিখ", "Start Date")}</label>
                       <div className="relative">
                         <Calendar className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
                         <Input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="h-9 pl-8 w-[160px]" />
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">শেষ তারিখ</label>
+                      <label className="text-xs font-medium text-muted-foreground">{t("শেষ তারিখ", "End Date")}</label>
                       <div className="relative">
                         <Calendar className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
                         <Input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} className="h-9 pl-8 w-[160px]" />
@@ -275,21 +277,21 @@ export default function POSDashboard() {
                 )}
 
                 <div className="space-y-1 min-w-[140px]">
-                  <label className="text-xs font-medium text-muted-foreground">পেমেন্ট মেথড</label>
+                  <label className="text-xs font-medium text-muted-foreground">{t("পেমেন্ট মেথড", "Payment Method")}</label>
                   <Select value={paymentFilter} onValueChange={setPaymentFilter}>
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                      <SelectContent>
-                      <SelectItem value="all">সব</SelectItem>
-                      <SelectItem value="cash">ক্যাশ</SelectItem>
-                      <SelectItem value="mobile_banking">মোবাইল ব্যাংকিং</SelectItem>
-                      <SelectItem value="due">বাকি</SelectItem>
+                      <SelectItem value="all">{t("সব", "All")}</SelectItem>
+                      <SelectItem value="cash">{t("ক্যাশ", "Cash")}</SelectItem>
+                      <SelectItem value="mobile_banking">{t("মোবাইল ব্যাংকিং", "Mobile Banking")}</SelectItem>
+                      <SelectItem value="due">{t("বাকি", "Due")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {isFiltered && (
                   <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-destructive hover:text-destructive">
-                    <X className="h-3.5 w-3.5" /> রিসেট
+                    <X className="h-3.5 w-3.5" /> {t("রিসেট", "Reset")}
                   </Button>
                 )}
               </div>
@@ -297,57 +299,57 @@ export default function POSDashboard() {
           </Card>
         )}
 
-        {/* Stats Cards - Reference Style */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard
             icon={<ShoppingCart className="h-6 w-6 text-white" />}
             iconBg="bg-[hsl(187,80%,55%)]"
-            title="মোট বিক্রি"
+            title={t("মোট বিক্রি", "Total Sales")}
             amount={todayStats.totalSales.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           />
           <StatCard
             icon={<FileText className="h-6 w-6 text-white" />}
             iconBg="bg-[hsl(40,85%,55%)]"
-            title="ইনভয়েস বকেয়া"
+            title={t("ইনভয়েস বকেয়া", "Invoice Due")}
             amount={todayStats.mobileSales.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           />
           <StatCard
             icon={<Banknote className="h-6 w-6 text-white" />}
             iconBg="bg-[hsl(200,75%,55%)]"
-            title="মোট ক্রয়"
+            title={t("মোট ক্রয়", "Total Purchase")}
             amount={todayStats.totalPurchase.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           />
           <StatCard
             icon={<TrendingUp className="h-6 w-6 text-white" />}
             iconBg="bg-[hsl(350,75%,55%)]"
-            title="ক্রয় বকেয়া"
+            title={t("ক্রয় বকেয়া", "Purchase Due")}
             amount={todayStats.purchaseDue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           />
           <Link to="/pos/due-collections" className="block">
             <StatCard
               icon={<HandCoins className="h-6 w-6 text-white" />}
               iconBg="bg-[hsl(0,75%,55%)]"
-              title="মোট বাকি বিক্রয়"
+              title={t("মোট বাকি বিক্রয়", "Total Due Sales")}
               amount={todayStats.totalSalesDue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-              subtitle={`বাকি বিক্রয় সংখ্যা: ${todayStats.totalSalesDueCount}`}
-              subtitle2="ক্লিক করে আদায় করুন →"
+              subtitle={`${t("বাকি বিক্রয় সংখ্যা", "Due sales count")}: ${todayStats.totalSalesDueCount}`}
+              subtitle2={t("ক্লিক করে আদায় করুন →", "Click to collect →")}
             />
           </Link>
           <StatCard
             icon={<RotateCcw className="h-6 w-6 text-white" />}
             iconBg="bg-[hsl(10,75%,55%)]"
-            title="মোট ক্রয় রিটার্ন"
+            title={t("মোট ক্রয় রিটার্ন", "Total Purchase Returns")}
             amount="0.00"
-            subtitle="ক্রয় রিটার্ন: ৳ 0.00"
-            subtitle2="ক্রয় রিটার্ন পেইড: ৳ 0.00"
+            subtitle={`${t("ক্রয় রিটার্ন", "Purchase Return")}: ৳ 0.00`}
+            subtitle2={`${t("ক্রয় রিটার্ন পেইড", "Purchase Return Paid")}: ৳ 0.00`}
           />
           <StatCard
             icon={<ArrowLeftRight className="h-6 w-6 text-white" />}
             iconBg="bg-[hsl(340,75%,55%)]"
-            title="মোট বিক্রি রিটার্ন"
+            title={t("মোট বিক্রি রিটার্ন", "Total Sales Returns")}
             amount="0.00"
-            subtitle="বিক্রি রিটার্ন: ৳ 0.00"
-            subtitle2="বিক্রি রিটার্ন পেইড: ৳ 0.00"
+            subtitle={`${t("বিক্রি রিটার্ন", "Sales Return")}: ৳ 0.00`}
+            subtitle2={`${t("বিক্রি রিটার্ন পেইড", "Sales Return Paid")}: ৳ 0.00`}
           />
         </div>
 
@@ -356,15 +358,15 @@ export default function POSDashboard() {
           <Card className="border-primary/30 bg-primary/5">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
-                <PlayCircle className="h-5 w-5 text-primary" /> চলমান শিফট
+                <PlayCircle className="h-5 w-5 text-primary" /> {t("চলমান শিফট", "Active Shift")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                <div><p className="text-muted-foreground text-xs">শিফট নং</p><p className="font-bold">{activeShift.shift_number}</p></div>
-                <div><p className="text-muted-foreground text-xs">প্রারম্ভিক টাকা</p><p className="font-bold">৳{activeShift.opening_amount?.toLocaleString()}</p></div>
-                <div><p className="text-muted-foreground text-xs">মোট বিক্রি</p><p className="font-bold text-primary">৳{activeShift.total_sales?.toLocaleString()}</p></div>
-                <div><p className="text-muted-foreground text-xs">ট্রানজেকশন</p><p className="font-bold">{activeShift.total_transactions}</p></div>
+                <div><p className="text-muted-foreground text-xs">{t("শিফট নং", "Shift No.")}</p><p className="font-bold">{activeShift.shift_number}</p></div>
+                <div><p className="text-muted-foreground text-xs">{t("প্রারম্ভিক টাকা", "Opening Amount")}</p><p className="font-bold">৳{activeShift.opening_amount?.toLocaleString()}</p></div>
+                <div><p className="text-muted-foreground text-xs">{t("মোট বিক্রি", "Total Sales")}</p><p className="font-bold text-primary">৳{activeShift.total_sales?.toLocaleString()}</p></div>
+                <div><p className="text-muted-foreground text-xs">{t("ট্রানজেকশন", "Transactions")}</p><p className="font-bold">{activeShift.total_transactions}</p></div>
               </div>
             </CardContent>
           </Card>
@@ -375,9 +377,9 @@ export default function POSDashboard() {
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">সাম্প্রতিক বিক্রি</CardTitle>
+                <CardTitle className="text-base">{t("সাম্প্রতিক বিক্রি", "Recent Sales")}</CardTitle>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/pos/history">সব দেখুন <ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
+                  <Link to="/pos/history">{t("সব দেখুন", "View All")} <ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
                 </Button>
               </div>
             </CardHeader>
@@ -385,10 +387,10 @@ export default function POSDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs">রিসিপ্ট</TableHead>
-                    <TableHead className="text-xs">পেমেন্ট</TableHead>
-                    <TableHead className="text-xs text-right">মূল্য</TableHead>
-                    <TableHead className="text-xs">সময়</TableHead>
+                    <TableHead className="text-xs">{t("রিসিপ্ট", "Receipt")}</TableHead>
+                    <TableHead className="text-xs">{t("পেমেন্ট", "Payment")}</TableHead>
+                    <TableHead className="text-xs text-right">{t("মূল্য", "Amount")}</TableHead>
+                    <TableHead className="text-xs">{t("সময়", "Time")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -397,15 +399,15 @@ export default function POSDashboard() {
                       <TableCell className="font-mono text-xs">{sale.sale_number}</TableCell>
                       <TableCell>
                         <Badge variant={sale.payment_method === "cash" ? "default" : sale.payment_method === "due" ? "destructive" : "secondary"} className="text-[10px]">
-                          {sale.payment_method === "cash" ? "ক্যাশ" : sale.payment_method === "due" ? "বাকি" : "মোবাইল"}
+                          {sale.payment_method === "cash" ? t("ক্যাশ", "Cash") : sale.payment_method === "due" ? t("বাকি", "Due") : t("মোবাইল", "Mobile")}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-bold text-sm">৳{sale.total_amount}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{new Date(sale.created_at).toLocaleTimeString("bn-BD")}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{new Date(sale.created_at).toLocaleTimeString(language === "bn" ? "bn-BD" : "en-US")}</TableCell>
                     </TableRow>
                   ))}
                   {recentSales.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">কোনো বিক্রি নেই</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">{t("কোনো বিক্রি নেই", "No sales found")}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -416,9 +418,9 @@ export default function POSDashboard() {
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">সাম্প্রতিক শিফট</CardTitle>
+                <CardTitle className="text-base">{t("সাম্প্রতিক শিফট", "Recent Shifts")}</CardTitle>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/pos/shifts">সব দেখুন <ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
+                  <Link to="/pos/shifts">{t("সব দেখুন", "View All")} <ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
                 </Button>
               </div>
             </CardHeader>
@@ -426,10 +428,10 @@ export default function POSDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs">শিফট</TableHead>
-                    <TableHead className="text-xs">স্ট্যাটাস</TableHead>
-                    <TableHead className="text-xs text-right">বিক্রি</TableHead>
-                    <TableHead className="text-xs">তারিখ</TableHead>
+                    <TableHead className="text-xs">{t("শিফট", "Shift")}</TableHead>
+                    <TableHead className="text-xs">{t("স্ট্যাটাস", "Status")}</TableHead>
+                    <TableHead className="text-xs text-right">{t("বিক্রি", "Sales")}</TableHead>
+                    <TableHead className="text-xs">{t("তারিখ", "Date")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -438,15 +440,15 @@ export default function POSDashboard() {
                       <TableCell className="font-mono text-xs">{shift.shift_number}</TableCell>
                       <TableCell>
                         <Badge variant={shift.status === "open" ? "default" : "secondary"} className="text-[10px]">
-                          {shift.status === "open" ? "চলছে" : "বন্ধ"}
+                          {shift.status === "open" ? t("চলছে", "Open") : t("বন্ধ", "Closed")}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-bold text-sm">৳{shift.total_sales?.toLocaleString()}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{new Date(shift.opened_at).toLocaleDateString("bn-BD")}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{new Date(shift.opened_at).toLocaleDateString(language === "bn" ? "bn-BD" : "en-US")}</TableCell>
                     </TableRow>
                   ))}
                   {recentShifts.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">কোনো শিফট নেই</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">{t("কোনো শিফট নেই", "No shifts found")}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
