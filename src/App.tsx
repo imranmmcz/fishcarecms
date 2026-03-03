@@ -16,6 +16,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeLoader } from "@/components/ThemeLoader";
 import { POSLayout } from "@/components/POSLayout";
 import FloatingChatbot from "@/components/FloatingChatbot";
+import GoogleAnalyticsLoader from "@/components/GoogleAnalyticsLoader";
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
 import PondCalculator from "./pages/PondCalculator";
@@ -105,6 +106,7 @@ const App = () => (
                 <AdSettingsProvider>
                   <TooltipProvider>
                     <ThemeLoader />
+                    <GoogleAnalyticsLoader />
                     <Toaster />
                     <Sonner />
                   <BrowserRouter>
