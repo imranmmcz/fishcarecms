@@ -26,6 +26,7 @@ const incomeCategories = [
 
 export default function DashboardIncome() {
   const { user } = useAuth();
+  const { printReport } = usePrintHeaderFooter();
   const [records, setRecords] = useState<IncomeRecord[]>([]);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [category, setCategory] = useState("");
@@ -75,14 +76,12 @@ export default function DashboardIncome() {
   const totalIncome = records.reduce((sum, r) => sum + r.amount, 0);
 
   const handlePrint = () => {
-    const printContent = `
-      <html><head><title>আয়ের রিপোর্ট</title>
-      <style>body{font-family:'Noto Sans Bengali',sans-serif;padding:20px}h1{color:#16a34a;text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background:#f0fdf4;color:#166534}.total{font-weight:bold;color:#16a34a;font-size:18px;text-align:right;margin-top:20px}.amount{text-align:right;color:#16a34a}</style></head>
-      <body><h1>আয়ের রিপোর্ট</h1><table><thead><tr><th>তারিখ</th><th>ক্যাটাগরি</th><th>পুকুর</th><th>বিবরণ</th><th>পরিমাণ</th></tr></thead><tbody>
-      ${records.map(r => `<tr><td>${r.date}</td><td>${r.category}</td><td>${r.pond_name || '-'}</td><td>${r.description || '-'}</td><td class="amount">৳${r.amount.toLocaleString('bn-BD')}</td></tr>`).join('')}
-      </tbody></table><div class="total">মোট আয়: ৳${totalIncome.toLocaleString('bn-BD')}</div></body></html>`;
-    const w = window.open('', '_blank');
-    if (w) { w.document.write(printContent); w.document.close(); w.print(); }
+    const bodyContent = `
+      <table><thead><tr><th>তারিখ</th><th>ক্যাটাগরি</th><th>পুকুর</th><th>বিবরণ</th><th style="text-align:right">পরিমাণ</th></tr></thead><tbody>
+      ${records.map(r => `<tr><td>${r.date}</td><td>${r.category}</td><td>${r.pond_name || '-'}</td><td>${r.description || '-'}</td><td style="text-align:right" class="income">৳${r.amount.toLocaleString('bn-BD')}</td></tr>`).join('')}
+      </tbody></table>
+      <div class="total" style="color:#16a34a">মোট আয়: ৳${totalIncome.toLocaleString('bn-BD')}</div>`;
+    printReport('আয়ের রিপোর্ট', bodyContent);
   };
 
   const handleDownloadCSV = () => {
