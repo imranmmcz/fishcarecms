@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { FishSpeciesEditor } from "@/components/admin/FishSpeciesEditor";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog";
@@ -96,6 +97,19 @@ export default function AdminPages() {
   const [authForm, setAuthForm] = useState<Record<string, any>>({});
   const [authSaving, setAuthSaving] = useState(false);
 
+  // Fish Species editor state
+  const [fishEditorOpen, setFishEditorOpen] = useState(false);
+  const [fishSpeciesSection, setFishSpeciesSection] = useState<any>(null);
+
+  const fetchFishSpeciesSection = useCallback(async () => {
+    const { data } = await supabase
+      .from("page_content")
+      .select("*")
+      .eq("section_key", "fish_species_page")
+      .single();
+    if (data) setFishSpeciesSection(data);
+  }, []);
+
   const fetchPages = useCallback(async () => {
     setLoading(true);
     const [pagesRes, authRes, headerRes] = await Promise.all([
@@ -113,7 +127,7 @@ export default function AdminPages() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchPages(); }, [fetchPages]);
+  useEffect(() => { fetchPages(); fetchFishSpeciesSection(); }, [fetchPages, fetchFishSpeciesSection]);
 
   const openCreate = () => {
     setEditingPage(null);
@@ -430,30 +444,42 @@ export default function AdminPages() {
 
             {/* Fish Species System Page */}
             <Card className="hover:shadow-md transition-shadow border-primary/20">
-              <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="mt-0.5 p-2 rounded-lg shrink-0 bg-primary/10">
-                    <Fish className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-foreground">বাংলাদেশে প্রচলিত মাছ</h3>
-                      <Badge variant="secondary" className="text-xs">সিস্টেম</Badge>
-                      <Badge variant="default" className="text-xs">প্রকাশিত</Badge>
+              <CardContent className="py-4 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="mt-0.5 p-2 rounded-lg shrink-0 bg-primary/10">
+                      <Fish className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <ExternalLink className="h-3 w-3" /> /fish-species
-                      </span>
-                      <span>পেজ বিল্ডার থেকে সম্পূর্ণ এডিট করুন</span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-foreground">বাংলাদেশে প্রচলিত মাছ</h3>
+                        <Badge variant="secondary" className="text-xs">সিস্টেম</Badge>
+                        <Badge variant="default" className="text-xs">প্রকাশিত</Badge>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <ExternalLink className="h-3 w-3" /> /fish-species
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <Button size="sm" variant="outline" className="gap-1" onClick={() => setFishEditorOpen(prev => !prev)}>
+                    <Edit className="h-3.5 w-3.5" /> {fishEditorOpen ? "বন্ধ করুন" : "সম্পাদনা"}
+                  </Button>
                 </div>
-                <Button size="sm" variant="outline" className="gap-1" asChild>
-                  <Link to="/admin/page-builder">
-                    <Edit className="h-3.5 w-3.5" /> সম্পাদনা
-                  </Link>
-                </Button>
+                {fishEditorOpen && fishSpeciesSection && (
+                  <div className="border-t pt-4">
+                    <FishSpeciesEditor
+                      section={fishSpeciesSection as any}
+                      onUpdate={fetchFishSpeciesSection}
+                    />
+                  </div>
+                )}
+                {fishEditorOpen && !fishSpeciesSection && (
+                  <div className="border-t pt-4 text-center text-muted-foreground py-8">
+                    <p>মাছের তথ্য পেজ এখনো তৈরি হয়নি।</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
