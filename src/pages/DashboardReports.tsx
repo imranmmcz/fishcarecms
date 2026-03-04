@@ -16,7 +16,6 @@ interface Record { id: string; date: string; category: string; amount: number; d
 export default function DashboardReports() {
   const { user } = useAuth();
   const { printReport, siteName } = usePrintHeaderFooter();
-  const footerData = getSectionContent<any>("footer");
   const [incomes, setIncomes] = useState<Record[]>([]);
   const [expenses, setExpenses] = useState<Record[]>([]);
   const [filterMonth, setFilterMonth] = useState("all");
@@ -65,18 +64,6 @@ export default function DashboardReports() {
 
   const incomeByCategory = filteredIncomes.reduce((acc, i) => { acc[i.category] = (acc[i.category] || 0) + i.amount; return acc; }, {} as { [k: string]: number });
   const expenseByCategory = filteredExpenses.reduce((acc, e) => { acc[e.category] = (acc[e.category] || 0) + e.amount; return acc; }, {} as { [k: string]: number });
-
-  const siteLogoUrl = headerData?.logoUrl || '';
-  const siteName = headerData?.companyName || footerData?.companyName || 'FishCare';
-  const sitePhone = footerData?.phone || '+880 1978 865277';
-  const siteEmail = footerData?.email || 'support@fishcare.com.bd';
-  const siteAddress1 = footerData?.address_line1 || 'Manirampur, Jashore';
-  const siteAddress2 = footerData?.address_line2 || 'Khulna, Bangladesh';
-  const siteUrl = window.location.origin;
-
-  const userName = user?.full_name || user?.email || '';
-  const userMobile = user?.mobile || '';
-  const userAddress = [user?.village, user?.upazila, user?.district, user?.division].filter(Boolean).join(', ');
 
   const handlePrintReport = () => {
     const printContent = `<html><head><title>আয়-ব্যয় রিপোর্ট</title><style>
