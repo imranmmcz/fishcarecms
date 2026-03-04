@@ -21,9 +21,11 @@ import {
 import {
   FileText, Plus, Edit, Trash2, Globe, Eye, EyeOff,
   Search, Clock, ExternalLink, Menu, LogIn, UserPlus, Save, Loader2,
-  Navigation, X, Home, ShoppingBag, LayoutGrid, TrendingUp, CheckCircle
+  Navigation, X, Home, ShoppingBag, LayoutGrid, TrendingUp, CheckCircle,
+  Fish, MessageSquare
 } from "lucide-react";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 
 interface CustomPage {
   id: string;
@@ -425,6 +427,64 @@ export default function AdminPages() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Fish Species System Page */}
+            <Card className="hover:shadow-md transition-shadow border-primary/20">
+              <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="mt-0.5 p-2 rounded-lg shrink-0 bg-primary/10">
+                    <Fish className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-foreground">বাংলাদেশে প্রচলিত মাছ</h3>
+                      <Badge variant="secondary" className="text-xs">সিস্টেম</Badge>
+                      <Badge variant="default" className="text-xs">প্রকাশিত</Badge>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <ExternalLink className="h-3 w-3" /> /fish-species
+                      </span>
+                      <span>পেজ বিল্ডার থেকে সম্পূর্ণ এডিট করুন</span>
+                    </div>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="gap-1" asChild>
+                  <Link to="/admin/page-builder">
+                    <Edit className="h-3.5 w-3.5" /> সম্পাদনা
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Blog System Page */}
+            <Card className="hover:shadow-md transition-shadow border-primary/20">
+              <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="mt-0.5 p-2 rounded-lg shrink-0 bg-primary/10">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-foreground">ব্লগ / কমিউনিটি</h3>
+                      <Badge variant="secondary" className="text-xs">সিস্টেম</Badge>
+                      <Badge variant="default" className="text-xs">প্রকাশিত</Badge>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <ExternalLink className="h-3 w-3" /> /blog
+                      </span>
+                      <span>ব্লগ ম্যানেজমেন্ট থেকে পোস্ট ও কমেন্ট পরিচালনা করুন</span>
+                    </div>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="gap-1" asChild>
+                  <Link to="/admin/blog">
+                    <Edit className="h-3.5 w-3.5" /> সম্পাদনা
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
