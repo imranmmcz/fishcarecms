@@ -10,6 +10,7 @@ import { Plus, Trash2, TrendingUp, Printer, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePrintHeaderFooter } from "@/hooks/usePrintHeaderFooter";
 
 interface IncomeRecord {
   id: string; date: string; category: string; amount: number; description: string;
