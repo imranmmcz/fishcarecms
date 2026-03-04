@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { HeroSliderManagement } from "@/components/admin/HeroSliderManagement";
 import { HeroFeaturedProductAdmin } from "@/components/admin/HeroFeaturedProductAdmin";
+import { FishSpeciesEditor } from "@/components/admin/FishSpeciesEditor";
 
 
 interface PageSection {
@@ -462,7 +463,7 @@ export default function AdminPageBuilder() {
             <TabsTrigger value="stats" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">পরিসংখ্যান</TabsTrigger>
             <TabsTrigger value="cta" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">CTA</TabsTrigger>
             <TabsTrigger value="footer" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">ফুটার</TabsTrigger>
-            
+            <TabsTrigger value="fish_species" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5">🐟 মাছের তথ্য</TabsTrigger>
           </TabsList>
 
           {/* Header Section */}
@@ -1436,6 +1437,21 @@ export default function AdminPageBuilder() {
             </Card>
           </TabsContent>
 
+          {/* Fish Species Page */}
+          <TabsContent value="fish_species">
+            {getSection("fish_species_page") ? (
+              <FishSpeciesEditor
+                section={getSection("fish_species_page") as any}
+                onUpdate={fetchSections}
+              />
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <p>মাছের তথ্য পেজ এখনো তৈরি হয়নি। ডাটাবেসে "fish_species_page" সেকশন যুক্ত করুন।</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
         </Tabs>
       </div>

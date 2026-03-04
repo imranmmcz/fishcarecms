@@ -73,6 +73,7 @@ import AdminPOS from "./pages/AdminPOS";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import AdminBlog from "./pages/AdminBlog";
+import FishSpecies from "./pages/FishSpecies";
 import POSDashboard from "./pages/pos/POSDashboard";
 import POSHistory from "./pages/pos/POSHistory";
 import POSShifts from "./pages/pos/POSShifts";
@@ -131,6 +132,7 @@ const App = () => (
                       <Route path="/track-order" element={<TrackOrder />} />
                       <Route path="/blog" element={<Blog />} />
                       <Route path="/blog/:slug" element={<BlogPost />} />
+                      <Route path="/fish-species" element={<FishSpecies />} />
                       <Route path="/pond-calculator" element={<PondCalculator />} />
                       <Route path="/fish-stocking" element={<FishStocking />} />
                       <Route path="/stocking-density" element={<StockingDensity />} />
