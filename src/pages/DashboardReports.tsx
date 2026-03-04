@@ -67,8 +67,94 @@ export default function DashboardReports() {
   const incomeByCategory = filteredIncomes.reduce((acc, i) => { acc[i.category] = (acc[i.category] || 0) + i.amount; return acc; }, {} as { [k: string]: number });
   const expenseByCategory = filteredExpenses.reduce((acc, e) => { acc[e.category] = (acc[e.category] || 0) + e.amount; return acc; }, {} as { [k: string]: number });
 
+  const siteLogoUrl = headerData?.logoUrl || '';
+  const siteName = headerData?.companyName || footerData?.companyName || 'FishCare';
+  const sitePhone = footerData?.phone || '+880 1978 865277';
+  const siteEmail = footerData?.email || 'support@fishcare.com.bd';
+  const siteAddress1 = footerData?.address_line1 || 'Manirampur, Jashore';
+  const siteAddress2 = footerData?.address_line2 || 'Khulna, Bangladesh';
+  const siteUrl = window.location.origin;
+
+  const userName = user?.full_name || user?.email || '';
+  const userMobile = user?.mobile || '';
+  const userAddress = [user?.village, user?.upazila, user?.district, user?.division].filter(Boolean).join(', ');
+
   const handlePrintReport = () => {
-    const printContent = `<html><head><title>আয়-ব্যয় রিপোর্ট</title><style>body{font-family:'Noto Sans Bengali',sans-serif;padding:20px}h1{text-align:center;color:#7c3aed}.summary{display:flex;justify-content:space-around;margin:20px 0;padding:15px;background:#f5f5f5;border-radius:8px}.income{color:#16a34a}.expense{color:#dc2626}.profit{color:${profit >= 0 ? '#16a34a' : '#dc2626'}}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background:#f3e8ff;color:#6b21a8}</style></head><body><h1>আয়-ব্যয় রিপোর্ট</h1><div class="summary"><div><strong>মোট আয়</strong><br/><span class="income">৳${totalIncome.toLocaleString('bn-BD')}</span></div><div><strong>মোট ব্যয়</strong><br/><span class="expense">৳${totalExpense.toLocaleString('bn-BD')}</span></div><div><strong>লাভ/ক্ষতি</strong><br/><span class="profit">${profit >= 0 ? '+' : ''}৳${profit.toLocaleString('bn-BD')}</span></div></div></body></html>`;
+    const printContent = `<html><head><title>আয়-ব্যয় রিপোর্ট</title><style>
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&display=swap');
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:'Noto Sans Bengali',sans-serif;padding:0;color:#333}
+      .print-header{display:flex;align-items:center;gap:16px;padding:20px 30px;border-bottom:3px solid #7c3aed}
+      .print-header img{width:60px;height:60px;object-fit:contain;border-radius:8px}
+      .print-header .logo-placeholder{width:60px;height:60px;background:linear-gradient(135deg,#7c3aed,#06b6d4);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:bold}
+      .print-header .user-info{flex:1}
+      .print-header .user-info h2{font-size:18px;color:#7c3aed;margin-bottom:2px}
+      .print-header .user-info p{font-size:12px;color:#666}
+      .print-header .report-title{text-align:right}
+      .print-header .report-title h1{font-size:20px;color:#7c3aed}
+      .print-header .report-title p{font-size:11px;color:#888}
+      .content{padding:20px 30px}
+      .summary{display:flex;justify-content:space-around;margin:15px 0;padding:15px;background:#f8f5ff;border-radius:8px;border:1px solid #e9e0ff}
+      .summary div{text-align:center}
+      .summary strong{display:block;font-size:13px;color:#555;margin-bottom:4px}
+      .income{color:#16a34a}.expense{color:#dc2626}
+      .profit{color:${profit >= 0 ? '#16a34a' : '#dc2626'}}
+      table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px}
+      th,td{border:1px solid #e5e7eb;padding:8px 10px;text-align:left}
+      th{background:#f3e8ff;color:#6b21a8;font-weight:600}
+      .section-title{font-size:16px;font-weight:600;color:#7c3aed;margin:20px 0 8px;border-bottom:1px solid #e9e0ff;padding-bottom:4px}
+      .print-footer{margin-top:30px;padding:15px 30px;border-top:2px solid #7c3aed;background:#f8f5ff;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#666}
+      .print-footer .left p{margin-bottom:2px}
+      .print-footer .right{text-align:right}
+      .print-footer .site-name{font-weight:700;color:#7c3aed;font-size:13px}
+      .print-footer .promo{font-size:10px;color:#888;margin-top:4px}
+      @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    </style></head><body>
+      <div class="print-header">
+        ${siteLogoUrl ? `<img src="${siteLogoUrl}" alt="${siteName}"/>` : `<div class="logo-placeholder">🐟</div>`}
+        <div class="user-info">
+          <h2>${userName}</h2>
+          ${userMobile ? `<p>📱 ${userMobile}</p>` : ''}
+          ${userAddress ? `<p>📍 ${userAddress}</p>` : ''}
+        </div>
+        <div class="report-title">
+          <h1>আয়-ব্যয় রিপোর্ট</h1>
+          <p>তারিখ: ${new Date().toLocaleDateString('bn-BD')}</p>
+        </div>
+      </div>
+      <div class="content">
+        <div class="summary">
+          <div><strong>মোট আয়</strong><span class="income">৳${totalIncome.toLocaleString('bn-BD')}</span></div>
+          <div><strong>মোট ব্যয়</strong><span class="expense">৳${totalExpense.toLocaleString('bn-BD')}</span></div>
+          <div><strong>লাভ/ক্ষতি</strong><span class="profit">${profit >= 0 ? '+' : ''}৳${profit.toLocaleString('bn-BD')}</span></div>
+        </div>
+        ${Object.keys(incomeByCategory).length > 0 ? `
+          <div class="section-title">ক্যাটাগরি অনুযায়ী আয়</div>
+          <table><tr><th>ক্যাটাগরি</th><th style="text-align:right">পরিমাণ</th></tr>
+          ${Object.entries(incomeByCategory).map(([cat, amt]) => `<tr><td>${cat}</td><td style="text-align:right" class="income">৳${amt.toLocaleString('bn-BD')}</td></tr>`).join('')}
+          </table>` : ''}
+        ${Object.keys(expenseByCategory).length > 0 ? `
+          <div class="section-title">ক্যাটাগরি অনুযায়ী ব্যয়</div>
+          <table><tr><th>ক্যাটাগরি</th><th style="text-align:right">পরিমাণ</th></tr>
+          ${Object.entries(expenseByCategory).map(([cat, amt]) => `<tr><td>${cat}</td><td style="text-align:right" class="expense">৳${amt.toLocaleString('bn-BD')}</td></tr>`).join('')}
+          </table>` : ''}
+        <div class="section-title">সকল লেনদেন</div>
+        <table><tr><th>তারিখ</th><th>ধরন</th><th>ক্যাটাগরি</th><th>পুকুর</th><th style="text-align:right">পরিমাণ</th></tr>
+        ${[...filteredIncomes.map(i => ({ ...i, type: 'income' as const })), ...filteredExpenses.map(e => ({ ...e, type: 'expense' as const }))].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(item => `<tr><td>${item.date}</td><td>${item.type === 'income' ? 'আয়' : 'ব্যয়'}</td><td>${item.category}</td><td>${item.pondName || '-'}</td><td style="text-align:right" class="${item.type === 'income' ? 'income' : 'expense'}">${item.type === 'income' ? '+' : '-'}৳${item.amount.toLocaleString('bn-BD')}</td></tr>`).join('')}
+        </table>
+      </div>
+      <div class="print-footer">
+        <div class="left">
+          <p>📍 ${siteAddress1}, ${siteAddress2}</p>
+          <p>📱 ${sitePhone} | ✉️ ${siteEmail}</p>
+        </div>
+        <div class="right">
+          <div class="site-name">${siteName}</div>
+          <p>🌐 ${siteUrl}</p>
+          <div class="promo">মাছ চাষিদের সেবায় নিবেদিত | ${siteName}</div>
+        </div>
+      </div>
+    </body></html>`;
     const w = window.open('', '_blank');
     if (w) { w.document.write(printContent); w.document.close(); w.print(); }
   };
