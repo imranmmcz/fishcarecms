@@ -62,6 +62,7 @@ import AdminEcommerceOverview from "./pages/AdminEcommerceOverview";
 import AdminPages from "./pages/AdminPages";
 import CustomPage from "./pages/CustomPage";
 import AdminOrders from "./pages/AdminOrders";
+import AdminIncompleteOrders from "./pages/AdminIncompleteOrders";
 import AdminInventory from "./pages/AdminInventory";
 import AdminCustomers from "./pages/AdminCustomers";
 import AdminSuppliers from "./pages/AdminSuppliers";
@@ -152,6 +153,7 @@ const App = () => (
                       <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
                       <Route path="/admin/products" element={<ProtectedRoute requireAdmin><AdminProducts /></ProtectedRoute>} />
                       <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><AdminOrders /></ProtectedRoute>} />
+                      <Route path="/admin/incomplete-orders" element={<ProtectedRoute requireAdmin><AdminIncompleteOrders /></ProtectedRoute>} />
                       <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
                       <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
                       <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AdminReports /></ProtectedRoute>} />
