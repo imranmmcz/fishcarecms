@@ -62,6 +62,13 @@ export default function DashboardSettings() {
   const { language, setLanguage, t } = useLanguage();
   const { currency, setCurrency, currencyInfo } = useCurrency();
   const { user } = useAuth();
+  const [printName, setPrintName] = useState('');
+  const [printMobile, setPrintMobile] = useState('');
+  const [printVillage, setPrintVillage] = useState('');
+  const [printUpazila, setPrintUpazila] = useState('');
+  const [printDistrict, setPrintDistrict] = useState('');
+  const [printDivision, setPrintDivision] = useState('');
+  const [savingPrint, setSavingPrint] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
