@@ -214,6 +214,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     icon: Store,
     items: [
       { title: at.orderManagement, url: "/admin/orders", icon: ShoppingCart, permissionKey: "admin_orders" },
+      { title: at.incompleteOrders, url: "/admin/incomplete-orders", icon: Clock, permissionKey: "admin_orders" },
       { title: at.ecommerceOverview, url: "/admin/ecommerce-overview", icon: BarChart3, permissionKey: "admin_ecommerce" },
     ],
   };
