@@ -125,6 +125,199 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_comment_votes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_comment_votes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "blog_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_comments: {
+        Row: {
+          author_name: string
+          author_role: string | null
+          comment_text: string
+          created_at: string
+          helpful_count: number | null
+          id: string
+          image_url: string | null
+          parent_id: string | null
+          post_id: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          author_name: string
+          author_role?: string | null
+          comment_text: string
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          image_url?: string | null
+          parent_id?: string | null
+          post_id: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          author_name?: string
+          author_role?: string | null
+          comment_text?: string
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          image_url?: string | null
+          parent_id?: string | null
+          post_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "blog_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          image_url: string
+          post_id: string
+          thumbnail_url: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url: string
+          post_id: string
+          thumbnail_url?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          post_id?: string
+          thumbnail_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_images_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_posts: {
+        Row: {
+          author_name: string | null
+          author_role: string | null
+          category: string
+          comment_count: number | null
+          content: string | null
+          created_at: string
+          id: string
+          is_comments_locked: boolean | null
+          is_pinned: boolean | null
+          meta_description: string | null
+          meta_title: string | null
+          og_image: string | null
+          slug: string
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_name?: string | null
+          author_role?: string | null
+          category?: string
+          comment_count?: number | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_comments_locked?: boolean | null
+          is_pinned?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image?: string | null
+          slug: string
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_name?: string | null
+          author_role?: string | null
+          category?: string
+          comment_count?: number | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_comments_locked?: boolean | null
+          is_pinned?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image?: string | null
+          slug?: string
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           company_id: string | null

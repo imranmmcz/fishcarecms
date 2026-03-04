@@ -192,6 +192,7 @@ export const Header = () => {
     : [
         { path: "/", label: t.home },
         { path: "/shop", label: t.shop },
+        { path: "/blog", label: language === "bn" ? "ব্লগ" : "Blog" },
         { path: "/market-price", label: t.marketPrice },
         { path: "/pond-calculator", label: t.pondMeasurement },
         { path: "/fish-advice", label: t.fishAdvice },

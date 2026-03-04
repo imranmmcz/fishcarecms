@@ -70,6 +70,9 @@ import Profile from "./pages/Profile";
 import AdminDiseases from "./pages/AdminDiseases";
 import AdminCalculators from "./pages/AdminCalculators";
 import AdminPOS from "./pages/AdminPOS";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import AdminBlog from "./pages/AdminBlog";
 import POSDashboard from "./pages/pos/POSDashboard";
 import POSHistory from "./pages/pos/POSHistory";
 import POSShifts from "./pages/pos/POSShifts";
@@ -126,6 +129,8 @@ const App = () => (
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
                       <Route path="/track-order" element={<TrackOrder />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:slug" element={<BlogPost />} />
                       <Route path="/pond-calculator" element={<PondCalculator />} />
                       <Route path="/fish-stocking" element={<FishStocking />} />
                       <Route path="/stocking-density" element={<StockingDensity />} />
@@ -171,6 +176,7 @@ const App = () => (
                       <Route path="/admin/diseases" element={<ProtectedRoute requireAdmin><AdminDiseases /></ProtectedRoute>} />
                       <Route path="/admin/calculators" element={<ProtectedRoute requireAdmin><AdminCalculators /></ProtectedRoute>} />
                       <Route path="/admin/pos" element={<ProtectedRoute requireAdmin><AdminPOS /></ProtectedRoute>} />
+                      <Route path="/admin/blog" element={<ProtectedRoute requireAdmin><AdminBlog /></ProtectedRoute>} />
                       <Route path="/pos" element={<ProtectedRoute requireAdmin><POSDashboard /></ProtectedRoute>} />
                       <Route path="/pos/sell" element={<ProtectedRoute requireAdmin><AdminPOS /></ProtectedRoute>} />
                       <Route path="/pos/history" element={<ProtectedRoute requireAdmin><POSHistory /></ProtectedRoute>} />

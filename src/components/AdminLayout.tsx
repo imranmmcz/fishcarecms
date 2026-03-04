@@ -11,7 +11,7 @@ import {
   LayoutDashboard, Users, Settings, BarChart3, Home, Shield, User, Package,
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
   Building2, FileText, CloudUpload, Palette, Store, ChevronDown, CreditCard,
-  Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, type LucideIcon,
+  Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, MessageSquare, type LucideIcon,
   Menu, X, LogOut, ChevronLeft, ChevronRight, Languages,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -206,6 +206,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       { title: at.marketPrices, url: "/admin/market-prices", icon: TrendingUp, permissionKey: "admin_market_prices" },
       { title: at.diseaseManagement, url: "/admin/diseases", icon: Stethoscope, permissionKey: "admin_pages" },
       { title: at.calculatorModules, url: "/admin/calculators", icon: Calculator, permissionKey: "admin_pages" },
+      { title: at.blogManagement, url: "/admin/blog", icon: MessageSquare, permissionKey: "admin_pages" },
     ],
   };
 
