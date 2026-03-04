@@ -74,14 +74,22 @@ export default function DashboardSettings() {
     const loadSettings = async () => {
       if (!user) { setLoading(false); return; }
       try {
-        const { data, error } = await supabase.from("profiles").select("dashboard_settings").eq("user_id", user.id).single();
-        if (!error && data?.dashboard_settings) {
-          const saved = data.dashboard_settings as unknown as Settings;
-          setSettings(saved);
-          applyTheme(saved.theme);
-        } else {
-          const savedTheme = localStorage.getItem("theme") || "system";
-          applyTheme(savedTheme as "light" | "dark" | "system");
+        const { data, error } = await supabase.from("profiles").select("dashboard_settings, full_name, mobile, village, upazila, district, division").eq("user_id", user.id).single();
+        if (!error && data) {
+          if (data.dashboard_settings) {
+            const saved = data.dashboard_settings as unknown as Settings;
+            setSettings(saved);
+            applyTheme(saved.theme);
+          } else {
+            const savedTheme = localStorage.getItem("theme") || "system";
+            applyTheme(savedTheme as "light" | "dark" | "system");
+          }
+          setPrintName(data.full_name || '');
+          setPrintMobile(data.mobile || '');
+          setPrintVillage(data.village || '');
+          setPrintUpazila(data.upazila || '');
+          setPrintDistrict(data.district || '');
+          setPrintDivision(data.division || '');
         }
       } catch {
         const savedTheme = localStorage.getItem("theme") || "system";
@@ -91,6 +99,26 @@ export default function DashboardSettings() {
     };
     loadSettings();
   }, [user]);
+
+  const handleSavePrintSettings = async () => {
+    if (!user) return;
+    setSavingPrint(true);
+    try {
+      const { error } = await supabase.from("profiles").update({
+        full_name: printName,
+        mobile: printMobile,
+        village: printVillage,
+        upazila: printUpazila,
+        district: printDistrict,
+        division: printDivision,
+      }).eq("user_id", user.id);
+      if (error) throw error;
+      toast.success(language === "bn" ? "প্রিন্ট তথ্য সংরক্ষিত হয়েছে" : "Print info saved");
+    } catch {
+      toast.error(language === "bn" ? "সংরক্ষণে সমস্যা হয়েছে" : "Failed to save");
+    }
+    setSavingPrint(false);
+  };
 
   const applyTheme = (theme: "light" | "dark" | "system") => {
     const root = document.documentElement;
