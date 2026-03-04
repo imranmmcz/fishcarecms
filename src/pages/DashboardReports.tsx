@@ -9,14 +9,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePageContent } from "@/hooks/usePageContent";
+import { usePrintHeaderFooter } from "@/hooks/usePrintHeaderFooter";
 
 interface Record { id: string; date: string; category: string; amount: number; description: string; pondName?: string; }
 
 export default function DashboardReports() {
   const { user } = useAuth();
-  const { getSectionContent } = usePageContent();
-  const headerData = getSectionContent<any>("header");
+  const { printReport, siteName } = usePrintHeaderFooter();
   const footerData = getSectionContent<any>("footer");
   const [incomes, setIncomes] = useState<Record[]>([]);
   const [expenses, setExpenses] = useState<Record[]>([]);
