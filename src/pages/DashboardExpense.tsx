@@ -10,6 +10,7 @@ import { Plus, Trash2, TrendingDown, Printer, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePrintHeaderFooter } from "@/hooks/usePrintHeaderFooter";
 
 interface ExpenseRecord {
   id: string;
@@ -26,6 +27,7 @@ const expenseCategories = [
 
 export default function DashboardExpense() {
   const { user } = useAuth();
+  const { printReport } = usePrintHeaderFooter();
   const [records, setRecords] = useState<ExpenseRecord[]>([]);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [category, setCategory] = useState("");
@@ -76,14 +78,12 @@ export default function DashboardExpense() {
   const totalExpense = records.reduce((sum, r) => sum + r.amount, 0);
 
   const handlePrint = () => {
-    const printContent = `
-      <html><head><title>ব্যয়ের রিপোর্ট</title>
-      <style>body{font-family:'Noto Sans Bengali',sans-serif;padding:20px}h1{color:#dc2626;text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background:#fef2f2;color:#991b1b}.total{font-weight:bold;color:#dc2626;font-size:18px;text-align:right;margin-top:20px}.amount{text-align:right;color:#dc2626}</style></head>
-      <body><h1>ব্যয়ের রিপোর্ট</h1><table><thead><tr><th>তারিখ</th><th>ক্যাটাগরি</th><th>পুকুর</th><th>বিবরণ</th><th>পরিমাণ</th></tr></thead><tbody>
-      ${records.map(r => `<tr><td>${r.date}</td><td>${r.category}</td><td>${r.pond_name || '-'}</td><td>${r.description || '-'}</td><td class="amount">৳${r.amount.toLocaleString('bn-BD')}</td></tr>`).join('')}
-      </tbody></table><div class="total">মোট ব্যয়: ৳${totalExpense.toLocaleString('bn-BD')}</div></body></html>`;
-    const w = window.open('', '_blank');
-    if (w) { w.document.write(printContent); w.document.close(); w.print(); }
+    const bodyContent = `
+      <table><thead><tr><th>তারিখ</th><th>ক্যাটাগরি</th><th>পুকুর</th><th>বিবরণ</th><th style="text-align:right">পরিমাণ</th></tr></thead><tbody>
+      ${records.map(r => `<tr><td>${r.date}</td><td>${r.category}</td><td>${r.pond_name || '-'}</td><td>${r.description || '-'}</td><td style="text-align:right" class="expense">৳${r.amount.toLocaleString('bn-BD')}</td></tr>`).join('')}
+      </tbody></table>
+      <div class="total" style="color:#dc2626">মোট ব্যয়: ৳${totalExpense.toLocaleString('bn-BD')}</div>`;
+    printReport('ব্যয়ের রিপোর্ট', bodyContent);
   };
 
   const handleDownloadCSV = () => {

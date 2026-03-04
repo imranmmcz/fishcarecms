@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { 
@@ -15,6 +16,7 @@ import {
   Volume2, 
   VolumeX,
   Save,
+  Printer,
   Palette,
   Monitor,
   CloudUpload,
@@ -60,19 +62,34 @@ export default function DashboardSettings() {
   const { language, setLanguage, t } = useLanguage();
   const { currency, setCurrency, currencyInfo } = useCurrency();
   const { user } = useAuth();
+  const [printName, setPrintName] = useState('');
+  const [printMobile, setPrintMobile] = useState('');
+  const [printVillage, setPrintVillage] = useState('');
+  const [printUpazila, setPrintUpazila] = useState('');
+  const [printDistrict, setPrintDistrict] = useState('');
+  const [printDivision, setPrintDivision] = useState('');
+  const [savingPrint, setSavingPrint] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
       if (!user) { setLoading(false); return; }
       try {
-        const { data, error } = await supabase.from("profiles").select("dashboard_settings").eq("user_id", user.id).single();
-        if (!error && data?.dashboard_settings) {
-          const saved = data.dashboard_settings as unknown as Settings;
-          setSettings(saved);
-          applyTheme(saved.theme);
-        } else {
-          const savedTheme = localStorage.getItem("theme") || "system";
-          applyTheme(savedTheme as "light" | "dark" | "system");
+        const { data, error } = await supabase.from("profiles").select("dashboard_settings, full_name, mobile, village, upazila, district, division").eq("user_id", user.id).single();
+        if (!error && data) {
+          if (data.dashboard_settings) {
+            const saved = data.dashboard_settings as unknown as Settings;
+            setSettings(saved);
+            applyTheme(saved.theme);
+          } else {
+            const savedTheme = localStorage.getItem("theme") || "system";
+            applyTheme(savedTheme as "light" | "dark" | "system");
+          }
+          setPrintName(data.full_name || '');
+          setPrintMobile(data.mobile || '');
+          setPrintVillage(data.village || '');
+          setPrintUpazila(data.upazila || '');
+          setPrintDistrict(data.district || '');
+          setPrintDivision(data.division || '');
         }
       } catch {
         const savedTheme = localStorage.getItem("theme") || "system";
@@ -82,6 +99,26 @@ export default function DashboardSettings() {
     };
     loadSettings();
   }, [user]);
+
+  const handleSavePrintSettings = async () => {
+    if (!user) return;
+    setSavingPrint(true);
+    try {
+      const { error } = await supabase.from("profiles").update({
+        full_name: printName,
+        mobile: printMobile,
+        village: printVillage,
+        upazila: printUpazila,
+        district: printDistrict,
+        division: printDivision,
+      }).eq("user_id", user.id);
+      if (error) throw error;
+      toast.success(language === "bn" ? "প্রিন্ট তথ্য সংরক্ষিত হয়েছে" : "Print info saved");
+    } catch {
+      toast.error(language === "bn" ? "সংরক্ষণে সমস্যা হয়েছে" : "Failed to save");
+    }
+    setSavingPrint(false);
+  };
 
   const applyTheme = (theme: "light" | "dark" | "system") => {
     const root = document.documentElement;
@@ -386,7 +423,57 @@ export default function DashboardSettings() {
           </CardContent>
         </Card>
 
-        {/* Backup Settings */}
+        {/* Print Header/Footer Settings */}
+        <Card className="border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Printer className="h-5 w-5 text-primary" />
+              {language === "bn" ? "প্রিন্ট হেডার/ফুটার সেটিংস" : "Print Header/Footer Settings"}
+            </CardTitle>
+            <CardDescription>
+              {language === "bn" ? "আয়-ব্যয় রিপোর্ট প্রিন্টে আপনার তথ্য কাস্টমাইজ করুন" : "Customize your info on printed reports"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{language === "bn" ? "নাম" : "Name"}</Label>
+                <Input value={printName} onChange={(e) => setPrintName(e.target.value)} placeholder={language === "bn" ? "আপনার নাম" : "Your name"} />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "bn" ? "মোবাইল" : "Mobile"}</Label>
+                <Input value={printMobile} onChange={(e) => setPrintMobile(e.target.value)} placeholder={language === "bn" ? "মোবাইল নম্বর" : "Mobile number"} />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "bn" ? "গ্রাম" : "Village"}</Label>
+                <Input value={printVillage} onChange={(e) => setPrintVillage(e.target.value)} placeholder={language === "bn" ? "গ্রামের নাম" : "Village"} />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "bn" ? "উপজেলা" : "Upazila"}</Label>
+                <Input value={printUpazila} onChange={(e) => setPrintUpazila(e.target.value)} placeholder={language === "bn" ? "উপজেলা" : "Upazila"} />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "bn" ? "জেলা" : "District"}</Label>
+                <Input value={printDistrict} onChange={(e) => setPrintDistrict(e.target.value)} placeholder={language === "bn" ? "জেলা" : "District"} />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "bn" ? "বিভাগ" : "Division"}</Label>
+                <Input value={printDivision} onChange={(e) => setPrintDivision(e.target.value)} placeholder={language === "bn" ? "বিভাগ" : "Division"} />
+              </div>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground mb-1">{language === "bn" ? "📋 প্রিভিউ:" : "📋 Preview:"}</p>
+              <p><strong>{language === "bn" ? "হেডার:" : "Header:"}</strong> {printName || '—'} | 📱 {printMobile || '—'} | 📍 {[printVillage, printUpazila, printDistrict, printDivision].filter(Boolean).join(', ') || '—'}</p>
+              <p className="mt-1"><strong>{language === "bn" ? "ফুটার:" : "Footer:"}</strong> {language === "bn" ? "সাইটের ঠিকানা, ফোন, ইমেইল ও প্রমোশন তথ্য স্বয়ংক্রিয়ভাবে যুক্ত হবে" : "Site address, phone, email & promo auto-included"}</p>
+            </div>
+            <Button onClick={handleSavePrintSettings} disabled={savingPrint} variant="outline" className="w-full">
+              {savingPrint ? (language === "bn" ? "সংরক্ষণ হচ্ছে..." : "Saving...") : (
+                <><Save className="h-4 w-4 mr-2" />{language === "bn" ? "প্রিন্ট তথ্য সংরক্ষণ করুন" : "Save Print Info"}</>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
