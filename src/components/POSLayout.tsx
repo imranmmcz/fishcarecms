@@ -36,7 +36,6 @@ const salesSubItems: MenuItem[] = [
   { title_bn: "বাকি আদায়", title_en: "Due Collections", url: "/pos/due-collections", icon: HandCoins },
   { title_bn: "বিক্রি রিটার্ন", title_en: "Sales Returns", url: "/pos/sales/returns", icon: RotateCcw },
   { title_bn: "বিক্রি রিপোর্ট", title_en: "Sales Report", url: "/pos/sales/report", icon: FileText },
-  { title_bn: "কাস্টমার বাকি রিপোর্ট", title_en: "Customer Due Report", url: "/pos/customer-due-report", icon: Users },
 ];
 
 const productSubItems: MenuItem[] = [
@@ -56,15 +55,15 @@ const purchaseSubItems: MenuItem[] = [
   { title_bn: "ক্রয় রিপোর্ট", title_en: "Purchase Report", url: "/pos/purchases/report", icon: FileText },
 ];
 
-const expenseMenuItems: MenuItem[] = [
+const expenseSubItems: MenuItem[] = [
   { title_bn: "খরচ ব্যবস্থাপনা", title_en: "Expense Management", url: "/pos/expenses", icon: DollarSign },
+  { title_bn: "কাস্টমার বাকি রিপোর্ট", title_en: "Customer Due Report", url: "/pos/customer-due-report", icon: Users },
 ];
 
 const reportSubItems: MenuItem[] = [
   { title_bn: "সকল রিপোর্ট", title_en: "All Reports", url: "/pos/reports", icon: BarChart3 },
   { title_bn: "বিক্রি রিপোর্ট", title_en: "Sales Report", url: "/pos/sales/report", icon: FileText },
   { title_bn: "ক্রয় রিপোর্ট", title_en: "Purchase Report", url: "/pos/purchases/report", icon: FileText },
-  { title_bn: "কাস্টমার বাকি রিপোর্ট", title_en: "Customer Due Report", url: "/pos/customer-due-report", icon: Users },
 ];
 
 const bottomMenuItems: MenuItem[] = [
@@ -207,7 +206,7 @@ export function POSLayout({ children }: POSLayoutProps) {
 
   if (!user || !canAccess) return null;
 
-  const allItems = [...mainMenuItems, ...salesSubItems, ...productSubItems, ...purchaseSubItems, ...expenseMenuItems, ...reportSubItems, ...bottomMenuItems];
+  const allItems = [...mainMenuItems, ...salesSubItems, ...productSubItems, ...purchaseSubItems, ...expenseSubItems, ...reportSubItems, ...bottomMenuItems];
   const currentTitle = (() => {
     const found = allItems.find(i => i.url === location.pathname);
     return found ? getTitle(found, lang) : "POS";
@@ -228,12 +227,8 @@ export function POSLayout({ children }: POSLayoutProps) {
         currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} lang={lang} />
       <POSCollapsibleGroup label={t("ক্রয় ব্যবস্থাপনা", "Purchase Management")} icon={ShoppingBag} items={purchaseSubItems}
         currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} lang={lang} />
-
-      {/* Expense menu items */}
-      {expenseMenuItems.map(item => (
-        <POSNavItem key={item.url} to={item.url} icon={item.icon} label={getTitle(item, lang)}
-          isActive={location.pathname === item.url} onNavigate={onNavigate} collapsed={collapsed} />
-      ))}
+      <POSCollapsibleGroup label={t("খরচ", "Expense")} icon={DollarSign} items={expenseSubItems}
+        currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} lang={lang} />
 
       <POSCollapsibleGroup label={t("রিপোর্ট", "Reports")} icon={BarChart3} items={reportSubItems}
         currentPath={location.pathname} onNavigate={onNavigate} collapsed={collapsed} lang={lang} />
