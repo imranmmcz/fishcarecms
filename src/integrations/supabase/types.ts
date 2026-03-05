@@ -656,6 +656,45 @@ export type Database = {
         }
         Relationships: []
       }
+      disease_recommended_products: {
+        Row: {
+          created_at: string
+          disease_id: string
+          display_order: number
+          id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          disease_id: string
+          display_order?: number
+          id?: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          disease_id?: string
+          display_order?: number
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disease_recommended_products_disease_id_fkey"
+            columns: ["disease_id"]
+            isOneToOne: false
+            referencedRelation: "fish_diseases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disease_recommended_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_logs: {
         Row: {
           created_at: string

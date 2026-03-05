@@ -192,9 +192,9 @@ export const Header = () => {
     : [
         { path: "/", label: t.home },
         { path: "/shop", label: t.shop },
+        { path: "/disease-advice", label: language === "bn" ? "রোগ ও পরামর্শ" : "Disease & Advice" },
         { path: "/blog", label: language === "bn" ? "ব্লগ" : "Blog" },
         { path: "/market-price", label: t.marketPrice },
-        { path: "/pond-calculator", label: t.pondMeasurement },
         { path: "/fish-advice", label: t.fishAdvice },
         { path: "/modules", label: t.allModules },
       ];

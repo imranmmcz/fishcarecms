@@ -9,10 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Plus, Pencil, Trash2, RefreshCw, Stethoscope, Search, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, Stethoscope, Search, Eye, EyeOff, Pill } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Treatment {
@@ -96,6 +97,11 @@ const AdminDiseases = () => {
   const [affectedFishText, setAffectedFishText] = useState('');
   const [seasonText, setSeasonText] = useState('');
 
+  // Product recommendation
+  const [allProducts, setAllProducts] = useState<{ id: string; name: string; image_url: string | null }[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+
   const fetchDiseases = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -110,7 +116,21 @@ const AdminDiseases = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchDiseases(); }, []);
+  useEffect(() => { fetchDiseases(); fetchAllProducts(); }, []);
+
+  const fetchAllProducts = async () => {
+    const { data } = await supabase.from('products').select('id, name, image_url').order('name');
+    setAllProducts(data || []);
+  };
+
+  const fetchRecommendedProducts = async (diseaseId: string) => {
+    const { data } = await supabase
+      .from('disease_recommended_products')
+      .select('product_id')
+      .eq('disease_id', diseaseId)
+      .order('display_order');
+    setSelectedProductIds((data || []).map((d: any) => d.product_id));
+  };
 
   const openCreate = () => {
     setEditingId(null);
@@ -120,6 +140,8 @@ const AdminDiseases = () => {
     setPreventionText('');
     setAffectedFishText('');
     setSeasonText('');
+    setSelectedProductIds([]);
+    setProductSearch('');
     setDialogOpen(true);
   };
 
@@ -146,6 +168,8 @@ const AdminDiseases = () => {
     setPreventionText(d.prevention.join('\n'));
     setAffectedFishText(d.affected_fish.join(', '));
     setSeasonText(d.season.join(', '));
+    setProductSearch('');
+    fetchRecommendedProducts(d.id);
     setDialogOpen(true);
   };
 
@@ -173,15 +197,30 @@ const AdminDiseases = () => {
     };
 
     let error;
+    let savedId = editingId;
     if (editingId) {
       ({ error } = await supabase.from('fish_diseases').update(payload).eq('id', editingId));
     } else {
-      ({ error } = await supabase.from('fish_diseases').insert(payload));
+      const { data: insertedData, error: insertError } = await supabase.from('fish_diseases').insert(payload).select('id').single();
+      error = insertError;
+      if (insertedData) savedId = insertedData.id;
     }
 
     if (error) {
       toast({ title: 'সংরক্ষণে সমস্যা', description: error.message, variant: 'destructive' });
     } else {
+      // Save recommended products
+      if (savedId) {
+        await supabase.from('disease_recommended_products').delete().eq('disease_id', savedId);
+        if (selectedProductIds.length > 0) {
+          const rows = selectedProductIds.map((pid, i) => ({
+            disease_id: savedId!,
+            product_id: pid,
+            display_order: i,
+          }));
+          await supabase.from('disease_recommended_products').insert(rows);
+        }
+      }
       toast({ title: editingId ? 'আপডেট সফল' : 'যোগ করা সফল' });
       setDialogOpen(false);
       fetchDiseases();
@@ -422,7 +461,51 @@ const AdminDiseases = () => {
                 </div>
               </div>
 
-              {/* Active */}
+              {/* Recommended Products */}
+              <div>
+                <Label className="mb-2 block flex items-center gap-2">
+                  <Pill className="h-4 w-4" />
+                  প্রস্তাবিত ঔষধ/পণ্য নির্বাচন করুন
+                </Label>
+                <Input
+                  placeholder="পণ্য খুঁজুন..."
+                  value={productSearch}
+                  onChange={e => setProductSearch(e.target.value)}
+                  className="mb-2"
+                />
+                <div className="border rounded-lg max-h-48 overflow-y-auto">
+                  {allProducts
+                    .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
+                    .map(product => (
+                      <label
+                        key={product.id}
+                        className="flex items-center gap-3 p-2 hover:bg-muted/50 cursor-pointer border-b last:border-b-0"
+                      >
+                        <Checkbox
+                          checked={selectedProductIds.includes(product.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedProductIds(prev => [...prev, product.id]);
+                            } else {
+                              setSelectedProductIds(prev => prev.filter(id => id !== product.id));
+                            }
+                          }}
+                        />
+                        {product.image_url && (
+                          <img src={product.image_url} alt="" className="h-8 w-8 rounded object-cover" />
+                        )}
+                        <span className="text-sm">{product.name}</span>
+                      </label>
+                    ))}
+                  {allProducts.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-3">কোনো পণ্য পাওয়া যায়নি</p>
+                  )}
+                </div>
+                {selectedProductIds.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">{selectedProductIds.length}টি পণ্য নির্বাচিত</p>
+                )}
+              </div>
+
               <div className="flex items-center gap-2">
                 <Switch checked={form.is_active} onCheckedChange={v => setForm({ ...form, is_active: v })} />
                 <Label>সক্রিয়</Label>
