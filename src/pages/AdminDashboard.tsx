@@ -79,6 +79,7 @@ interface UserDashboardData {
   totalIncome: number;
   totalExpense: number;
   totalFishCount: number;
+  fishSpecies: string[];
 }
 
 const AdminDashboard = () => {
@@ -229,7 +230,7 @@ const AdminDashboard = () => {
       ] = await Promise.all([
         supabase.from("orders").select("id, order_number, customer_name, total_amount, status, payment_method, payment_status, created_at").eq("user_id", userId).order("created_at", { ascending: false }),
         supabase.from("user_roles").select("role").eq("user_id", userId).limit(1),
-        supabase.from("farmer_ponds").select("id, status, fish_count").eq("user_id", userId),
+        supabase.from("farmer_ponds").select("id, status, fish_count, fish_types").eq("user_id", userId),
         supabase.from("farmer_incomes").select("amount").eq("user_id", userId),
         supabase.from("farmer_expenses").select("amount").eq("user_id", userId),
       ]);
@@ -237,6 +238,12 @@ const AdminDashboard = () => {
       const byStatus: Record<string, number> = {};
       orders.forEach(o => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
       const ponds = pondsData || [];
+      const allFishTypes = new Set<string>();
+      ponds.forEach(p => {
+        if (Array.isArray(p.fish_types)) {
+          p.fish_types.forEach((ft: string) => { if (ft) allFishTypes.add(ft); });
+        }
+      });
       setSelectedUserData({
         totalOrders: orders.length,
         totalSpent: orders.reduce((s, o) => s + Number(o.total_amount), 0),
@@ -249,6 +256,7 @@ const AdminDashboard = () => {
         totalIncome: (incomesData || []).reduce((s, i) => s + Number(i.amount), 0),
         totalExpense: (expensesData || []).reduce((s, e) => s + Number(e.amount), 0),
         totalFishCount: ponds.reduce((s, p) => s + (p.fish_count || 0), 0),
+        fishSpecies: Array.from(allFishTypes),
       });
     } catch (err) {
       console.error("User dashboard error:", err);
@@ -581,14 +589,23 @@ const AdminDashboard = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { icon: Waves, label: `${at.totalPonds} (${selectedUserData.activePondCount.toLocaleString(locale)} ${at.active})`, value: selectedUserData.pondCount.toLocaleString(locale), cls: "text-primary" },
-                    { icon: Fish, label: at.totalFish, value: selectedUserData.totalFishCount.toLocaleString(locale), cls: "text-primary" },
+                    { icon: Fish, label: at.totalFish, value: selectedUserData.totalFishCount.toLocaleString(locale), cls: "text-primary", species: selectedUserData.fishSpecies },
                     { icon: TrendingUp, label: at.totalIncome, value: `৳${selectedUserData.totalIncome.toLocaleString(locale)}`, cls: "text-green-600" },
                     { icon: TrendingDown, label: at.totalExpense, value: `৳${selectedUserData.totalExpense.toLocaleString(locale)}`, cls: "text-destructive" },
-                  ].map((s, i) => (
+                  ].map((s: any, i) => (
                     <div key={i} className="flex flex-col items-center p-3 rounded-lg bg-muted/40 gap-1 text-center">
                       <s.icon className={cn("h-4 w-4", s.cls)} />
                       <span className={cn("text-lg font-bold", s.cls)}>{s.value}</span>
                       <span className="text-[11px] text-muted-foreground">{s.label}</span>
+                      {s.species && s.species.length > 0 && (
+                        <div className="flex flex-wrap justify-center gap-1 mt-1">
+                          {s.species.map((sp: string, idx: number) => (
+                            <Badge key={idx} variant="secondary" className="text-[9px] px-1.5 py-0">
+                              {sp}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
