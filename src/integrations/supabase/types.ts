@@ -404,6 +404,108 @@ export type Database = {
         }
         Relationships: []
       }
+      campaigns: {
+        Row: {
+          applicable_category_ids: string[] | null
+          applicable_product_ids: string[] | null
+          banner_image_url: string | null
+          banner_link: string | null
+          banner_position: string | null
+          campaign_type: string
+          coupon_code: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          description_bn: string | null
+          discount_type: string | null
+          discount_value: number | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          max_discount_amount: number | null
+          min_order_amount: number | null
+          notification_channels: string[] | null
+          notification_message: string | null
+          notification_message_bn: string | null
+          popup_delay_seconds: number | null
+          show_popup: boolean | null
+          start_date: string | null
+          status: string
+          target_audience: string | null
+          title: string
+          title_bn: string | null
+          updated_at: string
+          usage_limit: number | null
+          used_count: number | null
+        }
+        Insert: {
+          applicable_category_ids?: string[] | null
+          applicable_product_ids?: string[] | null
+          banner_image_url?: string | null
+          banner_link?: string | null
+          banner_position?: string | null
+          campaign_type?: string
+          coupon_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          description_bn?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          min_order_amount?: number | null
+          notification_channels?: string[] | null
+          notification_message?: string | null
+          notification_message_bn?: string | null
+          popup_delay_seconds?: number | null
+          show_popup?: boolean | null
+          start_date?: string | null
+          status?: string
+          target_audience?: string | null
+          title: string
+          title_bn?: string | null
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number | null
+        }
+        Update: {
+          applicable_category_ids?: string[] | null
+          applicable_product_ids?: string[] | null
+          banner_image_url?: string | null
+          banner_link?: string | null
+          banner_position?: string | null
+          campaign_type?: string
+          coupon_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          description_bn?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          min_order_amount?: number | null
+          notification_channels?: string[] | null
+          notification_message?: string | null
+          notification_message_bn?: string | null
+          popup_delay_seconds?: number | null
+          show_popup?: boolean | null
+          start_date?: string | null
+          status?: string
+          target_audience?: string | null
+          title?: string
+          title_bn?: string | null
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string

@@ -215,15 +215,15 @@ export const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 transition-transform hover:scale-[1.02]">
             {headerData?.logoUrl ? (
-              <img src={headerData.logoUrl} alt={companyName} className="h-10 w-10 md:h-12 md:w-12 rounded-lg object-contain" />
+              <img src={headerData.logoUrl} alt={companyName} className="h-10 w-10 md:h-14 md:w-14 lg:h-16 lg:w-16 rounded-lg object-contain" />
             ) : (
-              <div className="rounded-lg bg-foreground p-2 md:p-2.5">
-                <span className="text-sm md:text-base font-bold text-background">FC</span>
+              <div className="rounded-lg bg-foreground p-2 md:p-3">
+                <span className="text-sm md:text-lg font-bold text-background">FC</span>
               </div>
             )}
             <div className="flex flex-col">
-              <span className="text-base md:text-lg font-bold text-foreground leading-tight">{companyName}</span>
-              <span className="text-[10px] md:text-xs text-muted-foreground leading-tight">{companySubtitle}</span>
+              <span className="text-base md:text-xl lg:text-2xl font-bold text-foreground leading-tight">{companyName}</span>
+              <span className="text-[10px] md:text-xs lg:text-sm text-muted-foreground leading-tight">{companySubtitle}</span>
             </div>
           </Link>
 
