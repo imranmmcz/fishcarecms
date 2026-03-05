@@ -489,7 +489,7 @@ const PurchaseOrders = ({ companies, products, onRefresh }: PurchaseOrdersProps)
         items: orderItems || [],
       };
 
-      generatePurchaseOrderPDF(pdfData, { language });
+      await generatePurchaseOrderPDF(pdfData, { language });
 
       toast({
         title: language === "bn" ? "সফল" : "Success",

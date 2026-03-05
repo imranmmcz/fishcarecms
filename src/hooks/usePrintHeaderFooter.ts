@@ -20,9 +20,9 @@ export function usePrintHeaderFooter() {
   const userAddress = [user?.village, user?.upazila, user?.district, user?.division].filter(Boolean).join(', ');
 
   const getPrintStyles = () => `
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&display=swap');
+    @import url('https://fonts.maateen.me/nikosh/font.css');
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Noto Sans Bengali',sans-serif;padding:0;color:#333}
+    body{font-family:'Nikosh',sans-serif;padding:0;color:#333}
     .print-header{display:flex;align-items:center;gap:16px;padding:20px 30px;border-bottom:3px solid #7c3aed}
     .print-header img{width:60px;height:60px;object-fit:contain;border-radius:8px}
     .print-header .logo-placeholder{width:60px;height:60px;background:linear-gradient(135deg,#7c3aed,#06b6d4);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:bold}

@@ -5,6 +5,7 @@
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { registerBanglaFont, setBanglaFont } from "@/lib/pdfBanglaFont";
 
 export interface PurchaseOrderItem {
   product_name?: string;
@@ -47,27 +48,24 @@ const defaultOptions: InvoiceOptions = {
   companyEmail: "support@fishcare.com.bd",
 };
 
-export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Partial<InvoiceOptions> = {}) => {
+export const generatePurchaseOrderPDF = async (order: PurchaseOrderData, options: Partial<InvoiceOptions> = {}) => {
   const opts = { ...defaultOptions, ...options };
   const isBn = opts.language === "bn";
 
-  // Create PDF document
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4",
-  });
-
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
   let yPos = margin;
 
-  // Helper function to format price
+  // Register Nikosh font
+  await registerBanglaFont(doc);
+  const setFont = (style: "normal" | "bold" = "normal") => setBanglaFont(doc, isBn, style);
+  const fontName = isBn ? "Nikosh" : "helvetica";
+
   const formatPrice = (amount: number) => {
     return `৳${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  // Helper function to format date
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return "-";
     const date = new Date(dateStr);
@@ -79,22 +77,19 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
   };
 
   // ========== HEADER ==========
-  // Company Name
   doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(124, 58, 237); // Purple/violet color
+  setFont("bold");
+  doc.setTextColor(124, 58, 237);
   doc.text(opts.companyName || "FishCare Pro", margin, yPos);
   
-  // Invoice Title (right aligned)
   doc.setFontSize(18);
   doc.setTextColor(0, 0, 0);
   doc.text(isBn ? "ক্রয় অর্ডার" : "PURCHASE ORDER", pageWidth - margin, yPos, { align: "right" });
   
   yPos += 8;
   
-  // Company Contact Info
   doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
+  setFont("normal");
   doc.setTextColor(100, 100, 100);
   doc.text(opts.companyAddress || "", margin, yPos);
   yPos += 4;
@@ -103,30 +98,30 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
   yPos += 12;
 
   // ========== PO INFO BOX ==========
-  doc.setFillColor(248, 245, 255); // Light purple background
+  doc.setFillColor(248, 245, 255);
   doc.roundedRect(margin, yPos, pageWidth - margin * 2, 32, 2, 2, "F");
   
   const infoY = yPos + 6;
   const col1 = margin + 5;
-  const col2 = pageWidth / 2 + 10;
+  const col2x = pageWidth / 2 + 10;
   
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
+  setFont("normal");
   doc.text(isBn ? "অর্ডার নম্বর:" : "PO Number:", col1, infoY);
   doc.text(isBn ? "অর্ডার তারিখ:" : "Order Date:", col1, infoY + 8);
-  doc.text(isBn ? "স্ট্যাটাস:" : "Status:", col2, infoY);
-  doc.text(isBn ? "প্রত্যাশিত তারিখ:" : "Expected Date:", col2, infoY + 8);
+  doc.text(isBn ? "স্ট্যাটাস:" : "Status:", col2x, infoY);
+  doc.text(isBn ? "প্রত্যাশিত তারিখ:" : "Expected Date:", col2x, infoY + 8);
   
   if (order.received_date) {
     doc.text(isBn ? "প্রাপ্তির তারিখ:" : "Received Date:", col1, infoY + 16);
   }
   
-  doc.setFont("helvetica", "bold");
+  setFont("bold");
   doc.setTextColor(0, 0, 0);
   doc.text(order.order_number, col1 + 35, infoY);
   doc.text(formatDate(order.order_date), col1 + 35, infoY + 8);
   
-  // Status with color
   const statusLabels: Record<string, { bn: string; en: string }> = {
     pending: { bn: "পেন্ডিং", en: "Pending" },
     ordered: { bn: "অর্ডার করা হয়েছে", en: "Ordered" },
@@ -135,21 +130,21 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
   };
   
   const statusColors: Record<string, [number, number, number]> = {
-    pending: [245, 158, 11], // Yellow
-    ordered: [59, 130, 246], // Blue
-    received: [34, 197, 94], // Green
-    cancelled: [239, 68, 68], // Red
+    pending: [245, 158, 11],
+    ordered: [59, 130, 246],
+    received: [34, 197, 94],
+    cancelled: [239, 68, 68],
   };
   
   const statusColor = statusColors[order.status] || [100, 100, 100];
   doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
-  doc.text(statusLabels[order.status]?.[opts.language] || order.status, col2 + 25, infoY);
+  doc.text(statusLabels[order.status]?.[opts.language] || order.status, col2x + 25, infoY);
   
   doc.setTextColor(0, 0, 0);
-  doc.text(formatDate(order.expected_date), col2 + 38, infoY + 8);
+  doc.text(formatDate(order.expected_date), col2x + 38, infoY + 8);
   
   if (order.received_date) {
-    doc.setTextColor(34, 197, 94); // Green
+    doc.setTextColor(34, 197, 94);
     doc.text(formatDate(order.received_date), col1 + 40, infoY + 16);
   }
   
@@ -157,19 +152,19 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
 
   // ========== SUPPLIER INFO ==========
   doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
+  setFont("bold");
   doc.setTextColor(124, 58, 237);
   doc.text(isBn ? "সাপ্লায়ার:" : "Supplier:", margin, yPos);
   
   yPos += 6;
   doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
+  setFont("bold");
   doc.setTextColor(0, 0, 0);
   doc.text(order.company_name || "-", margin, yPos);
   
   if (order.company_address) {
     yPos += 5;
-    doc.setFont("helvetica", "normal");
+    setFont("normal");
     doc.setTextColor(80, 80, 80);
     doc.text(order.company_address, margin, yPos);
   }
@@ -206,14 +201,16 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
     body: tableData,
     margin: { left: margin, right: margin },
     headStyles: {
-      fillColor: [124, 58, 237], // Violet
+      fillColor: [124, 58, 237],
       textColor: [255, 255, 255],
       fontStyle: "bold",
       fontSize: 10,
+      font: fontName,
     },
     bodyStyles: {
       fontSize: 9,
       textColor: [50, 50, 50],
+      font: fontName,
     },
     alternateRowStyles: {
       fillColor: [250, 250, 250],
@@ -226,7 +223,6 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
     },
   });
 
-  // Get final Y position after table
   yPos = (doc as any).lastAutoTable.finalY + 8;
 
   // ========== TOTALS ==========
@@ -234,7 +230,7 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
   const totalsValueX = pageWidth - margin;
   
   doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
+  setFont("normal");
   doc.setTextColor(80, 80, 80);
   doc.text(isBn ? "সাবটোটাল:" : "Subtotal:", totalsX, yPos);
   doc.text(formatPrice(order.subtotal), totalsValueX, yPos, { align: "right" });
@@ -253,7 +249,7 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
   
   yPos += 8;
   doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
+  setFont("bold");
   doc.setTextColor(0, 0, 0);
   doc.text(isBn ? "সর্বমোট:" : "Grand Total:", totalsX, yPos);
   doc.setTextColor(124, 58, 237);
@@ -263,12 +259,12 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
   if (order.notes) {
     yPos += 15;
     doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
+    setFont("bold");
     doc.setTextColor(124, 58, 237);
     doc.text(isBn ? "নোট:" : "Notes:", margin, yPos);
     
     yPos += 5;
-    doc.setFont("helvetica", "normal");
+    setFont("normal");
     doc.setTextColor(80, 80, 80);
     const noteLines = doc.splitTextToSize(order.notes, pageWidth - margin * 2);
     doc.text(noteLines, margin, yPos);
@@ -282,7 +278,7 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
   doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
   
   doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
+  setFont("normal");
   doc.setTextColor(100, 100, 100);
   doc.text(
     isBn ? "এটি একটি স্বয়ংক্রিয়ভাবে তৈরি ক্রয় অর্ডার ডকুমেন্ট।" : "This is an auto-generated purchase order document.",
@@ -297,7 +293,6 @@ export const generatePurchaseOrderPDF = (order: PurchaseOrderData, options: Part
     { align: "center" }
   );
 
-  // Save the PDF
   doc.save(`PurchaseOrder-${order.order_number}.pdf`);
 };
 

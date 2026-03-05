@@ -454,8 +454,8 @@ export default function FeedFormulaCalculator() {
                         </p>
                         <Button
                           className="w-full mt-2"
-                          onClick={() => {
-                            generateFeedFormulaPDF({
+                          onClick={async () => {
+                            await generateFeedFormulaPDF({
                               language: language as "bn" | "en",
                               ingredients: selectedIngredients,
                               analysis: formulaAnalysis,
