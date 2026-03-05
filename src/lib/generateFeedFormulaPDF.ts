@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { registerBanglaFont, setBanglaFont } from "@/lib/pdfBanglaFont";
+import { registerBanglaFont, setBanglaFont, getFontName } from "@/lib/pdfBanglaFont";
 
 interface FormulaIngredient {
   name: string;
@@ -45,7 +45,7 @@ export const generateFeedFormulaPDF = async (options: FeedFormulaPDFOptions) => 
   // Register Nikosh font
   await registerBanglaFont(doc);
   const setFont = (style: "normal" | "bold" = "normal") => setBanglaFont(doc, isBn, style);
-  const fontName = isBn ? "Nikosh" : "helvetica";
+  const fontName = getFontName(isBn);
 
   // ========== HEADER ==========
   doc.setFontSize(22);

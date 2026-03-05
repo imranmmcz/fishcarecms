@@ -6,7 +6,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Order } from "@/lib/api-client";
-import { registerBanglaFont, setBanglaFont } from "@/lib/pdfBanglaFont";
+import { registerBanglaFont, setBanglaFont, getFontName } from "@/lib/pdfBanglaFont";
 
 interface InvoiceOptions {
   language: "bn" | "en";
@@ -382,7 +382,7 @@ export const generateInvoicePDF = async (order: Order, options: Partial<InvoiceO
     ];
   }) || [];
 
-  const fontName = isBn ? "Nikosh" : "helvetica";
+  const fontName = getFontName(isBn);
 
   autoTable(doc, {
     startY: y,
