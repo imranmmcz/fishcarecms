@@ -57,13 +57,13 @@ const purchaseSubItems: MenuItem[] = [
 
 const expenseSubItems: MenuItem[] = [
   { title_bn: "খরচ ব্যবস্থাপনা", title_en: "Expense Management", url: "/pos/expenses", icon: DollarSign },
-  { title_bn: "কাস্টমার বাকি রিপোর্ট", title_en: "Customer Due Report", url: "/pos/customer-due-report", icon: Users },
 ];
 
 const reportSubItems: MenuItem[] = [
   { title_bn: "সকল রিপোর্ট", title_en: "All Reports", url: "/pos/reports", icon: BarChart3 },
   { title_bn: "বিক্রি রিপোর্ট", title_en: "Sales Report", url: "/pos/sales/report", icon: FileText },
   { title_bn: "ক্রয় রিপোর্ট", title_en: "Purchase Report", url: "/pos/purchases/report", icon: FileText },
+  { title_bn: "কাস্টমার বাকি রিপোর্ট", title_en: "Customer Due Report", url: "/pos/customer-due-report", icon: Users },
 ];
 
 const bottomMenuItems: MenuItem[] = [
