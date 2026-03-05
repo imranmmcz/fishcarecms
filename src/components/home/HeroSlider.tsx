@@ -159,8 +159,17 @@ export function HeroSlider() {
             return (
               <CarouselItem key={slide.id}>
                 <div
-                  className="py-20 relative"
-                  style={{ background: slide.background_value || undefined }}
+                  className="py-20 relative min-h-[400px] flex items-center"
+                  style={
+                    slide.background_type === 'image' && slide.background_value
+                      ? {
+                          backgroundImage: `url(${slide.background_value})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat',
+                        }
+                      : { background: slide.background_value || undefined }
+                  }
                 >
                   <div className="container relative z-10">
                     <div className="flex items-center gap-6">
