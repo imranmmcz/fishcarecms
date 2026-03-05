@@ -207,6 +207,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       { title: at.diseaseManagement, url: "/admin/diseases", icon: Stethoscope, permissionKey: "admin_pages" },
       { title: at.calculatorModules, url: "/admin/calculators", icon: Calculator, permissionKey: "admin_pages" },
       { title: at.blogManagement, url: "/admin/blog", icon: MessageSquare, permissionKey: "admin_pages" },
+      { title: at.campaignManagement, url: "/admin/campaigns", icon: Megaphone, permissionKey: "admin_ads" },
     ],
   };
 
