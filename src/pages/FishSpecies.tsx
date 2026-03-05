@@ -13,6 +13,7 @@ import {
   ShoppingBag, Apple, ImageIcon, FlaskConical, Clock,
   ChevronDown, ChevronUp
 } from "lucide-react";
+import AdUnit from "@/components/AdUnit";
 
 interface FishDetails {
   cultureDuration: string;
@@ -173,6 +174,11 @@ export default function FishSpecies() {
       />
       <Header />
 
+      {/* Header Ad */}
+      <div className="container mx-auto px-4 pt-4">
+        <AdUnit position="header" className="mb-4" />
+      </div>
+
       <main className="container mx-auto px-4 py-8 md:py-12">
         {/* Heading */}
         <div className="text-center mb-8 md:mb-12 space-y-3">
@@ -217,6 +223,10 @@ export default function FishSpecies() {
             ))}
           </Tabs>
         )}
+        {/* In-article Ad */}
+        <div className="mt-8">
+          <AdUnit position="footer" />
+        </div>
       </main>
 
       <Footer />

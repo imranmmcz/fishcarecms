@@ -27,7 +27,7 @@ interface UserProfile {
   avatar_url: string | null;
 }
 
-type UserRole = 'admin' | 'farmer' | 'customer' | 'user' | 'manager' | 'cashier' | 'delivery_staff';
+type UserRole = 'admin' | 'farmer' | 'customer' | 'user' | 'manager' | 'cashier' | 'delivery_staff' | 'blogger';
 
 // Compatibility User type
 interface User {

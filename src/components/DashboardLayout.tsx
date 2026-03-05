@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard, TrendingUp, TrendingDown, Waves, FileText, Home, Fish,
   CloudUpload, User, Settings, Shield, LogOut, ChevronDown, ChevronLeft, ChevronRight,
-  Menu, X, Package, RefreshCw, Store, MonitorSmartphone, BarChart3, Palette, type LucideIcon,
+  Menu, X, Package, RefreshCw, Store, MonitorSmartphone, BarChart3, Palette, PenSquare, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -70,9 +70,10 @@ const adminGroups = [adminCmsGroup, adminEcommerceGroup, adminSettingsGroup];
 
 // ===================== FARMER/CUSTOMER MENU DATA =====================
 const farmerMainMenuItems = [
-  { title: "dashboard", titleBn: "ড্যাশবোর্ড", url: "/dashboard", icon: LayoutDashboard, color: "bg-gradient-to-r from-purple-500 to-purple-600", iconColor: "text-purple-500", roles: ["farmer", "customer", "admin"] },
+  { title: "dashboard", titleBn: "ড্যাশবোর্ড", url: "/dashboard", icon: LayoutDashboard, color: "bg-gradient-to-r from-purple-500 to-purple-600", iconColor: "text-purple-500", roles: ["farmer", "customer", "admin", "blogger"] },
   { title: "myPond", titleBn: "আমার পুকুর", url: "/dashboard/my-pond", icon: Waves, color: "bg-gradient-to-r from-blue-500 to-cyan-600", iconColor: "text-blue-500", roles: ["farmer", "admin"] },
-  { title: "orders", titleBn: "আমার অর্ডার", url: "/dashboard/orders", icon: Package, color: "bg-gradient-to-r from-teal-500 to-emerald-600", iconColor: "text-teal-500", roles: ["farmer", "customer", "admin"] },
+  { title: "orders", titleBn: "আমার অর্ডার", url: "/dashboard/orders", icon: Package, color: "bg-gradient-to-r from-teal-500 to-emerald-600", iconColor: "text-teal-500", roles: ["farmer", "customer", "admin", "blogger"] },
+  { title: "blog", titleBn: "ব্লগ", url: "/dashboard/blog", icon: PenSquare, color: "bg-gradient-to-r from-indigo-500 to-violet-600", iconColor: "text-indigo-500", roles: ["farmer", "customer", "admin", "blogger"] },
   { title: "income", titleBn: "আয়", url: "/dashboard/income", icon: TrendingUp, color: "bg-gradient-to-r from-emerald-500 to-green-600", iconColor: "text-emerald-500", roles: ["farmer", "admin"] },
   { title: "expense", titleBn: "ব্যয়", url: "/dashboard/expense", icon: TrendingDown, color: "bg-gradient-to-r from-rose-500 to-red-600", iconColor: "text-rose-500", roles: ["farmer", "admin"] },
   { title: "reports", titleBn: "রিপোর্ট", url: "/dashboard/reports", icon: FileText, color: "bg-gradient-to-r from-amber-500 to-orange-600", iconColor: "text-amber-500", roles: ["farmer", "admin"] },
@@ -293,9 +294,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const roleLabel = userRole === "customer"
     ? (isBn ? "কাস্টমার ড্যাশবোর্ড" : "Customer Dashboard")
-    : isAdmin
-      ? (isBn ? "এডমিন ড্যাশবোর্ড" : "Admin Dashboard")
-      : (isBn ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard");
+    : userRole === "blogger"
+      ? (isBn ? "ব্লগার ড্যাশবোর্ড" : "Blogger Dashboard")
+      : isAdmin
+        ? (isBn ? "এডমিন ড্যাশবোর্ড" : "Admin Dashboard")
+        : (isBn ? "কৃষক ড্যাশবোর্ড" : "Farmer Dashboard");
 
   // ===================== PROFILE DROPDOWN (shared) =====================
   const ProfileDropdown = () => (
