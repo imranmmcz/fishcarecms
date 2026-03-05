@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -632,7 +633,11 @@ const AdminDashboard = () => {
                       <tbody>
                         {selectedUserData.orders.map(order => (
                           <tr key={order.id} className="border-b last:border-0 hover:bg-muted/30">
-                            <td className="py-2 font-mono text-xs">{order.order_number}</td>
+                            <td className="py-2 font-mono text-xs">
+                              <Link to={`/admin/orders?order=${order.id}`} className="text-primary hover:underline cursor-pointer">
+                                {order.order_number}
+                              </Link>
+                            </td>
                             <td className="py-2 font-semibold text-sm">৳{Number(order.total_amount).toLocaleString()}</td>
                             <td className="py-2">
                               <Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[order.status] || "")}>
