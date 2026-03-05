@@ -164,13 +164,20 @@ export function HeroSlider() {
                     slide.background_type === 'image' && slide.background_value
                       ? {
                           backgroundImage: `url(${slide.background_value})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
+                          backgroundSize: (slide as any).bg_size || 'cover',
+                          backgroundPosition: (slide as any).bg_position || 'center',
                           backgroundRepeat: 'no-repeat',
                         }
                       : { background: slide.background_value || undefined }
                   }
                 >
+                  {/* Dark overlay for image backgrounds */}
+                  {slide.background_type === 'image' && (
+                    <div
+                      className="absolute inset-0 bg-black pointer-events-none"
+                      style={{ opacity: 1 - ((slide as any).bg_opacity ?? 1) }}
+                    />
+                  )}
                   <div className="container relative z-10">
                     <div className="flex items-center gap-6">
                       <div className="flex-1 text-center space-y-6 animate-fade-in">

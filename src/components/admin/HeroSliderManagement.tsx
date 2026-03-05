@@ -77,6 +77,9 @@ interface SlideFormData {
   button_variant: string;
   background_type: string;
   background_value: string;
+  bg_size: string;
+  bg_position: string;
+  bg_opacity: number;
   display_order: number;
   is_active: boolean;
   featured_product_id: string;
@@ -92,6 +95,9 @@ const defaultFormData: SlideFormData = {
   button_variant: "primary",
   background_type: "gradient",
   background_value: gradientPresets[0].value,
+  bg_size: "cover",
+  bg_position: "center",
+  bg_opacity: 1,
   display_order: 0,
   is_active: true,
   featured_product_id: "",
@@ -154,6 +160,9 @@ export function HeroSliderManagement() {
         button_variant: slide.button_variant || "primary",
         background_type: slide.background_type,
         background_value: slide.background_value || gradientPresets[0].value,
+        bg_size: (slide as any).bg_size || "cover",
+        bg_position: (slide as any).bg_position || "center",
+        bg_opacity: (slide as any).bg_opacity ?? 1,
         display_order: slide.display_order,
         is_active: slide.is_active,
         featured_product_id: slide.featured_product_id || "",
@@ -372,9 +381,21 @@ export function HeroSliderManagement() {
           <div className="space-y-6 py-4">
             {/* Preview */}
             <div
-              className="w-full h-32 rounded-lg flex items-center justify-center text-white p-4"
-              style={{ background: formData.background_value }}
+              className="w-full h-32 rounded-lg flex items-center justify-center text-white p-4 relative overflow-hidden"
+              style={
+                formData.background_type === 'image' && formData.background_value
+                  ? {
+                      backgroundImage: `url(${formData.background_value})`,
+                      backgroundSize: formData.bg_size || 'cover',
+                      backgroundPosition: formData.bg_position || 'center',
+                      backgroundRepeat: 'no-repeat',
+                    }
+                  : { background: formData.background_value }
+              }
             >
+              {formData.background_type === 'image' && (
+                <div className="absolute inset-0 bg-black" style={{ opacity: 1 - formData.bg_opacity }} />
+              )}
               <div className="text-center">
                 <p className="text-sm opacity-80">{formData.tagline}</p>
                 <p className="font-bold text-lg truncate">{formData.title || "শিরোনাম"}</p>
@@ -553,14 +574,75 @@ export function HeroSliderManagement() {
                 )}
 
                 {formData.background_type === "image" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="bg_image">ইমেজ URL</Label>
-                    <Input
-                      id="bg_image"
-                      value={formData.background_value}
-                      onChange={(e) => setFormData({ ...formData, background_value: `url(${e.target.value})` })}
-                      placeholder="https://example.com/image.jpg"
-                    />
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bg_image">ইমেজ URL</Label>
+                      <Input
+                        id="bg_image"
+                        value={formData.background_value}
+                        onChange={(e) => setFormData({ ...formData, background_value: e.target.value })}
+                        placeholder="https://example.com/image.jpg"
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>ইমেজ সাইজ</Label>
+                        <Select
+                          value={formData.bg_size}
+                          onValueChange={(value) => setFormData({ ...formData, bg_size: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cover">Cover (পূর্ণ কভার)</SelectItem>
+                            <SelectItem value="contain">Contain (সম্পূর্ণ দেখাবে)</SelectItem>
+                            <SelectItem value="100% 100%">Stretch (প্রসারিত)</SelectItem>
+                            <SelectItem value="auto">Auto (স্বয়ংক্রিয়)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>ইমেজ পজিশন</Label>
+                        <Select
+                          value={formData.bg_position}
+                          onValueChange={(value) => setFormData({ ...formData, bg_position: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="center">Center (মাঝখানে)</SelectItem>
+                            <SelectItem value="top">Top (উপরে)</SelectItem>
+                            <SelectItem value="bottom">Bottom (নিচে)</SelectItem>
+                            <SelectItem value="left">Left (বামে)</SelectItem>
+                            <SelectItem value="right">Right (ডানে)</SelectItem>
+                            <SelectItem value="top left">Top Left</SelectItem>
+                            <SelectItem value="top right">Top Right</SelectItem>
+                            <SelectItem value="bottom left">Bottom Left</SelectItem>
+                            <SelectItem value="bottom right">Bottom Right</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>ট্রান্সপারেন্সি / ওভারলে অপাসিটি: {Math.round((1 - formData.bg_opacity) * 100)}%</Label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={formData.bg_opacity}
+                        onChange={(e) => setFormData({ ...formData, bg_opacity: parseFloat(e.target.value) })}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        বামে টানলে ছবি বেশি অন্ধকার হবে (টেক্সট পরিষ্কার দেখাবে), ডানে টানলে ছবি পরিষ্কার দেখাবে
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>

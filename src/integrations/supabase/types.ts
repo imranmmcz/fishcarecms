@@ -977,6 +977,9 @@ export type Database = {
         Row: {
           background_type: string | null
           background_value: string | null
+          bg_opacity: number | null
+          bg_position: string | null
+          bg_size: string | null
           button_link: string | null
           button_text: string | null
           button_variant: string | null
@@ -994,6 +997,9 @@ export type Database = {
         Insert: {
           background_type?: string | null
           background_value?: string | null
+          bg_opacity?: number | null
+          bg_position?: string | null
+          bg_size?: string | null
           button_link?: string | null
           button_text?: string | null
           button_variant?: string | null
@@ -1011,6 +1017,9 @@ export type Database = {
         Update: {
           background_type?: string | null
           background_value?: string | null
+          bg_opacity?: number | null
+          bg_position?: string | null
+          bg_size?: string | null
           button_link?: string | null
           button_text?: string | null
           button_variant?: string | null
