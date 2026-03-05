@@ -10,7 +10,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Fish
+  Fish,
+  Pill
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +19,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 import { 
   diseaseCategories, 
   severityLabels,
   type FishDisease 
 } from "@/data/fishDiseaseData";
+
+interface RecommendedProduct {
+  id: string;
+  name: string;
+  price: number;
+  discount_percentage: number | null;
+  image_url: string | null;
+}
 
 export const VisualDiagnosisGuide = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,6 +40,7 @@ export const VisualDiagnosisGuide = () => {
   const [selectedDisease, setSelectedDisease] = useState<FishDisease | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [diseases, setDiseases] = useState<FishDisease[]>([]);
+  const [recommendedProducts, setRecommendedProducts] = useState<Record<string, RecommendedProduct[]>>({});
 
   useEffect(() => {
     const fetchDiseases = async () => {
@@ -55,6 +66,21 @@ export const VisualDiagnosisGuide = () => {
           imageDescription: d.image_description || '',
         })));
       }
+
+      // Fetch recommended products
+      const { data: recData } = await supabase
+        .from('disease_recommended_products')
+        .select('disease_id, product_id, products(id, name, price, discount_percentage, image_url)')
+        .order('display_order', { ascending: true });
+
+      const productMap: Record<string, RecommendedProduct[]> = {};
+      if (recData) {
+        for (const item of recData as any[]) {
+          if (!productMap[item.disease_id]) productMap[item.disease_id] = [];
+          if (item.products) productMap[item.disease_id].push(item.products);
+        }
+      }
+      setRecommendedProducts(productMap);
     };
     fetchDiseases();
   }, []);
@@ -389,6 +415,47 @@ export const VisualDiagnosisGuide = () => {
                         ))}
                       </div>
                     </div>
+
+                    {/* Recommended Products */}
+                    {selectedDisease && (recommendedProducts[selectedDisease.id] || []).length > 0 && (
+                      <div className="p-3 sm:p-4 rounded-xl bg-primary/5 border border-primary/20">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                          <Pill className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                          <h4 className="font-bold text-sm sm:text-base text-foreground">প্রস্তাবিত ঔষধ</h4>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                          {(recommendedProducts[selectedDisease.id] || []).map(product => {
+                            const discountedPrice = product.discount_percentage
+                              ? product.price * (1 - product.discount_percentage / 100)
+                              : product.price;
+                            return (
+                              <Link
+                                key={product.id}
+                                to={`/product/${product.id}`}
+                                className="group block rounded-lg border bg-card p-2 sm:p-3 hover:shadow-md transition-all hover:border-primary/30"
+                              >
+                                {product.image_url && (
+                                  <img
+                                    src={product.image_url}
+                                    alt={product.name}
+                                    className="w-full h-20 sm:h-24 object-cover rounded-md mb-1.5"
+                                  />
+                                )}
+                                <h5 className="text-xs sm:text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                                  {product.name}
+                                </h5>
+                                <div className="mt-1 flex items-center gap-1.5">
+                                  <span className="text-xs sm:text-sm font-bold text-primary">৳{Math.round(discountedPrice)}</span>
+                                  {product.discount_percentage && product.discount_percentage > 0 && (
+                                    <span className="text-[10px] sm:text-xs line-through text-muted-foreground">৳{product.price}</span>
+                                  )}
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Image Description */}
                     <p className="text-center text-xs sm:text-sm text-muted-foreground italic px-2">
