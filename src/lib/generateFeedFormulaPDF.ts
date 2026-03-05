@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { registerBanglaFont, setBanglaFont } from "@/lib/pdfBanglaFont";
 
 interface FormulaIngredient {
   name: string;
@@ -32,7 +33,7 @@ interface FeedFormulaPDFOptions {
   presetName?: string;
 }
 
-export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
+export const generateFeedFormulaPDF = async (options: FeedFormulaPDFOptions) => {
   const { language, ingredients, analysis, batchWeight, totalCost, presetName } = options;
   const isBn = language === "bn";
 
@@ -41,9 +42,14 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
   const margin = 15;
   let yPos = margin;
 
+  // Register Nikosh font
+  await registerBanglaFont(doc);
+  const setFont = (style: "normal" | "bold" = "normal") => setBanglaFont(doc, isBn, style);
+  const fontName = isBn ? "Nikosh" : "helvetica";
+
   // ========== HEADER ==========
   doc.setFontSize(22);
-  doc.setFont("helvetica", "bold");
+  setFont("bold");
   doc.setTextColor(16, 124, 65);
   doc.text("FishCare Pro", margin, yPos);
 
@@ -53,7 +59,7 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
 
   yPos += 8;
   doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
+  setFont("normal");
   doc.setTextColor(100, 100, 100);
   const now = new Date();
   doc.text(
@@ -75,12 +81,12 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
 
   const boxY = yPos + 7;
   doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
+  setFont("bold");
   doc.setTextColor(16, 124, 65);
   doc.text(isBn ? "পুষ্টিমান সারাংশ" : "Nutrition Summary", margin + 5, boxY);
 
   doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
+  setFont("normal");
   doc.setTextColor(50, 50, 50);
   const col1 = margin + 5;
   const col2 = margin + 65;
@@ -91,7 +97,7 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
   doc.text(`${isBn ? "ফাইবার" : "Fiber"}: ${analysis.fiber.toFixed(1)}%`, col3, boxY + 8);
   doc.text(`${isBn ? "আর্দ্রতা" : "Moisture"}: ${analysis.moisture.toFixed(1)}%`, col1, boxY + 15);
   doc.text(`${isBn ? "অ্যাশ" : "Ash"}: ${analysis.ash.toFixed(1)}%`, col2, boxY + 15);
-  doc.setFont("helvetica", "bold");
+  setFont("bold");
   doc.setTextColor(16, 124, 65);
   doc.text(`${isBn ? "খরচ/কেজি" : "Cost/kg"}: ৳${analysis.costPerKg.toFixed(2)}`, col3, boxY + 15);
 
@@ -99,7 +105,7 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
 
   // ========== INGREDIENTS TABLE ==========
   doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
+  setFont("bold");
   doc.setTextColor(0, 0, 0);
   doc.text(isBn ? "ফর্মুলা উপাদান তালিকা" : "Formula Ingredients", margin, yPos);
   yPos += 4;
@@ -120,7 +126,6 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
     additive: isBn ? "সংযোজন" : "Additives",
   };
 
-  // Group by category
   const grouped: Record<string, FormulaIngredient[]> = {};
   ingredients.forEach((ing) => {
     if (!grouped[ing.category]) grouped[ing.category] = [];
@@ -148,8 +153,8 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
     head: headers,
     body: tableData,
     margin: { left: margin, right: margin },
-    headStyles: { fillColor: [16, 124, 65], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9 },
-    bodyStyles: { fontSize: 9, textColor: [50, 50, 50] },
+    headStyles: { fillColor: [16, 124, 65], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9, font: fontName },
+    bodyStyles: { fontSize: 9, textColor: [50, 50, 50], font: fontName },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     columnStyles: {
       0: { cellWidth: "auto" },
@@ -164,7 +169,7 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
 
   // ========== BATCH CALCULATION ==========
   doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
+  setFont("bold");
   doc.setTextColor(0, 0, 0);
   doc.text(
     `${isBn ? "ব্যাচ হিসাব" : "Batch Calculation"} (${batchWeight} ${isBn ? "কেজি" : "kg"})`,
@@ -200,8 +205,8 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
     head: batchHeaders,
     body: batchData,
     margin: { left: margin, right: margin },
-    headStyles: { fillColor: [16, 124, 65], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9 },
-    bodyStyles: { fontSize: 9, textColor: [50, 50, 50] },
+    headStyles: { fillColor: [16, 124, 65], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9, font: fontName },
+    bodyStyles: { fontSize: 9, textColor: [50, 50, 50], font: fontName },
     columnStyles: {
       0: { cellWidth: "auto" },
       1: { cellWidth: 20, halign: "center" },
@@ -223,10 +228,10 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
     doc.setFillColor(255, 251, 235);
     doc.roundedRect(margin, yPos, pageWidth - margin * 2, 28, 2, 2, "F");
     doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
+    setFont("bold");
     doc.setTextColor(120, 80, 0);
     doc.text(isBn ? "গুরুত্বপূর্ণ টিপস:" : "Important Tips:", margin + 5, yPos + 6);
-    doc.setFont("helvetica", "normal");
+    setFont("normal");
     doc.setFontSize(8);
     const tips = isBn
       ? [
@@ -250,7 +255,7 @@ export const generateFeedFormulaPDF = (options: FeedFormulaPDFOptions) => {
   doc.setLineWidth(0.5);
   doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
   doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
+  setFont("normal");
   doc.setTextColor(100, 100, 100);
   doc.text("FishCare Pro — fishcare.com.bd", pageWidth / 2, footerY, { align: "center" });
   doc.text(
