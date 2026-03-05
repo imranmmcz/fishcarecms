@@ -68,6 +68,7 @@ import AdminCustomers from "./pages/AdminCustomers";
 import AdminSuppliers from "./pages/AdminSuppliers";
 import Profile from "./pages/Profile";
 import AdminDiseases from "./pages/AdminDiseases";
+import DiseaseAdvice from "./pages/DiseaseAdvice";
 import AdminCalculators from "./pages/AdminCalculators";
 import AdminPOS from "./pages/AdminPOS";
 import Blog from "./pages/Blog";
@@ -133,6 +134,7 @@ const App = () => (
                       <Route path="/blog" element={<Blog />} />
                       <Route path="/blog/:slug" element={<BlogPost />} />
                       <Route path="/fish-species" element={<FishSpecies />} />
+                      <Route path="/disease-advice" element={<DiseaseAdvice />} />
                       <Route path="/pond-calculator" element={<PondCalculator />} />
                       <Route path="/fish-stocking" element={<FishStocking />} />
                       <Route path="/stocking-density" element={<StockingDensity />} />
