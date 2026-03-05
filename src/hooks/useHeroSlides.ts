@@ -15,6 +15,9 @@ export interface HeroSlide {
   display_order: number;
   is_active: boolean;
   featured_product_id: string | null;
+  bg_size: string | null;
+  bg_position: string | null;
+  bg_opacity: number | null;
   created_at: string;
   updated_at: string;
 }
