@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button3D } from "@/components/ui/button-3d";
@@ -34,6 +34,8 @@ const signupSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const roleFromUrl = searchParams.get("role") || "farmer";
   const { signIn, signUp, user, isAdmin, userRole, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const { loginContent, registerContent, siteLogoUrl, siteName } = useAuthPageContent();
@@ -161,7 +163,7 @@ const Auth = () => {
       district,
       upazila,
       village
-    }, 'farmer');
+    }, roleFromUrl);
     setIsLoading(false);
 
     if (error) {

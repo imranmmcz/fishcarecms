@@ -36,6 +36,7 @@ export const ROLE_LABELS: Record<string, string> = {
   cashier: "ক্যাশিয়ার",
   delivery_staff: "ডেলিভারি স্টাফ",
   farmer: "কৃষক",
+  blogger: "ব্লগার",
   customer: "কাস্টমার",
   user: "সাধারণ ব্যবহারকারী",
 };

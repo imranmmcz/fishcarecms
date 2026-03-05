@@ -16,6 +16,7 @@ import { MessageSquare, Eye, Pin, Search, Plus, Clock, TrendingUp, Filter } from
 import { format } from "date-fns";
 import { bn } from "date-fns/locale";
 import BlogCreateDialog from "@/components/blog/BlogCreateDialog";
+import AdUnit from "@/components/AdUnit";
 
 const Blog = () => {
   const { language } = useLanguage();
@@ -44,6 +45,7 @@ const Blog = () => {
     switch (role) {
       case "admin": return <Badge className="bg-destructive text-destructive-foreground text-[10px]">{language === "bn" ? "অ্যাডমিন" : "Admin"}</Badge>;
       case "farmer": return <Badge className="bg-primary text-primary-foreground text-[10px]">{language === "bn" ? "কৃষক" : "Farmer"}</Badge>;
+      case "blogger": return <Badge className="bg-accent text-accent-foreground text-[10px]">{language === "bn" ? "ব্লগার" : "Blogger"}</Badge>;
       case "customer": return <Badge variant="secondary" className="text-[10px]">{language === "bn" ? "ক্রেতা" : "Customer"}</Badge>;
       default: return <Badge variant="outline" className="text-[10px]">{language === "bn" ? "অতিথি" : "Guest"}</Badge>;
     }
@@ -59,6 +61,9 @@ const Blog = () => {
       <Header />
 
       <main className="flex-1 container py-6">
+        {/* Header Ad */}
+        <AdUnit position="header" className="mb-4" />
+        
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
@@ -186,13 +191,16 @@ const Blog = () => {
               </CardContent>
             </Card>
 
+            {/* Sidebar Ad */}
+            <AdUnit position="sidebar" className="mb-4" />
+
             {!user && (
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="p-4 text-center">
                   <p className="text-sm mb-3">
                     {language === "bn" ? "প্রশ্ন করতে ও মন্তব্য করতে লগইন করুন" : "Login to ask questions & comment"}
                   </p>
-                  <Link to="/auth">
+                  <Link to="/auth?role=blogger">
                     <Button size="sm">{language === "bn" ? "লগইন / সাইনআপ" : "Login / Signup"}</Button>
                   </Link>
                 </CardContent>
@@ -201,6 +209,9 @@ const Blog = () => {
           </div>
         </div>
       </main>
+
+      {/* Footer Ad */}
+      <AdUnit position="footer" className="mt-4" />
 
       <Footer />
       
