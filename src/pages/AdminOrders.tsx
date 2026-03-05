@@ -35,13 +35,31 @@ import { cn } from "@/lib/utils";
 import {
   Package, Eye, Loader2, ShoppingBag, Calendar, CalendarIcon, MapPin, Phone, Clock,
   Truck, CheckCircle, XCircle, AlertCircle, TrendingUp,
-  Search, RefreshCw, AlertTriangle, Users, X,
+  Search, RefreshCw, AlertTriangle, Users, X, Bell, MessageSquare,
 } from "lucide-react";
 import { ShipmentTrackingForm } from "@/components/ShipmentTrackingForm";
 import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
 import { InvoiceDownloadButton } from "@/components/InvoiceDownloadButton";
 import { SteadfastOrderButton } from "@/components/admin/SteadfastOrderButton";
+import { useSteadfast } from "@/hooks/useSteadfast";
 import { sendOrderStatusEmail } from "@/lib/emailService";
+
+// Helper to map Supabase order to invoice Order format
+const mapOrderForInvoice = (order: Order) => ({
+  ...order,
+  shipping_name: order.customer_name,
+  shipping_mobile: order.customer_phone,
+  shipping_division: order.division,
+  shipping_district: order.district,
+  shipping_upazila: order.upazila,
+  shipping_address: order.shipping_address,
+  payment_trx_id: order.transaction_id,
+  customer_note: order.notes,
+  items: order.items?.map(item => ({
+    ...item,
+    discount_percentage: item.discount_percentage || 0,
+  })) || [],
+});
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: { bn: string; en: string } }> = {
   pending: { color: "bg-yellow-500", icon: <Clock className="h-4 w-4" />, label: { bn: "পেন্ডিং", en: "Pending" } },
@@ -110,6 +128,9 @@ const AdminOrders = () => {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [datePreset, setDatePreset] = useState("all");
+
+  const { settings: courierSettings, createOrder: createCourierOrder, getConsignments } = useSteadfast();
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
 
   const translations = {
     orderManagement: language === "bn" ? "অর্ডার ব্যবস্থাপনা" : "Order Management",
@@ -259,6 +280,29 @@ const AdminOrders = () => {
         }).catch(console.error);
       }
 
+      // Auto-send to Steadfast courier when status is shipped
+      if (newStatus === "shipped" && courierSettings?.is_enabled) {
+        try {
+          // Check if already sent to courier
+          const existingConsignments = await getConsignments(selectedOrder.id);
+          if (existingConsignments.length === 0) {
+            const codAmount = selectedOrder.payment_method === "cod" ? selectedOrder.total_amount : 0;
+            await createCourierOrder({
+              order_id: selectedOrder.id,
+              invoice: selectedOrder.order_number,
+              recipient_name: selectedOrder.customer_name,
+              recipient_phone: selectedOrder.customer_phone,
+              recipient_address: [selectedOrder.shipping_address, selectedOrder.upazila, selectedOrder.district, selectedOrder.division].filter(Boolean).join(", "),
+              cod_amount: codAmount,
+              note: selectedOrder.notes || "",
+            });
+            toast.success(language === "bn" ? "অটোমেটিক কুরিয়ারে পাঠানো হয়েছে" : "Auto-sent to courier");
+          }
+        } catch (courierErr) {
+          console.error("Auto courier error:", courierErr);
+        }
+      }
+
       toast.success(language === "bn" ? "স্ট্যাটাস আপডেট হয়েছে" : "Status updated");
       fetchOrders();
       fetchStats();
@@ -300,6 +344,32 @@ const AdminOrders = () => {
       toast.error(language === "bn" ? "সমস্যা হয়েছে" : "Failed");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  // Payment Reminder via SMS
+  const handleSendPaymentReminder = async () => {
+    if (!selectedOrder) return;
+    setIsSendingReminder(true);
+    try {
+      const reminderMessage = `প্রিয় ${selectedOrder.customer_name}, আপনার অর্ডার ${selectedOrder.order_number} এর পেমেন্ট (৳${selectedOrder.total_amount}) এখনও পেন্ডিং রয়েছে। অনুগ্রহ করে দ্রুত পেমেন্ট সম্পন্ন করুন। ধন্যবাদ!`;
+
+      const { error: smsError } = await supabase.functions.invoke("send-sms", {
+        body: {
+          phone: selectedOrder.customer_phone,
+          message: reminderMessage,
+          message_type: "payment_reminder",
+          order_number: selectedOrder.order_number,
+        },
+      });
+
+      if (smsError) throw smsError;
+      toast.success(language === "bn" ? "পেমেন্ট রিমাইন্ডার পাঠানো হয়েছে" : "Payment reminder sent");
+    } catch (err) {
+      console.error("Payment reminder error:", err);
+      toast.error(language === "bn" ? "রিমাইন্ডার পাঠাতে সমস্যা হয়েছে" : "Failed to send reminder");
+    } finally {
+      setIsSendingReminder(false);
     }
   };
 
@@ -728,6 +798,38 @@ const AdminOrders = () => {
                       </div>
                     </>
                   )}
+
+                  {/* Payment Reminder Section */}
+                  {selectedOrder.payment_status !== "paid" && (
+                    <>
+                      <Separator />
+                      <div className="p-4 rounded-lg border border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
+                        <h4 className="font-semibold mb-2 flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
+                          <Bell className="h-4 w-4" />
+                          {language === "bn" ? "পেমেন্ট রিমাইন্ডার" : "Payment Reminder"}
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {language === "bn"
+                            ? `পেমেন্ট স্ট্যাটাস: ${selectedOrder.payment_status === "pending" ? "পেন্ডিং" : selectedOrder.payment_status}। কাস্টমারকে এসএমএস রিমাইন্ডার পাঠান।`
+                            : `Payment status: ${selectedOrder.payment_status}. Send SMS reminder to customer.`}
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSendPaymentReminder}
+                          disabled={isSendingReminder}
+                          className="border-yellow-300 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/40"
+                        >
+                          {isSendingReminder ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                          )}
+                          {language === "bn" ? "এসএমএস রিমাইন্ডার পাঠান" : "Send SMS Reminder"}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="items" className="space-y-4 mt-4">
@@ -775,7 +877,7 @@ const AdminOrders = () => {
                     </div>
                   </div>
 
-                  <InvoiceDownloadButton order={selectedOrder as any} variant="default" className="w-full" showAdminOption={true} />
+                  <InvoiceDownloadButton order={mapOrderForInvoice(selectedOrder) as any} variant="default" className="w-full" showAdminOption={true} />
                 </TabsContent>
 
                 <TabsContent value="tracking" className="space-y-4 mt-4">
@@ -808,6 +910,12 @@ const AdminOrders = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      {newStatus === "shipped" && courierSettings?.is_enabled && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                          <Truck className="h-3 w-3" />
+                          {language === "bn" ? "শিপড করলে অটোমেটিক Steadfast কুরিয়ারে পাঠানো হবে" : "Will auto-send to Steadfast courier"}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
