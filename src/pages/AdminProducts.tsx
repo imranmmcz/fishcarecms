@@ -809,6 +809,7 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
       meta_description: p.meta_description || "",
       image_alt_text: p.image_alt_text || "",
       seo_url: p.seo_url || "",
+      recommendation_tags: p.recommendation_tags || [],
     });
     setIsEditOpen(true);
   };
