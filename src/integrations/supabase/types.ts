@@ -1233,6 +1233,110 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_logs: {
+        Row: {
+          channel: string
+          created_at: string
+          error_message: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          sent_at: string
+          status: string
+          subject: string | null
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_templates: {
+        Row: {
+          channels: string[]
+          created_at: string
+          created_by: string | null
+          dynamic_variables: string[] | null
+          id: string
+          is_default: boolean | null
+          message: string
+          message_bn: string | null
+          name: string
+          name_bn: string | null
+          status: string
+          subject: string | null
+          subject_bn: string | null
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          dynamic_variables?: string[] | null
+          id?: string
+          is_default?: boolean | null
+          message: string
+          message_bn?: string | null
+          name: string
+          name_bn?: string | null
+          status?: string
+          subject?: string | null
+          subject_bn?: string | null
+          template_type?: string
+          updated_at?: string
+        }
+        Update: {
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          dynamic_variables?: string[] | null
+          id?: string
+          is_default?: boolean | null
+          message?: string
+          message_bn?: string | null
+          name?: string
+          name_bn?: string | null
+          status?: string
+          subject?: string | null
+          subject_bn?: string | null
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
