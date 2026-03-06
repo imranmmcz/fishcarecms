@@ -42,32 +42,32 @@ const RecommendedProductsSlider = ({
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-      let query = supabase
-        .from('products')
-        .select('id, name, description, price, discount_percentage, image_url')
-        .eq('is_active', true)
-        .gt('stock_quantity', 0);
-
-      // Filter by recommendation tags if available
-      if (category) {
-        query = query.contains('recommendation_tags', [category]);
-      } else {
-        query = query.or('recommendation_tags.cs.{calculator_related},recommendation_tags.cs.{popular_medicine},recommendation_tags.cs.{admin_recommended}');
+      
+      // Try fetching tagged products first
+      let rpcData: Product[] = [];
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('id, name, description, price, discount_percentage, image_url')
+          .eq('is_active', true)
+          .gt('stock_quantity', 0)
+          .contains('recommendation_tags' as any, category ? [category] : ['calculator_related'])
+          .limit(12);
+        rpcData = (data as any as Product[]) || [];
+      } catch {
+        rpcData = [];
       }
 
-      const { data } = await query.limit(12) as { data: Product[] | null };
-
-      // If no tagged products, fallback to any active products
-      if (!data || data.length < 4) {
+      if (rpcData.length < 4) {
         const { data: fallback } = await supabase
           .from('products')
           .select('id, name, description, price, discount_percentage, image_url')
           .eq('is_active', true)
           .gt('stock_quantity', 0)
-          .limit(8) as { data: Product[] | null };
-        setProducts(fallback || []);
+          .limit(8);
+        setProducts((fallback as any as Product[]) || []);
       } else {
-        setProducts(data);
+        setProducts(rpcData);
       }
       setLoading(false);
     };
