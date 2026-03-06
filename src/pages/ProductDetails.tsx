@@ -41,6 +41,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
+import ShareButtons from "@/components/ShareButtons";
 
 interface ProductDetails {
   id: string;
@@ -887,6 +888,12 @@ const ProductDetails = () => {
         </div>
       </div>
       <Footer />
+      <ShareButtons
+        title={product.name}
+        description={product.description || undefined}
+        image={product.image_url || undefined}
+        url={`/product/${(product as any).seo_url || product.id}`}
+      />
     </div>
   );
 };
