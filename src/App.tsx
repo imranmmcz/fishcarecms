@@ -80,6 +80,7 @@ import AdminNotificationTemplates from "./pages/AdminNotificationTemplates";
 import AdminFarmingReports from "./pages/AdminFarmingReports";
 import FarmProfitPrediction from "./pages/FarmProfitPrediction";
 import SmartFeedCalculator from "./pages/SmartFeedCalculator";
+import MedicineRecommendation from "./pages/MedicineRecommendation";
 import FishSpecies from "./pages/FishSpecies";
 import POSDashboard from "./pages/pos/POSDashboard";
 import POSHistory from "./pages/pos/POSHistory";
@@ -153,6 +154,7 @@ const App = () => (
                       <Route path="/reports" element={<Reports />} />
                       <Route path="/fish-advice" element={<FishAdvice />} />
                       <Route path="/feed-formula" element={<FeedFormulaCalculator />} />
+                      <Route path="/medicine-recommendation" element={<MedicineRecommendation />} />
                       <Route path="/fisheries-contact" element={<FisheriesContact />} />
                       <Route path="/market-price" element={<MarketPrice />} />
                       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
