@@ -833,6 +833,102 @@ export type Database = {
         }
         Relationships: []
       }
+      farm_predictions: {
+        Row: {
+          avg_harvest_weight: number
+          created_at: string
+          culture_duration: number
+          electricity_cost: number
+          fcr: number
+          feed_cost_per_kg: number
+          feed_type: string | null
+          fingerling_price: number
+          fish_species: string
+          id: string
+          labor_cost: number
+          market_price_per_kg: number
+          medicine_cost: number
+          other_cost: number
+          pond_name: string
+          pond_size: number
+          pond_size_unit: string
+          predicted_profit: number
+          predicted_revenue: number
+          roi: number
+          stocking_density: number
+          survival_rate: number
+          total_farming_cost: number
+          total_feed_cost: number
+          total_fingerling_cost: number
+          total_fish_stocked: number
+          total_harvest_biomass: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_harvest_weight?: number
+          created_at?: string
+          culture_duration?: number
+          electricity_cost?: number
+          fcr?: number
+          feed_cost_per_kg?: number
+          feed_type?: string | null
+          fingerling_price?: number
+          fish_species?: string
+          id?: string
+          labor_cost?: number
+          market_price_per_kg?: number
+          medicine_cost?: number
+          other_cost?: number
+          pond_name?: string
+          pond_size?: number
+          pond_size_unit?: string
+          predicted_profit?: number
+          predicted_revenue?: number
+          roi?: number
+          stocking_density?: number
+          survival_rate?: number
+          total_farming_cost?: number
+          total_feed_cost?: number
+          total_fingerling_cost?: number
+          total_fish_stocked?: number
+          total_harvest_biomass?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_harvest_weight?: number
+          created_at?: string
+          culture_duration?: number
+          electricity_cost?: number
+          fcr?: number
+          feed_cost_per_kg?: number
+          feed_type?: string | null
+          fingerling_price?: number
+          fish_species?: string
+          id?: string
+          labor_cost?: number
+          market_price_per_kg?: number
+          medicine_cost?: number
+          other_cost?: number
+          pond_name?: string
+          pond_size?: number
+          pond_size_unit?: string
+          predicted_profit?: number
+          predicted_revenue?: number
+          roi?: number
+          stocking_density?: number
+          survival_rate?: number
+          total_farming_cost?: number
+          total_feed_cost?: number
+          total_fingerling_cost?: number
+          total_fish_stocked?: number
+          total_harvest_biomass?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       farmer_expenses: {
         Row: {
           amount: number
