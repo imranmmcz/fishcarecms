@@ -767,6 +767,7 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
       meta_description: formData.meta_description || null,
       image_alt_text: formData.image_alt_text || null,
       seo_url: formData.seo_url || null,
+      recommendation_tags: formData.recommendation_tags || [],
     } as any);
     setIsSubmitting(false);
     if (success) {
