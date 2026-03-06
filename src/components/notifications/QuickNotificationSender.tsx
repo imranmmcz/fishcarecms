@@ -64,7 +64,7 @@ export function QuickNotificationSender() {
         const { data: roleUsers } = await supabase
           .from("user_roles")
           .select("user_id")
-          .eq("role", target);
+          .eq("role", target as any);
         const userIds = (roleUsers || []).map(r => r.user_id);
         if (userIds.length === 0) throw new Error(t("কোনো ইউজার পাওয়া যায়নি", "No users found"));
         query = query.in("user_id", userIds);
@@ -85,8 +85,8 @@ export function QuickNotificationSender() {
           user_id: u.user_id,
           title: selectedTemplate?.name || "Notification",
           title_bn: selectedTemplate?.name_bn || "নোটিফিকেশন",
-          message: message.replaceAll("{user_name}", u.full_name || "User"),
-          message_bn: (selectedTemplate?.message_bn || message).replaceAll("{user_name}", u.full_name || "ব্যবহারকারী"),
+          message: message.split("{user_name}").join(u.full_name || "User"),
+          message_bn: (selectedTemplate?.message_bn || message).split("{user_name}").join(u.full_name || "ব্যবহারকারী"),
           type: "system",
         }));
 
@@ -103,7 +103,7 @@ export function QuickNotificationSender() {
           template_id: templateId || null,
           channel: ch,
           subject: subject,
-          message: message.replaceAll("{user_name}", u.full_name || "User"),
+          message: message.split("{user_name}").join(u.full_name || "User"),
           status: ch === "in_app" ? "sent" : "queued",
         }))
       );

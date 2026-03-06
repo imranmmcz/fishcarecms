@@ -25,7 +25,7 @@ const CHANNEL_LABELS: Record<string, { bn: string; en: string }> = {
 function replaceVars(text: string): string {
   let result = text;
   Object.entries(SAMPLE_DATA).forEach(([key, val]) => {
-    result = result.replaceAll(key, val);
+    result = result.split(key).join(val);
   });
   return result;
 }
