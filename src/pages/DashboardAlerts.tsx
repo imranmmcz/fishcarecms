@@ -286,13 +286,20 @@ export default function DashboardAlerts() {
 
     const { error } = await supabase.from("farming_alerts").insert({
       user_id: user.id,
-      ...newAlert,
+      alert_type: newAlert.alert_type as any,
+      title: newAlert.title,
+      message: newAlert.message,
+      alert_date: newAlert.alert_date,
+      alert_time: newAlert.alert_time,
       pond_name: pond?.name || newAlert.pond_name || "",
       pond_id: newAlert.pond_id || null,
       title_bn: newAlert.title,
       message_bn: newAlert.message,
+      priority: newAlert.priority,
+      is_recurring: newAlert.is_recurring,
+      recurrence_interval: newAlert.recurrence_interval,
       channels: newAlert.channels,
-    });
+    } as any);
 
     if (error) {
       toast.error("অ্যালার্ট তৈরিতে সমস্যা");
@@ -310,7 +317,7 @@ export default function DashboardAlerts() {
     }
   };
 
-  const updateAlertStatus = async (id: string, status: string) => {
+  const updateAlertStatus = async (id: string, status: "pending" | "sent" | "completed" | "dismissed" | "overdue") => {
     const { error } = await supabase.from("farming_alerts").update({ status }).eq("id", id);
     if (error) toast.error("আপডেট ব্যর্থ");
     else {
@@ -638,6 +645,3 @@ export default function DashboardAlerts() {
     </DashboardLayout>
   );
 }
-
-// Need Sparkles and Plus icons
-import { Sparkles } from "lucide-react";
