@@ -46,26 +46,27 @@ const RecommendedProductsSlider = ({
       // Try fetching tagged products first
       let rpcData: Product[] = [];
       try {
-        const { data } = await supabase
+        const tag = category || 'calculator_related';
+        const { data } = await (supabase
           .from('products')
-          .select('id, name, description, price, discount_percentage, image_url')
+          .select('id, name, description, price, discount_percentage, image_url') as any)
           .eq('is_active', true)
           .gt('stock_quantity', 0)
-          .contains('recommendation_tags' as any, category ? [category] : ['calculator_related'])
+          .contains('recommendation_tags', [tag])
           .limit(12);
-        rpcData = (data as any as Product[]) || [];
+        rpcData = (data as Product[]) || [];
       } catch {
         rpcData = [];
       }
 
       if (rpcData.length < 4) {
-        const { data: fallback } = await supabase
+        const { data: fallback } = await (supabase
           .from('products')
-          .select('id, name, description, price, discount_percentage, image_url')
+          .select('id, name, description, price, discount_percentage, image_url') as any)
           .eq('is_active', true)
           .gt('stock_quantity', 0)
           .limit(8);
-        setProducts((fallback as any as Product[]) || []);
+        setProducts((fallback as Product[]) || []);
       } else {
         setProducts(rpcData);
       }
