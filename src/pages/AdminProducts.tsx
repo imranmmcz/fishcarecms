@@ -71,6 +71,7 @@ interface ProductFormData {
   meta_description: string;
   image_alt_text: string;
   seo_url: string;
+  recommendation_tags: string[];
 }
 
 const emptyProduct: ProductFormData = {
@@ -94,6 +95,7 @@ const emptyProduct: ProductFormData = {
   meta_description: "",
   image_alt_text: "",
   seo_url: "",
+  recommendation_tags: [],
 };
 
 // Moved ProductForm outside of AdminProducts to prevent re-creation on each render
@@ -622,6 +624,32 @@ const ProductForm = ({ formData, onFormChange, onSubmit, submitLabel, isSubmitti
           </p>
         </div>
       )}
+
+      {/* Recommendation Tags */}
+      <div className="grid gap-2 mt-2">
+        <Label className="font-semibold">প্রস্তাবিত পণ্য ট্যাগ</Label>
+        <p className="text-xs text-muted-foreground">ক্যালকুলেটর ও অন্যান্য পেজে প্রদর্শনের জন্য ট্যাগ নির্বাচন করুন</p>
+        <div className="flex flex-wrap gap-3">
+          {[
+            { value: 'popular_medicine', label: 'জনপ্রিয় ঔষধ' },
+            { value: 'admin_recommended', label: 'অ্যাডমিন প্রস্তাবিত' },
+            { value: 'calculator_related', label: 'ক্যালকুলেটর সম্পর্কিত' },
+          ].map(tag => (
+            <label key={tag.value} className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={formData.recommendation_tags.includes(tag.value)}
+                onCheckedChange={(checked) => {
+                  const tags = checked
+                    ? [...formData.recommendation_tags, tag.value]
+                    : formData.recommendation_tags.filter(t => t !== tag.value);
+                  onFormChange({ ...formData, recommendation_tags: tags });
+                }}
+              />
+              <span className="text-sm">{tag.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
       
       <Button3D
         variant="success"
@@ -704,6 +732,7 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
       meta_description: formData.meta_description || null,
       image_alt_text: formData.image_alt_text || null,
       seo_url: formData.seo_url || null,
+      recommendation_tags: formData.recommendation_tags || [],
     } as any);
     setIsSubmitting(false);
     if (success) {
@@ -738,6 +767,7 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
       meta_description: formData.meta_description || null,
       image_alt_text: formData.image_alt_text || null,
       seo_url: formData.seo_url || null,
+      recommendation_tags: formData.recommendation_tags || [],
     } as any);
     setIsSubmitting(false);
     if (success) {
@@ -781,6 +811,7 @@ const AdminProducts = ({ Layout = AdminLayout }: { Layout?: React.ComponentType<
       meta_description: p.meta_description || "",
       image_alt_text: p.image_alt_text || "",
       seo_url: p.seo_url || "",
+      recommendation_tags: p.recommendation_tags || [],
     });
     setIsEditOpen(true);
   };

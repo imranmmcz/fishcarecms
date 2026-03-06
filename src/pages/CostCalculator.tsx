@@ -13,6 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 
 interface CostItem {
   name: string;
@@ -1109,6 +1110,9 @@ const CostCalculator = () => {
           )}
         </div>
         
+        {/* Recommended Products */}
+        <RecommendedProductsSlider category="calculator_related" />
+
         {/* Footer Ad */}
         <div className="mt-8">
           <AdUnit position="footer" />

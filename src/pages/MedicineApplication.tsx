@@ -12,6 +12,7 @@ import { Pill, CheckCircle2, ArrowRight, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useFarming } from "@/contexts/FarmingContext";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 
 export default function MedicineApplication() {
   const navigate = useNavigate();
@@ -305,6 +306,9 @@ export default function MedicineApplication() {
             </CardContent>
           </Card>
           
+          {/* Recommended Products */}
+          <RecommendedProductsSlider category="popular_medicine" titleBn="ঔষধ প্রয়োগের জন্য প্রস্তাবিত পণ্য" />
+
           {/* Footer Ad */}
           <div className="mt-8">
             <AdUnit position="footer" />

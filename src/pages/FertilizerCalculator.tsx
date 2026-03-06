@@ -12,6 +12,7 @@ import { TrendingUp, Info, CheckCircle2, ArrowRight, RotateCcw } from "lucide-re
 import { toast } from "sonner";
 import { useFarming } from "@/contexts/FarmingContext";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 
 const FertilizerCalculator = () => {
   const navigate = useNavigate();
@@ -273,6 +274,9 @@ const FertilizerCalculator = () => {
             </Card>
           )}
           
+          {/* Recommended Products */}
+          <RecommendedProductsSlider category="calculator_related" titleBn="সার ব্যবস্থাপনার জন্য প্রস্তাবিত পণ্য" />
+
           {/* Footer Ad */}
           <div className="mt-8">
             <AdUnit position="footer" />

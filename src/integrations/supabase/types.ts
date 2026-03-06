@@ -1962,6 +1962,7 @@ export type Database = {
           meta_title: string | null
           name: string
           price: number
+          recommendation_tags: string[] | null
           reorder_level: number | null
           seo_url: string | null
           sku: string | null
@@ -1987,6 +1988,7 @@ export type Database = {
           meta_title?: string | null
           name: string
           price?: number
+          recommendation_tags?: string[] | null
           reorder_level?: number | null
           seo_url?: string | null
           sku?: string | null
@@ -2012,6 +2014,7 @@ export type Database = {
           meta_title?: string | null
           name?: string
           price?: number
+          recommendation_tags?: string[] | null
           reorder_level?: number | null
           seo_url?: string | null
           sku?: string | null

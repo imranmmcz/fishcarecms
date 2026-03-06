@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Scale, ArrowRight, RotateCcw } from "lucide-react";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { toast } from "sonner";
 
 export default function BiomassCalculator() {
@@ -222,6 +223,9 @@ export default function BiomassCalculator() {
             </CardContent>
           </Card>
           
+          {/* Recommended Products */}
+          <RecommendedProductsSlider category="calculator_related" />
+
           {/* Footer Ad */}
           <div className="mt-8">
             <AdUnit position="footer" />
