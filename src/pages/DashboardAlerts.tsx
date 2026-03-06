@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Bell, Plus, Clock, CheckCircle2, AlertTriangle, Calendar, Fish, Droplets,
-  Pill, Wheat, Scale, CloudRain, Megaphone, Settings, Trash2, RotateCcw, X,
+  Pill, Wheat, Scale, CloudRain, Megaphone, Settings, Trash2, RotateCcw, X, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
