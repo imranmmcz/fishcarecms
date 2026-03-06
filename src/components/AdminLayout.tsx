@@ -208,6 +208,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       { title: at.calculatorModules, url: "/admin/calculators", icon: Calculator, permissionKey: "admin_pages" },
       { title: at.blogManagement, url: "/admin/blog", icon: MessageSquare, permissionKey: "admin_pages" },
       { title: at.campaignManagement, url: "/admin/campaigns", icon: Megaphone, permissionKey: "admin_ads" },
+      { title: at.notificationTemplates, url: "/admin/notification-templates", icon: MessageSquare, permissionKey: "admin_settings" },
     ],
   };
 
