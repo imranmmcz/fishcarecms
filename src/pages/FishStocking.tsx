@@ -11,6 +11,7 @@ import { Fish, Info, ArrowRight, RotateCcw } from "lucide-react";
 import { useFarming } from "@/contexts/FarmingContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { toast } from "sonner";
 
 export default function FishStocking() {
@@ -241,6 +242,9 @@ export default function FishStocking() {
             </CardContent>
           </Card>
           
+          {/* Recommended Products */}
+          <RecommendedProductsSlider category="calculator_related" titleBn="মাছ মজুদের জন্য প্রস্তাবিত পণ্য" />
+
           {/* Footer Ad */}
           <div className="mt-8">
             <AdUnit position="footer" />

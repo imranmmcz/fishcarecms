@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FlaskConical, Plus, Trash2, RotateCcw, Download, Lightbulb, AlertTriangle, CheckCircle2, Info, Beaker } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { generateFeedFormulaPDF } from "@/lib/generateFeedFormulaPDF";
@@ -629,6 +630,9 @@ export default function FeedFormulaCalculator() {
               </div>
             </TabsContent>
           </Tabs>
+
+          {/* Recommended Products */}
+          <RecommendedProductsSlider category="calculator_related" titleBn="ফিড ফর্মুলার জন্য প্রস্তাবিত পণ্য" />
 
           <div className="mt-8">
             <AdUnit position="footer" />

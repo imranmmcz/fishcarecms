@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calculator, Droplets, Ruler, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { useFarming } from "@/contexts/FarmingContext";
 
 // Pond shape images
@@ -460,6 +461,9 @@ export default function PondCalculator() {
           )}
         </div>
         
+        {/* Recommended Products */}
+        <RecommendedProductsSlider category="calculator_related" />
+
         {/* Footer Ad */}
         <div className="mt-8">
           <AdUnit position="footer" />

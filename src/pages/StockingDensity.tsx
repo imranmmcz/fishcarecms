@@ -12,6 +12,7 @@ import { Fish, Info, ArrowRight, RotateCcw } from "lucide-react";
 import { useFarming } from "@/contexts/FarmingContext";
 import { fishSpecies, mixedFarmingModels, costRates, FishSpecies } from "@/data/fishData";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { toast } from "sonner";
 
 interface FishStockDetail {
@@ -648,6 +649,9 @@ export default function StockingDensity() {
           </Card>
         </div>
         
+        {/* Recommended Products */}
+        <RecommendedProductsSlider category="calculator_related" titleBn="মজুদ ঘনত্বের জন্য প্রস্তাবিত পণ্য" />
+
         {/* Footer Ad */}
         <div className="mt-8">
           <AdUnit position="footer" />

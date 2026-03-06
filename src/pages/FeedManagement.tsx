@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Wheat, ArrowRight, RotateCcw } from "lucide-react";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { toast } from "sonner";
 
 export default function FeedManagement() {
@@ -247,6 +248,9 @@ export default function FeedManagement() {
             </CardContent>
           </Card>
           
+          {/* Recommended Products */}
+          <RecommendedProductsSlider category="calculator_related" titleBn="খাদ্য ব্যবস্থাপনার জন্য প্রস্তাবিত পণ্য" />
+
           {/* Footer Ad */}
           <div className="mt-8">
             <AdUnit position="footer" />

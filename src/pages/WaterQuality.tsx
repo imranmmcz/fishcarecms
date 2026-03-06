@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Droplets, AlertTriangle, CheckCircle2, Info, ArrowRight, RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { toast } from "sonner";
 
 const WaterQuality = () => {
@@ -341,6 +342,9 @@ const WaterQuality = () => {
             </Card>
           )}
           
+          {/* Recommended Products */}
+          <RecommendedProductsSlider category="calculator_related" titleBn="পানির গুণমানের জন্য প্রস্তাবিত পণ্য" />
+
           {/* Footer Ad */}
           <div className="mt-8">
             <AdUnit position="footer" />
