@@ -15,7 +15,7 @@ import AdUnit from "@/components/AdUnit";
 import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { pdfBanglaFont } from "@/lib/pdfBanglaFont";
+import { registerBanglaFont, setBanglaFont } from "@/lib/pdfBanglaFont";
 
 interface FormData {
   fishSpecies: string;
