@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, MessageSquare, Eye, ThumbsUp, Clock, Reply, Lock, Send } from "lucide-react";
 import { format } from "date-fns";
 import { bn } from "date-fns/locale";
+import ShareButtons from "@/components/ShareButtons";
 
 const BlogPostPage = () => {
   const { slug } = useParams();

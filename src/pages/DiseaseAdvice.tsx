@@ -10,6 +10,7 @@ import { Stethoscope, Search, ChevronDown, ChevronUp, ShoppingCart, ExternalLink
 import { Button } from '@/components/ui/button';
 import SeoHead from '@/components/SeoHead';
 import { Link } from 'react-router-dom';
+import ShareButtons from '@/components/ShareButtons';
 
 interface Treatment {
   method: string;
@@ -363,6 +364,10 @@ const DiseaseAdvice = () => {
         </section>
       </main>
       <Footer />
+      <ShareButtons
+        title={language === 'bn' ? 'রোগ ও পরামর্শ | মাছের রোগ নির্ণয় ও চিকিৎসা' : 'Disease & Advice'}
+        url="/disease-advice"
+      />
     </div>
   );
 };

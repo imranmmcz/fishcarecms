@@ -14,6 +14,7 @@ import {
   ChevronDown, ChevronUp
 } from "lucide-react";
 import AdUnit from "@/components/AdUnit";
+import ShareButtons from "@/components/ShareButtons";
 
 interface FishDetails {
   cultureDuration: string;
@@ -230,6 +231,10 @@ export default function FishSpecies() {
       </main>
 
       <Footer />
+      <ShareButtons
+        title={content?.headline || "বাংলাদেশে প্রচলিত মাছ"}
+        url="/fish-species"
+      />
     </div>
   );
 }
