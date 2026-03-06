@@ -136,7 +136,17 @@ const BlogPostPage = () => {
           )}
 
           {/* Content */}
-          <div className="prose prose-sm max-w-none mb-8" dangerouslySetInnerHTML={{ __html: post.content || "" }} />
+          <div className="prose prose-sm max-w-none mb-6" dangerouslySetInnerHTML={{ __html: post.content || "" }} />
+          
+          {/* Share Buttons */}
+          <ShareButtons
+            title={post.title}
+            description={post.meta_description || post.content?.replace(/<[^>]*>/g, "").substring(0, 160)}
+            url={`/blog/${post.slug}`}
+            image={post.og_image || post.images?.[0]?.image_url}
+            variant="inline"
+            className="mb-8"
+          />
         </article>
 
         {/* Comments Section */}
