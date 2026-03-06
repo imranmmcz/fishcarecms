@@ -65,6 +65,95 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_logs: {
+        Row: {
+          alert_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          sent_at: string
+          sent_channel: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string
+          sent_channel?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string
+          sent_channel?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_logs_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "farming_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alert_settings: {
+        Row: {
+          channels: string[] | null
+          created_at: string
+          feed_reminder_enabled: boolean | null
+          feed_reminder_times: string[] | null
+          harvest_reminder_days_before: number | null
+          id: string
+          medicine_reminder_enabled: boolean | null
+          sampling_interval_days: number | null
+          sampling_reminder_enabled: boolean | null
+          updated_at: string
+          user_id: string
+          water_check_enabled: boolean | null
+          water_check_interval_days: number | null
+        }
+        Insert: {
+          channels?: string[] | null
+          created_at?: string
+          feed_reminder_enabled?: boolean | null
+          feed_reminder_times?: string[] | null
+          harvest_reminder_days_before?: number | null
+          id?: string
+          medicine_reminder_enabled?: boolean | null
+          sampling_interval_days?: number | null
+          sampling_reminder_enabled?: boolean | null
+          updated_at?: string
+          user_id: string
+          water_check_enabled?: boolean | null
+          water_check_interval_days?: number | null
+        }
+        Update: {
+          channels?: string[] | null
+          created_at?: string
+          feed_reminder_enabled?: boolean | null
+          feed_reminder_times?: string[] | null
+          harvest_reminder_days_before?: number | null
+          id?: string
+          medicine_reminder_enabled?: boolean | null
+          sampling_interval_days?: number | null
+          sampling_reminder_enabled?: boolean | null
+          updated_at?: string
+          user_id?: string
+          water_check_enabled?: boolean | null
+          water_check_interval_days?: number | null
+        }
+        Relationships: []
+      }
       backup_logs: {
         Row: {
           backup_scope: string
@@ -1110,6 +1199,86 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "farmer_samplings_pond_id_fkey"
+            columns: ["pond_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_ponds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farming_alerts: {
+        Row: {
+          alert_date: string
+          alert_time: string | null
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          channels: string[] | null
+          created_at: string
+          created_by: string | null
+          fish_species: string | null
+          id: string
+          is_global: boolean | null
+          is_recurring: boolean | null
+          message: string
+          message_bn: string | null
+          pond_id: string | null
+          pond_name: string | null
+          priority: string | null
+          recurrence_interval: string | null
+          status: Database["public"]["Enums"]["alert_status"] | null
+          title: string
+          title_bn: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          alert_date?: string
+          alert_time?: string | null
+          alert_type?: Database["public"]["Enums"]["alert_type"]
+          channels?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          fish_species?: string | null
+          id?: string
+          is_global?: boolean | null
+          is_recurring?: boolean | null
+          message: string
+          message_bn?: string | null
+          pond_id?: string | null
+          pond_name?: string | null
+          priority?: string | null
+          recurrence_interval?: string | null
+          status?: Database["public"]["Enums"]["alert_status"] | null
+          title: string
+          title_bn?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          alert_date?: string
+          alert_time?: string | null
+          alert_type?: Database["public"]["Enums"]["alert_type"]
+          channels?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          fish_species?: string | null
+          id?: string
+          is_global?: boolean | null
+          is_recurring?: boolean | null
+          message?: string
+          message_bn?: string | null
+          pond_id?: string | null
+          pond_name?: string | null
+          priority?: string | null
+          recurrence_interval?: string | null
+          status?: Database["public"]["Enums"]["alert_status"] | null
+          title?: string
+          title_bn?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farming_alerts_pond_id_fkey"
             columns: ["pond_id"]
             isOneToOne: false
             referencedRelation: "farmer_ponds"
@@ -2848,6 +3017,18 @@ export type Database = {
       }
     }
     Enums: {
+      alert_status: "pending" | "sent" | "completed" | "dismissed" | "overdue"
+      alert_type:
+        | "feed_reminder"
+        | "medicine_reminder"
+        | "water_check"
+        | "pond_cleaning"
+        | "fish_sampling"
+        | "harvest_reminder"
+        | "weather_risk"
+        | "disease_outbreak"
+        | "government_advisory"
+        | "custom"
       app_role:
         | "admin"
         | "user"
@@ -2984,6 +3165,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      alert_status: ["pending", "sent", "completed", "dismissed", "overdue"],
+      alert_type: [
+        "feed_reminder",
+        "medicine_reminder",
+        "water_check",
+        "pond_cleaning",
+        "fish_sampling",
+        "harvest_reminder",
+        "weather_risk",
+        "disease_outbreak",
+        "government_advisory",
+        "custom",
+      ],
       app_role: [
         "admin",
         "user",
