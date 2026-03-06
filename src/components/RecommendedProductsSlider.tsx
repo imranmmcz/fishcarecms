@@ -14,7 +14,6 @@ interface Product {
   price: number;
   discount_percentage: number | null;
   image_url: string | null;
-  category_id: string | null;
 }
 
 interface RecommendedProductsSliderProps {
@@ -45,7 +44,7 @@ const RecommendedProductsSlider = ({
       setLoading(true);
       let query = supabase
         .from('products')
-        .select('id, name, description, price, discount_percentage, image_url, category_id')
+        .select('id, name, description, price, discount_percentage, image_url')
         .eq('is_active', true)
         .gt('stock_quantity', 0);
 
@@ -56,16 +55,16 @@ const RecommendedProductsSlider = ({
         query = query.or('recommendation_tags.cs.{calculator_related},recommendation_tags.cs.{popular_medicine},recommendation_tags.cs.{admin_recommended}');
       }
 
-      const { data } = await query.limit(12);
+      const { data } = await query.limit(12) as { data: Product[] | null };
 
-      // If no tagged products, fallback to medicine category products
+      // If no tagged products, fallback to any active products
       if (!data || data.length < 4) {
         const { data: fallback } = await supabase
           .from('products')
-          .select('id, name, description, price, discount_percentage, image_url, category_id')
+          .select('id, name, description, price, discount_percentage, image_url')
           .eq('is_active', true)
           .gt('stock_quantity', 0)
-          .limit(8);
+          .limit(8) as { data: Product[] | null };
         setProducts(fallback || []);
       } else {
         setProducts(data);
