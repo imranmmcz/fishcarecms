@@ -77,6 +77,7 @@ const farmerMainMenuItems = [
   { title: "income", titleBn: "আয়", url: "/dashboard/income", icon: TrendingUp, color: "bg-gradient-to-r from-emerald-500 to-green-600", iconColor: "text-emerald-500", roles: ["farmer", "admin"] },
   { title: "expense", titleBn: "ব্যয়", url: "/dashboard/expense", icon: TrendingDown, color: "bg-gradient-to-r from-rose-500 to-red-600", iconColor: "text-rose-500", roles: ["farmer", "admin"] },
   { title: "reports", titleBn: "রিপোর্ট", url: "/dashboard/reports", icon: FileText, color: "bg-gradient-to-r from-amber-500 to-orange-600", iconColor: "text-amber-500", roles: ["farmer", "admin"] },
+  { title: "profitPrediction", titleBn: "লাভ হিসাব", url: "/dashboard/profit-prediction", icon: BarChart3, color: "bg-gradient-to-r from-green-500 to-emerald-600", iconColor: "text-green-500", roles: ["farmer", "admin"] },
 ];
 
 const farmerSettingsGroup: MenuGroup = {
