@@ -266,7 +266,7 @@ export default function DashboardAlerts() {
       return;
     }
 
-    const { error } = await supabase.from("farming_alerts").insert(newAlerts);
+    const { error } = await supabase.from("farming_alerts").insert(newAlerts as any);
     if (error) {
       toast.error("অ্যালার্ট তৈরিতে সমস্যা হয়েছে");
       console.error(error);
