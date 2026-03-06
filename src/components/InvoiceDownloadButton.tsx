@@ -1,21 +1,17 @@
 /**
- * Invoice Download Button Component
- * কাস্টমার ও এডমিন কপি সহ ইনভয়েস ডাউনলোড বাটন
+ * Invoice Download Button - Multi-template, Bengali/English/Dual support
  */
 
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Order } from "@/lib/api-client";
 import { generateInvoicePDF } from "@/lib/generateInvoicePDF";
-import { useInvoiceSettings } from "@/hooks/useInvoiceSettings";
+import { useInvoicePrintSettings } from "@/hooks/useInvoicePrintSettings";
 import { Button } from "@/components/ui/button";
-import { FileDown, Loader2, Printer } from "lucide-react";
+import { FileDown, Loader2, Printer, Languages } from "lucide-react";
 import { toast } from "sonner";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 interface InvoiceDownloadButtonProps {
@@ -28,81 +24,64 @@ interface InvoiceDownloadButtonProps {
 }
 
 export const InvoiceDownloadButton = ({
-  order,
-  variant = "outline",
-  size = "sm",
-  className = "",
-  showText = true,
-  showAdminOption = false,
+  order, variant = "outline", size = "sm", className = "", showText = true, showAdminOption = false,
 }: InvoiceDownloadButtonProps) => {
   const { language } = useLanguage();
-  const { settings: companySettings } = useInvoiceSettings();
+  const { settings: printSettings } = useInvoicePrintSettings();
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const translations = {
-    invoice: language === "bn" ? "ইনভয়েস" : "Invoice",
-    generating: language === "bn" ? "তৈরি হচ্ছে..." : "Generating...",
-    success: language === "bn" ? "ইনভয়েস ডাউনলোড হয়েছে" : "Invoice downloaded",
-    error: language === "bn" ? "ইনভয়েস তৈরি করতে সমস্যা হয়েছে" : "Failed to generate invoice",
-    customerCopy: language === "bn" ? "কাস্টমার কপি" : "Customer Copy",
-    adminCopy: language === "bn" ? "অফিস কপি" : "Office Copy",
-  };
+  const isBn = language === "bn";
+  const tt = (bn: string, en: string) => isBn ? bn : en;
 
-  const handleDownload = async (copyType: "customer" | "admin") => {
+  const handleDownload = async (copyType: "customer" | "admin", langOverride?: "bn" | "en" | "dual") => {
     setIsGenerating(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((r) => setTimeout(r, 200));
+      const langMode = langOverride || printSettings.languageMode;
       generateInvoicePDF(order, {
-        language,
+        language: langMode === "dual" ? "bn" : langMode as "bn" | "en",
         copyType,
-        companyName: companySettings.companyName,
-        companyAddress: companySettings.companyAddress,
-        companyPhone: companySettings.companyPhone,
-        companyEmail: companySettings.companyEmail,
-        companyWebsite: companySettings.companyWebsite,
-        companyLogo: companySettings.companyLogo,
+        printSettings: { ...printSettings, languageMode: langMode as any },
       });
-      toast.success(translations.success);
+      toast.success(tt("ইনভয়েস ডাউনলোড হয়েছে", "Invoice downloaded"));
     } catch (error) {
-      console.error("Failed to generate invoice:", error);
-      toast.error(translations.error);
+      console.error("Invoice error:", error);
+      toast.error(tt("ইনভয়েস তৈরি ব্যর্থ", "Failed to generate invoice"));
     } finally {
       setIsGenerating(false);
     }
   };
-
-  if (!showAdminOption) {
-    return (
-      <Button
-        variant={variant}
-        size={size}
-        onClick={() => handleDownload("customer")}
-        disabled={isGenerating}
-        className={className}
-      >
-        {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-        {showText && <span className="ml-1">{isGenerating ? translations.generating : translations.invoice}</span>}
-      </Button>
-    );
-  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant={variant} size={size} disabled={isGenerating} className={className}>
           {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
-          {showText && <span className="ml-1">{isGenerating ? translations.generating : translations.invoice}</span>}
+          {showText && <span className="ml-1">{isGenerating ? tt("তৈরি হচ্ছে...", "Generating...") : tt("ইনভয়েস", "Invoice")}</span>}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem onClick={() => handleDownload("customer")}>
-          <FileDown className="h-4 w-4 mr-2" />
-          {translations.customerCopy}
+          <FileDown className="h-4 w-4 mr-2" />{tt("ডাউনলোড PDF", "Download PDF")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleDownload("admin")}>
-          <Printer className="h-4 w-4 mr-2" />
-          {translations.adminCopy}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => handleDownload("customer", "bn")}>
+          <FileDown className="h-4 w-4 mr-2" />{tt("বাংলা কপি", "Bengali Copy")}
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleDownload("customer", "en")}>
+          <FileDown className="h-4 w-4 mr-2" />{tt("ইংরেজি কপি", "English Copy")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleDownload("customer", "dual")}>
+          <Languages className="h-4 w-4 mr-2" />{tt("ডুয়াল ভাষা", "Dual Language")}
+        </DropdownMenuItem>
+        {showAdminOption && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleDownload("admin")}>
+              <Printer className="h-4 w-4 mr-2" />{tt("অফিস কপি", "Office Copy")}
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

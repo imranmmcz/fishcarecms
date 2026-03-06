@@ -1,5 +1,6 @@
 /**
  * Hook to fetch invoice settings from system_settings
+ * (Legacy compatibility wrapper - now delegates to useInvoicePrintSettings)
  */
 
 import { useState, useEffect } from "react";
