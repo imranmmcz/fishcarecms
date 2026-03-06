@@ -161,7 +161,9 @@ export default function SmartFeedCalculator() {
   const exportPDF = () => {
     if (!result) return;
     const doc = new jsPDF();
-    try { doc.addFileToVFS("Nikosh.ttf", pdfBanglaFont); doc.addFont("Nikosh.ttf", "Nikosh", "normal"); doc.setFont("Nikosh"); } catch { /* fallback */ }
+    registerBanglaFont(doc).then(() => {
+      setBanglaFont(doc, true);
+    });
     doc.setFontSize(18);
     doc.text("Smart Feed Calculator Report", 14, 20);
     doc.setFontSize(10);
