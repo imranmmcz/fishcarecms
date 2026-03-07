@@ -1,13 +1,55 @@
 /**
  * Invoice PDF Generator - Multi-template, Bengali/English/Dual support
  * 4 Templates: minimal, modern, pos, detailed
+ * QR Code & Product Image support
  */
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import QRCode from "qrcode";
 import type { Order } from "@/lib/api-client";
 import { registerBanglaFont, setBanglaFont, getFontName } from "@/lib/pdfBanglaFont";
 import type { InvoicePrintSettings } from "@/hooks/useInvoicePrintSettings";
+
+// Generate QR code as base64 data URL
+const generateQRCode = async (text: string, size = 100): Promise<string | null> => {
+  try {
+    return await QRCode.toDataURL(text, {
+      width: size,
+      margin: 1,
+      color: { dark: "#000000", light: "#ffffff" },
+      errorCorrectionLevel: "M",
+    });
+  } catch (err) {
+    console.error("QR code generation failed:", err);
+    return null;
+  }
+};
+
+// Load product image as base64
+const loadProductImage = async (url: string): Promise<string | null> => {
+  if (!url) return null;
+  try {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    return new Promise((resolve) => {
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = 40;
+          canvas.height = 40;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, 40, 40);
+            resolve(canvas.toDataURL("image/jpeg", 0.7));
+          } else resolve(null);
+        } catch { resolve(null); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  } catch { return null; }
+};
 
 export interface InvoiceOptions {
   language: "bn" | "en";
@@ -156,11 +198,24 @@ async function renderMinimal(doc: jsPDF, order: Order, s: ReturnType<typeof reso
   }
   y += 4;
 
-  // Items table
-  const headers = [["#", t("পণ্য", "Product", s.langMode), t("দাম", "Price", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]];
-  const body = order.items?.map((item, i) => [
-    (i + 1).toString(), item.product_name, formatPrice(item.unit_price), item.quantity.toString(), formatPrice(item.total_price),
-  ]) || [];
+  // Items table - with product images if enabled
+  const hasImages = s.showProductImage && order.items?.some(item => item.product_image);
+  const headers = hasImages
+    ? [["#", "", t("পণ্য", "Product", s.langMode), t("দাম", "Price", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]]
+    : [["#", t("পণ্য", "Product", s.langMode), t("দাম", "Price", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]];
+
+  // Pre-load product images
+  let productImages: (string | null)[] = [];
+  if (hasImages && order.items) {
+    productImages = await Promise.all(order.items.map(item => loadProductImage(item.product_image || "")));
+  }
+
+  const body = order.items?.map((item, i) => {
+    const row = [(i + 1).toString()];
+    if (hasImages) row.push(""); // placeholder for image
+    row.push(item.product_name, formatPrice(item.unit_price), item.quantity.toString(), formatPrice(item.total_price));
+    return row;
+  }) || [];
 
   autoTable(doc, {
     startY: y, head: headers, body,
@@ -168,7 +223,19 @@ async function renderMinimal(doc: jsPDF, order: Order, s: ReturnType<typeof reso
     headStyles: { fillColor: primary, textColor: [255, 255, 255], fontSize: 8, font: fontName, fontStyle: "bold", cellPadding: 2.5 },
     bodyStyles: { fontSize: 8, textColor: [50, 50, 50], font: fontName, cellPadding: 2 },
     alternateRowStyles: { fillColor: [248, 250, 252] },
-    columnStyles: { 0: { cellWidth: 10, halign: "center" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "center", cellWidth: 16 }, 4: { halign: "right", cellWidth: 30, fontStyle: "bold" } },
+    columnStyles: hasImages
+      ? { 0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: 12 }, 3: { halign: "right", cellWidth: 28 }, 4: { halign: "center", cellWidth: 16 }, 5: { halign: "right", cellWidth: 30, fontStyle: "bold" } }
+      : { 0: { cellWidth: 10, halign: "center" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "center", cellWidth: 16 }, 4: { halign: "right", cellWidth: 30, fontStyle: "bold" } },
+    ...(hasImages ? {
+      didDrawCell: (data: any) => {
+        if (data.section === "body" && data.column.index === 1 && productImages[data.row.index]) {
+          try {
+            doc.addImage(productImages[data.row.index]!, "JPEG", data.cell.x + 1, data.cell.y + 1, 8, 8);
+          } catch {}
+        }
+      },
+      rowPageBreak: "avoid" as const,
+    } : {}),
   });
 
   y = (doc as any).lastAutoTable.finalY + 8;
@@ -215,16 +282,26 @@ async function renderMinimal(doc: jsPDF, order: Order, s: ReturnType<typeof reso
     doc.text(`${t("পেমেন্ট", "Payment", s.langMode)}: ${pm[order.payment_method || ""]?.[isBn ? "bn" : "en"] || order.payment_method || ""}`, margin, y);
   }
 
+  // QR Code
+  if (s.showQr && s.companyWebsite) {
+    const qrUrl = s.companyWebsite.startsWith("http") ? s.companyWebsite : `https://${s.companyWebsite}`;
+    const qrData = await generateQRCode(qrUrl, 120);
+    if (qrData) {
+      doc.addImage(qrData, "PNG", margin, pageHeight - 35, 20, 20);
+    }
+  }
+
   // Footer
   const footerY = pageHeight - 20;
+  const footerCenterX = s.showQr ? pageWidth / 2 + 10 : pageWidth / 2;
   doc.setFontSize(9);
   setFont("bold");
   doc.setTextColor(...primary);
-  doc.text(t("ধন্যবাদ!", "Thank you!", s.langMode), pageWidth / 2, footerY, { align: "center" });
+  doc.text(t("ধন্যবাদ!", "Thank you!", s.langMode), footerCenterX, footerY, { align: "center" });
   doc.setFontSize(7);
   setFont("normal");
   doc.setTextColor(150, 150, 150);
-  doc.text(`${s.companyWebsite} | ${s.companyPhone}`, pageWidth / 2, footerY + 5, { align: "center" });
+  doc.text(`${s.companyWebsite} | ${s.companyPhone}`, footerCenterX, footerY + 5, { align: "center" });
 
   // Copy type
   doc.setFontSize(6);
@@ -391,11 +468,24 @@ async function renderModern(doc: jsPDF, order: Order, s: ReturnType<typeof resol
   doc.text(t("পণ্যের বিবরণ", "ORDER ITEMS", s.langMode), margin, y + 4);
   y += 7;
 
-  const tableHeaders = [["#", t("পণ্যের নাম", "Product", s.langMode), t("একক দাম", "Unit Price", s.langMode), t("ছাড়", "Disc%", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]];
-  const tableData = order.items?.map((item, idx) => [
-    (idx + 1).toString(), item.product_name, formatPrice(item.unit_price),
-    item.discount_percentage > 0 ? `${item.discount_percentage}%` : "-", item.quantity.toString(), formatPrice(item.total_price),
-  ]) || [];
+  // Items table - with product images if enabled
+  const hasImages = s.showProductImage && order.items?.some(item => item.product_image);
+  let productImages: (string | null)[] = [];
+  if (hasImages && order.items) {
+    productImages = await Promise.all(order.items.map(item => loadProductImage(item.product_image || "")));
+  }
+
+  const tableHeaders = hasImages
+    ? [["#", "", t("পণ্যের নাম", "Product", s.langMode), t("একক দাম", "Unit Price", s.langMode), t("ছাড়", "Disc%", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]]
+    : [["#", t("পণ্যের নাম", "Product", s.langMode), t("একক দাম", "Unit Price", s.langMode), t("ছাড়", "Disc%", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]];
+
+  const tableData = order.items?.map((item, idx) => {
+    const row = [(idx + 1).toString()];
+    if (hasImages) row.push(""); // placeholder for image
+    row.push(item.product_name, formatPrice(item.unit_price),
+      item.discount_percentage > 0 ? `${item.discount_percentage}%` : "-", item.quantity.toString(), formatPrice(item.total_price));
+    return row;
+  }) || [];
 
   autoTable(doc, {
     startY: y, head: tableHeaders, body: tableData,
@@ -403,11 +493,27 @@ async function renderModern(doc: jsPDF, order: Order, s: ReturnType<typeof resol
     headStyles: { fillColor: primary, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8, cellPadding: 3, font: fontName },
     bodyStyles: { fontSize: 8, textColor: textDark, cellPadding: 2.5, lineColor: border, lineWidth: 0.1, font: fontName },
     alternateRowStyles: { fillColor: [250, 253, 251] },
-    columnStyles: {
-      0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: "auto" },
-      2: { cellWidth: 28, halign: "right" }, 3: { cellWidth: 16, halign: "center" },
-      4: { cellWidth: 16, halign: "center" }, 5: { cellWidth: 32, halign: "right", fontStyle: "bold" },
-    },
+    columnStyles: hasImages
+      ? {
+          0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: 12 }, 2: { cellWidth: "auto" },
+          3: { cellWidth: 28, halign: "right" }, 4: { cellWidth: 16, halign: "center" },
+          5: { cellWidth: 16, halign: "center" }, 6: { cellWidth: 32, halign: "right", fontStyle: "bold" },
+        }
+      : {
+          0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: "auto" },
+          2: { cellWidth: 28, halign: "right" }, 3: { cellWidth: 16, halign: "center" },
+          4: { cellWidth: 16, halign: "center" }, 5: { cellWidth: 32, halign: "right", fontStyle: "bold" },
+        },
+    ...(hasImages ? {
+      didDrawCell: (data: any) => {
+        if (data.section === "body" && data.column.index === 1 && productImages[data.row.index]) {
+          try {
+            doc.addImage(productImages[data.row.index]!, "JPEG", data.cell.x + 1, data.cell.y + 1, 8, 8);
+          } catch {}
+        }
+      },
+      rowPageBreak: "avoid" as const,
+    } : {}),
   });
   y = (doc as any).lastAutoTable.finalY + 6;
 
@@ -447,27 +553,37 @@ async function renderModern(doc: jsPDF, order: Order, s: ReturnType<typeof resol
     y += 22;
   }
 
+  // QR Code
+  if (s.showQr && s.companyWebsite) {
+    const qrUrl = s.companyWebsite.startsWith("http") ? s.companyWebsite : `https://${s.companyWebsite}`;
+    const qrData = await generateQRCode(qrUrl, 120);
+    if (qrData) {
+      doc.addImage(qrData, "PNG", margin, pageHeight - 40, 22, 22);
+    }
+  }
+
   // Footer
   const fY = pageHeight - 28;
+  const fCenterX = s.showQr ? pageWidth / 2 + 12 : pageWidth / 2;
   doc.setFillColor(...primary); doc.rect(0, pageHeight - 4, pageWidth, 4, "F");
   doc.setDrawColor(...primary); doc.setLineWidth(0.4); doc.line(margin, fY, pageWidth - margin, fY);
   doc.setFontSize(10); setFont("bold"); doc.setTextColor(...primary);
-  doc.text(t("আপনার অর্ডারের জন্য ধন্যবাদ!", "Thank you for your order!", s.langMode), pageWidth / 2, fY + 6, { align: "center" });
+  doc.text(t("আপনার অর্ডারের জন্য ধন্যবাদ!", "Thank you for your order!", s.langMode), fCenterX, fY + 6, { align: "center" });
 
   // Custom footer text
   if (s.footerTextBn || s.footerText) {
     doc.setFontSize(7.5); setFont("normal"); doc.setTextColor(...textMuted);
     const fText = isBn ? (s.footerTextBn || s.footerText) : (s.footerText || s.footerTextBn);
-    if (fText) doc.text(fText, pageWidth / 2, fY + 11, { align: "center" });
+    if (fText) doc.text(fText, fCenterX, fY + 11, { align: "center" });
   } else {
     doc.setFontSize(7.5); setFont("normal"); doc.setTextColor(...textMuted);
-    doc.text(t("কোনো প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন।", "For questions or support, please contact us.", s.langMode), pageWidth / 2, fY + 11, { align: "center" });
+    doc.text(t("কোনো প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন।", "For questions or support, please contact us.", s.langMode), fCenterX, fY + 11, { align: "center" });
   }
 
   doc.setFontSize(7); doc.setTextColor(56, 161, 105);
   let contactLine = `${s.companyWebsite} | ${s.companyPhone} | ${s.companyEmail}`;
   if (s.socialFacebook) contactLine += ` | FB: ${s.socialFacebook}`;
-  doc.text(contactLine, pageWidth / 2, fY + 16, { align: "center" });
+  doc.text(contactLine, fCenterX, fY + 16, { align: "center" });
 
   doc.setFontSize(6); doc.setTextColor(...border);
   doc.text(isAdmin ? "Office Copy" : "Customer Copy", pageWidth - margin, fY + 20, { align: "right" });
@@ -571,6 +687,16 @@ async function renderPOS(doc: jsPDF, order: Order, s: ReturnType<typeof resolveS
   doc.setLineDashPattern([], 0);
   y += 5;
 
+  // QR Code for POS
+  if (s.showQr && s.companyWebsite) {
+    const qrUrl = s.companyWebsite.startsWith("http") ? s.companyWebsite : `https://${s.companyWebsite}`;
+    const qrData = await generateQRCode(qrUrl, 80);
+    if (qrData) {
+      doc.addImage(qrData, "PNG", pageWidth / 2 - 8, y, 16, 16);
+      y += 18;
+    }
+  }
+
   doc.setFontSize(8); setFont("bold"); doc.setTextColor(0, 0, 0);
   doc.text(t("ধন্যবাদ!", "Thank you!", s.langMode), pageWidth / 2, y, { align: "center" });
   y += 4;
@@ -657,13 +783,25 @@ async function renderDetailed(doc: jsPDF, order: Order, s: ReturnType<typeof res
   aLines.forEach((l: string) => { if (aY2 < y + 33) { doc.text(l, sx, aY2); aY2 += 4.5; } });
   y += 40;
 
-  // Items table with more detail
-  const tableHeaders = [["#", t("পণ্যের নাম", "Product", s.langMode), t("একক দাম", "Unit Price", s.langMode), t("ছাড়%", "Disc%", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]];
-  const tableData = order.items?.map((item, idx) => [
-    (idx + 1).toString(), item.product_name, formatPrice(item.unit_price),
-    item.discount_percentage > 0 ? `${item.discount_percentage}%` : "-",
-    item.quantity.toString(), formatPrice(item.total_price),
-  ]) || [];
+  // Items table with more detail - with product images if enabled
+  const hasImages = s.showProductImage && order.items?.some(item => item.product_image);
+  let productImages: (string | null)[] = [];
+  if (hasImages && order.items) {
+    productImages = await Promise.all(order.items.map(item => loadProductImage(item.product_image || "")));
+  }
+
+  const tableHeaders = hasImages
+    ? [["#", "", t("পণ্যের নাম", "Product", s.langMode), t("একক দাম", "Unit Price", s.langMode), t("ছাড়%", "Disc%", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]]
+    : [["#", t("পণ্যের নাম", "Product", s.langMode), t("একক দাম", "Unit Price", s.langMode), t("ছাড়%", "Disc%", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]];
+
+  const tableData = order.items?.map((item, idx) => {
+    const row = [(idx + 1).toString()];
+    if (hasImages) row.push("");
+    row.push(item.product_name, formatPrice(item.unit_price),
+      item.discount_percentage > 0 ? `${item.discount_percentage}%` : "-",
+      item.quantity.toString(), formatPrice(item.total_price));
+    return row;
+  }) || [];
 
   autoTable(doc, {
     startY: y, head: tableHeaders, body: tableData,
@@ -671,11 +809,27 @@ async function renderDetailed(doc: jsPDF, order: Order, s: ReturnType<typeof res
     headStyles: { fillColor: primary, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8, cellPadding: 3, font: fontName },
     bodyStyles: { fontSize: 8, textColor: [40, 40, 40], cellPadding: 2.5, font: fontName },
     alternateRowStyles: { fillColor: [250, 252, 255] },
-    columnStyles: {
-      0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: "auto" },
-      2: { cellWidth: 28, halign: "right" }, 3: { cellWidth: 16, halign: "center" },
-      4: { cellWidth: 16, halign: "center" }, 5: { cellWidth: 32, halign: "right", fontStyle: "bold" },
-    },
+    columnStyles: hasImages
+      ? {
+          0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: 12 }, 2: { cellWidth: "auto" },
+          3: { cellWidth: 28, halign: "right" }, 4: { cellWidth: 16, halign: "center" },
+          5: { cellWidth: 16, halign: "center" }, 6: { cellWidth: 32, halign: "right", fontStyle: "bold" },
+        }
+      : {
+          0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: "auto" },
+          2: { cellWidth: 28, halign: "right" }, 3: { cellWidth: 16, halign: "center" },
+          4: { cellWidth: 16, halign: "center" }, 5: { cellWidth: 32, halign: "right", fontStyle: "bold" },
+        },
+    ...(hasImages ? {
+      didDrawCell: (data: any) => {
+        if (data.section === "body" && data.column.index === 1 && productImages[data.row.index]) {
+          try {
+            doc.addImage(productImages[data.row.index]!, "JPEG", data.cell.x + 1, data.cell.y + 1, 8, 8);
+          } catch {}
+        }
+      },
+      rowPageBreak: "avoid" as const,
+    } : {}),
   });
   y = (doc as any).lastAutoTable.finalY + 8;
 
@@ -714,16 +868,26 @@ async function renderDetailed(doc: jsPDF, order: Order, s: ReturnType<typeof res
     if (order.tracking_number) doc.text(`${t("ট্র্যাকিং", "Tracking", s.langMode)}: ${order.tracking_number}`, margin + contentWidth * 0.45, tY2 + 10);
   }
 
+  // QR Code
+  if (s.showQr && s.companyWebsite) {
+    const qrUrl = s.companyWebsite.startsWith("http") ? s.companyWebsite : `https://${s.companyWebsite}`;
+    const qrData = await generateQRCode(qrUrl, 120);
+    if (qrData) {
+      doc.addImage(qrData, "PNG", margin, pageHeight - 36, 22, 22);
+    }
+  }
+
   // Footer
   const fY = pageHeight - 22;
+  const fCenterX = s.showQr ? pageWidth / 2 + 12 : pageWidth / 2;
   doc.setFillColor(...primary); doc.rect(0, pageHeight - 4, pageWidth, 4, "F");
   doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.3); doc.line(margin, fY, pageWidth - margin, fY);
   doc.setFontSize(10); setFont("bold"); doc.setTextColor(...primary);
-  doc.text(t("আপনার অর্ডারের জন্য ধন্যবাদ!", "Thank you for your order!", s.langMode), pageWidth / 2, fY + 6, { align: "center" });
+  doc.text(t("আপনার অর্ডারের জন্য ধন্যবাদ!", "Thank you for your order!", s.langMode), fCenterX, fY + 6, { align: "center" });
   doc.setFontSize(7); setFont("normal"); doc.setTextColor(130, 130, 130);
   let fLine = `${s.companyWebsite} | ${s.companyPhone} | ${s.companyEmail}`;
   if (s.socialFacebook) fLine += ` | FB: ${s.socialFacebook}`;
-  doc.text(fLine, pageWidth / 2, fY + 11, { align: "center" });
+  doc.text(fLine, fCenterX, fY + 11, { align: "center" });
   doc.setFontSize(6); doc.setTextColor(200, 200, 200);
   doc.text(s.copyType === "admin" ? "Office Copy" : "Customer Copy", pageWidth - margin, fY + 15, { align: "right" });
 }
