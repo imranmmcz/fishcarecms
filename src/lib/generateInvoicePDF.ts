@@ -282,16 +282,26 @@ async function renderMinimal(doc: jsPDF, order: Order, s: ReturnType<typeof reso
     doc.text(`${t("পেমেন্ট", "Payment", s.langMode)}: ${pm[order.payment_method || ""]?.[isBn ? "bn" : "en"] || order.payment_method || ""}`, margin, y);
   }
 
+  // QR Code
+  if (s.showQr && s.companyWebsite) {
+    const qrUrl = s.companyWebsite.startsWith("http") ? s.companyWebsite : `https://${s.companyWebsite}`;
+    const qrData = await generateQRCode(qrUrl, 120);
+    if (qrData) {
+      doc.addImage(qrData, "PNG", margin, pageHeight - 35, 20, 20);
+    }
+  }
+
   // Footer
   const footerY = pageHeight - 20;
+  const footerCenterX = s.showQr ? pageWidth / 2 + 10 : pageWidth / 2;
   doc.setFontSize(9);
   setFont("bold");
   doc.setTextColor(...primary);
-  doc.text(t("ধন্যবাদ!", "Thank you!", s.langMode), pageWidth / 2, footerY, { align: "center" });
+  doc.text(t("ধন্যবাদ!", "Thank you!", s.langMode), footerCenterX, footerY, { align: "center" });
   doc.setFontSize(7);
   setFont("normal");
   doc.setTextColor(150, 150, 150);
-  doc.text(`${s.companyWebsite} | ${s.companyPhone}`, pageWidth / 2, footerY + 5, { align: "center" });
+  doc.text(`${s.companyWebsite} | ${s.companyPhone}`, footerCenterX, footerY + 5, { align: "center" });
 
   // Copy type
   doc.setFontSize(6);
