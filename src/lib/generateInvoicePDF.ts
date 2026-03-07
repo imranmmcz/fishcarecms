@@ -468,11 +468,24 @@ async function renderModern(doc: jsPDF, order: Order, s: ReturnType<typeof resol
   doc.text(t("পণ্যের বিবরণ", "ORDER ITEMS", s.langMode), margin, y + 4);
   y += 7;
 
-  const tableHeaders = [["#", t("পণ্যের নাম", "Product", s.langMode), t("একক দাম", "Unit Price", s.langMode), t("ছাড়", "Disc%", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]];
-  const tableData = order.items?.map((item, idx) => [
-    (idx + 1).toString(), item.product_name, formatPrice(item.unit_price),
-    item.discount_percentage > 0 ? `${item.discount_percentage}%` : "-", item.quantity.toString(), formatPrice(item.total_price),
-  ]) || [];
+  // Items table - with product images if enabled
+  const hasImages = s.showProductImage && order.items?.some(item => item.product_image);
+  let productImages: (string | null)[] = [];
+  if (hasImages && order.items) {
+    productImages = await Promise.all(order.items.map(item => loadProductImage(item.product_image || "")));
+  }
+
+  const tableHeaders = hasImages
+    ? [["#", "", t("পণ্যের নাম", "Product", s.langMode), t("একক দাম", "Unit Price", s.langMode), t("ছাড়", "Disc%", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]]
+    : [["#", t("পণ্যের নাম", "Product", s.langMode), t("একক দাম", "Unit Price", s.langMode), t("ছাড়", "Disc%", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]];
+
+  const tableData = order.items?.map((item, idx) => {
+    const row = [(idx + 1).toString()];
+    if (hasImages) row.push(""); // placeholder for image
+    row.push(item.product_name, formatPrice(item.unit_price),
+      item.discount_percentage > 0 ? `${item.discount_percentage}%` : "-", item.quantity.toString(), formatPrice(item.total_price));
+    return row;
+  }) || [];
 
   autoTable(doc, {
     startY: y, head: tableHeaders, body: tableData,
@@ -480,11 +493,27 @@ async function renderModern(doc: jsPDF, order: Order, s: ReturnType<typeof resol
     headStyles: { fillColor: primary, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8, cellPadding: 3, font: fontName },
     bodyStyles: { fontSize: 8, textColor: textDark, cellPadding: 2.5, lineColor: border, lineWidth: 0.1, font: fontName },
     alternateRowStyles: { fillColor: [250, 253, 251] },
-    columnStyles: {
-      0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: "auto" },
-      2: { cellWidth: 28, halign: "right" }, 3: { cellWidth: 16, halign: "center" },
-      4: { cellWidth: 16, halign: "center" }, 5: { cellWidth: 32, halign: "right", fontStyle: "bold" },
-    },
+    columnStyles: hasImages
+      ? {
+          0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: 12 }, 2: { cellWidth: "auto" },
+          3: { cellWidth: 28, halign: "right" }, 4: { cellWidth: 16, halign: "center" },
+          5: { cellWidth: 16, halign: "center" }, 6: { cellWidth: 32, halign: "right", fontStyle: "bold" },
+        }
+      : {
+          0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: "auto" },
+          2: { cellWidth: 28, halign: "right" }, 3: { cellWidth: 16, halign: "center" },
+          4: { cellWidth: 16, halign: "center" }, 5: { cellWidth: 32, halign: "right", fontStyle: "bold" },
+        },
+    ...(hasImages ? {
+      didDrawCell: (data: any) => {
+        if (data.section === "body" && data.column.index === 1 && productImages[data.row.index]) {
+          try {
+            doc.addImage(productImages[data.row.index]!, "JPEG", data.cell.x + 1, data.cell.y + 1, 8, 8);
+          } catch {}
+        }
+      },
+      rowPageBreak: "avoid" as const,
+    } : {}),
   });
   y = (doc as any).lastAutoTable.finalY + 6;
 
