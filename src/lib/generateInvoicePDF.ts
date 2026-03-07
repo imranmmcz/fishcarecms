@@ -198,11 +198,24 @@ async function renderMinimal(doc: jsPDF, order: Order, s: ReturnType<typeof reso
   }
   y += 4;
 
-  // Items table
-  const headers = [["#", t("পণ্য", "Product", s.langMode), t("দাম", "Price", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]];
-  const body = order.items?.map((item, i) => [
-    (i + 1).toString(), item.product_name, formatPrice(item.unit_price), item.quantity.toString(), formatPrice(item.total_price),
-  ]) || [];
+  // Items table - with product images if enabled
+  const hasImages = s.showProductImage && order.items?.some(item => item.product_image);
+  const headers = hasImages
+    ? [["#", "", t("পণ্য", "Product", s.langMode), t("দাম", "Price", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]]
+    : [["#", t("পণ্য", "Product", s.langMode), t("দাম", "Price", s.langMode), t("পরিমাণ", "Qty", s.langMode), t("মোট", "Total", s.langMode)]];
+
+  // Pre-load product images
+  let productImages: (string | null)[] = [];
+  if (hasImages && order.items) {
+    productImages = await Promise.all(order.items.map(item => loadProductImage(item.product_image || "")));
+  }
+
+  const body = order.items?.map((item, i) => {
+    const row = [(i + 1).toString()];
+    if (hasImages) row.push(""); // placeholder for image
+    row.push(item.product_name, formatPrice(item.unit_price), item.quantity.toString(), formatPrice(item.total_price));
+    return row;
+  }) || [];
 
   autoTable(doc, {
     startY: y, head: headers, body,
@@ -210,7 +223,19 @@ async function renderMinimal(doc: jsPDF, order: Order, s: ReturnType<typeof reso
     headStyles: { fillColor: primary, textColor: [255, 255, 255], fontSize: 8, font: fontName, fontStyle: "bold", cellPadding: 2.5 },
     bodyStyles: { fontSize: 8, textColor: [50, 50, 50], font: fontName, cellPadding: 2 },
     alternateRowStyles: { fillColor: [248, 250, 252] },
-    columnStyles: { 0: { cellWidth: 10, halign: "center" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "center", cellWidth: 16 }, 4: { halign: "right", cellWidth: 30, fontStyle: "bold" } },
+    columnStyles: hasImages
+      ? { 0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: 12 }, 3: { halign: "right", cellWidth: 28 }, 4: { halign: "center", cellWidth: 16 }, 5: { halign: "right", cellWidth: 30, fontStyle: "bold" } }
+      : { 0: { cellWidth: 10, halign: "center" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "center", cellWidth: 16 }, 4: { halign: "right", cellWidth: 30, fontStyle: "bold" } },
+    ...(hasImages ? {
+      didDrawCell: (data: any) => {
+        if (data.section === "body" && data.column.index === 1 && productImages[data.row.index]) {
+          try {
+            doc.addImage(productImages[data.row.index]!, "JPEG", data.cell.x + 1, data.cell.y + 1, 8, 8);
+          } catch {}
+        }
+      },
+      rowPageBreak: "avoid" as const,
+    } : {}),
   });
 
   y = (doc as any).lastAutoTable.finalY + 8;
