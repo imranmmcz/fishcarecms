@@ -553,27 +553,37 @@ async function renderModern(doc: jsPDF, order: Order, s: ReturnType<typeof resol
     y += 22;
   }
 
+  // QR Code
+  if (s.showQr && s.companyWebsite) {
+    const qrUrl = s.companyWebsite.startsWith("http") ? s.companyWebsite : `https://${s.companyWebsite}`;
+    const qrData = await generateQRCode(qrUrl, 120);
+    if (qrData) {
+      doc.addImage(qrData, "PNG", margin, pageHeight - 40, 22, 22);
+    }
+  }
+
   // Footer
   const fY = pageHeight - 28;
+  const fCenterX = s.showQr ? pageWidth / 2 + 12 : pageWidth / 2;
   doc.setFillColor(...primary); doc.rect(0, pageHeight - 4, pageWidth, 4, "F");
   doc.setDrawColor(...primary); doc.setLineWidth(0.4); doc.line(margin, fY, pageWidth - margin, fY);
   doc.setFontSize(10); setFont("bold"); doc.setTextColor(...primary);
-  doc.text(t("আপনার অর্ডারের জন্য ধন্যবাদ!", "Thank you for your order!", s.langMode), pageWidth / 2, fY + 6, { align: "center" });
+  doc.text(t("আপনার অর্ডারের জন্য ধন্যবাদ!", "Thank you for your order!", s.langMode), fCenterX, fY + 6, { align: "center" });
 
   // Custom footer text
   if (s.footerTextBn || s.footerText) {
     doc.setFontSize(7.5); setFont("normal"); doc.setTextColor(...textMuted);
     const fText = isBn ? (s.footerTextBn || s.footerText) : (s.footerText || s.footerTextBn);
-    if (fText) doc.text(fText, pageWidth / 2, fY + 11, { align: "center" });
+    if (fText) doc.text(fText, fCenterX, fY + 11, { align: "center" });
   } else {
     doc.setFontSize(7.5); setFont("normal"); doc.setTextColor(...textMuted);
-    doc.text(t("কোনো প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন।", "For questions or support, please contact us.", s.langMode), pageWidth / 2, fY + 11, { align: "center" });
+    doc.text(t("কোনো প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন।", "For questions or support, please contact us.", s.langMode), fCenterX, fY + 11, { align: "center" });
   }
 
   doc.setFontSize(7); doc.setTextColor(56, 161, 105);
   let contactLine = `${s.companyWebsite} | ${s.companyPhone} | ${s.companyEmail}`;
   if (s.socialFacebook) contactLine += ` | FB: ${s.socialFacebook}`;
-  doc.text(contactLine, pageWidth / 2, fY + 16, { align: "center" });
+  doc.text(contactLine, fCenterX, fY + 16, { align: "center" });
 
   doc.setFontSize(6); doc.setTextColor(...border);
   doc.text(isAdmin ? "Office Copy" : "Customer Copy", pageWidth - margin, fY + 20, { align: "right" });
