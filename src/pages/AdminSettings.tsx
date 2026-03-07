@@ -24,6 +24,7 @@ import PaymentGatewaySettings from "@/components/admin/PaymentGatewaySettings";
 import DeliverySettingsAdmin from "@/components/admin/DeliverySettingsAdmin";
 import InvoiceSettings from "@/components/admin/InvoiceSettings";
 import { SteadfastCourierSettings } from "@/components/admin/SteadfastCourierSettings";
+import { SundarbanCourierSettings } from "@/components/admin/SundarbanCourierSettings";
 import { WhatsAppSettings } from "@/components/admin/WhatsAppSettings";
 import POSPrintSettings from "@/components/admin/POSPrintSettings";
 import SmsSettings from "@/components/admin/SmsSettings";
@@ -715,7 +716,24 @@ const AdminSettings = () => {
 
           {/* Courier Settings Tab */}
           <TabsContent value="courier" className="space-y-6 mt-6">
-            <SteadfastCourierSettings />
+            <Tabs defaultValue="steadfast" className="w-full">
+              <TabsList className="w-full">
+                <TabsTrigger value="steadfast" className="flex-1">
+                  <Truck className="h-4 w-4 mr-2" />
+                  Steadfast
+                </TabsTrigger>
+                <TabsTrigger value="sundarban" className="flex-1">
+                  <Truck className="h-4 w-4 mr-2" />
+                  সুন্দরবন
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="steadfast" className="mt-4">
+                <SteadfastCourierSettings />
+              </TabsContent>
+              <TabsContent value="sundarban" className="mt-4">
+                <SundarbanCourierSettings />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* WhatsApp Settings Tab */}
