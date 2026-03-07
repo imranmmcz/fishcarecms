@@ -1,13 +1,55 @@
 /**
  * Invoice PDF Generator - Multi-template, Bengali/English/Dual support
  * 4 Templates: minimal, modern, pos, detailed
+ * QR Code & Product Image support
  */
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import QRCode from "qrcode";
 import type { Order } from "@/lib/api-client";
 import { registerBanglaFont, setBanglaFont, getFontName } from "@/lib/pdfBanglaFont";
 import type { InvoicePrintSettings } from "@/hooks/useInvoicePrintSettings";
+
+// Generate QR code as base64 data URL
+const generateQRCode = async (text: string, size = 100): Promise<string | null> => {
+  try {
+    return await QRCode.toDataURL(text, {
+      width: size,
+      margin: 1,
+      color: { dark: "#000000", light: "#ffffff" },
+      errorCorrectionLevel: "M",
+    });
+  } catch (err) {
+    console.error("QR code generation failed:", err);
+    return null;
+  }
+};
+
+// Load product image as base64
+const loadProductImage = async (url: string): Promise<string | null> => {
+  if (!url) return null;
+  try {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    return new Promise((resolve) => {
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = 40;
+          canvas.height = 40;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, 40, 40);
+            resolve(canvas.toDataURL("image/jpeg", 0.7));
+          } else resolve(null);
+        } catch { resolve(null); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  } catch { return null; }
+};
 
 export interface InvoiceOptions {
   language: "bn" | "en";
