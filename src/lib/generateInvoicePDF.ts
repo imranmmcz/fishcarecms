@@ -868,16 +868,26 @@ async function renderDetailed(doc: jsPDF, order: Order, s: ReturnType<typeof res
     if (order.tracking_number) doc.text(`${t("ট্র্যাকিং", "Tracking", s.langMode)}: ${order.tracking_number}`, margin + contentWidth * 0.45, tY2 + 10);
   }
 
+  // QR Code
+  if (s.showQr && s.companyWebsite) {
+    const qrUrl = s.companyWebsite.startsWith("http") ? s.companyWebsite : `https://${s.companyWebsite}`;
+    const qrData = await generateQRCode(qrUrl, 120);
+    if (qrData) {
+      doc.addImage(qrData, "PNG", margin, pageHeight - 36, 22, 22);
+    }
+  }
+
   // Footer
   const fY = pageHeight - 22;
+  const fCenterX = s.showQr ? pageWidth / 2 + 12 : pageWidth / 2;
   doc.setFillColor(...primary); doc.rect(0, pageHeight - 4, pageWidth, 4, "F");
   doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.3); doc.line(margin, fY, pageWidth - margin, fY);
   doc.setFontSize(10); setFont("bold"); doc.setTextColor(...primary);
-  doc.text(t("আপনার অর্ডারের জন্য ধন্যবাদ!", "Thank you for your order!", s.langMode), pageWidth / 2, fY + 6, { align: "center" });
+  doc.text(t("আপনার অর্ডারের জন্য ধন্যবাদ!", "Thank you for your order!", s.langMode), fCenterX, fY + 6, { align: "center" });
   doc.setFontSize(7); setFont("normal"); doc.setTextColor(130, 130, 130);
   let fLine = `${s.companyWebsite} | ${s.companyPhone} | ${s.companyEmail}`;
   if (s.socialFacebook) fLine += ` | FB: ${s.socialFacebook}`;
-  doc.text(fLine, pageWidth / 2, fY + 11, { align: "center" });
+  doc.text(fLine, fCenterX, fY + 11, { align: "center" });
   doc.setFontSize(6); doc.setTextColor(200, 200, 200);
   doc.text(s.copyType === "admin" ? "Office Copy" : "Customer Copy", pageWidth - margin, fY + 15, { align: "right" });
 }
