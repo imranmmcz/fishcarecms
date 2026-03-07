@@ -687,6 +687,16 @@ async function renderPOS(doc: jsPDF, order: Order, s: ReturnType<typeof resolveS
   doc.setLineDashPattern([], 0);
   y += 5;
 
+  // QR Code for POS
+  if (s.showQr && s.companyWebsite) {
+    const qrUrl = s.companyWebsite.startsWith("http") ? s.companyWebsite : `https://${s.companyWebsite}`;
+    const qrData = await generateQRCode(qrUrl, 80);
+    if (qrData) {
+      doc.addImage(qrData, "PNG", pageWidth / 2 - 8, y, 16, 16);
+      y += 18;
+    }
+  }
+
   doc.setFontSize(8); setFont("bold"); doc.setTextColor(0, 0, 0);
   doc.text(t("ধন্যবাদ!", "Thank you!", s.langMode), pageWidth / 2, y, { align: "center" });
   y += 4;
