@@ -191,7 +191,7 @@ const MySQLBackendSettings = () => {
       </Card>
 
       {isEnabled && (
-        <Alert variant="destructive" className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400">
+        <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             {language === "bn"
