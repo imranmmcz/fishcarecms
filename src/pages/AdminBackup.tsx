@@ -80,7 +80,113 @@ const AdminBackup = () => {
     } catch (e) { console.error(e); }
   }, []);
 
-  useEffect(() => { loadBackupLogs(); loadSettings(); loadCronStatus(); }, [loadBackupLogs, loadSettings, loadCronStatus]);
+  // Google Drive functions
+  const loadGoogleSettings = useCallback(async () => {
+    try {
+      const { data } = await supabase.from("system_settings").select("setting_key, setting_value")
+        .in("setting_key", ["google_client_id", "google_client_secret"]);
+      const settings = data || [];
+      const findVal = (key: string) => settings.find((s) => s.setting_key === key)?.setting_value || '';
+      setGoogleClientId(findVal('google_client_id'));
+      setGoogleClientSecret(findVal('google_client_secret'));
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const checkDriveConnection = useCallback(async () => {
+    setIsCheckingDrive(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-drive-auth', {
+        body: { action: 'check_connection' }
+      });
+      if (!error && data) {
+        setDriveConnected(data.connected);
+        setDriveEmail(data.drive_email || '');
+        setDriveConnectedAt(data.connected_at || '');
+      }
+    } catch (e) { console.error(e); }
+    finally { setIsCheckingDrive(false); }
+  }, []);
+
+  const saveGoogleCredentials = async () => {
+    setIsSavingGoogle(true);
+    try {
+      const settingsToSave = [
+        { key: 'google_client_id', value: googleClientId, desc: 'Google OAuth Client ID' },
+        { key: 'google_client_secret', value: googleClientSecret, desc: 'Google OAuth Client Secret' },
+      ];
+      for (const s of settingsToSave) {
+        await supabase.from("system_settings").upsert(
+          { setting_key: s.key, setting_value: s.value, description: s.desc },
+          { onConflict: "setting_key" }
+        );
+      }
+      toast({ title: "সফল", description: "Google OAuth ক্রেডেনশিয়াল সংরক্ষিত হয়েছে" });
+    } catch (e: any) {
+      toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
+    } finally { setIsSavingGoogle(false); }
+  };
+
+  const connectGoogleDrive = async () => {
+    setIsConnecting(true);
+    try {
+      const redirectUri = window.location.origin + '/admin/backup';
+      const { data, error } = await supabase.functions.invoke('google-drive-auth', {
+        body: { action: 'get_auth_url', redirect_uri: redirectUri }
+      });
+      if (error) throw error;
+      if (data?.auth_url) {
+        window.location.href = data.auth_url;
+      } else {
+        toast({ title: "ত্রুটি", description: "Google OAuth URL তৈরি করতে সমস্যা হয়েছে। Client ID ও Secret সঠিকভাবে কনফিগার করা আছে কিনা নিশ্চিত করুন।", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
+    } finally { setIsConnecting(false); }
+  };
+
+  const disconnectGoogleDrive = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('google-drive-auth', {
+        body: { action: 'disconnect' }
+      });
+      if (error) throw error;
+      setDriveConnected(false);
+      setDriveEmail('');
+      setDriveConnectedAt('');
+      toast({ title: "সফল", description: "Google Drive সংযোগ বিচ্ছিন্ন হয়েছে" });
+    } catch (e: any) {
+      toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
+    }
+  };
+
+  // Handle OAuth callback code
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      const exchangeCode = async () => {
+        try {
+          const redirectUri = window.location.origin + '/admin/backup';
+          const { data, error } = await supabase.functions.invoke('google-drive-auth', {
+            body: { action: 'exchange_code', code, redirect_uri: redirectUri }
+          });
+          if (error) throw error;
+          if (data?.success) {
+            setDriveConnected(true);
+            setDriveEmail(data.drive_email || '');
+            toast({ title: "সফল", description: "Google Drive সফলভাবে সংযুক্ত হয়েছে!" });
+          }
+        } catch (e: any) {
+          toast({ title: "ত্রুটি", description: "Google Drive সংযোগ করতে সমস্যা হয়েছে", variant: "destructive" });
+        }
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      };
+      exchangeCode();
+    }
+  }, [toast]);
+
+  useEffect(() => { loadBackupLogs(); loadSettings(); loadCronStatus(); loadGoogleSettings(); checkDriveConnection(); }, [loadBackupLogs, loadSettings, loadCronStatus, loadGoogleSettings, checkDriveConnection]);
 
   const createBackup = async () => {
     setIsBackingUp(true);
