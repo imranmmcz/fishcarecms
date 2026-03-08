@@ -888,22 +888,41 @@ const AdminOrders = () => {
                         </h4>
                         <p className="text-sm text-muted-foreground mb-3">
                           {language === "bn"
-                            ? `পেমেন্ট স্ট্যাটাস: ${selectedOrder.payment_status === "pending" ? "পেন্ডিং" : selectedOrder.payment_status}। কাস্টমারকে এসএমএস রিমাইন্ডার পাঠান।`
-                            : `Payment status: ${selectedOrder.payment_status}. Send SMS reminder to customer.`}
+                            ? `পেমেন্ট স্ট্যাটাস: ${selectedOrder.payment_status === "pending" ? "পেন্ডিং" : selectedOrder.payment_status}। চ্যানেল সিলেক্ট করে রিমাইন্ডার পাঠান।`
+                            : `Payment status: ${selectedOrder.payment_status}. Select channels and send reminder.`}
                         </p>
+
+                        <div className="flex flex-wrap gap-3 mb-3">
+                          {[
+                            { key: "sms", label: language === "bn" ? "SMS" : "SMS", icon: Phone },
+                            { key: "whatsapp", label: "WhatsApp", icon: MessageSquare },
+                            { key: "in_app", label: language === "bn" ? "ইন-অ্যাপ" : "In-App", icon: Bell },
+                            { key: "email", label: language === "bn" ? "ইমেইল" : "Email", icon: Mail },
+                          ].map(ch => (
+                            <label key={ch.key} className="flex items-center gap-1.5 cursor-pointer">
+                              <Checkbox
+                                checked={reminderChannels.includes(ch.key)}
+                                onCheckedChange={() => toggleReminderChannel(ch.key)}
+                              />
+                              <ch.icon className="h-3.5 w-3.5" />
+                              <span className="text-sm">{ch.label}</span>
+                            </label>
+                          ))}
+                        </div>
+
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={handleSendPaymentReminder}
-                          disabled={isSendingReminder}
+                          disabled={isSendingReminder || reminderChannels.length === 0}
                           className="border-yellow-300 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/40"
                         >
                           {isSendingReminder ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                           ) : (
-                            <MessageSquare className="h-4 w-4 mr-2" />
+                            <Send className="h-4 w-4 mr-2" />
                           )}
-                          {language === "bn" ? "এসএমএস রিমাইন্ডার পাঠান" : "Send SMS Reminder"}
+                          {language === "bn" ? "রিমাইন্ডার পাঠান" : "Send Reminder"}
                         </Button>
                       </div>
                     </>
