@@ -23,7 +23,7 @@ import {
   FileText, Plus, Edit, Trash2, Globe, Eye, EyeOff,
   Search, Clock, ExternalLink, Menu, LogIn, UserPlus, Save, Loader2,
   Navigation, X, Home, ShoppingBag, LayoutGrid, TrendingUp, CheckCircle,
-  Fish, MessageSquare
+  Fish, MessageSquare, GripVertical
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -303,6 +303,62 @@ export default function AdminPages() {
   const [navEditDialogOpen, setNavEditDialogOpen] = useState(false);
   const [navEditSaving, setNavEditSaving] = useState(false);
 
+  // Drag and drop state for menu reordering
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [reorderSaving, setReorderSaving] = useState(false);
+
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === dropIndex || !headerContent) {
+      handleDragEnd();
+      return;
+    }
+
+    const reordered = [...navItems];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(dropIndex, 0, moved);
+
+    // Optimistic update
+    setNavItems(reordered);
+    handleDragEnd();
+
+    // Save to DB
+    setReorderSaving(true);
+    try {
+      const { error } = await supabase
+        .from("page_content")
+        .update({
+          content: { ...headerContent, navItems: reordered } as any,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("section_key", "header");
+      if (error) throw error;
+      setHeaderContent({ ...headerContent, navItems: reordered });
+      toast({ title: "সফল!", description: "মেনু ক্রম আপডেট হয়েছে" });
+    } catch (err: any) {
+      // Revert on error
+      fetchPages();
+      toast({ title: "ত্রুটি", description: err.message, variant: "destructive" });
+    } finally {
+      setReorderSaving(false);
+    }
+  };
+
   const openNavEdit = (item: NavItem, index: number) => {
     setEditingNavIndex(index);
     setNavEditForm({ label_bn: item.label_bn, label_en: item.label_en, path: item.path });
@@ -518,18 +574,34 @@ export default function AdminPages() {
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wider flex items-center gap-2">
             <Navigation className="h-3.5 w-3.5" /> মেনু পেজসমূহ
+            {reorderSaving && <Loader2 className="h-3 w-3 animate-spin" />}
           </h2>
           <p className="text-xs text-muted-foreground mb-3">
-            বর্তমানে মেনু বারে যে পেজগুলো প্রদর্শিত হচ্ছে। নতুন পেজ তৈরি করে "মেনুতে যোগ করুন" চেক করলে স্বয়ংক্রিয়ভাবে যুক্ত হবে।
+            বর্তমানে মেনু বারে যে পেজগুলো প্রদর্শিত হচ্ছে। ড্রাগ করে ক্রম পরিবর্তন করুন।
           </p>
           <div className="grid gap-2">
             {navItems.map((item, index) => {
               const IconComp = getNavIcon(item.path);
               const isSystemPage = !item.path.startsWith("/pages/");
+              const isDragging = dragIndex === index;
+              const isDragOver = dragOverIndex === index && dragIndex !== index;
               return (
-                <Card key={index} className="hover:shadow-sm transition-shadow">
+                <Card
+                  key={`${item.path}-${index}`}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`transition-all cursor-grab active:cursor-grabbing ${
+                    isDragging ? "opacity-40 scale-95" : ""
+                  } ${isDragOver ? "border-primary ring-2 ring-primary/20 scale-[1.01]" : "hover:shadow-sm"}`}
+                >
                   <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 px-4">
                     <div className="flex items-center gap-3 min-w-0">
+                      <div className="shrink-0 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                        <GripVertical className="h-5 w-5" />
+                      </div>
                       <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
                         <IconComp className="h-4 w-4 text-primary" />
                       </div>
