@@ -82,21 +82,23 @@ export function AddressFields({
   return (
     <div className="space-y-4">
       {/* Mobile Number */}
-      <div className="space-y-2">
-        <Label htmlFor="mobile" className={`flex items-center gap-2 ${labelClass}`}>
-          <Phone className="h-4 w-4" />
-          মোবাইল নম্বর <span className="text-red-400">*</span>
-        </Label>
-        <Input
-          id="mobile"
-          type="tel"
-          value={mobile}
-          onChange={(e) => onMobileChange(e.target.value)}
-          placeholder="01XXXXXXXXX"
-          className={inputClass}
-        />
-        {errors.mobile && <p className="text-sm text-red-400">{errors.mobile}</p>}
-      </div>
+      {!hideMobile && (
+        <div className="space-y-2">
+          <Label htmlFor="mobile" className={`flex items-center gap-2 ${labelClass}`}>
+            <Phone className="h-4 w-4" />
+            মোবাইল নম্বর <span className="text-red-400">*</span>
+          </Label>
+          <Input
+            id="mobile"
+            type="tel"
+            value={mobile}
+            onChange={(e) => onMobileChange(e.target.value)}
+            placeholder="01XXXXXXXXX"
+            className={inputClass}
+          />
+          {errors.mobile && <p className="text-sm text-red-400">{errors.mobile}</p>}
+        </div>
+      )}
 
       {/* Address Section Header */}
       <div className={`flex items-center gap-2 pt-2 ${isAuthVariant ? "text-white" : "text-foreground"}`}>
