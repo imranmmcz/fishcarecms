@@ -74,10 +74,8 @@ export function AddressFields({
   };
 
   const isAuthVariant = variant === "auth";
-  const labelClass = isAuthVariant ? "text-white" : "";
-  const inputClass = isAuthVariant
-    ? "bg-white/10 border-white/20 text-white placeholder:text-slate-400"
-    : "";
+  const labelClass = isAuthVariant ? "" : "";
+  const inputClass = isAuthVariant ? "" : "";
 
   return (
     <div className="space-y-4">
