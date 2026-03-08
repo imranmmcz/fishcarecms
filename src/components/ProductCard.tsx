@@ -11,6 +11,7 @@ import { Product } from "@/contexts/ProductsContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { supabase } from "@/integrations/supabase/client";
 import QuickViewModal from "@/components/QuickViewModal";
+import { useFlashSaleForProduct } from "@/hooks/useFlashSales";
 
 // Extended product type that can come from database or static data
 export interface DisplayProduct {
