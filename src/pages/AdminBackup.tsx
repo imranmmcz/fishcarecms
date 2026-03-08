@@ -342,6 +342,129 @@ const AdminBackup = () => {
           </CardContent>
         </Card>
 
+        {/* Google Drive / OAuth Settings */}
+        <Card className="border-blue-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <svg className="h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 5.5h6.28l3.43-5.5L7.71 3.5zm0 3.27L11.18 14H4.24L7.71 6.77zM22.84 15L16.29 3.5h-4.57l3.43 6 3.43 5.5h4.26zm-8.56-5.5l3.06 5h-6.12l3.06-5zM8.56 16h6.88L12 22.5 8.56 16z"/></svg>
+              Google Drive / OAuth সেটিংস
+            </CardTitle>
+            <CardDescription>Google Drive ব্যাকআপ ও OAuth সংযোগের জন্য ক্রেডেনশিয়াল কনফিগার করুন</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Connection Status */}
+            <div className="p-4 rounded-xl border border-border bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {isCheckingDrive ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : driveConnected ? (
+                    <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    </div>
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <Unlink className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {driveConnected ? 'Google Drive সংযুক্ত' : 'Google Drive সংযুক্ত নয়'}
+                    </p>
+                    {driveConnected && driveEmail && (
+                      <p className="text-sm text-muted-foreground">{driveEmail} • সংযুক্ত: {driveConnectedAt ? new Date(driveConnectedAt).toLocaleDateString('bn-BD') : ''}</p>
+                    )}
+                    {!driveConnected && <p className="text-sm text-muted-foreground">ব্যাকআপ Google Drive-এ সংরক্ষণ করতে সংযোগ করুন</p>}
+                  </div>
+                </div>
+                <div>
+                  {driveConnected ? (
+                    <Button variant="outline" size="sm" onClick={disconnectGoogleDrive} className="gap-2 text-destructive hover:text-destructive">
+                      <Unlink className="h-4 w-4" />
+                      সংযোগ বিচ্ছিন্ন
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={connectGoogleDrive} disabled={isConnecting || !googleClientId} className="gap-2">
+                      {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                      Google Drive সংযোগ
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* OAuth Credentials */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <KeyRound className="h-4 w-4 text-primary" />
+                OAuth ক্রেডেনশিয়াল
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Google Cloud Console থেকে OAuth 2.0 Client ID ও Client Secret সংগ্রহ করুন।{" "}
+                <a 
+                  href="https://console.cloud.google.com/apis/credentials" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Google Cloud Console <ExternalLink className="h-3 w-3" />
+                </a>
+              </p>
+
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="google-client-id" className="text-sm">Client ID</Label>
+                  <Input
+                    id="google-client-id"
+                    value={googleClientId}
+                    onChange={(e) => setGoogleClientId(e.target.value)}
+                    placeholder="xxxx.apps.googleusercontent.com"
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="google-client-secret" className="text-sm">Client Secret</Label>
+                  <div className="relative">
+                    <Input
+                      id="google-client-secret"
+                      type={showSecret ? "text" : "password"}
+                      value={googleClientSecret}
+                      onChange={(e) => setGoogleClientSecret(e.target.value)}
+                      placeholder="GOCSPX-xxxxxxxxxxxx"
+                      className="font-mono text-xs pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSecret(!showSecret)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={saveGoogleCredentials} disabled={isSavingGoogle} size="sm" className="gap-2">
+                  {isSavingGoogle ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  ক্রেডেনশিয়াল সেভ করুন
+                </Button>
+              </div>
+
+              <div className="p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground space-y-1">
+                <p className="font-medium">⚠️ সেটআপ নির্দেশিকা:</p>
+                <ul className="list-disc list-inside space-y-0.5 ml-1">
+                  <li>Google Cloud Console-এ একটি OAuth 2.0 Client ID তৈরি করুন</li>
+                  <li>Application type: <strong>Web application</strong> নির্বাচন করুন</li>
+                  <li>Authorized redirect URI: <code className="bg-background px-1 py-0.5 rounded">{window.location.origin}/admin/backup</code></li>
+                  <li>Google Drive API সক্রিয় করুন</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+
         <Card className="border-green-500/20">
           <CardHeader><CardTitle className="flex items-center gap-2"><Database className="h-5 w-5 text-green-500" />সিস্টেম ব্যাকআপ</CardTitle></CardHeader>
           <CardContent>
