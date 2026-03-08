@@ -1,18 +1,27 @@
 /**
  * PDF Font Manager for jsPDF
- * Nikosh ফন্ট (বাংলা) এবং Helvetica ফন্ট (ইংরেজি) লোড ও রেজিস্টার করে
+ * বাংলা ফন্ট সাপোর্ট: HindSiliguri (primary), NotoSansBengali, Nikosh (fallback)
  * 
- * সমস্যা সমাধান:
+ * সমাধান:
+ * - একাধিক ফন্ট ফলব্যাক চেইন
  * - ফন্ট ক্যাশিং ও রেস কন্ডিশন ফিক্স
- * - এরর হ্যান্ডলিং উন্নত
- * - jsPDF ইনস্ট্যান্স ট্র্যাকিং যাতে একই ডকে দুবার রেজিস্টার না হয়
+ * - jsPDF ইনস্ট্যান্স ট্র্যাকিং
+ * - Bold / Normal আলাদা ফন্ট ফাইল
  */
 
 import jsPDF from "jspdf";
 
-let nikoshBase64Cache: string | null = null;
-let nikoshLoading: Promise<string | null> | null = null;
+// Cache structure per font file
+interface FontCache {
+  base64: string | null;
+  loading: Promise<string | null> | null;
+}
+
+const fontCaches: Record<string, FontCache> = {};
 const registeredDocs = new WeakSet<jsPDF>();
+
+// Which Bengali font was successfully registered (so setBanglaFont uses the right name)
+const docFontName = new WeakMap<jsPDF, string>();
 
 async function loadFontAsBase64(url: string): Promise<string | null> {
   try {
@@ -25,7 +34,6 @@ async function loadFontAsBase64(url: string): Promise<string | null> {
     }
     const bytes = new Uint8Array(buffer);
     let binary = "";
-    // Process in chunks to avoid call stack issues with large fonts
     const chunkSize = 8192;
     for (let i = 0; i < bytes.length; i += chunkSize) {
       const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
@@ -38,72 +46,140 @@ async function loadFontAsBase64(url: string): Promise<string | null> {
   }
 }
 
-async function loadNikoshFont(): Promise<string | null> {
-  if (nikoshBase64Cache) return nikoshBase64Cache;
-  if (nikoshLoading) return nikoshLoading;
+function getCachedFont(url: string): Promise<string | null> {
+  if (!fontCaches[url]) {
+    fontCaches[url] = { base64: null, loading: null };
+  }
+  const cache = fontCaches[url];
+  if (cache.base64) return Promise.resolve(cache.base64);
+  if (cache.loading) return cache.loading;
 
-  nikoshLoading = loadFontAsBase64("/fonts/Nikosh.ttf").then((base64) => {
-    if (base64) {
-      nikoshBase64Cache = base64;
-    } else {
-      // Reset so next call retries
-      nikoshLoading = null;
+  cache.loading = loadFontAsBase64(url)
+    .then((b64) => {
+      if (b64) cache.base64 = b64;
+      else cache.loading = null;
+      return b64;
+    })
+    .catch((err) => {
+      console.error("Font loading rejected:", err);
+      cache.loading = null;
+      return null;
+    });
+
+  return cache.loading;
+}
+
+// Font definitions with fallback priority
+interface BanglaFontDef {
+  name: string; // jsPDF font family name
+  regularUrl: string;
+  boldUrl: string; // can be same as regular if no separate bold
+}
+
+const BANGLA_FONTS: BanglaFontDef[] = [
+  {
+    name: "HindSiliguri",
+    regularUrl: "/fonts/HindSiliguri-Regular.ttf",
+    boldUrl: "/fonts/HindSiliguri-Bold.ttf",
+  },
+  {
+    name: "NotoSansBengali",
+    regularUrl: "/fonts/NotoSansBengali-Regular.ttf",
+    boldUrl: "/fonts/NotoSansBengali-Regular.ttf", // variable font handles weight
+  },
+  {
+    name: "Nikosh",
+    regularUrl: "/fonts/Nikosh.ttf",
+    boldUrl: "/fonts/Nikosh.ttf",
+  },
+];
+
+/**
+ * Try registering a single font (both regular and bold) on a jsPDF doc.
+ * Returns true if successful.
+ */
+async function tryRegisterFont(doc: jsPDF, fontDef: BanglaFontDef): Promise<boolean> {
+  try {
+    const [regularBase64, boldBase64] = await Promise.all([
+      getCachedFont(fontDef.regularUrl),
+      fontDef.boldUrl === fontDef.regularUrl
+        ? getCachedFont(fontDef.regularUrl)
+        : getCachedFont(fontDef.boldUrl),
+    ]);
+
+    if (!regularBase64) return false;
+
+    // Register regular
+    const regFileName = `${fontDef.name}-Regular.ttf`;
+    doc.addFileToVFS(regFileName, regularBase64);
+    doc.addFont(regFileName, fontDef.name, "normal");
+
+    // Register bold
+    const boldFileName = `${fontDef.name}-Bold.ttf`;
+    const boldData = boldBase64 || regularBase64;
+    doc.addFileToVFS(boldFileName, boldData);
+    doc.addFont(boldFileName, fontDef.name, "bold");
+
+    // Verify by trying to set it
+    doc.setFont(fontDef.name, "normal");
+    const currentFont = doc.getFont();
+    if (currentFont.fontName !== fontDef.name) {
+      console.warn(`Font ${fontDef.name} registration seemed to succeed but setFont failed`);
+      return false;
     }
-    return base64;
-  }).catch((err) => {
-    console.error("Font loading promise rejected:", err);
-    nikoshLoading = null;
-    return null;
-  });
 
-  return nikoshLoading;
+    console.log(`Bengali PDF font registered: ${fontDef.name}`);
+    return true;
+  } catch (err) {
+    console.warn(`Failed to register font ${fontDef.name}:`, err);
+    return false;
+  }
 }
 
 /**
- * Register Nikosh font with a jsPDF instance.
- * Call this once before using setBanglaFont().
+ * Register the best available Bengali font with a jsPDF instance.
+ * Tries fonts in order: HindSiliguri → NotoSansBengali → Nikosh
  * Uses WeakSet to prevent double-registration on the same doc.
  */
 export async function registerBanglaFont(doc: jsPDF): Promise<boolean> {
-  // Skip if already registered on this doc
   if (registeredDocs.has(doc)) return true;
 
-  const base64 = await loadNikoshFont();
-  if (!base64) {
-    console.warn("Nikosh font not available - Bengali text may not render correctly in PDF");
-    return false;
+  for (const fontDef of BANGLA_FONTS) {
+    const success = await tryRegisterFont(doc, fontDef);
+    if (success) {
+      registeredDocs.add(doc);
+      docFontName.set(doc, fontDef.name);
+      return true;
+    }
   }
 
-  try {
-    doc.addFileToVFS("Nikosh.ttf", base64);
-    doc.addFont("Nikosh.ttf", "Nikosh", "normal");
-    // Register same font data for bold style
-    doc.addFileToVFS("Nikosh-Bold.ttf", base64);
-    doc.addFont("Nikosh-Bold.ttf", "Nikosh", "bold");
-    registeredDocs.add(doc);
-    return true;
-  } catch (err) {
-    console.error("Failed to register Nikosh font:", err);
-    return false;
-  }
+  console.warn("No Bengali font could be registered - Bengali text may not render correctly");
+  return false;
+}
+
+/**
+ * Get the registered Bengali font name for a doc, or fallback.
+ */
+function getRegisteredFontName(doc: jsPDF): string {
+  return docFontName.get(doc) || "HindSiliguri";
 }
 
 /**
  * Set font based on language.
- * Bengali → Nikosh, English → helvetica
+ * Bengali → registered Bengali font, English → helvetica
  */
 export function setBanglaFont(doc: jsPDF, isBn: boolean, style: "normal" | "bold" = "normal") {
   if (isBn) {
+    const fontName = getRegisteredFontName(doc);
     try {
-      doc.setFont("Nikosh", style);
-      // Verify the font was actually set
+      doc.setFont(fontName, style);
       const currentFont = doc.getFont();
-      if (currentFont.fontName !== "Nikosh") {
-        console.warn("Nikosh font set failed, falling back to helvetica");
+      if (currentFont.fontName !== fontName) {
+        console.warn(`${fontName} set failed, falling back to helvetica`);
         doc.setFont("helvetica", style);
       }
     } catch {
-      console.warn("Nikosh font not available, using helvetica");
+      console.warn(`${fontName} not available, using helvetica`);
       doc.setFont("helvetica", style);
     }
   } else {
@@ -112,17 +188,31 @@ export function setBanglaFont(doc: jsPDF, isBn: boolean, style: "normal" | "bold
 }
 
 /**
- * Get the font name string for autoTable usage
+ * Get the font name string for autoTable usage.
+ * Uses the first font name as default (HindSiliguri).
  */
 export function getFontName(isBn: boolean): string {
-  return isBn ? "Nikosh" : "helvetica";
+  return isBn ? "HindSiliguri" : "helvetica";
 }
 
 /**
- * Pre-load the Nikosh font so it's cached for future use.
- * Call this early (e.g., on app load) to avoid delays when generating PDFs.
+ * Get the actual registered font name for a specific doc instance.
+ * Use this for autoTable when you have the doc reference.
+ */
+export function getDocFontName(doc: jsPDF, isBn: boolean): string {
+  return isBn ? getRegisteredFontName(doc) : "helvetica";
+}
+
+/**
+ * Pre-load all Bengali fonts so they're cached for future use.
+ * Call this early (e.g., on app load) to avoid delays.
  */
 export async function preloadBanglaFont(): Promise<boolean> {
-  const result = await loadNikoshFont();
-  return result !== null;
+  const results = await Promise.allSettled(
+    BANGLA_FONTS.flatMap((f) => [
+      getCachedFont(f.regularUrl),
+      f.boldUrl !== f.regularUrl ? getCachedFont(f.boldUrl) : Promise.resolve(null),
+    ])
+  );
+  return results.some((r) => r.status === "fulfilled" && r.value !== null);
 }

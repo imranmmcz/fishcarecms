@@ -8,7 +8,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from "qrcode";
 import type { Order } from "@/lib/api-client";
-import { registerBanglaFont, setBanglaFont, getFontName } from "@/lib/pdfBanglaFont";
+import { registerBanglaFont, setBanglaFont, getDocFontName } from "@/lib/pdfBanglaFont";
 import type { InvoicePrintSettings } from "@/hooks/useInvoicePrintSettings";
 
 // Generate QR code as base64 data URL
@@ -144,7 +144,7 @@ async function renderMinimal(doc: jsPDF, order: Order, s: ReturnType<typeof reso
   const margin = 15;
   const contentWidth = pageWidth - margin * 2;
   const isBn = s.langMode !== "en";
-  const fontName = getFontName(isBn);
+  const fontName = getDocFontName(doc, isBn);
   const setFont = (style: "normal" | "bold" = "normal") => setBanglaFont(doc, isBn, style);
   const primary = hexToRgb(s.primaryColor);
   let y = 15;
@@ -317,7 +317,7 @@ async function renderModern(doc: jsPDF, order: Order, s: ReturnType<typeof resol
   const margin = 14;
   const contentWidth = pageWidth - margin * 2;
   const isBn = s.langMode !== "en";
-  const fontName = getFontName(isBn);
+  const fontName = getDocFontName(doc, isBn);
   const setFont = (style: "normal" | "bold" = "normal") => setBanglaFont(doc, isBn, style);
   const primary = hexToRgb(s.primaryColor);
   const primaryLight: [number, number, number] = [
@@ -713,7 +713,7 @@ async function renderDetailed(doc: jsPDF, order: Order, s: ReturnType<typeof res
   const margin = 12;
   const contentWidth = pageWidth - margin * 2;
   const isBn = s.langMode !== "en";
-  const fontName = getFontName(isBn);
+  const fontName = getDocFontName(doc, isBn);
   const setFont = (style: "normal" | "bold" = "normal") => setBanglaFont(doc, isBn, style);
   const primary = hexToRgb(s.primaryColor);
   let y = 0;

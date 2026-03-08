@@ -5,7 +5,7 @@
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { registerBanglaFont, setBanglaFont, getFontName } from "@/lib/pdfBanglaFont";
+import { registerBanglaFont, setBanglaFont, getDocFontName } from "@/lib/pdfBanglaFont";
 
 export interface PurchaseOrderItem {
   product_name?: string;
@@ -60,7 +60,7 @@ export const generatePurchaseOrderPDF = async (order: PurchaseOrderData, options
   // Register Nikosh font
   await registerBanglaFont(doc);
   const setFont = (style: "normal" | "bold" = "normal") => setBanglaFont(doc, isBn, style);
-  const fontName = getFontName(isBn);
+  const fontName = getDocFontName(doc, isBn);
 
   const formatPrice = (amount: number) => {
     return `৳${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
