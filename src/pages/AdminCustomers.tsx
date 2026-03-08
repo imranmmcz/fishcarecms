@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Users, ShoppingCart, Phone, Mail, MapPin, Eye, Plus, UserPlus } from "lucide-react";
+import { Search, Users, ShoppingCart, Phone, Mail, MapPin, Eye, Plus, UserPlus, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -203,6 +203,115 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
     setIsOrdersDialogOpen(true);
   };
 
+  // Export customers to CSV
+  const handleExportCSV = () => {
+    try {
+      const headers = ['নাম', 'ফোন', 'ইমেইল', 'বিভাগ', 'জেলা', 'উপজেলা', 'ঠিকানা', 'মোট অর্ডার', 'মোট খরচ'];
+      const csvRows = [headers.join(',')];
+      
+      filteredCustomers.forEach(c => {
+        const row = [
+          `"${c.customer_name || ''}"`,
+          `"${c.customer_phone || ''}"`,
+          `"${c.customer_email || ''}"`,
+          `"${c.division || ''}"`,
+          `"${c.district || ''}"`,
+          `"${c.upazila || ''}"`,
+          `"${c.shipping_address || ''}"`,
+          c.total_orders,
+          c.total_spent,
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const csvContent = '\uFEFF' + csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `customers_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${filteredCustomers.length} জন কাস্টমার এক্সপোর্ট হয়েছে`);
+    } catch (error) {
+      toast.error('এক্সপোর্ট করতে সমস্যা হয়েছে');
+    }
+  };
+
+  // Import customers from CSV
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      if (lines.length < 2) {
+        toast.error('CSV ফাইলে কোনো ডাটা নেই');
+        return;
+      }
+
+      // Skip header row
+      const dataLines = lines.slice(1);
+      let imported = 0;
+      let skipped = 0;
+
+      for (const line of dataLines) {
+        // Parse CSV properly handling quoted fields
+        const fields: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') { inQuotes = !inQuotes; continue; }
+          if (ch === ',' && !inQuotes) { fields.push(current.trim()); current = ''; continue; }
+          current += ch;
+        }
+        fields.push(current.trim());
+
+        const name = fields[0] || '';
+        const phone = fields[1] || '';
+        if (!name || !phone) { skipped++; continue; }
+
+        const { error } = await supabase.from('customers').upsert({
+          customer_name: name,
+          customer_phone: phone,
+          customer_email: fields[2] || null,
+          division: fields[3] || null,
+          district: fields[4] || null,
+          upazila: fields[5] || null,
+          shipping_address: fields[6] || null,
+        }, { onConflict: 'customer_phone' });
+
+        if (error) { skipped++; } else { imported++; }
+      }
+
+      toast.success(`${imported} জন কাস্টমার ইমপোর্ট হয়েছে${skipped > 0 ? `, ${skipped} টি বাদ পড়েছে` : ''}`);
+      fetchCustomers();
+    } catch (error) {
+      console.error('Import error:', error);
+      toast.error('ইমপোর্ট করতে সমস্যা হয়েছে');
+    }
+
+    // Reset file input
+    e.target.value = '';
+  };
+
+  // Download sample CSV template
+  const handleDownloadTemplate = () => {
+    const headers = 'নাম,ফোন,ইমেইল,বিভাগ,জেলা,উপজেলা,ঠিকানা';
+    const sample = '"রহিম উদ্দিন","01712345678","rahim@email.com","ঢাকা","ঢাকা","সাভার","সাভার বাজার"';
+    const csvContent = '\uFEFF' + headers + '\n' + sample;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'customer_import_template.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('টেমপ্লেট ডাউনলোড হয়েছে');
+  };
+
   const filteredCustomers = customers.filter(customer =>
     customer.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.customer_phone.includes(searchTerm) ||
@@ -239,14 +348,29 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
             <h1 className="text-2xl font-bold text-foreground">কাস্টমার ম্যানেজমেন্ট</h1>
             <p className="text-muted-foreground">অর্ডারকারী কাস্টমারদের তালিকা</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
               <UserPlus className="h-4 w-4" />
-              কাস্টমার যোগ করুন
+              কাস্টমার যোগ
             </Button>
-            <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
-              <Users className="h-5 w-5 text-primary" />
-              <span className="font-semibold text-primary">{customers.length} জন কাস্টমার</span>
+            <Button variant="outline" onClick={handleExportCSV} className="gap-2">
+              <Download className="h-4 w-4" />
+              এক্সপোর্ট
+            </Button>
+            <Button variant="outline" className="gap-2 relative" asChild>
+              <label>
+                <Upload className="h-4 w-4" />
+                ইমপোর্ট
+                <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
+              </label>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleDownloadTemplate} className="gap-1 text-xs">
+              <FileSpreadsheet className="h-3 w-3" />
+              টেমপ্লেট
+            </Button>
+            <div className="flex items-center gap-2 bg-primary/10 px-3 py-2 rounded-lg">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="font-semibold text-sm text-primary">{customers.length} জন</span>
             </div>
           </div>
         </div>
