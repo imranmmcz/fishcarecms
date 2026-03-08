@@ -30,6 +30,7 @@ import { WhatsAppSettings } from "@/components/admin/WhatsAppSettings";
 import POSPrintSettings from "@/components/admin/POSPrintSettings";
 import SmsSettings from "@/components/admin/SmsSettings";
 import ChatbotSettings from "@/components/admin/ChatbotSettings";
+import MySQLBackendSettings from "@/components/admin/MySQLBackendSettings";
 
 interface SystemSetting {
   id: string;
