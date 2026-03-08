@@ -29,7 +29,7 @@ const defaultCouriers: CourierService[] = [
   { id: 1, name: 'Sundarban Courier', name_bn: 'সুন্দরবন কুরিয়ার', tracking_url_template: null, is_active: true, display_order: 1 },
   { id: 2, name: 'SA Paribahan', name_bn: 'এসএ পরিবহন', tracking_url_template: null, is_active: true, display_order: 2 },
   { id: 3, name: 'Pathao Courier', name_bn: 'পাঠাও কুরিয়ার', tracking_url_template: null, is_active: true, display_order: 3 },
-  { id: 4, name: 'RedX', name_bn: 'রেডএক্স', tracking_url_template: null, is_active: true, display_order: 4 },
+  { id: 4, name: 'RedX', name_bn: 'রেডএক্স', tracking_url_template: 'https://redx.com.bd/track-parcel/?trackingId={tracking_number}', is_active: true, display_order: 4 },
   { id: 5, name: 'Steadfast', name_bn: 'স্টেডফাস্ট', tracking_url_template: null, is_active: true, display_order: 5 },
   { id: 6, name: 'eCourier', name_bn: 'ইকুরিয়ার', tracking_url_template: null, is_active: true, display_order: 6 },
   { id: 7, name: 'Paperfly', name_bn: 'পেপারফ্লাই', tracking_url_template: null, is_active: true, display_order: 7 },

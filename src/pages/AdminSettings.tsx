@@ -25,6 +25,7 @@ import DeliverySettingsAdmin from "@/components/admin/DeliverySettingsAdmin";
 import InvoiceSettings from "@/components/admin/InvoiceSettings";
 import { SteadfastCourierSettings } from "@/components/admin/SteadfastCourierSettings";
 import { SundarbanCourierSettings } from "@/components/admin/SundarbanCourierSettings";
+import { RedxCourierSettings } from "@/components/admin/RedxCourierSettings";
 import { WhatsAppSettings } from "@/components/admin/WhatsAppSettings";
 import POSPrintSettings from "@/components/admin/POSPrintSettings";
 import SmsSettings from "@/components/admin/SmsSettings";
@@ -726,12 +727,19 @@ const AdminSettings = () => {
                   <Truck className="h-4 w-4 mr-2" />
                   সুন্দরবন
                 </TabsTrigger>
+                <TabsTrigger value="redx" className="flex-1">
+                  <Truck className="h-4 w-4 mr-2" />
+                  RedX
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="steadfast" className="mt-4">
                 <SteadfastCourierSettings />
               </TabsContent>
               <TabsContent value="sundarban" className="mt-4">
                 <SundarbanCourierSettings />
+              </TabsContent>
+              <TabsContent value="redx" className="mt-4">
+                <RedxCourierSettings />
               </TabsContent>
             </Tabs>
           </TabsContent>
