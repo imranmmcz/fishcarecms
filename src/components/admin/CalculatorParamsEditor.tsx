@@ -45,6 +45,8 @@ const groupLabels: Record<string, string> = {
   utility: "ইউটিলিটি",
   fixed_cost: "স্থায়ী খরচ",
   dosage: "ডোজ",
+  fish_density: "মাছের ঘনত্ব",
+  fingerling_weight: "পোনার ওজন",
 };
 
 export function CalculatorParamsEditor() {
