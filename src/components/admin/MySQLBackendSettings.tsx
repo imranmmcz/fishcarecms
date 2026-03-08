@@ -256,7 +256,7 @@ const MySQLBackendSettings = () => {
               {language === "bn" ? "কানেকশন টেস্ট" : "Test Connection"}
             </Button>
             {connectionStatus === "success" && (
-              <div className="flex items-center gap-1 text-green-600">
+              <div className="flex items-center gap-1 text-primary">
                 <CheckCircle2 className="h-4 w-4" />
                 <span className="text-sm">{language === "bn" ? "সংযুক্ত" : "Connected"}</span>
               </div>
