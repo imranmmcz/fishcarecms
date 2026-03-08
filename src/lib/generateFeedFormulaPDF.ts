@@ -45,7 +45,7 @@ export const generateFeedFormulaPDF = async (options: FeedFormulaPDFOptions) => 
   // Register Nikosh font
   await registerBanglaFont(doc);
   const setFont = (style: "normal" | "bold" = "normal") => setBanglaFont(doc, isBn, style);
-  const fontName = getFontName(isBn);
+  const fontName = getDocFontName(doc, isBn);
 
   // ========== HEADER ==========
   doc.setFontSize(22);
