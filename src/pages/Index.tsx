@@ -163,6 +163,8 @@ const Index = () => {
       <section className="relative">
         <HeroSlider />
       </section>
+      {/* Flash Sale */}
+      <FlashSaleSection />
 
       {/* Featured Products */}
       <FeaturedProducts />
