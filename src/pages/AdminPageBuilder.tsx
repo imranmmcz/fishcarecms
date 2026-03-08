@@ -384,7 +384,11 @@ export default function AdminPageBuilder() {
     updateSectionContent("footer", "socialLinks", items);
   };
 
-  const socialIconOptions = ["Facebook", "Youtube", "MessageCircle", "Instagram", "Twitter", "Globe", "Linkedin", "Github"];
+  const socialIconOptions = [
+    "Facebook", "Youtube", "MessageCircle", "Instagram", "Twitter", "Globe", 
+    "Linkedin", "Github", "Send", "Music2", "Phone", "Mail", "MapPin",
+    "Twitch", "Rss", "ExternalLink", "Share2", "Video"
+  ];
 
   const heroSection = getSection("hero");
   const modulesSection = getSection("modules");
