@@ -354,9 +354,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
         {/* Price */}
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-primary">{formatPrice(product.price)}</span>
-          {product.originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
+          <span className="text-2xl font-bold text-primary">{formatPrice(displayPrice)}</span>
+          {(flashPrice || product.originalPrice) && (
+            <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice || product.price)}</span>
           )}
         </div>
 
