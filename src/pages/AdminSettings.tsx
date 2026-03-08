@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search, FileText, Truck, MessageCircle, Printer, MessageSquare, Bot, Database } from "lucide-react";
+import { Settings, Save, Loader2, RefreshCw, Globe, DollarSign, CreditCard, Mail, Palette, Type, Search, FileText, Truck, MessageCircle, Printer, MessageSquare, Bot } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useCurrency, currencies, CurrencyCode } from "@/contexts/CurrencyContext";
@@ -30,7 +30,7 @@ import { WhatsAppSettings } from "@/components/admin/WhatsAppSettings";
 import POSPrintSettings from "@/components/admin/POSPrintSettings";
 import SmsSettings from "@/components/admin/SmsSettings";
 import ChatbotSettings from "@/components/admin/ChatbotSettings";
-import MySQLBackendSettings from "@/components/admin/MySQLBackendSettings";
+
 
 interface SystemSetting {
   id: string;
@@ -294,10 +294,6 @@ const AdminSettings = () => {
             <TabsTrigger value="chatbot" className="flex items-center gap-2">
               <Bot className="h-4 w-4" />
               {language === "bn" ? "চ্যাটবট" : "Chatbot"}
-            </TabsTrigger>
-            <TabsTrigger value="backend" className="flex items-center gap-2">
-              <Database className="h-4 w-4" />
-              {language === "bn" ? "ব্যাকএন্ড" : "Backend"}
             </TabsTrigger>
           </TabsList>
 
@@ -769,10 +765,6 @@ const AdminSettings = () => {
             <ChatbotSettings />
           </TabsContent>
 
-          {/* MySQL Backend Settings Tab */}
-          <TabsContent value="backend" className="space-y-6 mt-6">
-            <MySQLBackendSettings />
-          </TabsContent>
         </Tabs>
       </div>
     </AdminLayout>
