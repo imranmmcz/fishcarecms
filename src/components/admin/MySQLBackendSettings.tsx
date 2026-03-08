@@ -275,8 +275,8 @@ const MySQLBackendSettings = () => {
       <Card className="border-border">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-orange-500/10">
-              <Server className="h-5 w-5 text-orange-600" />
+            <div className="p-2 rounded-lg bg-accent">
+              <Server className="h-5 w-5 text-accent-foreground" />
             </div>
             <div>
               <CardTitle className="text-lg">
