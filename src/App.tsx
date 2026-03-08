@@ -18,6 +18,10 @@ import { POSLayout } from "@/components/POSLayout";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import GoogleAnalyticsLoader from "@/components/GoogleAnalyticsLoader";
 import { ActivityLogger } from "@/components/ActivityLogger";
+import { preloadBanglaFont } from "@/lib/pdfBanglaFont";
+
+// Pre-load Nikosh font for PDF generation
+preloadBanglaFont();
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
 import PondCalculator from "./pages/PondCalculator";

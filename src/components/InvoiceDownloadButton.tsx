@@ -38,7 +38,7 @@ export const InvoiceDownloadButton = ({
     try {
       await new Promise((r) => setTimeout(r, 200));
       const langMode = langOverride || printSettings.languageMode;
-      generateInvoicePDF(order, {
+      await generateInvoicePDF(order, {
         language: langMode === "dual" ? "bn" : langMode as "bn" | "en",
         copyType,
         printSettings: { ...printSettings, languageMode: langMode as any },
