@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard, TrendingUp, TrendingDown, Waves, FileText, Home, Fish,
   CloudUpload, User, Settings, Shield, LogOut, ChevronDown, ChevronLeft, ChevronRight,
-  Menu, X, Package, RefreshCw, Store, MonitorSmartphone, BarChart3, Palette, PenSquare, type LucideIcon,
+  Menu, X, Package, RefreshCw, Store, MonitorSmartphone, BarChart3, Palette, PenSquare, Stethoscope, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
