@@ -81,6 +81,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import AdminBlog from "./pages/AdminBlog";
 import AdminCampaigns from "./pages/AdminCampaigns";
+import AdminFlashSales from "./pages/AdminFlashSales";
 import AdminNotificationTemplates from "./pages/AdminNotificationTemplates";
 import AdminFarmingReports from "./pages/AdminFarmingReports";
 import FarmProfitPrediction from "./pages/FarmProfitPrediction";
