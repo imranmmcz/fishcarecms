@@ -11,7 +11,7 @@ import {
 import { getDivisions, getDistrictsByDivision, getUpazilasByDistrict } from "@/data/bangladeshLocationData";
 import { Phone, MapPin } from "lucide-react";
 
-interface AddressFieldsProps {
+export interface AddressFieldsProps {
   mobile: string;
   division: string;
   district: string;
@@ -24,6 +24,7 @@ interface AddressFieldsProps {
   onVillageChange: (value: string) => void;
   errors?: Record<string, string>;
   variant?: "profile" | "auth";
+  hideMobile?: boolean;
 }
 
 export function AddressFields({
