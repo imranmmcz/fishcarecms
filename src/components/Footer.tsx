@@ -5,7 +5,9 @@ import { UnderwaterEffect } from "@/components/UnderwaterEffect";
 import { usePageContent } from "@/hooks/usePageContent";
 
 const iconMap: Record<string, any> = {
-  Facebook, Youtube, MessageCircle, Instagram, Twitter, Globe, Linkedin, Github
+  Facebook, Youtube, MessageCircle, Instagram, Twitter, Globe, Linkedin, Github,
+  Send: MessageCircle, Music2: Globe, Phone, Mail, MapPin,
+  Twitch: Globe, Rss: Globe, ExternalLink: Globe, Share2: Globe, Video: Globe
 };
 
 const Footer = () => {

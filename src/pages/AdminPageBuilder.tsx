@@ -384,7 +384,11 @@ export default function AdminPageBuilder() {
     updateSectionContent("footer", "socialLinks", items);
   };
 
-  const socialIconOptions = ["Facebook", "Youtube", "MessageCircle", "Instagram", "Twitter", "Globe", "Linkedin", "Github"];
+  const socialIconOptions = [
+    "Facebook", "Youtube", "MessageCircle", "Instagram", "Twitter", "Globe", 
+    "Linkedin", "Github", "Send", "Music2", "Phone", "Mail", "MapPin",
+    "Twitch", "Rss", "ExternalLink", "Share2", "Video"
+  ];
 
   const heroSection = getSection("hero");
   const modulesSection = getSection("modules");
@@ -1325,33 +1329,49 @@ export default function AdminPageBuilder() {
                   </div>
                   <div className="space-y-3">
                     {(footerSection?.content.socialLinks || []).map((item: SocialLinkItem, index: number) => (
-                      <div key={index} className="flex items-center gap-3 border rounded-lg p-3">
-                        <div className="flex-1 grid grid-cols-3 gap-2">
-                          <Input
-                            placeholder="নাম"
-                            value={item.name}
-                            onChange={(e) => updateSocialLink(index, "name", e.target.value)}
-                          />
-                          <select
-                            className="p-2 border rounded-md bg-background text-sm"
-                            value={item.icon}
-                            onChange={(e) => updateSocialLink(index, "icon", e.target.value)}
-                          >
-                            {socialIconOptions.map(icon => (
-                              <option key={icon} value={icon}>{icon}</option>
-                            ))}
-                          </select>
-                          <Input
-                            placeholder="URL"
-                            value={item.url}
-                            onChange={(e) => updateSocialLink(index, "url", e.target.value)}
-                          />
+                      <div key={index} className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">লিংক #{index + 1}</span>
+                          <Button variant="destructive" size="sm" onClick={() => removeSocialLink(index)}>
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            মুছুন
+                          </Button>
                         </div>
-                        <Button variant="destructive" size="icon" onClick={() => removeSocialLink(index)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">প্ল্যাটফর্ম নাম</Label>
+                            <Input
+                              placeholder="যেমন: Facebook"
+                              value={item.name}
+                              onChange={(e) => updateSocialLink(index, "name", e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">আইকন</Label>
+                            <select
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              value={item.icon}
+                              onChange={(e) => updateSocialLink(index, "icon", e.target.value)}
+                            >
+                              {socialIconOptions.map(icon => (
+                                <option key={icon} value={icon}>{icon === "MessageCircle" ? "WhatsApp" : icon === "Send" ? "Telegram" : icon === "Music2" ? "TikTok" : icon === "Share2" ? "Share" : icon === "Video" ? "Video" : icon}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">লিংক URL</Label>
+                            <Input
+                              placeholder="https://..."
+                              value={item.url}
+                              onChange={(e) => updateSocialLink(index, "url", e.target.value)}
+                            />
+                          </div>
+                        </div>
                       </div>
                     ))}
+                    {(footerSection?.content.socialLinks || []).length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">কোনো সোশ্যাল লিংক নেই। "যোগ করুন" বাটনে ক্লিক করুন।</p>
+                    )}
                   </div>
                 </div>
 
