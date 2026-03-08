@@ -255,6 +255,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { t, language } = useLanguage();
   const isBn = language === "bn";
   const isMobileView = useIsMobile();
+  const { getSectionContent } = usePageContent();
+  const headerData = getSectionContent<Record<string, any>>("header");
+  const siteLogo = headerData?.logoUrl || null;
+  const siteName = headerData?.companyName || (isBn ? "মাছ চাষ" : "Fish Farming");
 
   const [userName, setUserName] = useState("");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
