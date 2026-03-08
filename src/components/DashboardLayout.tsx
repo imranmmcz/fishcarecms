@@ -463,11 +463,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               )} style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}>
                 {!adminSidebarCollapsed && (
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                    <div className="p-2 rounded-xl shrink-0 bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
-                      <Fish className="h-5 w-5 text-primary-foreground" />
-                    </div>
+                    {siteLogo ? (
+                      <img src={siteLogo} alt={siteName} className="h-10 w-10 rounded-xl shrink-0 object-contain shadow-lg" />
+                    ) : (
+                      <div className="p-2 rounded-xl shrink-0 bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
+                        <Fish className="h-5 w-5 text-primary-foreground" />
+                      </div>
+                    )}
                     <div className="min-w-0">
-                      <h1 className="font-bold text-sm leading-tight truncate" style={{ color: 'hsl(var(--sidebar-text))' }}>{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
+                      <h1 className="font-bold text-sm leading-tight truncate" style={{ color: 'hsl(var(--sidebar-text))' }}>{siteName}</h1>
                       <p className="text-[10px] leading-tight" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>{roleLabel}</p>
                     </div>
                   </div>
