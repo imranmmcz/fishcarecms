@@ -1,4 +1,5 @@
 import { ReactNode, useState, useEffect } from "react";
+import { usePageContent } from "@/hooks/usePageContent";
 import { InactivityWarningBanner } from "@/components/InactivityWarningBanner";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
