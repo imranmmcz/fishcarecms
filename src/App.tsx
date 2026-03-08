@@ -86,6 +86,7 @@ import FarmProfitPrediction from "./pages/FarmProfitPrediction";
 import SmartFeedCalculator from "./pages/SmartFeedCalculator";
 import MedicineRecommendation from "./pages/MedicineRecommendation";
 import DashboardAlerts from "./pages/DashboardAlerts";
+import DashboardDiseaseDetect from "./pages/DashboardDiseaseDetect";
 import FishSpecies from "./pages/FishSpecies";
 import POSDashboard from "./pages/pos/POSDashboard";
 import POSHistory from "./pages/pos/POSHistory";
