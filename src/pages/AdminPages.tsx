@@ -303,6 +303,62 @@ export default function AdminPages() {
   const [navEditDialogOpen, setNavEditDialogOpen] = useState(false);
   const [navEditSaving, setNavEditSaving] = useState(false);
 
+  // Drag and drop state for menu reordering
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [reorderSaving, setReorderSaving] = useState(false);
+
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === dropIndex || !headerContent) {
+      handleDragEnd();
+      return;
+    }
+
+    const reordered = [...navItems];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(dropIndex, 0, moved);
+
+    // Optimistic update
+    setNavItems(reordered);
+    handleDragEnd();
+
+    // Save to DB
+    setReorderSaving(true);
+    try {
+      const { error } = await supabase
+        .from("page_content")
+        .update({
+          content: { ...headerContent, navItems: reordered },
+          updated_at: new Date().toISOString(),
+        })
+        .eq("section_key", "header");
+      if (error) throw error;
+      setHeaderContent({ ...headerContent, navItems: reordered });
+      toast({ title: "সফল!", description: "মেনু ক্রম আপডেট হয়েছে" });
+    } catch (err: any) {
+      // Revert on error
+      fetchPages();
+      toast({ title: "ত্রুটি", description: err.message, variant: "destructive" });
+    } finally {
+      setReorderSaving(false);
+    }
+  };
+
   const openNavEdit = (item: NavItem, index: number) => {
     setEditingNavIndex(index);
     setNavEditForm({ label_bn: item.label_bn, label_en: item.label_en, path: item.path });
