@@ -768,6 +768,11 @@ const AdminSettings = () => {
           <TabsContent value="chatbot" className="space-y-6 mt-6">
             <ChatbotSettings />
           </TabsContent>
+
+          {/* MySQL Backend Settings Tab */}
+          <TabsContent value="backend" className="space-y-6 mt-6">
+            <MySQLBackendSettings />
+          </TabsContent>
         </Tabs>
       </div>
     </AdminLayout>
