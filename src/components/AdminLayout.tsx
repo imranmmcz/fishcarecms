@@ -11,7 +11,7 @@ import {
   LayoutDashboard, Users, Settings, BarChart3, Home, Shield, User, Package,
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
   Building2, FileText, CloudUpload, Palette, Store, ChevronDown, CreditCard,
-  Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, MessageSquare, type LucideIcon,
+  Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, MessageSquare, Zap, type LucideIcon,
   Menu, X, LogOut, ChevronLeft, ChevronRight, Languages,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
