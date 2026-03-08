@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Users, ShoppingCart, Phone, Mail, MapPin, Eye, Plus, UserPlus } from "lucide-react";
+import { Search, Users, ShoppingCart, Phone, Mail, MapPin, Eye, Plus, UserPlus, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
