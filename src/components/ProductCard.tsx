@@ -282,8 +282,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </button>
         )}
 
-        {/* Discount Badge */}
-        {(product.originalPrice || (product.discount_percentage && product.discount_percentage > 0)) && (
+        {/* Flash Sale Badge */}
+        {showFlashBadge && (
+          <span className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold bg-destructive text-destructive-foreground shadow-md z-10 animate-pulse flex items-center gap-1">
+            <ZapIcon className="h-3 w-3" />
+            {flashSaleDiscount.type === "percentage" ? `${flashSaleDiscount.value}%` : `৳${flashSaleDiscount.value}`} {translations.discount}
+          </span>
+        )}
+
+        {/* Discount Badge (only if no flash sale) */}
+        {!showFlashBadge && (product.originalPrice || (product.discount_percentage && product.discount_percentage > 0)) && (
           <span className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold bg-destructive text-destructive-foreground shadow-md z-10">
             {product.originalPrice 
               ? `${Math.round((1 - product.price / product.originalPrice) * 100)}%`
