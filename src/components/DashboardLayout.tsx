@@ -1,4 +1,5 @@
 import { ReactNode, useState, useEffect } from "react";
+import { usePageContent } from "@/hooks/usePageContent";
 import { InactivityWarningBanner } from "@/components/InactivityWarningBanner";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
@@ -254,6 +255,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { t, language } = useLanguage();
   const isBn = language === "bn";
   const isMobileView = useIsMobile();
+  const { getSectionContent } = usePageContent();
+  const headerData = getSectionContent<Record<string, any>>("header");
+  const siteLogo = headerData?.logoUrl || null;
+  const siteName = headerData?.companyName || (isBn ? "মাছ চাষ" : "Fish Farming");
 
   const [userName, setUserName] = useState("");
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -458,11 +463,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               )} style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}>
                 {!adminSidebarCollapsed && (
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                    <div className="p-2 rounded-xl shrink-0 bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
-                      <Fish className="h-5 w-5 text-primary-foreground" />
-                    </div>
+                    {siteLogo ? (
+                      <img src={siteLogo} alt={siteName} className="h-10 w-10 rounded-xl shrink-0 object-contain shadow-lg" />
+                    ) : (
+                      <div className="p-2 rounded-xl shrink-0 bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
+                        <Fish className="h-5 w-5 text-primary-foreground" />
+                      </div>
+                    )}
                     <div className="min-w-0">
-                      <h1 className="font-bold text-sm leading-tight truncate" style={{ color: 'hsl(var(--sidebar-text))' }}>{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
+                      <h1 className="font-bold text-sm leading-tight truncate" style={{ color: 'hsl(var(--sidebar-text))' }}>{siteName}</h1>
                       <p className="text-[10px] leading-tight" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>{roleLabel}</p>
                     </div>
                   </div>
@@ -511,11 +520,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <div className="p-4" style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2.5">
-                            <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
-                              <Fish className="h-5 w-5 text-primary-foreground" />
-                            </div>
+                            {siteLogo ? (
+                              <img src={siteLogo} alt={siteName} className="h-10 w-10 rounded-xl object-contain shadow-lg" />
+                            ) : (
+                              <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
+                                <Fish className="h-5 w-5 text-primary-foreground" />
+                              </div>
+                            )}
                             <div>
-                              <h1 className="font-bold text-base" style={{ color: 'hsl(var(--sidebar-text))' }}>{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
+                              <h1 className="font-bold text-base" style={{ color: 'hsl(var(--sidebar-text))' }}>{siteName}</h1>
                               <p className="text-[10px]" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>{roleLabel}</p>
                             </div>
                           </div>
@@ -709,11 +722,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           )} style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}>
             {!farmerSidebarCollapsed && (
               <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                <div className="p-2 rounded-xl shrink-0 bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
-                  <Fish className="h-5 w-5 text-primary-foreground" />
-                </div>
+                {siteLogo ? (
+                  <img src={siteLogo} alt={siteName} className="h-10 w-10 rounded-xl shrink-0 object-contain shadow-lg" />
+                ) : (
+                  <div className="p-2 rounded-xl shrink-0 bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
+                    <Fish className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                )}
                 <div className="min-w-0">
-                  <h1 className="font-bold text-sm leading-tight truncate" style={{ color: 'hsl(var(--sidebar-text))' }}>{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
+                  <h1 className="font-bold text-sm leading-tight truncate" style={{ color: 'hsl(var(--sidebar-text))' }}>{siteName}</h1>
                   <p className="text-[10px] leading-tight" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>{roleLabel}</p>
                 </div>
               </div>
@@ -765,11 +782,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <div className="p-4" style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
-                          <Fish className="h-5 w-5 text-primary-foreground" />
-                        </div>
+                        {siteLogo ? (
+                          <img src={siteLogo} alt={siteName} className="h-10 w-10 rounded-xl object-contain shadow-lg" />
+                        ) : (
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
+                            <Fish className="h-5 w-5 text-primary-foreground" />
+                          </div>
+                        )}
                         <div>
-                          <h1 className="font-bold text-base" style={{ color: 'hsl(var(--sidebar-text))' }}>{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
+                          <h1 className="font-bold text-base" style={{ color: 'hsl(var(--sidebar-text))' }}>{siteName}</h1>
                           <p className="text-[10px]" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>{roleLabel}</p>
                         </div>
                       </div>
