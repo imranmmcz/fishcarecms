@@ -12,6 +12,7 @@ const adminTranslations = {
     calculatorModules: "ক্যালকুলেটর মডিউল",
     blogManagement: "ব্লগ ম্যানেজমেন্ট",
     campaignManagement: "ক্যাম্পেইন",
+    flashSales: "ফ্ল্যাশ সেল",
     notificationTemplates: "নোটিফিকেশন টেমপ্লেট",
     farmingReports: "ফার্মিং রিপোর্ট",
     ecommerce: "ই-কমার্স",
