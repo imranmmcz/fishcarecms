@@ -574,18 +574,34 @@ export default function AdminPages() {
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wider flex items-center gap-2">
             <Navigation className="h-3.5 w-3.5" /> মেনু পেজসমূহ
+            {reorderSaving && <Loader2 className="h-3 w-3 animate-spin" />}
           </h2>
           <p className="text-xs text-muted-foreground mb-3">
-            বর্তমানে মেনু বারে যে পেজগুলো প্রদর্শিত হচ্ছে। নতুন পেজ তৈরি করে "মেনুতে যোগ করুন" চেক করলে স্বয়ংক্রিয়ভাবে যুক্ত হবে।
+            বর্তমানে মেনু বারে যে পেজগুলো প্রদর্শিত হচ্ছে। ড্রাগ করে ক্রম পরিবর্তন করুন।
           </p>
           <div className="grid gap-2">
             {navItems.map((item, index) => {
               const IconComp = getNavIcon(item.path);
               const isSystemPage = !item.path.startsWith("/pages/");
+              const isDragging = dragIndex === index;
+              const isDragOver = dragOverIndex === index && dragIndex !== index;
               return (
-                <Card key={index} className="hover:shadow-sm transition-shadow">
+                <Card
+                  key={`${item.path}-${index}`}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`transition-all cursor-grab active:cursor-grabbing ${
+                    isDragging ? "opacity-40 scale-95" : ""
+                  } ${isDragOver ? "border-primary ring-2 ring-primary/20 scale-[1.01]" : "hover:shadow-sm"}`}
+                >
                   <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 px-4">
                     <div className="flex items-center gap-3 min-w-0">
+                      <div className="shrink-0 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                        <GripVertical className="h-5 w-5" />
+                      </div>
                       <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
                         <IconComp className="h-4 w-4 text-primary" />
                       </div>
