@@ -77,12 +77,22 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
   const wishlisted = product.isFromDatabase && isInWishlist(String(product.id));
+  const flashSaleDiscount = useFlashSaleForProduct(product.isFromDatabase ? String(product.id) : "");
   
   const mainImageUrl = product.image_url || product.image;
   const config = categoryConfig[product.category] || categoryConfig.medicine;
   const inCart = product.isFromDatabase && isInCart(String(product.id));
   const quantity = product.isFromDatabase ? getItemQuantity(String(product.id)) : 0;
   const externalLink = product.external_link || product.externalLink;
+
+  // Calculate flash sale price
+  const flashPrice = flashSaleDiscount
+    ? flashSaleDiscount.type === "percentage"
+      ? Math.round((product.originalPrice || product.price) * (1 - flashSaleDiscount.value / 100))
+      : Math.max(0, (product.originalPrice || product.price) - flashSaleDiscount.value)
+    : null;
+  const displayPrice = flashPrice ?? product.price;
+  const showFlashBadge = !!flashSaleDiscount;
 
   // Fetch product gallery images
   useEffect(() => {
