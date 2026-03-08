@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -13,10 +13,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import AdUnit from "@/components/AdUnit";
 import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { toast } from "sonner";
+import { useCalculatorParams } from "@/hooks/useCalculatorParams";
 
 export default function FishStocking() {
   const navigate = useNavigate();
   const { pondData, setFishStockingData } = useFarming();
+  const { params, loading: paramsLoading, getParam } = useCalculatorParams("fish_stocking");
   const [pondArea, setPondArea] = useState("");
   const [waterDepth, setWaterDepth] = useState("");
   const [fishType, setFishType] = useState("");
@@ -27,30 +29,55 @@ export default function FishStocking() {
     totalWeight: number;
   } | null>(null);
 
+  // Build fish types from DB params
+  const fishTypes = useMemo(() => {
+    const fishKeys = ["rohu", "katla", "mrigal", "silver", "grass", "tilapia", "pangas", "shing", "magur"];
+    const fishLabels: Record<string, string> = {
+      rohu: "রুই", katla: "কাতলা", mrigal: "মৃগেল", silver: "সিলভার কার্প",
+      grass: "গ্রাস কার্প", tilapia: "তেলাপিয়া", pangas: "পাঙ্গাশ", shing: "শিং", magur: "মাগুর",
+    };
+    // Fallback defaults
+    const defaults: Record<string, { dMin: number; dMax: number; wMin: number; wMax: number }> = {
+      rohu: { dMin: 3, dMax: 5, wMin: 25, wMax: 50 },
+      katla: { dMin: 2, dMax: 4, wMin: 25, wMax: 50 },
+      mrigal: { dMin: 2, dMax: 3, wMin: 25, wMax: 50 },
+      silver: { dMin: 3, dMax: 5, wMin: 20, wMax: 40 },
+      grass: { dMin: 1, dMax: 2, wMin: 30, wMax: 60 },
+      tilapia: { dMin: 5, dMax: 8, wMin: 10, wMax: 20 },
+      pangas: { dMin: 30, dMax: 50, wMin: 5, wMax: 10 },
+      shing: { dMin: 20, dMax: 30, wMin: 2, wMax: 5 },
+      magur: { dMin: 20, dMax: 30, wMin: 2, wMax: 5 },
+    };
+
+    return fishKeys.map((key) => {
+      const d = defaults[key];
+      const dMin = getParam(`${key}_density_min`, d.dMin);
+      const dMax = getParam(`${key}_density_max`, d.dMax);
+      const wMin = getParam(`${key}_weight_min`, d.wMin);
+      const wMax = getParam(`${key}_weight_max`, d.wMax);
+      return {
+        value: key,
+        label: fishLabels[key],
+        density: `${dMin}-${dMax}`,
+        weight: `${wMin}-${wMax}`,
+        avgWeight: (wMin + wMax) / 2,
+      };
+    });
+  }, [params, getParam]);
+
+  // Unit conversion from DB params
+  const sqmPerShotak = getParam("sqm_per_shotak", 40.47);
+  const feetPerMeter = getParam("feet_per_meter", 3.281);
+
   // Auto-load pond data from context and convert units
   useEffect(() => {
     if (pondData) {
-      // Convert area from square meters to shotak (1 shotak = 40.47 sq meters)
-      const areaInShotak = pondData.area / 40.47;
+      const areaInShotak = pondData.area / sqmPerShotak;
       setPondArea(areaInShotak.toFixed(2));
-      
-      // Convert depth from meters to feet (1 meter = 3.281 feet)
-      const depthInFeet = pondData.depth * 3.281;
+      const depthInFeet = pondData.depth * feetPerMeter;
       setWaterDepth(depthInFeet.toFixed(2));
     }
-  }, [pondData]);
-
-  const fishTypes = [
-    { value: "rohu", label: "রুই", density: "3-5", weight: "25-50" },
-    { value: "katla", label: "কাতলা", density: "2-4", weight: "25-50" },
-    { value: "mrigal", label: "মৃগেল", density: "2-3", weight: "25-50" },
-    { value: "silver", label: "সিলভার কার্প", density: "3-5", weight: "20-40" },
-    { value: "grass", label: "গ্রাস কার্প", density: "1-2", weight: "30-60" },
-    { value: "tilapia", label: "তেলাপিয়া", density: "5-8", weight: "10-20" },
-    { value: "pangas", label: "পাঙ্গাশ", density: "30-50", weight: "5-10" },
-    { value: "shing", label: "শিং", density: "20-30", weight: "2-5" },
-    { value: "magur", label: "মাগুর", density: "20-30", weight: "2-5" },
-  ];
+  }, [pondData, sqmPerShotak, feetPerMeter]);
 
   const calculateStocking = () => {
     if (!pondArea || !stockingDensity || !fishType) return;
@@ -61,9 +88,7 @@ export default function FishStocking() {
     const totalFish = Math.round(area * density * 100) / 100;
     
     const selectedFish = fishTypes.find(f => f.value === fishType);
-    const avgWeight = selectedFish 
-      ? (parseFloat(selectedFish.weight.split("-")[0]) + parseFloat(selectedFish.weight.split("-")[1])) / 2 
-      : 25;
+    const avgWeight = selectedFish ? selectedFish.avgWeight : 25;
     
     const totalWeight = Math.round(totalFish * avgWeight * 100) / 100;
 
@@ -110,7 +135,7 @@ export default function FishStocking() {
             <Alert className="mb-6 border-primary/30 bg-primary/5">
               <Info className="h-4 w-4" />
               <AlertDescription>
-                পুকুর পরিমাপ থেকে ডাটা অটোমেটিক লোড হয়েছে: <strong>{(pondData.area / 40.47).toFixed(2)} শতক</strong> আয়তন, <strong>{(pondData.depth * 3.281).toFixed(2)} ফুট</strong> গভীরতা
+                পুকুর পরিমাপ থেকে ডাটা অটোমেটিক লোড হয়েছে: <strong>{(pondData.area / sqmPerShotak).toFixed(2)} শতক</strong> আয়তন, <strong>{(pondData.depth * feetPerMeter).toFixed(2)} ফুট</strong> গভীরতা
               </AlertDescription>
             </Alert>
           )}
@@ -221,7 +246,6 @@ export default function FishStocking() {
                     <Button
                       type="button"
                       onClick={() => {
-                        // Save fish stocking data to context
                         setFishStockingData({
                           totalFish: result.totalFish,
                           density: parseFloat(stockingDensity),
