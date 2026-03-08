@@ -105,6 +105,7 @@ const adminTranslations = {
     calculatorModules: "Calculator Modules",
     blogManagement: "Blog Management",
     campaignManagement: "Campaigns",
+    flashSales: "Flash Sales",
     notificationTemplates: "Notification Templates",
     farmingReports: "Farming Reports",
     ecommerce: "E-Commerce",
