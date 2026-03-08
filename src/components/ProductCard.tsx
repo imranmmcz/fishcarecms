@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Zap as ZapIcon } from "lucide-react";
 import { ExternalLink, Pill, Utensils, Wrench, ShoppingCart, Plus, Minus, Check, Eye, Package, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button3D } from "@/components/ui/button-3d";
