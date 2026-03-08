@@ -40,6 +40,7 @@ export function AddressFields({
   onVillageChange,
   errors = {},
   variant = "profile",
+  hideMobile = false,
 }: AddressFieldsProps) {
   const [districts, setDistricts] = useState<string[]>([]);
   const [upazilas, setUpazilas] = useState<string[]>([]);
