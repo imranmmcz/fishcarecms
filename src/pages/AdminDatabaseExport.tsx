@@ -4,10 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, Database, FileJson, FileCode, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Download, Database, FileJson, FileCode, Loader2, RefreshCw, AlertCircle, Server } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import MySQLBackendSettings from "@/components/admin/MySQLBackendSettings";
 
 interface TableConfig {
   name: string;
