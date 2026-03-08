@@ -348,24 +348,101 @@ const AdminOrders = () => {
     }
   };
 
-  // Payment Reminder via SMS
+  // Multi-channel Payment Reminder
+  const [reminderChannels, setReminderChannels] = useState<string[]>(["sms", "in_app"]);
+
+  const toggleReminderChannel = (ch: string) => {
+    setReminderChannels(prev => prev.includes(ch) ? prev.filter(c => c !== ch) : [...prev, ch]);
+  };
+
   const handleSendPaymentReminder = async () => {
-    if (!selectedOrder) return;
+    if (!selectedOrder || reminderChannels.length === 0) return;
     setIsSendingReminder(true);
+    const results: string[] = [];
+    const errors: string[] = [];
+
+    const reminderMessageBn = `প্রিয় ${selectedOrder.customer_name}, আপনার অর্ডার ${selectedOrder.order_number} এর পেমেন্ট (৳${selectedOrder.total_amount}) এখনও পেন্ডিং রয়েছে। অনুগ্রহ করে দ্রুত পেমেন্ট সম্পন্ন করুন। ধন্যবাদ!`;
+    const reminderMessageEn = `Dear ${selectedOrder.customer_name}, payment of ৳${selectedOrder.total_amount} for order ${selectedOrder.order_number} is still pending. Please complete your payment soon. Thank you!`;
+
     try {
-      const reminderMessage = `প্রিয় ${selectedOrder.customer_name}, আপনার অর্ডার ${selectedOrder.order_number} এর পেমেন্ট (৳${selectedOrder.total_amount}) এখনও পেন্ডিং রয়েছে। অনুগ্রহ করে দ্রুত পেমেন্ট সম্পন্ন করুন। ধন্যবাদ!`;
+      // SMS
+      if (reminderChannels.includes("sms")) {
+        try {
+          const { error } = await supabase.functions.invoke("send-sms", {
+            body: {
+              phone: selectedOrder.customer_phone,
+              message: reminderMessageBn,
+              message_type: "payment_reminder",
+              order_number: selectedOrder.order_number,
+            },
+          });
+          if (error) throw error;
+          results.push("SMS");
+        } catch (e) { errors.push("SMS"); }
+      }
 
-      const { error: smsError } = await supabase.functions.invoke("send-sms", {
-        body: {
-          phone: selectedOrder.customer_phone,
-          message: reminderMessage,
-          message_type: "payment_reminder",
-          order_number: selectedOrder.order_number,
-        },
-      });
+      // WhatsApp
+      if (reminderChannels.includes("whatsapp")) {
+        try {
+          const { error } = await supabase.functions.invoke("send-whatsapp", {
+            body: {
+              action: "send_text",
+              phone: selectedOrder.customer_phone,
+              text_message: reminderMessageBn,
+              order_number: selectedOrder.order_number,
+            },
+          });
+          if (error) throw error;
+          results.push("WhatsApp");
+        } catch (e) { errors.push("WhatsApp"); }
+      }
 
-      if (smsError) throw smsError;
-      toast.success(language === "bn" ? "পেমেন্ট রিমাইন্ডার পাঠানো হয়েছে" : "Payment reminder sent");
+      // In-App Notification
+      if (reminderChannels.includes("in_app") && selectedOrder.user_id) {
+        try {
+          const { error } = await supabase.from("notifications").insert({
+            user_id: selectedOrder.user_id,
+            title: `Payment Reminder - ${selectedOrder.order_number}`,
+            title_bn: `পেমেন্ট রিমাইন্ডার - ${selectedOrder.order_number}`,
+            message: reminderMessageEn,
+            message_bn: reminderMessageBn,
+            type: "payment_reminder",
+            reference_id: selectedOrder.id,
+            reference_type: "order",
+          });
+          if (error) throw error;
+          results.push(language === "bn" ? "ইন-অ্যাপ" : "In-App");
+        } catch (e) { errors.push(language === "bn" ? "ইন-অ্যাপ" : "In-App"); }
+      }
+
+      // Email
+      if (reminderChannels.includes("email") && selectedOrder.customer_email) {
+        try {
+          const { error } = await supabase.functions.invoke("send-order-email", {
+            body: {
+              to: selectedOrder.customer_email,
+              subject: `পেমেন্ট রিমাইন্ডার - অর্ডার ${selectedOrder.order_number}`,
+              order_number: selectedOrder.order_number,
+              customer_name: selectedOrder.customer_name,
+              template_type: "payment_reminder",
+              message: reminderMessageBn,
+            },
+          });
+          if (error) throw error;
+          results.push(language === "bn" ? "ইমেইল" : "Email");
+        } catch (e) { errors.push(language === "bn" ? "ইমেইল" : "Email"); }
+      }
+
+      if (results.length > 0) {
+        toast.success(language === "bn"
+          ? `রিমাইন্ডার পাঠানো হয়েছে: ${results.join(", ")}`
+          : `Reminder sent via: ${results.join(", ")}`);
+      }
+      if (errors.length > 0) {
+        toast.error(language === "bn"
+          ? `ব্যর্থ হয়েছে: ${errors.join(", ")}`
+          : `Failed: ${errors.join(", ")}`);
+      }
     } catch (err) {
       console.error("Payment reminder error:", err);
       toast.error(language === "bn" ? "রিমাইন্ডার পাঠাতে সমস্যা হয়েছে" : "Failed to send reminder");
