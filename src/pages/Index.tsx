@@ -8,6 +8,7 @@ import { ProductSlider } from "@/components/ProductSlider";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { FishHealthAdvice } from "@/components/FishHealthAdvice";
 import { HeroSlider } from "@/components/home/HeroSlider";
+import { FlashSaleSection } from "@/components/home/FlashSaleSection";
 
 import AdUnit from "@/components/AdUnit";
 import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, FlaskConical, Leaf, BarChart3, Languages } from "lucide-react";
@@ -162,6 +163,8 @@ const Index = () => {
       <section className="relative">
         <HeroSlider />
       </section>
+      {/* Flash Sale */}
+      <FlashSaleSection />
 
       {/* Featured Products */}
       <FeaturedProducts />

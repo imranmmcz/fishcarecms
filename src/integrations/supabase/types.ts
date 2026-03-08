@@ -1346,6 +1346,108 @@ export type Database = {
         }
         Relationships: []
       }
+      flash_sale_items: {
+        Row: {
+          created_at: string
+          flash_sale_id: string
+          id: string
+          override_discount_type: string | null
+          override_discount_value: number | null
+          product_id: string
+          sold_count: number
+          stock_limit: number | null
+        }
+        Insert: {
+          created_at?: string
+          flash_sale_id: string
+          id?: string
+          override_discount_type?: string | null
+          override_discount_value?: number | null
+          product_id: string
+          sold_count?: number
+          stock_limit?: number | null
+        }
+        Update: {
+          created_at?: string
+          flash_sale_id?: string
+          id?: string
+          override_discount_type?: string | null
+          override_discount_value?: number | null
+          product_id?: string
+          sold_count?: number
+          stock_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flash_sale_items_flash_sale_id_fkey"
+            columns: ["flash_sale_id"]
+            isOneToOne: false
+            referencedRelation: "flash_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flash_sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flash_sales: {
+        Row: {
+          banner_image_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          description_bn: string | null
+          discount_type: string
+          discount_value: number
+          end_time: string
+          id: string
+          is_active: boolean
+          max_quantity_per_user: number | null
+          start_time: string
+          title: string
+          title_bn: string | null
+          updated_at: string
+        }
+        Insert: {
+          banner_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          description_bn?: string | null
+          discount_type?: string
+          discount_value?: number
+          end_time: string
+          id?: string
+          is_active?: boolean
+          max_quantity_per_user?: number | null
+          start_time: string
+          title: string
+          title_bn?: string | null
+          updated_at?: string
+        }
+        Update: {
+          banner_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          description_bn?: string | null
+          discount_type?: string
+          discount_value?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          max_quantity_per_user?: number | null
+          start_time?: string
+          title?: string
+          title_bn?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       google_drive_tokens: {
         Row: {
           access_token: string | null

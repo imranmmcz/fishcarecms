@@ -81,6 +81,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import AdminBlog from "./pages/AdminBlog";
 import AdminCampaigns from "./pages/AdminCampaigns";
+import AdminFlashSales from "./pages/AdminFlashSales";
 import AdminNotificationTemplates from "./pages/AdminNotificationTemplates";
 import AdminFarmingReports from "./pages/AdminFarmingReports";
 import FarmProfitPrediction from "./pages/FarmProfitPrediction";
@@ -204,6 +205,7 @@ const App = () => (
                       <Route path="/admin/pos" element={<ProtectedRoute requireAdmin><AdminPOS /></ProtectedRoute>} />
                       <Route path="/admin/blog" element={<ProtectedRoute requireAdmin><AdminBlog /></ProtectedRoute>} />
                       <Route path="/admin/campaigns" element={<ProtectedRoute requireAdmin><AdminCampaigns /></ProtectedRoute>} />
+                      <Route path="/admin/flash-sales" element={<ProtectedRoute requireAdmin><AdminFlashSales /></ProtectedRoute>} />
                       <Route path="/admin/notification-templates" element={<ProtectedRoute requireAdmin><AdminNotificationTemplates /></ProtectedRoute>} />
                       <Route path="/admin/farming-reports" element={<ProtectedRoute requireAdmin><AdminFarmingReports /></ProtectedRoute>} />
                       <Route path="/pos" element={<ProtectedRoute requireAdmin><POSDashboard /></ProtectedRoute>} />

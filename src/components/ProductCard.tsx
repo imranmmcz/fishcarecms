@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Zap as ZapIcon } from "lucide-react";
 import { ExternalLink, Pill, Utensils, Wrench, ShoppingCart, Plus, Minus, Check, Eye, Package, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button3D } from "@/components/ui/button-3d";
@@ -10,6 +11,7 @@ import { Product } from "@/contexts/ProductsContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { supabase } from "@/integrations/supabase/client";
 import QuickViewModal from "@/components/QuickViewModal";
+import { useFlashSaleForProduct } from "@/hooks/useFlashSales";
 
 // Extended product type that can come from database or static data
 export interface DisplayProduct {
@@ -75,12 +77,22 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
   const wishlisted = product.isFromDatabase && isInWishlist(String(product.id));
+  const flashSaleDiscount = useFlashSaleForProduct(product.isFromDatabase ? String(product.id) : "");
   
   const mainImageUrl = product.image_url || product.image;
   const config = categoryConfig[product.category] || categoryConfig.medicine;
   const inCart = product.isFromDatabase && isInCart(String(product.id));
   const quantity = product.isFromDatabase ? getItemQuantity(String(product.id)) : 0;
   const externalLink = product.external_link || product.externalLink;
+
+  // Calculate flash sale price
+  const flashPrice = flashSaleDiscount
+    ? flashSaleDiscount.type === "percentage"
+      ? Math.round((product.originalPrice || product.price) * (1 - flashSaleDiscount.value / 100))
+      : Math.max(0, (product.originalPrice || product.price) - flashSaleDiscount.value)
+    : null;
+  const displayPrice = flashPrice ?? product.price;
+  const showFlashBadge = !!flashSaleDiscount;
 
   // Fetch product gallery images
   useEffect(() => {
@@ -270,8 +282,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </button>
         )}
 
-        {/* Discount Badge */}
-        {(product.originalPrice || (product.discount_percentage && product.discount_percentage > 0)) && (
+        {/* Flash Sale Badge */}
+        {showFlashBadge && (
+          <span className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold bg-destructive text-destructive-foreground shadow-md z-10 animate-pulse flex items-center gap-1">
+            <ZapIcon className="h-3 w-3" />
+            {flashSaleDiscount.type === "percentage" ? `${flashSaleDiscount.value}%` : `৳${flashSaleDiscount.value}`} {translations.discount}
+          </span>
+        )}
+
+        {/* Discount Badge (only if no flash sale) */}
+        {!showFlashBadge && (product.originalPrice || (product.discount_percentage && product.discount_percentage > 0)) && (
           <span className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold bg-destructive text-destructive-foreground shadow-md z-10">
             {product.originalPrice 
               ? `${Math.round((1 - product.price / product.originalPrice) * 100)}%`
@@ -334,9 +354,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
         {/* Price */}
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-primary">{formatPrice(product.price)}</span>
-          {product.originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
+          <span className="text-2xl font-bold text-primary">{formatPrice(displayPrice)}</span>
+          {(flashPrice || product.originalPrice) && (
+            <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice || product.price)}</span>
           )}
         </div>
 
