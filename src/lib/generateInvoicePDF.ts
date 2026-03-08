@@ -144,7 +144,7 @@ async function renderMinimal(doc: jsPDF, order: Order, s: ReturnType<typeof reso
   const margin = 15;
   const contentWidth = pageWidth - margin * 2;
   const isBn = s.langMode !== "en";
-  const fontName = getFontName(isBn);
+  const fontName = getDocFontName(doc, isBn);
   const setFont = (style: "normal" | "bold" = "normal") => setBanglaFont(doc, isBn, style);
   const primary = hexToRgb(s.primaryColor);
   let y = 15;
