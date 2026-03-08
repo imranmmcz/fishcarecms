@@ -11,10 +11,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   CloudUpload, HardDrive, Loader2, CheckCircle, 
   RefreshCw, Trash2, Clock, FileJson,
-  Database, Shield, DownloadCloud, Settings, BarChart3, Mail, Timer, Play, Pause
+  Database, Shield, DownloadCloud, Settings, BarChart3, Mail, Timer, Play, Pause,
+  Link2, Unlink, Eye, EyeOff, Save, ExternalLink, KeyRound
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminBackup = () => {
   const { toast } = useToast();
@@ -32,6 +35,17 @@ const AdminBackup = () => {
   const [cronSchedule, setCronSchedule] = useState('0 2 * * *');
   const [isSavingCron, setIsSavingCron] = useState(false);
   const [cronStatus, setCronStatus] = useState<{ active: boolean; schedule: string | null } | null>(null);
+
+  // Google Drive states
+  const [googleClientId, setGoogleClientId] = useState('');
+  const [googleClientSecret, setGoogleClientSecret] = useState('');
+  const [showSecret, setShowSecret] = useState(false);
+  const [isSavingGoogle, setIsSavingGoogle] = useState(false);
+  const [driveConnected, setDriveConnected] = useState(false);
+  const [driveEmail, setDriveEmail] = useState('');
+  const [driveConnectedAt, setDriveConnectedAt] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isCheckingDrive, setIsCheckingDrive] = useState(true);
   const loadBackupLogs = useCallback(async () => {
     setIsLoadingLogs(true);
     try {
@@ -66,7 +80,113 @@ const AdminBackup = () => {
     } catch (e) { console.error(e); }
   }, []);
 
-  useEffect(() => { loadBackupLogs(); loadSettings(); loadCronStatus(); }, [loadBackupLogs, loadSettings, loadCronStatus]);
+  // Google Drive functions
+  const loadGoogleSettings = useCallback(async () => {
+    try {
+      const { data } = await supabase.from("system_settings").select("setting_key, setting_value")
+        .in("setting_key", ["google_client_id", "google_client_secret"]);
+      const settings = data || [];
+      const findVal = (key: string) => settings.find((s) => s.setting_key === key)?.setting_value || '';
+      setGoogleClientId(findVal('google_client_id'));
+      setGoogleClientSecret(findVal('google_client_secret'));
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const checkDriveConnection = useCallback(async () => {
+    setIsCheckingDrive(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-drive-auth', {
+        body: { action: 'check_connection' }
+      });
+      if (!error && data) {
+        setDriveConnected(data.connected);
+        setDriveEmail(data.drive_email || '');
+        setDriveConnectedAt(data.connected_at || '');
+      }
+    } catch (e) { console.error(e); }
+    finally { setIsCheckingDrive(false); }
+  }, []);
+
+  const saveGoogleCredentials = async () => {
+    setIsSavingGoogle(true);
+    try {
+      const settingsToSave = [
+        { key: 'google_client_id', value: googleClientId, desc: 'Google OAuth Client ID' },
+        { key: 'google_client_secret', value: googleClientSecret, desc: 'Google OAuth Client Secret' },
+      ];
+      for (const s of settingsToSave) {
+        await supabase.from("system_settings").upsert(
+          { setting_key: s.key, setting_value: s.value, description: s.desc },
+          { onConflict: "setting_key" }
+        );
+      }
+      toast({ title: "সফল", description: "Google OAuth ক্রেডেনশিয়াল সংরক্ষিত হয়েছে" });
+    } catch (e: any) {
+      toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
+    } finally { setIsSavingGoogle(false); }
+  };
+
+  const connectGoogleDrive = async () => {
+    setIsConnecting(true);
+    try {
+      const redirectUri = window.location.origin + '/admin/backup';
+      const { data, error } = await supabase.functions.invoke('google-drive-auth', {
+        body: { action: 'get_auth_url', redirect_uri: redirectUri }
+      });
+      if (error) throw error;
+      if (data?.auth_url) {
+        window.location.href = data.auth_url;
+      } else {
+        toast({ title: "ত্রুটি", description: "Google OAuth URL তৈরি করতে সমস্যা হয়েছে। Client ID ও Secret সঠিকভাবে কনফিগার করা আছে কিনা নিশ্চিত করুন।", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
+    } finally { setIsConnecting(false); }
+  };
+
+  const disconnectGoogleDrive = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('google-drive-auth', {
+        body: { action: 'disconnect' }
+      });
+      if (error) throw error;
+      setDriveConnected(false);
+      setDriveEmail('');
+      setDriveConnectedAt('');
+      toast({ title: "সফল", description: "Google Drive সংযোগ বিচ্ছিন্ন হয়েছে" });
+    } catch (e: any) {
+      toast({ title: "ত্রুটি", description: e.message, variant: "destructive" });
+    }
+  };
+
+  // Handle OAuth callback code
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      const exchangeCode = async () => {
+        try {
+          const redirectUri = window.location.origin + '/admin/backup';
+          const { data, error } = await supabase.functions.invoke('google-drive-auth', {
+            body: { action: 'exchange_code', code, redirect_uri: redirectUri }
+          });
+          if (error) throw error;
+          if (data?.success) {
+            setDriveConnected(true);
+            setDriveEmail(data.drive_email || '');
+            toast({ title: "সফল", description: "Google Drive সফলভাবে সংযুক্ত হয়েছে!" });
+          }
+        } catch (e: any) {
+          toast({ title: "ত্রুটি", description: "Google Drive সংযোগ করতে সমস্যা হয়েছে", variant: "destructive" });
+        }
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      };
+      exchangeCode();
+    }
+  }, [toast]);
+
+  useEffect(() => { loadBackupLogs(); loadSettings(); loadCronStatus(); loadGoogleSettings(); checkDriveConnection(); }, [loadBackupLogs, loadSettings, loadCronStatus, loadGoogleSettings, checkDriveConnection]);
 
   const createBackup = async () => {
     setIsBackingUp(true);
@@ -219,6 +339,130 @@ const AdminBackup = () => {
               {isSavingCron ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Timer className="h-4 w-4 mr-2" />}
               Cron Job সেভ করুন
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Google Drive / OAuth Settings */}
+        <Card className="border-blue-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <svg className="h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 5.5h6.28l3.43-5.5L7.71 3.5zm0 3.27L11.18 14H4.24L7.71 6.77zM22.84 15L16.29 3.5h-4.57l3.43 6 3.43 5.5h4.26zm-8.56-5.5l3.06 5h-6.12l3.06-5zM8.56 16h6.88L12 22.5 8.56 16z"/></svg>
+              Google Drive / OAuth সেটিংস
+            </CardTitle>
+            <CardDescription>Google Drive ব্যাকআপ ও OAuth সংযোগের জন্য ক্রেডেনশিয়াল কনফিগার করুন</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Connection Status */}
+            <div className="p-4 rounded-xl border border-border bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {isCheckingDrive ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : driveConnected ? (
+                    <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    </div>
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <Unlink className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {driveConnected ? 'Google Drive সংযুক্ত' : 'Google Drive সংযুক্ত নয়'}
+                    </p>
+                    {driveConnected && driveEmail && (
+                      <p className="text-sm text-muted-foreground">{driveEmail} • সংযুক্ত: {driveConnectedAt ? new Date(driveConnectedAt).toLocaleDateString('bn-BD') : ''}</p>
+                    )}
+                    {!driveConnected && <p className="text-sm text-muted-foreground">ব্যাকআপ Google Drive-এ সংরক্ষণ করতে সংযোগ করুন</p>}
+                  </div>
+                </div>
+                <div>
+                  {driveConnected ? (
+                    <Button variant="outline" size="sm" onClick={disconnectGoogleDrive} className="gap-2 text-destructive hover:text-destructive">
+                      <Unlink className="h-4 w-4" />
+                      সংযোগ বিচ্ছিন্ন
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={connectGoogleDrive} disabled={isConnecting || !googleClientId} className="gap-2">
+                      {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                      Google Drive সংযোগ
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* OAuth Credentials */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <KeyRound className="h-4 w-4 text-primary" />
+                OAuth ক্রেডেনশিয়াল
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Google Cloud Console থেকে OAuth 2.0 Client ID ও Client Secret সংগ্রহ করুন।{" "}
+                <a 
+                  href="https://console.cloud.google.com/apis/credentials" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Google Cloud Console <ExternalLink className="h-3 w-3" />
+                </a>
+              </p>
+
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="google-client-id" className="text-sm">Client ID</Label>
+                  <Input
+                    id="google-client-id"
+                    value={googleClientId}
+                    onChange={(e) => setGoogleClientId(e.target.value)}
+                    placeholder="xxxx.apps.googleusercontent.com"
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="google-client-secret" className="text-sm">Client Secret</Label>
+                  <div className="relative">
+                    <Input
+                      id="google-client-secret"
+                      type={showSecret ? "text" : "password"}
+                      value={googleClientSecret}
+                      onChange={(e) => setGoogleClientSecret(e.target.value)}
+                      placeholder="GOCSPX-xxxxxxxxxxxx"
+                      className="font-mono text-xs pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSecret(!showSecret)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={saveGoogleCredentials} disabled={isSavingGoogle} size="sm" className="gap-2">
+                  {isSavingGoogle ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  ক্রেডেনশিয়াল সেভ করুন
+                </Button>
+              </div>
+
+              <div className="p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground space-y-1">
+                <p className="font-medium">⚠️ সেটআপ নির্দেশিকা:</p>
+                <ul className="list-disc list-inside space-y-0.5 ml-1">
+                  <li>Google Cloud Console-এ একটি OAuth 2.0 Client ID তৈরি করুন</li>
+                  <li>Application type: <strong>Web application</strong> নির্বাচন করুন</li>
+                  <li>Authorized redirect URI: <code className="bg-background px-1 py-0.5 rounded">{window.location.origin}/admin/backup</code></li>
+                  <li>Google Drive API সক্রিয় করুন</li>
+                </ul>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
