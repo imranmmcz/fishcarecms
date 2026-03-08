@@ -22,6 +22,7 @@ const moduleLabels: Record<string, string> = {
   fertilizer: "সার ক্যালকুলেটর",
   biomass: "বায়োমাস",
   stocking: "মজুদ ঘনত্ব ও খরচ",
+  fish_stocking: "মাছের মজুদ",
   water: "পানির গুণাগুণ",
   cost: "খরচ ক্যালকুলেটর",
   medicine: "ঔষধ প্রয়োগ",
