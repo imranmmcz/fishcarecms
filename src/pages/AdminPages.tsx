@@ -23,7 +23,7 @@ import {
   FileText, Plus, Edit, Trash2, Globe, Eye, EyeOff,
   Search, Clock, ExternalLink, Menu, LogIn, UserPlus, Save, Loader2,
   Navigation, X, Home, ShoppingBag, LayoutGrid, TrendingUp, CheckCircle,
-  Fish, MessageSquare
+  Fish, MessageSquare, GripVertical
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
