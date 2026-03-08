@@ -317,7 +317,7 @@ async function renderModern(doc: jsPDF, order: Order, s: ReturnType<typeof resol
   const margin = 14;
   const contentWidth = pageWidth - margin * 2;
   const isBn = s.langMode !== "en";
-  const fontName = getFontName(isBn);
+  const fontName = getDocFontName(doc, isBn);
   const setFont = (style: "normal" | "bold" = "normal") => setBanglaFont(doc, isBn, style);
   const primary = hexToRgb(s.primaryColor);
   const primaryLight: [number, number, number] = [
