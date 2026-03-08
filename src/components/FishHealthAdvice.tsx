@@ -67,7 +67,7 @@ export const FishHealthAdvice = () => {
       if (data) {
         setDiseases(data.map(d => ({
           ...d,
-          treatment: Array.isArray(d.treatment) ? d.treatment as Treatment[] : [],
+          treatment: Array.isArray(d.treatment) ? (d.treatment as unknown as Treatment[]) : [],
         })));
       }
       setLoading(false);
