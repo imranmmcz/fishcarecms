@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard, TrendingUp, TrendingDown, Waves, FileText, Home, Fish,
   CloudUpload, User, Settings, Shield, LogOut, ChevronDown, ChevronLeft, ChevronRight,
-  Menu, X, Package, RefreshCw, Store, MonitorSmartphone, BarChart3, Palette, PenSquare, type LucideIcon,
+  Menu, X, Package, RefreshCw, Store, MonitorSmartphone, BarChart3, Palette, PenSquare, Stethoscope, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -80,6 +80,7 @@ const farmerMainMenuItems = [
   { title: "profitPrediction", titleBn: "লাভ হিসাব", url: "/dashboard/profit-prediction", icon: BarChart3, color: "bg-gradient-to-r from-green-500 to-emerald-600", iconColor: "text-green-500", roles: ["farmer", "admin"] },
   { title: "smartFeed", titleBn: "স্মার্ট ফিড", url: "/dashboard/smart-feed", icon: Package, color: "bg-gradient-to-r from-orange-500 to-amber-600", iconColor: "text-orange-500", roles: ["farmer", "admin"] },
   { title: "alerts", titleBn: "স্মার্ট অ্যালার্ট", url: "/dashboard/alerts", icon: MonitorSmartphone, color: "bg-gradient-to-r from-red-500 to-rose-600", iconColor: "text-red-500", roles: ["farmer", "admin"] },
+  { title: "diseaseDetect", titleBn: "এআই রোগ শনাক্ত", url: "/dashboard/disease-detect", icon: Stethoscope, color: "bg-gradient-to-r from-rose-500 to-pink-600", iconColor: "text-rose-500", roles: ["farmer", "admin"] },
 ];
 
 const farmerSettingsGroup: MenuGroup = {

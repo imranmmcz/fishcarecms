@@ -1,1 +1,4 @@
 project_id = "cozwxamdldjkeeffjvvf"
+
+[functions.ai-disease-detect]
+verify_jwt = false

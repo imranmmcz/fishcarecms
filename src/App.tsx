@@ -86,6 +86,7 @@ import FarmProfitPrediction from "./pages/FarmProfitPrediction";
 import SmartFeedCalculator from "./pages/SmartFeedCalculator";
 import MedicineRecommendation from "./pages/MedicineRecommendation";
 import DashboardAlerts from "./pages/DashboardAlerts";
+import DashboardDiseaseDetect from "./pages/DashboardDiseaseDetect";
 import FishSpecies from "./pages/FishSpecies";
 import POSDashboard from "./pages/pos/POSDashboard";
 import POSHistory from "./pages/pos/POSHistory";
@@ -176,6 +177,7 @@ const App = () => (
                       <Route path="/dashboard/smart-feed" element={<ProtectedRoute><SmartFeedCalculator /></ProtectedRoute>} />
                       <Route path="/smart-feed-calculator" element={<SmartFeedCalculator />} />
                       <Route path="/dashboard/alerts" element={<ProtectedRoute><DashboardAlerts /></ProtectedRoute>} />
+                      <Route path="/dashboard/disease-detect" element={<ProtectedRoute><DashboardDiseaseDetect /></ProtectedRoute>} />
                       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                       <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
                       <Route path="/admin/products" element={<ProtectedRoute requireAdmin><AdminProducts /></ProtectedRoute>} />
