@@ -8,7 +8,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from "qrcode";
 import type { Order } from "@/lib/api-client";
-import { registerBanglaFont, setBanglaFont, getFontName } from "@/lib/pdfBanglaFont";
+import { registerBanglaFont, setBanglaFont, getDocFontName } from "@/lib/pdfBanglaFont";
 import type { InvoicePrintSettings } from "@/hooks/useInvoicePrintSettings";
 
 // Generate QR code as base64 data URL

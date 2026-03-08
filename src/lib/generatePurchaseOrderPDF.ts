@@ -5,7 +5,7 @@
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { registerBanglaFont, setBanglaFont, getFontName } from "@/lib/pdfBanglaFont";
+import { registerBanglaFont, setBanglaFont, getDocFontName } from "@/lib/pdfBanglaFont";
 
 export interface PurchaseOrderItem {
   product_name?: string;
