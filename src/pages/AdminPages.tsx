@@ -343,7 +343,7 @@ export default function AdminPages() {
       const { error } = await supabase
         .from("page_content")
         .update({
-          content: { ...headerContent, navItems: reordered },
+          content: { ...headerContent, navItems: reordered } as any,
           updated_at: new Date().toISOString(),
         })
         .eq("section_key", "header");
