@@ -11,7 +11,7 @@ import {
 import { getDivisions, getDistrictsByDivision, getUpazilasByDistrict } from "@/data/bangladeshLocationData";
 import { Phone, MapPin } from "lucide-react";
 
-interface AddressFieldsProps {
+export interface AddressFieldsProps {
   mobile: string;
   division: string;
   district: string;
@@ -24,6 +24,7 @@ interface AddressFieldsProps {
   onVillageChange: (value: string) => void;
   errors?: Record<string, string>;
   variant?: "profile" | "auth";
+  hideMobile?: boolean;
 }
 
 export function AddressFields({
@@ -39,6 +40,7 @@ export function AddressFields({
   onVillageChange,
   errors = {},
   variant = "profile",
+  hideMobile = false,
 }: AddressFieldsProps) {
   const [districts, setDistricts] = useState<string[]>([]);
   const [upazilas, setUpazilas] = useState<string[]>([]);
@@ -72,29 +74,29 @@ export function AddressFields({
   };
 
   const isAuthVariant = variant === "auth";
-  const labelClass = isAuthVariant ? "text-white" : "";
-  const inputClass = isAuthVariant
-    ? "bg-white/10 border-white/20 text-white placeholder:text-slate-400"
-    : "";
+  const labelClass = isAuthVariant ? "" : "";
+  const inputClass = isAuthVariant ? "" : "";
 
   return (
     <div className="space-y-4">
       {/* Mobile Number */}
-      <div className="space-y-2">
-        <Label htmlFor="mobile" className={`flex items-center gap-2 ${labelClass}`}>
-          <Phone className="h-4 w-4" />
-          মোবাইল নম্বর <span className="text-red-400">*</span>
-        </Label>
-        <Input
-          id="mobile"
-          type="tel"
-          value={mobile}
-          onChange={(e) => onMobileChange(e.target.value)}
-          placeholder="01XXXXXXXXX"
-          className={inputClass}
-        />
-        {errors.mobile && <p className="text-sm text-red-400">{errors.mobile}</p>}
-      </div>
+      {!hideMobile && (
+        <div className="space-y-2">
+          <Label htmlFor="mobile" className={`flex items-center gap-2 ${labelClass}`}>
+            <Phone className="h-4 w-4" />
+            মোবাইল নম্বর <span className="text-red-400">*</span>
+          </Label>
+          <Input
+            id="mobile"
+            type="tel"
+            value={mobile}
+            onChange={(e) => onMobileChange(e.target.value)}
+            placeholder="01XXXXXXXXX"
+            className={inputClass}
+          />
+          {errors.mobile && <p className="text-sm text-red-400">{errors.mobile}</p>}
+        </div>
+      )}
 
       {/* Address Section Header */}
       <div className={`flex items-center gap-2 pt-2 ${isAuthVariant ? "text-white" : "text-foreground"}`}>
