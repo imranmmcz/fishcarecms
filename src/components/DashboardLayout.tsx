@@ -782,11 +782,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <div className="p-4" style={{ borderBottom: '1px solid hsl(var(--sidebar-border))' }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
-                          <Fish className="h-5 w-5 text-primary-foreground" />
-                        </div>
+                        {siteLogo ? (
+                          <img src={siteLogo} alt={siteName} className="h-10 w-10 rounded-xl object-contain shadow-lg" />
+                        ) : (
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25">
+                            <Fish className="h-5 w-5 text-primary-foreground" />
+                          </div>
+                        )}
                         <div>
-                          <h1 className="font-bold text-base" style={{ color: 'hsl(var(--sidebar-text))' }}>{isBn ? "মাছ চাষ" : "Fish Farming"}</h1>
+                          <h1 className="font-bold text-base" style={{ color: 'hsl(var(--sidebar-text))' }}>{siteName}</h1>
                           <p className="text-[10px]" style={{ color: 'hsl(var(--sidebar-text-muted))' }}>{roleLabel}</p>
                         </div>
                       </div>
