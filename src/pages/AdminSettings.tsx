@@ -295,10 +295,6 @@ const AdminSettings = () => {
               <Bot className="h-4 w-4" />
               {language === "bn" ? "চ্যাটবট" : "Chatbot"}
             </TabsTrigger>
-            <TabsTrigger value="backend" className="flex items-center gap-2">
-              <Database className="h-4 w-4" />
-              {language === "bn" ? "ব্যাকএন্ড" : "Backend"}
-            </TabsTrigger>
           </TabsList>
 
           {/* Theme Color Settings Tab */}
