@@ -234,12 +234,26 @@ export default function AdminDatabaseExport() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Database className="h-6 w-6" />
-            ডাটাবেজ এক্সপোর্ট
+            ডাটাবেজ এক্সপোর্ট ও ব্যাকএন্ড
           </h1>
           <p className="text-muted-foreground mt-1">
-            ডাটাবেজের ডেটা MySQL বা JSON ফরম্যাটে ডাউনলোড করুন
+            ডাটাবেজ এক্সপোর্ট এবং MySQL ব্যাকএন্ড কনফিগারেশন
           </p>
         </div>
+
+        <Tabs defaultValue="export" className="w-full">
+          <TabsList>
+            <TabsTrigger value="export" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              এক্সপোর্ট
+            </TabsTrigger>
+            <TabsTrigger value="backend" className="flex items-center gap-2">
+              <Server className="h-4 w-4" />
+              ব্যাকএন্ড কানেকশন
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="export" className="space-y-6 mt-4">
 
         {/* Auto-sync info */}
         <Alert className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
