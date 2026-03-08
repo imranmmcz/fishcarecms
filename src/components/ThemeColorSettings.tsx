@@ -5,8 +5,151 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Palette, Save, Loader2, RotateCcw } from "lucide-react";
+import { Palette, Save, Loader2, RotateCcw, Check, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+interface ThemePreset {
+  name_bn: string;
+  name_en: string;
+  colors: {
+    theme_primary: string;
+    theme_secondary: string;
+    theme_accent: string;
+    theme_background: string;
+    theme_foreground: string;
+    theme_card: string;
+    theme_hover: string;
+    theme_button: string;
+    theme_button_hover: string;
+    theme_link: string;
+    theme_header_utility_bg: string;
+    theme_header_utility_text: string;
+    theme_header_bg: string;
+    theme_header_nav_bg: string;
+    theme_header_nav_text: string;
+    theme_footer_bg: string;
+    theme_footer_text: string;
+    theme_footer_heading: string;
+    theme_border: string;
+    theme_alert: string;
+  };
+  swatches: string[]; // 4 preview colors
+}
+
+const themePresets: ThemePreset[] = [
+  {
+    name_bn: "ডিফল্ট (অ্যাকুয়া)",
+    name_en: "Default (Aqua)",
+    swatches: ["#00899A", "#2DA84F", "#E8930C", "#1E2D3D"],
+    colors: {
+      theme_primary: "#00899A", theme_secondary: "#2DA84F", theme_accent: "#E8930C",
+      theme_background: "#F5F7FA", theme_foreground: "#1E2D3D", theme_card: "#FFFFFF",
+      theme_hover: "#007A8A", theme_button: "#00899A", theme_button_hover: "#006E7D",
+      theme_link: "#0077B6", theme_header_utility_bg: "#00899A", theme_header_utility_text: "#FFFFFF",
+      theme_header_bg: "#FFFFFF", theme_header_nav_bg: "#1E2D3D", theme_header_nav_text: "#FFFFFF",
+      theme_footer_bg: "#1E2D3D", theme_footer_text: "#CBD5E1", theme_footer_heading: "#FFFFFF",
+      theme_border: "#E2E8F0", theme_alert: "#EF4444",
+    },
+  },
+  {
+    name_bn: "সবুজ প্রকৃতি",
+    name_en: "Green Nature",
+    swatches: ["#25671E", "#4CAF10", "#E8A317", "#F5F5F0"],
+    colors: {
+      theme_primary: "#25671E", theme_secondary: "#4CAF10", theme_accent: "#E8A317",
+      theme_background: "#F5F5F0", theme_foreground: "#1B3A15", theme_card: "#FFFFFF",
+      theme_hover: "#1E5518", theme_button: "#25671E", theme_button_hover: "#1E5518",
+      theme_link: "#2E7D32", theme_header_utility_bg: "#25671E", theme_header_utility_text: "#FFFFFF",
+      theme_header_bg: "#FFFFFF", theme_header_nav_bg: "#1B3A15", theme_header_nav_text: "#FFFFFF",
+      theme_footer_bg: "#1B3A15", theme_footer_text: "#A5D6A7", theme_footer_heading: "#FFFFFF",
+      theme_border: "#C8E6C9", theme_alert: "#D32F2F",
+    },
+  },
+  {
+    name_bn: "বেগুনি রাত",
+    name_en: "Purple Night",
+    swatches: ["#3D2C5E", "#6C3FBF", "#1DA0E0", "#D4E843"],
+    colors: {
+      theme_primary: "#6C3FBF", theme_secondary: "#1DA0E0", theme_accent: "#D4E843",
+      theme_background: "#F3F0FA", theme_foreground: "#2D1F4E", theme_card: "#FFFFFF",
+      theme_hover: "#5A33A3", theme_button: "#6C3FBF", theme_button_hover: "#5A33A3",
+      theme_link: "#1DA0E0", theme_header_utility_bg: "#3D2C5E", theme_header_utility_text: "#FFFFFF",
+      theme_header_bg: "#FFFFFF", theme_header_nav_bg: "#2D1F4E", theme_header_nav_text: "#FFFFFF",
+      theme_footer_bg: "#2D1F4E", theme_footer_text: "#B39DDB", theme_footer_heading: "#FFFFFF",
+      theme_border: "#D1C4E9", theme_alert: "#EF4444",
+    },
+  },
+  {
+    name_bn: "জলপাই সবুজ",
+    name_en: "Olive Green",
+    swatches: ["#558B2F", "#9E9D24", "#827717", "#6D7040"],
+    colors: {
+      theme_primary: "#558B2F", theme_secondary: "#9E9D24", theme_accent: "#FF8F00",
+      theme_background: "#F9F8F3", theme_foreground: "#33421A", theme_card: "#FFFFFF",
+      theme_hover: "#467525", theme_button: "#558B2F", theme_button_hover: "#467525",
+      theme_link: "#558B2F", theme_header_utility_bg: "#558B2F", theme_header_utility_text: "#FFFFFF",
+      theme_header_bg: "#FFFFFF", theme_header_nav_bg: "#33421A", theme_header_nav_text: "#FFFFFF",
+      theme_footer_bg: "#33421A", theme_footer_text: "#C5E1A5", theme_footer_heading: "#FFFFFF",
+      theme_border: "#DCEDC8", theme_alert: "#E53935",
+    },
+  },
+  {
+    name_bn: "সমুদ্র নীল",
+    name_en: "Ocean Blue",
+    swatches: ["#0D47A1", "#1976D2", "#03A9F4", "#E3F2FD"],
+    colors: {
+      theme_primary: "#1565C0", theme_secondary: "#0288D1", theme_accent: "#FF9800",
+      theme_background: "#F0F4FA", theme_foreground: "#0D2137", theme_card: "#FFFFFF",
+      theme_hover: "#0D47A1", theme_button: "#1565C0", theme_button_hover: "#0D47A1",
+      theme_link: "#1976D2", theme_header_utility_bg: "#0D47A1", theme_header_utility_text: "#FFFFFF",
+      theme_header_bg: "#FFFFFF", theme_header_nav_bg: "#0D2137", theme_header_nav_text: "#FFFFFF",
+      theme_footer_bg: "#0D2137", theme_footer_text: "#90CAF9", theme_footer_heading: "#FFFFFF",
+      theme_border: "#BBDEFB", theme_alert: "#E53935",
+    },
+  },
+  {
+    name_bn: "সূর্যাস্ত কমলা",
+    name_en: "Sunset Orange",
+    swatches: ["#E65100", "#FF9800", "#FFD54F", "#3E2723"],
+    colors: {
+      theme_primary: "#E65100", theme_secondary: "#FF9800", theme_accent: "#FFD54F",
+      theme_background: "#FFF8F0", theme_foreground: "#3E2723", theme_card: "#FFFFFF",
+      theme_hover: "#BF360C", theme_button: "#E65100", theme_button_hover: "#BF360C",
+      theme_link: "#E65100", theme_header_utility_bg: "#E65100", theme_header_utility_text: "#FFFFFF",
+      theme_header_bg: "#FFFFFF", theme_header_nav_bg: "#3E2723", theme_header_nav_text: "#FFFFFF",
+      theme_footer_bg: "#3E2723", theme_footer_text: "#FFCC80", theme_footer_heading: "#FFFFFF",
+      theme_border: "#FFE0B2", theme_alert: "#D32F2F",
+    },
+  },
+  {
+    name_bn: "গোলাপী মিষ্টি",
+    name_en: "Sweet Pink",
+    swatches: ["#AD1457", "#E91E63", "#F48FB1", "#FCE4EC"],
+    colors: {
+      theme_primary: "#C2185B", theme_secondary: "#E91E63", theme_accent: "#FF9800",
+      theme_background: "#FFF0F3", theme_foreground: "#4A0E2B", theme_card: "#FFFFFF",
+      theme_hover: "#AD1457", theme_button: "#C2185B", theme_button_hover: "#AD1457",
+      theme_link: "#C2185B", theme_header_utility_bg: "#AD1457", theme_header_utility_text: "#FFFFFF",
+      theme_header_bg: "#FFFFFF", theme_header_nav_bg: "#4A0E2B", theme_header_nav_text: "#FFFFFF",
+      theme_footer_bg: "#4A0E2B", theme_footer_text: "#F48FB1", theme_footer_heading: "#FFFFFF",
+      theme_border: "#F8BBD0", theme_alert: "#D32F2F",
+    },
+  },
+  {
+    name_bn: "ধূসর পেশাদার",
+    name_en: "Gray Professional",
+    swatches: ["#37474F", "#546E7A", "#78909C", "#ECEFF1"],
+    colors: {
+      theme_primary: "#37474F", theme_secondary: "#546E7A", theme_accent: "#FF6F00",
+      theme_background: "#F5F6F7", theme_foreground: "#212121", theme_card: "#FFFFFF",
+      theme_hover: "#263238", theme_button: "#37474F", theme_button_hover: "#263238",
+      theme_link: "#37474F", theme_header_utility_bg: "#37474F", theme_header_utility_text: "#FFFFFF",
+      theme_header_bg: "#FFFFFF", theme_header_nav_bg: "#212121", theme_header_nav_text: "#FFFFFF",
+      theme_footer_bg: "#212121", theme_footer_text: "#B0BEC5", theme_footer_heading: "#FFFFFF",
+      theme_border: "#CFD8DC", theme_alert: "#EF4444",
+    },
+  },
+];
 
 interface ColorConfig {
   key: string;
