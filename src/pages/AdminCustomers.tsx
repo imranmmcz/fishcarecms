@@ -348,14 +348,29 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
             <h1 className="text-2xl font-bold text-foreground">কাস্টমার ম্যানেজমেন্ট</h1>
             <p className="text-muted-foreground">অর্ডারকারী কাস্টমারদের তালিকা</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
               <UserPlus className="h-4 w-4" />
-              কাস্টমার যোগ করুন
+              কাস্টমার যোগ
             </Button>
-            <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
-              <Users className="h-5 w-5 text-primary" />
-              <span className="font-semibold text-primary">{customers.length} জন কাস্টমার</span>
+            <Button variant="outline" onClick={handleExportCSV} className="gap-2">
+              <Download className="h-4 w-4" />
+              এক্সপোর্ট
+            </Button>
+            <Button variant="outline" className="gap-2 relative" asChild>
+              <label>
+                <Upload className="h-4 w-4" />
+                ইমপোর্ট
+                <input type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
+              </label>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleDownloadTemplate} className="gap-1 text-xs">
+              <FileSpreadsheet className="h-3 w-3" />
+              টেমপ্লেট
+            </Button>
+            <div className="flex items-center gap-2 bg-primary/10 px-3 py-2 rounded-lg">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="font-semibold text-sm text-primary">{customers.length} জন</span>
             </div>
           </div>
         </div>
