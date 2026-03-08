@@ -427,6 +427,12 @@ export default function AdminDatabaseExport() {
             </ul>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="backend" className="space-y-6 mt-4">
+            <MySQLBackendSettings />
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );
