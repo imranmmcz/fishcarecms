@@ -520,6 +520,70 @@ export default function ThemeColorSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Theme Presets */}
+        <div>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            {language === "bn" ? "থিম প্রিসেট" : "Theme Presets"}
+          </h4>
+          <p className="text-xs text-muted-foreground mb-4">
+            {language === "bn" 
+              ? "একটি থিম সিলেক্ট করলে সকল কালার স্বয়ংক্রিয়ভাবে পরিবর্তন হবে। পরে আলাদা কালারও কাস্টমাইজ করতে পারবেন।" 
+              : "Select a theme to auto-apply all colors. You can customize individual colors afterward."}
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {themePresets.map((preset) => {
+              const isActive = preset.colors.theme_primary === colors.theme_primary &&
+                preset.colors.theme_secondary === colors.theme_secondary &&
+                preset.colors.theme_accent === colors.theme_accent;
+              return (
+                <button
+                  key={preset.name_en}
+                  onClick={() => {
+                    const newColors = { ...colors, ...preset.colors };
+                    setColors(newColors);
+                    // Live preview all colors
+                    Object.entries(preset.colors).forEach(([key, value]) => {
+                      const vars = cssVarMap[key];
+                      if (vars) {
+                        const hsl = hexToHsl(value);
+                        vars.forEach((v) => document.documentElement.style.setProperty(v, hsl));
+                      }
+                    });
+                    toast.success(language === "bn" 
+                      ? `"${preset.name_bn}" থিম প্রয়োগ হয়েছে` 
+                      : `"${preset.name_en}" theme applied`);
+                  }}
+                  className={`relative rounded-xl border-2 p-3 transition-all hover:scale-[1.03] hover:shadow-medium cursor-pointer text-left ${
+                    isActive 
+                      ? "border-primary ring-2 ring-primary/30 shadow-medium" 
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-0.5 z-10">
+                      <Check className="h-3.5 w-3.5" />
+                    </div>
+                  )}
+                  {/* Color swatches */}
+                  <div className="rounded-lg overflow-hidden mb-2">
+                    {preset.swatches.map((swatch, i) => (
+                      <div
+                        key={i}
+                        className="h-5"
+                        style={{ backgroundColor: swatch }}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs font-semibold truncate">
+                    {language === "bn" ? preset.name_bn : preset.name_en}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Base Colors */}
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
