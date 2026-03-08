@@ -11,10 +11,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   CloudUpload, HardDrive, Loader2, CheckCircle, 
   RefreshCw, Trash2, Clock, FileJson,
-  Database, Shield, DownloadCloud, Settings, BarChart3, Mail, Timer, Play, Pause
+  Database, Shield, DownloadCloud, Settings, BarChart3, Mail, Timer, Play, Pause,
+  Link2, Unlink, Eye, EyeOff, Save, ExternalLink, KeyRound
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminBackup = () => {
   const { toast } = useToast();
@@ -32,6 +35,17 @@ const AdminBackup = () => {
   const [cronSchedule, setCronSchedule] = useState('0 2 * * *');
   const [isSavingCron, setIsSavingCron] = useState(false);
   const [cronStatus, setCronStatus] = useState<{ active: boolean; schedule: string | null } | null>(null);
+
+  // Google Drive states
+  const [googleClientId, setGoogleClientId] = useState('');
+  const [googleClientSecret, setGoogleClientSecret] = useState('');
+  const [showSecret, setShowSecret] = useState(false);
+  const [isSavingGoogle, setIsSavingGoogle] = useState(false);
+  const [driveConnected, setDriveConnected] = useState(false);
+  const [driveEmail, setDriveEmail] = useState('');
+  const [driveConnectedAt, setDriveConnectedAt] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isCheckingDrive, setIsCheckingDrive] = useState(true);
   const loadBackupLogs = useCallback(async () => {
     setIsLoadingLogs(true);
     try {
