@@ -35,8 +35,9 @@ import { cn } from "@/lib/utils";
 import {
   Package, Eye, Loader2, ShoppingBag, Calendar, CalendarIcon, MapPin, Phone, Clock,
   Truck, CheckCircle, XCircle, AlertCircle, TrendingUp,
-  Search, RefreshCw, AlertTriangle, Users, X, Bell, MessageSquare,
+  Search, RefreshCw, AlertTriangle, Users, X, Bell, MessageSquare, Mail, Send,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ShipmentTrackingForm } from "@/components/ShipmentTrackingForm";
 import { ShipmentTrackingDisplay } from "@/components/ShipmentTrackingDisplay";
 import { InvoiceDownloadButton } from "@/components/InvoiceDownloadButton";
