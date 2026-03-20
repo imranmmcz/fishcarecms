@@ -31,7 +31,7 @@ export const SearchSuggestions = ({ placeholder, className, inputClassName }: Se
   const { language } = useLanguage();
   const { formatPrice } = useCurrency();
   const containerRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
