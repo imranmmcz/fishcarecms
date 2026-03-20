@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff, ArrowRight, LogIn } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowRight, LogIn, Fish, Waves, Droplets, Shield, BarChart3, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FishLoadingAnimation } from "@/components/FishLoadingAnimation";
 import { useAuthPageContent } from "@/hooks/useAuthPageContent";
@@ -110,161 +110,235 @@ const Auth = () => {
   const demoPassword = loginContent.demoPassword || "demo123";
   const demoText = loginContent.demoText || "ডেমো অ্যাকাউন্ট:";
 
-  return (
-    <div className="min-h-screen flex">
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-primary via-primary/90 to-primary/70 items-center justify-center p-12 overflow-hidden">
-        {/* Subtle pattern overlay */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 25% 25%, hsl(var(--primary-foreground)) 1px, transparent 1px),
-                              radial-gradient(circle at 75% 75%, hsl(var(--primary-foreground)) 1px, transparent 1px)`,
-            backgroundSize: '40px 40px'
-          }} />
-        </div>
-        {/* Floating circles */}
-        <div className="absolute top-20 left-20 w-64 h-64 bg-white/5 rounded-full blur-xl" />
-        <div className="absolute bottom-20 right-10 w-80 h-80 bg-white/5 rounded-full blur-xl" />
-        <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-white/5 rounded-full blur-lg" />
+  const features = [
+    { icon: Fish, label: "স্মার্ট মাছ চাষ" },
+    { icon: BarChart3, label: "রিয়েলটাইম রিপোর্ট" },
+    { icon: Shield, label: "নিরাপদ ডাটা" },
+    { icon: Users, label: "সহজ ব্যবস্থাপনা" },
+  ];
 
-        <div className="relative z-10 text-center max-w-md">
-          {siteLogoUrl ? (
-            <img src={siteLogoUrl} alt={loginHeading} className="h-24 w-24 rounded-2xl object-contain mx-auto mb-8 shadow-2xl ring-4 ring-white/20" />
-          ) : (
-            <div className="h-24 w-24 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center mx-auto mb-8 shadow-2xl ring-4 ring-white/20">
-              <LogIn className="h-12 w-12 text-primary-foreground" />
-            </div>
-          )}
-          <h1 className="text-4xl font-bold text-primary-foreground mb-4 leading-tight">
+  return (
+    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden bg-background">
+      {/* Animated background blobs for mobile */}
+      <div className="absolute inset-0 lg:hidden pointer-events-none overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-primary/5 blur-3xl animate-pulse" />
+        <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-secondary/5 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      {/* Left side - Hero Branding Panel */}
+      <div className="hidden lg:flex lg:w-[55%] relative items-center justify-center p-16 overflow-hidden">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-secondary/80" />
+        
+        {/* Animated wave pattern */}
+        <div className="absolute inset-0 opacity-[0.07]">
+          <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none">
+            <path fill="hsl(var(--primary-foreground))" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,138.7C672,128,768,160,864,181.3C960,203,1056,213,1152,197.3C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+          </svg>
+        </div>
+
+        {/* Floating decorative elements */}
+        <div className="absolute top-16 left-16 w-20 h-20 rounded-full bg-primary-foreground/5 backdrop-blur-sm animate-bounce" style={{ animationDuration: '6s' }} />
+        <div className="absolute top-1/3 right-12 w-14 h-14 rounded-full bg-primary-foreground/5 backdrop-blur-sm animate-bounce" style={{ animationDuration: '4s', animationDelay: '1s' }} />
+        <div className="absolute bottom-28 left-24 w-10 h-10 rounded-full bg-primary-foreground/5 backdrop-blur-sm animate-bounce" style={{ animationDuration: '5s', animationDelay: '2s' }} />
+        
+        {/* Fish icons floating */}
+        <Waves className="absolute top-20 right-20 h-8 w-8 text-primary-foreground/10 animate-pulse" />
+        <Droplets className="absolute bottom-32 right-32 h-6 w-6 text-primary-foreground/10 animate-pulse" style={{ animationDelay: '1.5s' }} />
+
+        <div className="relative z-10 text-center max-w-lg">
+          {/* Logo */}
+          <div className="mb-10">
+            {siteLogoUrl ? (
+              <img 
+                src={siteLogoUrl} 
+                alt={loginHeading} 
+                className="h-28 w-28 rounded-3xl object-contain mx-auto shadow-2xl ring-4 ring-primary-foreground/20 backdrop-blur-sm" 
+              />
+            ) : (
+              <div className="h-28 w-28 rounded-3xl bg-primary-foreground/10 backdrop-blur-md flex items-center justify-center mx-auto shadow-2xl ring-4 ring-primary-foreground/20">
+                <Fish className="h-14 w-14 text-primary-foreground" />
+              </div>
+            )}
+          </div>
+
+          {/* Heading */}
+          <h1 className="text-4xl xl:text-5xl font-bold text-primary-foreground mb-5 leading-tight tracking-tight">
             {loginHeading}
           </h1>
-          <p className="text-primary-foreground/70 text-lg leading-relaxed">
+          <p className="text-primary-foreground/65 text-lg leading-relaxed max-w-sm mx-auto">
             আপনার মাছ চাষ ব্যবসা পরিচালনা করুন আধুনিক ও স্মার্ট পদ্ধতিতে
           </p>
-          <div className="mt-10 flex items-center justify-center gap-6 text-primary-foreground/60 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              সহজ ব্যবস্থাপনা
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-blue-400" />
-              রিয়েলটাইম ডাটা
-            </div>
+
+          {/* Feature pills */}
+          <div className="mt-12 grid grid-cols-2 gap-3 max-w-sm mx-auto">
+            {features.map((f, i) => (
+              <div 
+                key={i} 
+                className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-primary-foreground/10 backdrop-blur-sm text-primary-foreground/80 text-sm font-medium transition-all hover:bg-primary-foreground/15 hover:scale-[1.02]"
+              >
+                <f.icon className="h-4.5 w-4.5 shrink-0" />
+                {f.label}
+              </div>
+            ))}
+          </div>
+
+          {/* Trust badge */}
+          <div className="mt-10 flex items-center justify-center gap-2 text-primary-foreground/40 text-xs">
+            <Shield className="h-3.5 w-3.5" />
+            <span>আপনার ডাটা সম্পূর্ণ নিরাপদ ও এনক্রিপ্টেড</span>
           </div>
         </div>
       </div>
 
       {/* Right side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-background">
-        <div className="w-full max-w-[420px] space-y-8">
-          {/* Mobile logo */}
-          <div className="lg:hidden text-center">
-            {siteLogoUrl ? (
-              <img src={siteLogoUrl} alt={loginHeading} className="h-16 w-16 rounded-xl object-contain mx-auto mb-4 shadow-lg" />
-            ) : (
-              <div className="h-16 w-16 rounded-xl bg-primary flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <LogIn className="h-8 w-8 text-primary-foreground" />
-              </div>
-            )}
+      <div className="w-full lg:w-[45%] flex items-center justify-center p-5 sm:p-8 lg:p-16 relative z-10">
+        <div className="w-full max-w-[400px] space-y-6">
+          {/* Mobile header */}
+          <div className="lg:hidden text-center mb-2">
+            <div className="inline-flex items-center justify-center mb-5">
+              {siteLogoUrl ? (
+                <img 
+                  src={siteLogoUrl} 
+                  alt={loginHeading} 
+                  className="h-18 w-18 rounded-2xl object-contain shadow-lg ring-2 ring-border" 
+                />
+              ) : (
+                <div className="h-18 w-18 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+                  <Fish className="h-9 w-9 text-primary-foreground" />
+                </div>
+              )}
+            </div>
             <h1 className="text-2xl font-bold text-foreground">{loginHeading}</h1>
+            <p className="text-muted-foreground text-sm mt-1">{loginDesc}</p>
           </div>
 
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-foreground hidden lg:block">স্বাগতম!</h2>
+          {/* Desktop welcome */}
+          <div className="hidden lg:block space-y-1.5">
+            <h2 className="text-3xl font-bold text-foreground">স্বাগতম! 👋</h2>
             <p className="text-muted-foreground">{loginDesc}</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="login-identifier" className="text-foreground font-medium">{loginEmailLabel}</Label>
-              <Input
-                id="login-identifier"
-                type="text"
-                placeholder={loginEmailPlaceholder}
-                value={loginIdentifier}
-                onChange={(e) => setLoginIdentifier(e.target.value)}
-                className="h-12 text-base"
-              />
-              {errors.identifier && <p className="text-sm text-destructive">{errors.identifier}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="login-password" className="text-foreground font-medium">{loginPwdLabel}</Label>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-                >
-                  পাসওয়ার্ড ভুলে গেছেন?
-                </Link>
+          {/* Login Form Card */}
+          <div className="bg-card/80 backdrop-blur-sm rounded-2xl border border-border/60 p-6 sm:p-7 shadow-sm space-y-5">
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* Email/Phone field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="login-identifier" className="text-foreground font-medium text-sm">
+                  {loginEmailLabel}
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="login-identifier"
+                    type="text"
+                    placeholder={loginEmailPlaceholder}
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
+                    className="h-12 text-base rounded-xl border-border/80 bg-background/60 focus:bg-background transition-colors pl-4"
+                  />
+                </div>
+                {errors.identifier && (
+                  <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+                    <span className="inline-block w-1 h-1 rounded-full bg-destructive" />
+                    {errors.identifier}
+                  </p>
+                )}
               </div>
-              <div className="relative">
-                <Input
-                  id="login-password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder={loginPwdPlaceholder}
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  className="h-12 text-base pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full h-12 text-base font-semibold gap-2"
-              disabled={isLoading}
-            >
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
-              {loginBtnText}
-            </Button>
-          </form>
+              {/* Password field */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="login-password" className="text-foreground font-medium text-sm">
+                    {loginPwdLabel}
+                  </Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-primary hover:text-primary/80 font-medium transition-colors hover:underline underline-offset-2"
+                  >
+                    পাসওয়ার্ড ভুলে গেছেন?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="login-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder={loginPwdPlaceholder}
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="h-12 text-base pr-12 rounded-xl border-border/80 bg-background/60 focus:bg-background transition-colors pl-4"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                  >
+                    {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+                    <span className="inline-block w-1 h-1 rounded-full bg-destructive" />
+                    {errors.password}
+                  </p>
+                )}
+              </div>
+
+              {/* Submit button */}
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-semibold gap-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 mt-2"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <LogIn className="h-5 w-5" />
+                )}
+                {loginBtnText}
+              </Button>
+            </form>
+          </div>
 
           {/* Demo account */}
           {showDemoAccount && (
-            <div className="p-4 rounded-xl bg-muted/50 border border-border">
-              <p className="text-sm font-medium text-foreground mb-2">🎯 {demoText}</p>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <p>ইমেইল: <span className="text-primary font-mono text-xs">{demoEmail}</span></p>
-                <p>পাসওয়ার্ড: <span className="text-primary font-mono text-xs">{demoPassword}</span></p>
+            <div className="p-4 rounded-xl bg-muted/40 border border-border/50 backdrop-blur-sm">
+              <p className="text-sm font-medium text-foreground mb-1.5">🎯 {demoText}</p>
+              <div className="space-y-0.5 text-sm text-muted-foreground">
+                <p>ইমেইল: <code className="text-primary bg-primary/5 px-1.5 py-0.5 rounded text-xs">{demoEmail}</code></p>
+                <p>পাসওয়ার্ড: <code className="text-primary bg-primary/5 px-1.5 py-0.5 rounded text-xs">{demoPassword}</code></p>
               </div>
             </div>
           )}
 
-          {/* Register link */}
-          <div className="text-center space-y-4">
+          {/* Divider + Register */}
+          <div className="space-y-4">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
+                <span className="w-full border-t border-border/50" />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-3 text-muted-foreground">অথবা</span>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-background px-4 text-muted-foreground">অথবা</span>
               </div>
             </div>
-            <p className="text-muted-foreground">
-              অ্যাকাউন্ট নেই?{" "}
-              <Link
-                to="/register"
-                className="text-primary hover:text-primary/80 font-semibold inline-flex items-center gap-1 transition-colors"
-              >
-                নিবন্ধন করুন <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </p>
+
+            <div className="text-center">
+              <p className="text-muted-foreground text-sm">
+                অ্যাকাউন্ট নেই?{" "}
+                <Link
+                  to="/register"
+                  className="text-primary hover:text-primary/80 font-semibold inline-flex items-center gap-1 transition-colors hover:underline underline-offset-2"
+                >
+                  নিবন্ধন করুন <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </p>
+            </div>
           </div>
 
           {/* Home link */}
-          <div className="text-center">
+          <div className="text-center pt-1">
             <Link
               to="/"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5 hover:underline underline-offset-2"
             >
               ← হোম পেজে ফিরে যান
             </Link>
