@@ -526,8 +526,21 @@ export default function MedicineRecommendation() {
             </div>
           )}
 
-          {/* Recommended Products Slider */}
-          <RecommendedProductsSlider category="popular_medicine" titleBn="জনপ্রিয় মাছের ঔষধ" />
+          {/* Dynamic disease-specific products slider */}
+          {analyzed && matchedDiseases.length > 0 && (
+            <RecommendedProductsSlider
+              diseaseIds={matchedDiseases.map(m => m.disease.id)}
+              category="popular_medicine"
+              titleBn="AI সুপারিশকৃত ঔষধ ও পণ্য"
+              title="AI Recommended Medicines"
+              showAiBadge
+            />
+          )}
+
+          {/* Fallback slider when no analysis done */}
+          {!analyzed && (
+            <RecommendedProductsSlider category="popular_medicine" titleBn="জনপ্রিয় মাছের ঔষধ" />
+          )}
 
           <div className="mt-8"><AdUnit position="footer" /></div>
         </div>
