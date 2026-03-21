@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ChevronLeft, ChevronRight, Pill, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pill, ShoppingCart, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 
@@ -17,15 +18,19 @@ interface Product {
 }
 
 interface RecommendedProductsSliderProps {
-  category?: string; // calculator context: medicine, feed, fertilizer, etc.
+  category?: string;
+  diseaseIds?: string[];
   title?: string;
   titleBn?: string;
+  showAiBadge?: boolean;
 }
 
 const RecommendedProductsSlider = ({ 
   category,
+  diseaseIds,
   title = 'Recommended Products',
-  titleBn = 'এই হিসাবের জন্য প্রস্তাবিত পণ্য'
+  titleBn = 'এই হিসাবের জন্য প্রস্তাবিত পণ্য',
+  showAiBadge = false,
 }: RecommendedProductsSliderProps) => {
   const { language } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
@@ -42,49 +47,89 @@ const RecommendedProductsSlider = ({
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-      
-      // Try fetching tagged products first
-      let rpcData: Product[] = [];
-      try {
-        const tag = category || 'calculator_related';
-        const { data } = await (supabase
-          .from('products')
-          .select('id, name, description, price, discount_percentage, image_url') as any)
-          .eq('is_active', true)
-          .gt('stock_quantity', 0)
-          .contains('recommendation_tags', [tag])
-          .limit(12);
-        rpcData = (data as Product[]) || [];
-      } catch {
-        rpcData = [];
+      let finalProducts: Product[] = [];
+
+      // Priority 1: Fetch products linked to specific diseases
+      if (diseaseIds && diseaseIds.length > 0) {
+        const { data: recData } = await supabase
+          .from('disease_recommended_products')
+          .select('product_id, products:product_id(id, name, description, price, discount_percentage, image_url)')
+          .in('disease_id', diseaseIds)
+          .order('display_order', { ascending: true });
+
+        if (recData) {
+          const seen = new Set<string>();
+          for (const item of recData as any[]) {
+            if (item.products && !seen.has(item.products.id)) {
+              seen.add(item.products.id);
+              finalProducts.push(item.products);
+            }
+          }
+        }
       }
 
-      if (rpcData.length < 4) {
+      // Priority 2: Fetch by tag/category
+      if (finalProducts.length < 4 && category) {
+        try {
+          const { data } = await (supabase
+            .from('products')
+            .select('id, name, description, price, discount_percentage, image_url') as any)
+            .eq('is_active', true)
+            .gt('stock_quantity', 0)
+            .contains('recommendation_tags', [category])
+            .limit(12);
+          
+          const existing = new Set(finalProducts.map(p => p.id));
+          for (const p of (data as Product[]) || []) {
+            if (!existing.has(p.id)) {
+              finalProducts.push(p);
+              existing.add(p.id);
+            }
+          }
+        } catch {
+          // tag column might not exist
+        }
+      }
+
+      // Priority 3: Fallback to popular products
+      if (finalProducts.length < 4) {
         const { data: fallback } = await (supabase
           .from('products')
           .select('id, name, description, price, discount_percentage, image_url') as any)
           .eq('is_active', true)
           .gt('stock_quantity', 0)
           .limit(8);
-        setProducts((fallback as Product[]) || []);
-      } else {
-        setProducts(rpcData);
+        
+        const existing = new Set(finalProducts.map(p => p.id));
+        for (const p of (fallback as Product[]) || []) {
+          if (!existing.has(p.id)) {
+            finalProducts.push(p);
+            existing.add(p.id);
+          }
+        }
       }
+
+      setProducts(finalProducts);
       setLoading(false);
     };
     fetchProducts();
-  }, [category]);
+  }, [category, diseaseIds?.join(',')]);
 
   if (loading || products.length === 0) return null;
 
   return (
     <section className="mt-10 mb-6">
       <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Pill className="h-5 w-5 text-primary" />
           <h2 className="text-lg md:text-xl font-bold text-foreground">
             {language === 'bn' ? titleBn : title}
           </h2>
+          {showAiBadge && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <Sparkles className="h-3 w-3" /> AI সুপারিশ
+            </Badge>
+          )}
         </div>
         <div className="flex gap-1.5">
           <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={scrollPrev}>
