@@ -118,8 +118,8 @@ const ForgotPassword = () => {
 
             {isSent ? (
               <div className="space-y-4">
-                <div className="p-5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-center space-y-3">
-                  <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
+              <div className="p-5 bg-primary/10 rounded-xl border border-primary/20 text-center space-y-3">
+                  <CheckCircle2 className="h-12 w-12 text-primary mx-auto" />
                   <p className="text-foreground font-medium">রিসেট লিংক পাঠানো হয়েছে</p>
                   <p className="text-muted-foreground text-sm">
                     <span className="text-primary font-mono text-xs">{email}</span> এ পাসওয়ার্ড রিসেট লিংক পাঠানো হয়েছে।

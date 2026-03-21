@@ -149,7 +149,7 @@ const ResetPassword = () => {
 
             {isSuccess ? (
               <div className="text-center space-y-4 py-4">
-                <CheckCircle className="h-16 w-16 text-emerald-500 mx-auto" />
+                <CheckCircle className="h-16 w-16 text-primary mx-auto" />
                 <p className="text-muted-foreground text-sm">কিছুক্ষণের মধ্যে লগইন পেজে যাবে...</p>
               </div>
             ) : !isValidSession ? (
