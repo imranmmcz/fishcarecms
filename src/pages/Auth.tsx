@@ -101,8 +101,8 @@ const Auth = () => {
   const loginHeading = loginContent.heading || siteName || "মাছ চাষ ম্যানেজমেন্ট";
   const loginDesc = loginContent.description || "আপনার অ্যাকাউন্টে প্রবেশ করুন";
   const loginBtnText = loginContent.buttonText || "লগইন করুন";
-  const loginEmailLabel = loginContent.emailLabel || "ইমেইল / মোবাইল নম্বর";
-  const loginEmailPlaceholder = loginContent.emailPlaceholder || "ইমেইল বা মোবাইল নম্বর";
+  const loginEmailLabel = loginContent.emailLabel || "ইমেইল অথবা মোবাইল নম্বর";
+  const loginEmailPlaceholder = loginContent.emailPlaceholder || "ইমেইল অথবা মোবাইল নম্বর দিন";
   const loginPwdLabel = loginContent.passwordLabel || "পাসওয়ার্ড";
   const loginPwdPlaceholder = loginContent.passwordPlaceholder || "••••••••";
   const showDemoAccount = loginContent.showDemoAccount !== false;
