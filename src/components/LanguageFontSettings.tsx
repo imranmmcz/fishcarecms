@@ -6,16 +6,27 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Type, Save, Loader2, Upload, Eye } from "lucide-react";
+import { Type, Save, Loader2, Upload, Eye, Globe, Link2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const WEB_SAFE_FONTS = [
-  { label: "Hind Siliguri (Default Bengali)", value: "Hind Siliguri" },
-  { label: "Noto Sans Bengali", value: "Noto Sans Bengali" },
-  { label: "Kalpurush", value: "Kalpurush" },
+const BANGLA_FONTS = [
+  { label: "Hind Siliguri (ডিফল্ট)", value: "Hind Siliguri", cdn: "https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" },
+  { label: "Noto Sans Bengali", value: "Noto Sans Bengali", cdn: "https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap" },
+  { label: "Noto Serif Bengali", value: "Noto Serif Bengali", cdn: "https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@300;400;500;600;700&display=swap" },
+  { label: "Baloo Da 2", value: "Baloo Da 2", cdn: "https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@400;500;600;700;800&display=swap" },
+  { label: "Tiro Bangla", value: "Tiro Bangla", cdn: "https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" },
+  { label: "Galada", value: "Galada", cdn: "https://fonts.googleapis.com/css2?family=Galada&display=swap" },
+  { label: "Anek Bangla", value: "Anek Bangla", cdn: "https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@300;400;500;600;700&display=swap" },
+  { label: "Mina", value: "Mina", cdn: "https://fonts.googleapis.com/css2?family=Mina:wght@400;700&display=swap" },
+  { label: "Atma", value: "Atma", cdn: "https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600;700&display=swap" },
+  { label: "Kalpurush", value: "Kalpurush", cdn: "" },
+  { label: "Nikosh", value: "Nikosh", cdn: "" },
+];
+
+const ENGLISH_FONTS = [
+  { label: "Inter", value: "Inter" },
   { label: "Arial", value: "Arial" },
   { label: "Georgia", value: "Georgia" },
-  { label: "Inter", value: "Inter" },
   { label: "Roboto", value: "Roboto" },
   { label: "Open Sans", value: "Open Sans" },
   { label: "Lato", value: "Lato" },
@@ -29,6 +40,7 @@ interface FontConfig {
   en_font: string;
   custom_font_name: string;
   custom_font_url: string;
+  cdn_font_url: string;
 }
 
 const DEFAULT_CONFIG: FontConfig = {
@@ -36,10 +48,28 @@ const DEFAULT_CONFIG: FontConfig = {
   en_font: "Inter",
   custom_font_name: "",
   custom_font_url: "",
+  cdn_font_url: "",
 };
 
-function applyFontToDocument(bnFont: string, enFont: string, customFontName?: string, customFontUrl?: string) {
-  // Inject custom font face if provided
+function loadGoogleFontCSS(url: string) {
+  if (!url) return;
+  const existingLink = document.querySelector(`link[href="${url}"]`);
+  if (existingLink) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = url;
+  document.head.appendChild(link);
+}
+
+function applyFontToDocument(bnFont: string, enFont: string, customFontName?: string, customFontUrl?: string, cdnFontUrl?: string) {
+  // Load CDN font CSS if provided
+  if (cdnFontUrl) loadGoogleFontCSS(cdnFontUrl);
+
+  // Load Google Font CSS for known Bengali fonts
+  const bnFontDef = BANGLA_FONTS.find(f => f.value === bnFont);
+  if (bnFontDef?.cdn) loadGoogleFontCSS(bnFontDef.cdn);
+
+  // Inject custom @font-face if provided
   if (customFontName && customFontUrl) {
     const existingStyle = document.getElementById("custom-font-style");
     if (existingStyle) existingStyle.remove();
@@ -85,9 +115,10 @@ export default function LanguageFontSettings() {
         en_font: map.font_en || DEFAULT_CONFIG.en_font,
         custom_font_name: map.font_custom_name || "",
         custom_font_url: map.font_custom_url || "",
+        cdn_font_url: map.font_cdn_url || "",
       };
       setConfig(loaded);
-      applyFontToDocument(loaded.bn_font, loaded.en_font, loaded.custom_font_name, loaded.custom_font_url);
+      applyFontToDocument(loaded.bn_font, loaded.en_font, loaded.custom_font_name, loaded.custom_font_url, loaded.cdn_font_url);
     } catch (err) {
       console.error("Error loading font config:", err);
     } finally {
@@ -117,8 +148,9 @@ export default function LanguageFontSettings() {
         upsertSetting("font_en", config.en_font),
         upsertSetting("font_custom_name", config.custom_font_name),
         upsertSetting("font_custom_url", config.custom_font_url),
+        upsertSetting("font_cdn_url", config.cdn_font_url),
       ]);
-      applyFontToDocument(config.bn_font, config.en_font, config.custom_font_name, config.custom_font_url);
+      applyFontToDocument(config.bn_font, config.en_font, config.custom_font_name, config.custom_font_url, config.cdn_font_url);
       toast.success(bn ? "ফন্ট সেটিংস সংরক্ষিত হয়েছে" : "Font settings saved");
     } catch (err) {
       console.error("Error saving font config:", err);
@@ -154,7 +186,7 @@ export default function LanguageFontSettings() {
   };
 
   const handlePreview = () => {
-    applyFontToDocument(config.bn_font, config.en_font, config.custom_font_name, config.custom_font_url);
+    applyFontToDocument(config.bn_font, config.en_font, config.custom_font_name, config.custom_font_url, config.cdn_font_url);
     toast.info(bn ? "ফন্ট প্রিভিউ প্রয়োগ হয়েছে" : "Font preview applied");
   };
 
@@ -175,28 +207,29 @@ export default function LanguageFontSettings() {
         </CardTitle>
         <CardDescription>
           {bn
-            ? "প্রতিটি ভাষার জন্য আলাদা ফন্ট নির্ধারণ করুন এবং কাস্টম ফন্ট আপলোড করুন।"
-            : "Assign a font family per language and optionally upload a custom font."}
+            ? "প্রতিটি ভাষার জন্য আলাদা ফন্ট নির্ধারণ করুন, CDN থেকে ফন্ট যুক্ত করুন অথবা কাস্টম ফন্ট আপলোড করুন।"
+            : "Assign a font per language, add fonts from CDN, or upload custom fonts."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Font selectors */}
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-2">
-            <Label className="font-semibold">
+            <Label className="font-semibold flex items-center gap-1.5">
+              <Globe className="h-4 w-4 text-primary" />
               {bn ? "বাংলা ফন্ট ফ্যামিলি" : "Bengali Font Family"}
             </Label>
             <p className="text-xs text-muted-foreground">
-              {bn ? "বাংলা ভাষার জন্য ফন্ট নির্বাচন করুন" : "Font used when Bengali is active"}
+              {bn ? "বাংলা ভাষার জন্য ফন্ট নির্বাচন করুন (১১টি বাংলা ফন্ট)" : "Font used when Bengali is active (11 Bengali fonts)"}
             </p>
             <Select value={config.bn_font} onValueChange={(v) => setConfig((p) => ({ ...p, bn_font: v }))}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {WEB_SAFE_FONTS.map((f) => (
+                {BANGLA_FONTS.map((f) => (
                   <SelectItem key={f.value} value={f.value}>
-                    {f.label}
+                    {f.label} {f.cdn ? "🌐" : "📁"}
                   </SelectItem>
                 ))}
                 {config.custom_font_name && (
@@ -209,7 +242,8 @@ export default function LanguageFontSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label className="font-semibold">
+            <Label className="font-semibold flex items-center gap-1.5">
+              <Globe className="h-4 w-4 text-primary" />
               {bn ? "ইংরেজি ফন্ট ফ্যামিলি" : "English Font Family"}
             </Label>
             <p className="text-xs text-muted-foreground">
@@ -220,7 +254,7 @@ export default function LanguageFontSettings() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {WEB_SAFE_FONTS.map((f) => (
+                {ENGLISH_FONTS.map((f) => (
                   <SelectItem key={f.value} value={f.value}>
                     {f.label}
                   </SelectItem>
@@ -235,9 +269,34 @@ export default function LanguageFontSettings() {
           </div>
         </div>
 
+        {/* CDN Font URL */}
+        <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
+          <Label className="font-semibold flex items-center gap-1.5">
+            <Link2 className="h-4 w-4 text-primary" />
+            {bn ? "CDN থেকে ফন্ট যুক্ত করুন" : "Add Font from CDN"}
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            {bn
+              ? "Google Fonts বা অন্য CDN থেকে ফন্ট CSS URL পেস্ট করুন। যেমন: https://fonts.googleapis.com/css2?family=FontName"
+              : "Paste a Google Fonts or CDN CSS URL. Example: https://fonts.googleapis.com/css2?family=FontName"}
+          </p>
+          <Input
+            value={config.cdn_font_url}
+            onChange={(e) => setConfig((p) => ({ ...p, cdn_font_url: e.target.value }))}
+            placeholder="https://fonts.googleapis.com/css2?family=YourFont&display=swap"
+            className="text-sm font-mono"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            {bn
+              ? "💡 টিপস: Google Fonts থেকে ফন্ট খুঁজুন → 'Get embed code' ক্লিক করুন → CSS URL কপি করুন"
+              : "💡 Tip: Find a font on Google Fonts → Click 'Get embed code' → Copy the CSS URL"}
+          </p>
+        </div>
+
         {/* Custom font upload */}
         <div className="rounded-lg border border-dashed border-border p-4 space-y-3">
-          <Label className="font-semibold">
+          <Label className="font-semibold flex items-center gap-1.5">
+            <Upload className="h-4 w-4 text-primary" />
             {bn ? "কাস্টম ফন্ট আপলোড" : "Upload Custom Font"}
           </Label>
           <p className="text-xs text-muted-foreground">

@@ -89,6 +89,7 @@ const FONT_CHAIN: FontDef[] = [
     urls: [
       "/fonts/HindSiliguri-Regular.ttf",
       "https://cdn.jsdelivr.net/gh/nicholasgasior/font-hind-siliguri@master/fonts/ttf/HindSiliguri-Regular.ttf",
+      "https://cdn.jsdelivr.net/gh/nicholasgasior/font-hind-siliguri@master/fonts/ttf/hindsiliguri-regular-webfont.ttf",
     ],
     boldUrls: [
       "/fonts/HindSiliguri-Bold.ttf",
@@ -100,9 +101,33 @@ const FONT_CHAIN: FontDef[] = [
     urls: [
       "/fonts/NotoSansBengali-Regular.ttf",
       "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansbengali/NotoSansBengali%5Bwdth%2Cwght%5D.ttf",
+      "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSansBengali/NotoSansBengali-Regular.ttf",
     ],
     boldUrls: [
       "/fonts/NotoSansBengali-Regular.ttf",
+      "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSansBengali/NotoSansBengali-Bold.ttf",
+    ],
+  },
+  {
+    name: "BalooDa2",
+    urls: [
+      "/fonts/BalooDa2-Regular.ttf",
+      "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/balooda2/BalooDa2%5Bwght%5D.ttf",
+    ],
+    boldUrls: [
+      "/fonts/BalooDa2-Regular.ttf",
+      "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/balooda2/BalooDa2%5Bwght%5D.ttf",
+    ],
+  },
+  {
+    name: "AnekBangla",
+    urls: [
+      "/fonts/AnekBangla-Regular.ttf",
+      "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anekbangla/AnekBangla%5Bwdth%2Cwght%5D.ttf",
+    ],
+    boldUrls: [
+      "/fonts/AnekBangla-Regular.ttf",
+      "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anekbangla/AnekBangla%5Bwdth%2Cwght%5D.ttf",
     ],
   },
 ];
