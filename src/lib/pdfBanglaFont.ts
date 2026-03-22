@@ -1,52 +1,61 @@
 /**
  * PDF Bengali Font Manager for jsPDF
- * Robust font loading with fallback chain: Nikosh → HindSiliguri → NotoSansBengali
+ * Robust font loading with multiple fallback approaches
  */
 
 import jsPDF from "jspdf";
 
-// Font cache
-let fontCache: Record<string, string> = {};
-let loadingPromises: Record<string, Promise<string | null>> = {};
+// Font cache - stores ArrayBuffer for reuse
+let fontBufferCache: Record<string, ArrayBuffer> = {};
+let loadingPromises: Record<string, Promise<ArrayBuffer | null>> = {};
 const registeredDocs = new WeakSet<jsPDF>();
 const docFontName = new WeakMap<jsPDF, string>();
 
 /**
- * Load a font file and convert to base64 string for jsPDF embedding
+ * Convert ArrayBuffer to base64 string - chunk-safe approach
  */
-async function loadFontBase64(url: string): Promise<string | null> {
-  // Return cached
-  if (fontCache[url]) return fontCache[url];
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.length;
+  let binary = "";
+  // Process in small chunks to avoid call stack issues
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
 
-  // Return in-flight promise
+/**
+ * Load a font file as ArrayBuffer
+ */
+async function loadFontBuffer(url: string): Promise<ArrayBuffer | null> {
+  if (fontBufferCache[url]) return fontBufferCache[url];
   if (loadingPromises[url]) return loadingPromises[url];
 
   const promise = (async () => {
     try {
+      // Try fetching with cache
       const response = await fetch(url, { cache: "force-cache" });
       if (!response.ok) {
         console.warn(`Font fetch failed: ${url} (${response.status})`);
         return null;
       }
 
-      const arrayBuffer = await response.arrayBuffer();
-      if (arrayBuffer.byteLength < 1000) {
-        console.warn(`Font file too small: ${url} (${arrayBuffer.byteLength} bytes)`);
+      const contentType = response.headers.get("content-type") || "";
+      // If we get HTML back, it's a 404 page
+      if (contentType.includes("text/html")) {
+        console.warn(`Font URL returned HTML (likely 404): ${url}`);
         return null;
       }
 
-      // Convert ArrayBuffer to base64
-      const bytes = new Uint8Array(arrayBuffer);
-      let binary = "";
-      const chunkSize = 8192;
-      for (let i = 0; i < bytes.length; i += chunkSize) {
-        const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
-        binary += String.fromCharCode(...Array.from(chunk));
+      const buffer = await response.arrayBuffer();
+      if (buffer.byteLength < 5000) {
+        console.warn(`Font file too small: ${url} (${buffer.byteLength} bytes)`);
+        return null;
       }
-      const base64 = btoa(binary);
 
-      fontCache[url] = base64;
-      return base64;
+      fontBufferCache[url] = buffer;
+      return buffer;
     } catch (err) {
       console.error(`Font load error: ${url}`, err);
       return null;
@@ -59,45 +68,79 @@ async function loadFontBase64(url: string): Promise<string | null> {
 
 interface FontDef {
   name: string;
-  regularUrl: string;
-  boldUrl: string;
+  urls: string[]; // Multiple URLs to try (local + CDN fallbacks)
+  boldUrls: string[];
 }
 
 const FONT_CHAIN: FontDef[] = [
   {
     name: "Nikosh",
-    regularUrl: "/fonts/Nikosh.ttf",
-    boldUrl: "/fonts/Nikosh.ttf",
+    urls: [
+      "/fonts/Nikosh.ttf",
+      "https://cdn.jsdelivr.net/gh/AbiruzzamanMolla/Bangla-Font@main/Nikosh.ttf",
+    ],
+    boldUrls: [
+      "/fonts/Nikosh.ttf",
+      "https://cdn.jsdelivr.net/gh/AbiruzzamanMolla/Bangla-Font@main/Nikosh.ttf",
+    ],
   },
   {
     name: "HindSiliguri",
-    regularUrl: "/fonts/HindSiliguri-Regular.ttf",
-    boldUrl: "/fonts/HindSiliguri-Bold.ttf",
+    urls: [
+      "/fonts/HindSiliguri-Regular.ttf",
+      "https://cdn.jsdelivr.net/gh/nicholasgasior/font-hind-siliguri@master/fonts/ttf/HindSiliguri-Regular.ttf",
+    ],
+    boldUrls: [
+      "/fonts/HindSiliguri-Bold.ttf",
+      "https://cdn.jsdelivr.net/gh/nicholasgasior/font-hind-siliguri@master/fonts/ttf/HindSiliguri-Bold.ttf",
+    ],
   },
   {
     name: "NotoSansBengali",
-    regularUrl: "/fonts/NotoSansBengali-Regular.ttf",
-    boldUrl: "/fonts/NotoSansBengali-Regular.ttf",
+    urls: [
+      "/fonts/NotoSansBengali-Regular.ttf",
+      "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansbengali/NotoSansBengali%5Bwdth%2Cwght%5D.ttf",
+    ],
+    boldUrls: [
+      "/fonts/NotoSansBengali-Regular.ttf",
+    ],
   },
 ];
 
 /**
+ * Try loading font from multiple URLs, return first success
+ */
+async function loadFontFromUrls(urls: string[]): Promise<ArrayBuffer | null> {
+  for (const url of urls) {
+    const buffer = await loadFontBuffer(url);
+    if (buffer) return buffer;
+  }
+  return null;
+}
+
+/**
  * Register Bengali font on a jsPDF doc instance.
- * Tries Nikosh first (best Bengali support), then HindSiliguri, then NotoSansBengali.
+ * Tries Nikosh first, then HindSiliguri, then NotoSansBengali.
+ * Each font has CDN fallback URLs.
  */
 export async function registerBanglaFont(doc: jsPDF): Promise<boolean> {
   if (registeredDocs.has(doc)) return true;
 
   for (const fontDef of FONT_CHAIN) {
     try {
-      const [regularB64, boldB64] = await Promise.all([
-        loadFontBase64(fontDef.regularUrl),
-        fontDef.boldUrl !== fontDef.regularUrl
-          ? loadFontBase64(fontDef.boldUrl)
-          : loadFontBase64(fontDef.regularUrl),
+      const [regularBuffer, boldBuffer] = await Promise.all([
+        loadFontFromUrls(fontDef.urls),
+        loadFontFromUrls(fontDef.boldUrls),
       ]);
 
-      if (!regularB64) continue;
+      if (!regularBuffer) {
+        console.warn(`All URLs failed for ${fontDef.name}, trying next font...`);
+        continue;
+      }
+
+      // Convert to base64
+      const regularB64 = arrayBufferToBase64(regularBuffer);
+      const boldB64 = boldBuffer ? arrayBufferToBase64(boldBuffer) : regularB64;
 
       // Register regular
       const regFile = `${fontDef.name}-Regular.ttf`;
@@ -106,27 +149,27 @@ export async function registerBanglaFont(doc: jsPDF): Promise<boolean> {
 
       // Register bold
       const boldFile = `${fontDef.name}-Bold.ttf`;
-      doc.addFileToVFS(boldFile, boldB64 || regularB64);
+      doc.addFileToVFS(boldFile, boldB64);
       doc.addFont(boldFile, fontDef.name, "bold");
 
-      // Verify
+      // Verify the font works
       doc.setFont(fontDef.name, "normal");
       const current = doc.getFont();
       if (current.fontName !== fontDef.name) {
-        console.warn(`Font verification failed for ${fontDef.name}`);
+        console.warn(`Font verification failed for ${fontDef.name}, trying next...`);
         continue;
       }
 
       registeredDocs.add(doc);
       docFontName.set(doc, fontDef.name);
-      console.log(`✅ Bengali PDF font registered: ${fontDef.name}`);
+      console.log(`✅ Bengali PDF font registered: ${fontDef.name} (${(regularBuffer.byteLength / 1024).toFixed(0)}KB)`);
       return true;
     } catch (err) {
       console.warn(`Font registration failed for ${fontDef.name}:`, err);
     }
   }
 
-  console.error("❌ No Bengali font could be registered");
+  console.error("❌ No Bengali font could be registered - PDF will have garbled text");
   return false;
 }
 
@@ -163,11 +206,13 @@ export function getFontName(isBn: boolean): string {
  * Pre-load all fonts so they're cached for instant PDF generation.
  */
 export async function preloadBanglaFont(): Promise<boolean> {
-  const results = await Promise.allSettled(
-    FONT_CHAIN.flatMap((f) => [
-      loadFontBase64(f.regularUrl),
-      f.boldUrl !== f.regularUrl ? loadFontBase64(f.boldUrl) : Promise.resolve(null),
-    ])
-  );
-  return results.some((r) => r.status === "fulfilled" && r.value !== null);
+  for (const fontDef of FONT_CHAIN) {
+    const buffer = await loadFontFromUrls(fontDef.urls);
+    if (buffer) {
+      console.log(`✅ Bengali font pre-loaded: ${fontDef.name}`);
+      return true;
+    }
+  }
+  console.warn("⚠️ No Bengali font could be pre-loaded");
+  return false;
 }
