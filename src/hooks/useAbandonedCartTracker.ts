@@ -38,7 +38,13 @@ function detectSource(): string {
   return "referral";
 }
 
-export function useAbandonedCartTracker() {
+function getCheckoutFormData() {
+  try {
+    const raw = sessionStorage.getItem("_checkout_form");
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
   const { user } = useAuth();
   const { items, subtotal } = useCart();
   const location = useLocation();
@@ -78,12 +84,18 @@ export function useAbandonedCartTracker() {
         image: item.product.image_url,
       }));
 
+      const formData = getCheckoutFormData();
+
       supabase.from("abandoned_carts").insert({
         user_id: user?.id || null,
         session_id: getSessionId(),
-        customer_name: (user as any)?.full_name || null,
-        customer_phone: (user as any)?.mobile || null,
+        customer_name: formData.name || (user as any)?.full_name || null,
+        customer_phone: formData.phone || (user as any)?.mobile || null,
         customer_email: user?.email || null,
+        division: formData.division || null,
+        district: formData.district || null,
+        upazila: formData.upazila || null,
+        shipping_address: formData.address || null,
         cart_items: cartItems,
         cart_total: subtotal,
         source: detectSource(),
@@ -95,6 +107,8 @@ export function useAbandonedCartTracker() {
         status: "abandoned",
       } as any).then(({ error }) => {
         if (error) console.error("Abandoned cart tracking error:", error);
+        // Clear form data after saving
+        try { sessionStorage.removeItem("_checkout_form"); } catch {}
       });
     }
   }, [location.pathname, items, subtotal, user]);
