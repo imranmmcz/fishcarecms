@@ -220,6 +220,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     items: [
       { title: at.orderManagement, url: "/admin/orders", icon: ShoppingCart, permissionKey: "admin_orders" },
       { title: at.incompleteOrders, url: "/admin/incomplete-orders", icon: Clock, permissionKey: "admin_orders" },
+      { title: at.abandonedCarts, url: "/admin/abandoned-carts", icon: UserCheck, permissionKey: "admin_orders" },
       { title: at.ecommerceOverview, url: "/admin/ecommerce-overview", icon: BarChart3, permissionKey: "admin_ecommerce" },
     ],
   };
