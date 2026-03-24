@@ -14,6 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_carts: {
+        Row: {
+          cart_items: Json
+          cart_total: number
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          district: string | null
+          division: string | null
+          id: string
+          ip_address: string | null
+          notes: string | null
+          recovered_at: string | null
+          recovered_order_id: string | null
+          recovery_sent: boolean
+          recovery_sent_at: string | null
+          referrer_url: string | null
+          session_id: string | null
+          shipping_address: string | null
+          source: string | null
+          status: string
+          upazila: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          cart_items?: Json
+          cart_total?: number
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          district?: string | null
+          division?: string | null
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          recovered_at?: string | null
+          recovered_order_id?: string | null
+          recovery_sent?: boolean
+          recovery_sent_at?: string | null
+          referrer_url?: string | null
+          session_id?: string | null
+          shipping_address?: string | null
+          source?: string | null
+          status?: string
+          upazila?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          cart_items?: Json
+          cart_total?: number
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          district?: string | null
+          division?: string | null
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          recovered_at?: string | null
+          recovered_order_id?: string | null
+          recovery_sent?: boolean
+          recovery_sent_at?: string | null
+          referrer_url?: string | null
+          session_id?: string | null
+          shipping_address?: string | null
+          source?: string | null
+          status?: string
+          upazila?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
       ad_settings: {
         Row: {
           ad_client_id: string | null

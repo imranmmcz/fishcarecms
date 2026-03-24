@@ -147,6 +147,18 @@ const Checkout = () => {
       } else if (field === "shipping_district") {
         updated.shipping_upazila = "";
       }
+
+      // Save checkout form data for abandoned cart tracking
+      try {
+        sessionStorage.setItem("_checkout_form", JSON.stringify({
+          name: updated.shipping_name,
+          phone: updated.shipping_mobile,
+          division: updated.shipping_division,
+          district: updated.shipping_district,
+          upazila: updated.shipping_upazila,
+          address: updated.shipping_address,
+        }));
+      } catch {}
       
       return updated;
     });
