@@ -71,11 +71,11 @@ export function useAbandonedCartTracker() {
 
       const utm = getUtmParams();
       const cartItems = items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
+        id: item.product.id,
+        name: item.product.name,
+        price: item.product.price,
         quantity: item.quantity,
-        image: item.image,
+        image: item.product.image_url,
       }));
 
       supabase.from("abandoned_carts").insert({
@@ -106,11 +106,11 @@ export function useAbandonedCartTracker() {
 
       const utm = getUtmParams();
       const cartItems = items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
+        id: item.product.id,
+        name: item.product.name,
+        price: item.product.price,
         quantity: item.quantity,
-        image: item.image,
+        image: item.product.image_url,
       }));
 
       // Use sendBeacon for reliable unload tracking
