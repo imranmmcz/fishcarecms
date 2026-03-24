@@ -45,6 +45,7 @@ function getCheckoutFormData() {
   } catch { return {}; }
 }
 
+export function useAbandonedCartTracker() {
   const { user } = useAuth();
   const { items, subtotal } = useCart();
   const location = useLocation();
