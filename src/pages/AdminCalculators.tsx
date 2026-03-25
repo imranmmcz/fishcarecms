@@ -60,22 +60,24 @@ export default function AdminCalculators() {
             <Calculator className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">সমন্বিত ক্যালকুলেটর মডিউল</h1>
           </div>
-          <button
-            onClick={() => setShowFormulas(!showFormulas)}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              showFormulas
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <Settings2 className="h-4 w-4" />
-            সূত্র সেটিংস
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => { setShowFormulas(!showFormulas); setFormulaModule(null); }}
+              className={cn(
+                "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                showFormulas && !formulaModule
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <Settings2 className="h-4 w-4" />
+              সকল সূত্র সেটিংস
+            </button>
+          </div>
         </div>
         <p className="text-muted-foreground text-sm">
           {showFormulas
-            ? "ক্যালকুলেটরের ধ্রুবক ও প্যারামিটার পরিবর্তন করুন। পরিবর্তন সরাসরি ক্যালকুলেটরে প্রতিফলিত হবে।"
+            ? `${formulaModule ? (modules.find(m => m.id === formulaModule)?.title || '') + ' — ' : ''}ক্যালকুলেটরের ধ্রুবক ও প্যারামিটার পরিবর্তন করুন।`
             : "সকল মৎস্য চাষ ক্যালকুলেটর মডিউল এখানে একত্রে পাবেন। যেকোনো ট্যাবে ক্লিক করে ব্যবহার করুন।"}
         </p>
 
