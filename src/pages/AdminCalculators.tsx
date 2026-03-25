@@ -47,6 +47,7 @@ const modules: ModuleTab[] = [
 export default function AdminCalculators() {
   const [activeTab, setActiveTab] = useState(modules[0].id);
   const [showFormulas, setShowFormulas] = useState(false);
+  const [formulaModule, setFormulaModule] = useState<string | null>(null);
 
   const activeModule = modules.find((m) => m.id === activeTab);
   const ActiveComponent = activeModule?.component;
