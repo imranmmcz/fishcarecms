@@ -11,8 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Save, Settings2, Loader2, RotateCcw } from "lucide-react";
+import { Save, Settings2, Loader2, RotateCcw, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { CalculatorParam } from "@/hooks/useCalculatorParams";
 
@@ -31,6 +39,22 @@ const moduleLabels: Record<string, string> = {
   advice: "মাছ পরামর্শ",
   reports: "রিপোর্ট",
 };
+
+const allModuleOptions = [
+  { value: "pond", label: "পুকুর ক্যালকুলেটর" },
+  { value: "feed", label: "খাদ্য ব্যবস্থাপনা" },
+  { value: "fertilizer", label: "সার ক্যালকুলেটর" },
+  { value: "biomass", label: "বায়োমাস" },
+  { value: "stocking", label: "মজুদ ঘনত্ব ও খরচ" },
+  { value: "stocking-density", label: "মজুদ ঘনত্ব" },
+  { value: "fish_stocking", label: "মাছের মজুদ" },
+  { value: "water", label: "পানির গুণাগুণ" },
+  { value: "cost", label: "খরচ ক্যালকুলেটর" },
+  { value: "medicine", label: "ঔষধ প্রয়োগ" },
+  { value: "formula", label: "খাদ্য ফর্মুলা" },
+  { value: "advice", label: "মাছ পরামর্শ" },
+  { value: "reports", label: "রিপোর্ট" },
+];
 
 const groupLabels: Record<string, string> = {
   unit_conversion: "একক রূপান্তর",
@@ -53,9 +77,33 @@ const groupLabels: Record<string, string> = {
   fingerling_weight: "পোনার ওজন",
 };
 
+const groupOptions = Object.entries(groupLabels).map(([value, label]) => ({ value, label }));
+
 interface CalculatorParamsEditorProps {
   moduleFilter?: string;
 }
+
+interface NewParamForm {
+  module_id: string;
+  param_key: string;
+  param_value: string;
+  param_label: string;
+  param_label_bn: string;
+  param_group: string;
+  param_unit: string;
+  display_order: number;
+}
+
+const emptyNewParam: NewParamForm = {
+  module_id: "",
+  param_key: "",
+  param_value: "0",
+  param_label: "",
+  param_label_bn: "",
+  param_group: "general",
+  param_unit: "",
+  display_order: 0,
+};
 
 export function CalculatorParamsEditor({ moduleFilter }: CalculatorParamsEditorProps) {
   const [params, setParams] = useState<CalculatorParam[]>([]);
@@ -63,6 +111,10 @@ export function CalculatorParamsEditor({ moduleFilter }: CalculatorParamsEditorP
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedModule, setSelectedModule] = useState(moduleFilter || "all");
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [newParam, setNewParam] = useState<NewParamForm>({ ...emptyNewParam });
+  const [addingParam, setAddingParam] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchParams();
@@ -119,12 +171,56 @@ export function CalculatorParamsEditor({ moduleFilter }: CalculatorParamsEditorP
     toast.success("পরিবর্তনগুলো বাতিল করা হয়েছে");
   };
 
+  const handleAddParam = async () => {
+    if (!newParam.module_id || !newParam.param_key || !newParam.param_label_bn) {
+      toast.error("মডিউল, কী এবং বাংলা লেবেল আবশ্যক");
+      return;
+    }
+
+    setAddingParam(true);
+    try {
+      const { error } = await supabase.from("calculator_parameters").insert({
+        module_id: newParam.module_id,
+        param_key: newParam.param_key,
+        param_value: newParam.param_value || "0",
+        param_label: newParam.param_label || newParam.param_key,
+        param_label_bn: newParam.param_label_bn,
+        param_group: newParam.param_group || "general",
+        param_unit: newParam.param_unit || "",
+        display_order: newParam.display_order || 0,
+      });
+      if (error) throw error;
+      toast.success("নতুন প্যারামিটার যোগ করা হয়েছে");
+      setNewParam({ ...emptyNewParam });
+      setAddDialogOpen(false);
+      fetchParams();
+    } catch (err: any) {
+      toast.error(err?.message || "প্যারামিটার যোগ করতে সমস্যা হয়েছে");
+    } finally {
+      setAddingParam(false);
+    }
+  };
+
+  const handleDeleteParam = async (id: string) => {
+    if (!confirm("আপনি কি নিশ্চিত এই প্যারামিটারটি মুছে ফেলতে চান?")) return;
+    setDeletingId(id);
+    try {
+      const { error } = await supabase.from("calculator_parameters").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("প্যারামিটার মুছে ফেলা হয়েছে");
+      fetchParams();
+    } catch {
+      toast.error("মুছে ফেলতে সমস্যা হয়েছে");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const filteredParams =
     selectedModule === "all"
       ? params
       : params.filter((p) => p.module_id === selectedModule);
 
-  // Group params by module then by param_group
   const grouped = filteredParams.reduce(
     (acc, param) => {
       const key = `${param.module_id}__${param.param_group}`;
@@ -138,6 +234,8 @@ export function CalculatorParamsEditor({ moduleFilter }: CalculatorParamsEditorP
   );
 
   const modules = [...new Set(params.map((p) => p.module_id))];
+  // Merge DB modules with all known modules
+  const allModules = [...new Set([...allModuleOptions.map(m => m.value), ...modules])];
   const changedCount = Object.keys(editedValues).length;
 
   if (loading) {
@@ -160,29 +258,143 @@ export function CalculatorParamsEditor({ moduleFilter }: CalculatorParamsEditorP
                 সূত্র ও প্যারামিটার এডিটর
               </CardTitle>
               <CardDescription>
-                ক্যালকুলেটরের ধ্রুবক, হার ও রূপান্তর মান পরিবর্তন করুন
+                ক্যালকুলেটরের ধ্রুবক, হার ও রূপান্তর মান পরিবর্তন বা নতুন যোগ করুন
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Select value={selectedModule} onValueChange={setSelectedModule}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">সকল মডিউল</SelectItem>
-                  {modules.map((m) => (
+                  {allModules.map((m) => (
                     <SelectItem key={m} value={m}>
                       {moduleLabels[m] || m}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
+              <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="gap-1.5">
+                    <Plus className="h-4 w-4" />
+                    নতুন প্যারামিটার
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>নতুন প্যারামিটার যোগ করুন</DialogTitle>
+                    <DialogDescription>
+                      ক্যালকুলেটর মডিউলে নতুন ধ্রুবক/ডোজ/একক যোগ করুন
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-3 py-2">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">মডিউল *</Label>
+                        <Select
+                          value={newParam.module_id}
+                          onValueChange={(v) => setNewParam((p) => ({ ...p, module_id: v }))}
+                        >
+                          <SelectTrigger><SelectValue placeholder="মডিউল নির্বাচন" /></SelectTrigger>
+                          <SelectContent>
+                            {allModuleOptions.map((m) => (
+                              <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">গ্রুপ</Label>
+                        <Select
+                          value={newParam.param_group}
+                          onValueChange={(v) => setNewParam((p) => ({ ...p, param_group: v }))}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {groupOptions.map((g) => (
+                              <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">প্যারামিটার কী (ইংরেজি) *</Label>
+                        <Input
+                          placeholder="যেমন: lime_dose_per_acre"
+                          value={newParam.param_key}
+                          onChange={(e) => setNewParam((p) => ({ ...p, param_key: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">ইংরেজি লেবেল</Label>
+                        <Input
+                          placeholder="Lime Dose Per Acre"
+                          value={newParam.param_label}
+                          onChange={(e) => setNewParam((p) => ({ ...p, param_label: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">বাংলা লেবেল *</Label>
+                      <Input
+                        placeholder="প্রতি একরে চুনের পরিমাণ"
+                        value={newParam.param_label_bn}
+                        onChange={(e) => setNewParam((p) => ({ ...p, param_label_bn: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">মান (ডিফল্ট)</Label>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={newParam.param_value}
+                          onChange={(e) => setNewParam((p) => ({ ...p, param_value: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">একক/ডোজ</Label>
+                        <Input
+                          placeholder="কেজি/শতক, মিলি/লিটার"
+                          value={newParam.param_unit}
+                          onChange={(e) => setNewParam((p) => ({ ...p, param_unit: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">ক্রম</Label>
+                        <Input
+                          type="number"
+                          value={newParam.display_order}
+                          onChange={(e) => setNewParam((p) => ({ ...p, display_order: parseInt(e.target.value) || 0 }))}
+                        />
+                      </div>
+                    </div>
+                    <Button onClick={handleAddParam} disabled={addingParam} className="mt-2">
+                      {addingParam ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Plus className="h-4 w-4 mr-1.5" />}
+                      প্যারামিটার যোগ করুন
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
       </Card>
 
       {/* Parameter Groups */}
+      {Object.values(grouped).length === 0 && (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            এই মডিউলে কোনো প্যারামিটার নেই। উপরের "নতুন প্যারামিটার" বাটনে ক্লিক করে যোগ করুন।
+          </CardContent>
+        </Card>
+      )}
+
       {Object.values(grouped).map((group) => (
         <Card key={`${group.module_id}__${group.param_group}`}>
           <CardHeader className="pb-3">
@@ -200,15 +412,30 @@ export function CalculatorParamsEditor({ moduleFilter }: CalculatorParamsEditorP
                 const isEdited = editedValues[param.id] !== undefined && editedValues[param.id] !== param.param_value;
                 return (
                   <div key={param.id} className="space-y-1.5">
-                    <Label
-                      htmlFor={param.id}
-                      className={`text-xs ${isEdited ? "text-primary font-semibold" : ""}`}
-                    >
-                      {param.param_label_bn}
-                      {param.param_unit && (
-                        <span className="text-muted-foreground ml-1">({param.param_unit})</span>
-                      )}
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label
+                        htmlFor={param.id}
+                        className={`text-xs ${isEdited ? "text-primary font-semibold" : ""}`}
+                      >
+                        {param.param_label_bn}
+                        {param.param_unit && (
+                          <span className="text-muted-foreground ml-1">({param.param_unit})</span>
+                        )}
+                      </Label>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteParam(param.id)}
+                        disabled={deletingId === param.id}
+                      >
+                        {deletingId === param.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
                     <Input
                       id={param.id}
                       type="number"
