@@ -88,19 +88,32 @@ export default function AdminCalculators() {
             {/* Tab Navigation */}
             <div className="flex flex-wrap gap-2 border-b pb-3">
               {modules.map((mod) => (
-                <button
-                  key={mod.id}
-                  onClick={() => setActiveTab(mod.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
-                    activeTab === mod.id
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <mod.icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{mod.title}</span>
-                </button>
+                <div key={mod.id} className="flex items-center gap-0.5">
+                  <button
+                    onClick={() => setActiveTab(mod.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 rounded-l-lg text-sm font-medium transition-all",
+                      activeTab === mod.id
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <mod.icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{mod.title}</span>
+                  </button>
+                  <button
+                    onClick={() => { setShowFormulas(true); setFormulaModule(mod.id); }}
+                    title={`${mod.title} সূত্র সেটিংস`}
+                    className={cn(
+                      "flex items-center px-1.5 py-2 rounded-r-lg text-xs transition-all border-l",
+                      activeTab === mod.id
+                        ? "bg-primary/80 text-primary-foreground border-primary-foreground/20"
+                        : "bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground border-border"
+                    )}
+                  >
+                    <Settings2 className="h-3 w-3" />
+                  </button>
+                </div>
               ))}
             </div>
 
