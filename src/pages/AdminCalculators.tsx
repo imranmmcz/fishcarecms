@@ -47,6 +47,7 @@ const modules: ModuleTab[] = [
 export default function AdminCalculators() {
   const [activeTab, setActiveTab] = useState(modules[0].id);
   const [showFormulas, setShowFormulas] = useState(false);
+  const [formulaModule, setFormulaModule] = useState<string | null>(null);
 
   const activeModule = modules.find((m) => m.id === activeTab);
   const ActiveComponent = activeModule?.component;
@@ -59,45 +60,60 @@ export default function AdminCalculators() {
             <Calculator className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">সমন্বিত ক্যালকুলেটর মডিউল</h1>
           </div>
-          <button
-            onClick={() => setShowFormulas(!showFormulas)}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              showFormulas
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <Settings2 className="h-4 w-4" />
-            সূত্র সেটিংস
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => { setShowFormulas(!showFormulas); setFormulaModule(null); }}
+              className={cn(
+                "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                showFormulas && !formulaModule
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <Settings2 className="h-4 w-4" />
+              সকল সূত্র সেটিংস
+            </button>
+          </div>
         </div>
         <p className="text-muted-foreground text-sm">
           {showFormulas
-            ? "ক্যালকুলেটরের ধ্রুবক ও প্যারামিটার পরিবর্তন করুন। পরিবর্তন সরাসরি ক্যালকুলেটরে প্রতিফলিত হবে।"
+            ? `${formulaModule ? (modules.find(m => m.id === formulaModule)?.title || '') + ' — ' : ''}ক্যালকুলেটরের ধ্রুবক ও প্যারামিটার পরিবর্তন করুন।`
             : "সকল মৎস্য চাষ ক্যালকুলেটর মডিউল এখানে একত্রে পাবেন। যেকোনো ট্যাবে ক্লিক করে ব্যবহার করুন।"}
         </p>
 
         {showFormulas ? (
-          <CalculatorParamsEditor />
+          <CalculatorParamsEditor moduleFilter={formulaModule || undefined} />
         ) : (
           <>
             {/* Tab Navigation */}
             <div className="flex flex-wrap gap-2 border-b pb-3">
               {modules.map((mod) => (
-                <button
-                  key={mod.id}
-                  onClick={() => setActiveTab(mod.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
-                    activeTab === mod.id
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <mod.icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{mod.title}</span>
-                </button>
+                <div key={mod.id} className="flex items-center gap-0.5">
+                  <button
+                    onClick={() => setActiveTab(mod.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 rounded-l-lg text-sm font-medium transition-all",
+                      activeTab === mod.id
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <mod.icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{mod.title}</span>
+                  </button>
+                  <button
+                    onClick={() => { setShowFormulas(true); setFormulaModule(mod.id); }}
+                    title={`${mod.title} সূত্র সেটিংস`}
+                    className={cn(
+                      "flex items-center px-1.5 py-2 rounded-r-lg text-xs transition-all border-l",
+                      activeTab === mod.id
+                        ? "bg-primary/80 text-primary-foreground border-primary-foreground/20"
+                        : "bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground border-border"
+                    )}
+                  >
+                    <Settings2 className="h-3 w-3" />
+                  </button>
+                </div>
               ))}
             </div>
 

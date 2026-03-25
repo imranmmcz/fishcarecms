@@ -22,10 +22,14 @@ const moduleLabels: Record<string, string> = {
   fertilizer: "সার ক্যালকুলেটর",
   biomass: "বায়োমাস",
   stocking: "মজুদ ঘনত্ব ও খরচ",
+  "stocking-density": "মজুদ ঘনত্ব",
   fish_stocking: "মাছের মজুদ",
   water: "পানির গুণাগুণ",
   cost: "খরচ ক্যালকুলেটর",
   medicine: "ঔষধ প্রয়োগ",
+  formula: "খাদ্য ফর্মুলা",
+  advice: "মাছ পরামর্শ",
+  reports: "রিপোর্ট",
 };
 
 const groupLabels: Record<string, string> = {
@@ -49,12 +53,16 @@ const groupLabels: Record<string, string> = {
   fingerling_weight: "পোনার ওজন",
 };
 
-export function CalculatorParamsEditor() {
+interface CalculatorParamsEditorProps {
+  moduleFilter?: string;
+}
+
+export function CalculatorParamsEditor({ moduleFilter }: CalculatorParamsEditorProps) {
   const [params, setParams] = useState<CalculatorParam[]>([]);
   const [editedValues, setEditedValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [selectedModule, setSelectedModule] = useState("all");
+  const [selectedModule, setSelectedModule] = useState(moduleFilter || "all");
 
   useEffect(() => {
     fetchParams();
