@@ -53,12 +53,16 @@ const groupLabels: Record<string, string> = {
   fingerling_weight: "পোনার ওজন",
 };
 
-export function CalculatorParamsEditor() {
+interface CalculatorParamsEditorProps {
+  moduleFilter?: string;
+}
+
+export function CalculatorParamsEditor({ moduleFilter }: CalculatorParamsEditorProps) {
   const [params, setParams] = useState<CalculatorParam[]>([]);
   const [editedValues, setEditedValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [selectedModule, setSelectedModule] = useState("all");
+  const [selectedModule, setSelectedModule] = useState(moduleFilter || "all");
 
   useEffect(() => {
     fetchParams();
