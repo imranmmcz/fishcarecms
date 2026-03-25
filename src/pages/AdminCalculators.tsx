@@ -82,7 +82,7 @@ export default function AdminCalculators() {
         </p>
 
         {showFormulas ? (
-          <CalculatorParamsEditor />
+          <CalculatorParamsEditor moduleFilter={formulaModule || undefined} />
         ) : (
           <>
             {/* Tab Navigation */}
