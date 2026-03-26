@@ -42,35 +42,47 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Rate limiting
+// Global rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // limit each IP to 200 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 200,
   message: { error: 'অনেক বেশি রিকোয়েস্ট পাঠানো হয়েছে, কিছুক্ষণ পর আবার চেষ্টা করুন।' }
 });
 app.use(limiter);
 
-// CORS configuration
+// === STRICT CORS Configuration ===
 const allowedOrigins = [
   'https://fishcal.lovable.app',
-  'http://localhost:5173',
-  'http://localhost:8080',
-  process.env.FRONTEND_URL
+  'https://fishcare.lovable.app',
+  'https://fishcare.com.bd',
+  'https://www.fishcare.com.bd',
+  'https://blog.fishcare.com.bd',
+  process.env.FRONTEND_URL,
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) : [])
 ].filter(Boolean);
+
+// Add localhost only in development
+if (process.env.NODE_ENV !== 'production') {
+  allowedOrigins.push('http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000');
+}
+
+// Remove duplicates
+const uniqueOrigins = [...new Set(allowedOrigins)];
 
 app.use(cors({
   origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     
-    const isAllowed = allowedOrigins.includes(origin) || 
+    const isAllowed = uniqueOrigins.includes(origin) || 
       origin.includes('.lovableproject.com') ||
       origin.includes('.lovable.app');
     
     if (isAllowed) {
       callback(null, true);
     } else {
-      console.log('CORS blocked origin:', origin);
-      callback(null, true); // Allow all, log blocked
+      console.warn(`[CORS BLOCKED] Origin: ${origin} at ${new Date().toISOString()}`);
+      callback(new Error('CORS policy: Origin not allowed'));
     }
   },
   credentials: true,
@@ -113,6 +125,10 @@ app.get('/api/health', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  // Handle CORS errors specifically
+  if (err.message && err.message.includes('CORS')) {
+    return res.status(403).json({ error: 'Access denied: CORS policy violation' });
+  }
   console.error('Error:', err);
   res.status(err.status || 500).json({
     error: err.message || 'Internal server error',
@@ -128,5 +144,5 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 FishCare API Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'Not configured'}`);
+  console.log(`🌐 Allowed Origins: ${uniqueOrigins.join(', ')}`);
 });

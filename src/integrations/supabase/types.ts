@@ -1642,6 +1642,33 @@ export type Database = {
           },
         ]
       }
+      login_attempts: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          ip_address: string | null
+          success: boolean | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       market_prices: {
         Row: {
           created_at: string
@@ -3173,10 +3200,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_login_rate_limit: {
+        Args: { check_email: string; check_ip?: string }
+        Returns: Json
+      }
       check_registration_rate_limit: {
         Args: { client_ip: string }
         Returns: boolean
       }
+      cleanup_old_login_attempts: { Args: never; Returns: undefined }
       generate_order_number: { Args: never; Returns: string }
       generate_pos_sale_number: { Args: never; Returns: string }
       generate_purchase_order_number: { Args: never; Returns: string }

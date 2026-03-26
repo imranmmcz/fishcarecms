@@ -6,15 +6,16 @@
 # Enable Rewrite Engine
 RewriteEngine On
 
-# ========== CORS Configuration ==========
+# ========== CORS Configuration (Strict) ==========
 <IfModule mod_headers.c>
-    # Dynamic Origin Support
+    # Only allow specific trusted origins
+    SetEnvIf Origin "^https://fishcal\.lovable\.app$" ORIGIN_OK=$0
+    SetEnvIf Origin "^https://fishcare\.lovable\.app$" ORIGIN_OK=$0
+    SetEnvIf Origin "^https://fishcare\.com\.bd$" ORIGIN_OK=$0
+    SetEnvIf Origin "^https://www\.fishcare\.com\.bd$" ORIGIN_OK=$0
+    SetEnvIf Origin "^https://blog\.fishcare\.com\.bd$" ORIGIN_OK=$0
     SetEnvIf Origin "^https://([a-z0-9-]+\.)?lovableproject\.com$" ORIGIN_OK=$0
     SetEnvIf Origin "^https://([a-z0-9-]+\.)?lovable\.app$" ORIGIN_OK=$0
-    SetEnvIf Origin "^https://fishcal\.lovable\.app$" ORIGIN_OK=$0
-    SetEnvIf Origin "^https://your-domain\.com$" ORIGIN_OK=$0
-    SetEnvIf Origin "^https://www\.your-domain\.com$" ORIGIN_OK=$0
-    SetEnvIf Origin "^http://localhost:(5173|8080|3000|3001)$" ORIGIN_OK=$0
     
     # Set CORS headers when origin matches
     Header always set Access-Control-Allow-Origin "%{ORIGIN_OK}e" env=ORIGIN_OK
@@ -29,12 +30,10 @@ RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule ^(.*)$ $1 [R=200,L]
 
 # ========== Proxy API to Node.js ==========
-# সকল /api রিকোয়েস্ট Node.js সার্ভারে ফরওয়ার্ড
 RewriteCond %{REQUEST_URI} ^/api(.*)$
 RewriteRule ^api(.*)$ http://127.0.0.1:3001/api$1 [P,L]
 
 # ========== SPA Routing ==========
-# React Router-এর জন্য - সকল রাউট index.html এ পাঠানো
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/api
@@ -47,7 +46,16 @@ RewriteRule . /index.html [L]
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://*.lovable.app;"
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
+    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 </IfModule>
+
+# ========== Block Sensitive Files ==========
+<FilesMatch "(^\.env|\.sql|\.log|\.bak|\.config)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
 
 # ========== Caching ==========
 <IfModule mod_expires.c>
