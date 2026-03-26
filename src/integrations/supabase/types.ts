@@ -1493,6 +1493,7 @@ export type Database = {
           description_bn: string | null
           discount_type: string
           discount_value: number
+          end_notification_sent: boolean | null
           end_time: string
           id: string
           is_active: boolean
@@ -1510,6 +1511,7 @@ export type Database = {
           description_bn?: string | null
           discount_type?: string
           discount_value?: number
+          end_notification_sent?: boolean | null
           end_time: string
           id?: string
           is_active?: boolean
@@ -1527,6 +1529,7 @@ export type Database = {
           description_bn?: string | null
           discount_type?: string
           discount_value?: number
+          end_notification_sent?: boolean | null
           end_time?: string
           id?: string
           is_active?: boolean
