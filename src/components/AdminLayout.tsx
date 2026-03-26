@@ -326,19 +326,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const renderFooter = (onNavigate?: () => void, collapsed?: boolean) => (
     <div className={cn("pt-3 space-y-1", collapsed && "flex flex-col items-center")} style={{ borderTop: '1px solid hsl(var(--sidebar-border))' }}>
-      {/* Language Switcher */}
-      <button
-        onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
-        title={at.language}
-        className={cn(
-          "flex items-center rounded-xl transition-all duration-200 hover:bg-white/8",
-          collapsed ? "justify-center w-10 h-10" : "gap-3 px-3 py-2 w-full",
-        )}
-        style={{ color: 'hsl(var(--sidebar-text-muted))' }}
-      >
-        <Languages className="h-[18px] w-[18px] shrink-0" />
-        {!collapsed && <span className="text-sm truncate">{language === "bn" ? "English" : "বাংলা"}</span>}
-      </button>
       <Link to="/admin/profile" onClick={onNavigate} title={at.profile}
         className={cn(
           "flex items-center rounded-xl transition-all duration-200",
