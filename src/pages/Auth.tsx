@@ -78,8 +78,36 @@ const Auth = () => {
       emailToUse = email;
     }
 
+    // Check rate limit before attempting login
+    try {
+      const { data: rateCheck } = await supabase.rpc("check_login_rate_limit", { 
+        check_email: emailToUse 
+      });
+      if (rateCheck?.locked) {
+        setIsLoading(false);
+        toast({
+          title: "অ্যাকাউন্ট লক",
+          description: `অনেক বেশি ভুল চেষ্টা। ${rateCheck.remaining_minutes} মিনিট পর আবার চেষ্টা করুন।`,
+          variant: "destructive",
+        });
+        return;
+      }
+    } catch (e) {
+      // If RPC fails, continue with login
+    }
+
     const { error } = await signIn(emailToUse, loginPassword);
     setIsLoading(false);
+
+    // Log the attempt
+    try {
+      await supabase.from("login_attempts").insert({
+        email: emailToUse,
+        success: !error,
+      } as any);
+    } catch (e) {
+      // Silent fail
+    }
 
     if (error) {
       toast({
