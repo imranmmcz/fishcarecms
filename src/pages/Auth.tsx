@@ -82,7 +82,7 @@ const Auth = () => {
     try {
       const { data: rateCheck } = await supabase.rpc("check_login_rate_limit", { 
         check_email: emailToUse 
-      });
+      }) as { data: any };
       if (rateCheck?.locked) {
         setIsLoading(false);
         toast({
