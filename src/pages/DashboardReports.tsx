@@ -1,15 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, TrendingUp, TrendingDown, Calculator, Calendar, Printer, Download } from "lucide-react";
+import { FileText, TrendingUp, TrendingDown, Calculator, Filter, Printer, Download, Calendar as CalendarIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrintHeaderFooter } from "@/hooks/usePrintHeaderFooter";
+import { format, startOfDay, endOfDay, subDays, startOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 interface Record { id: string; date: string; category: string; amount: number; description: string; pondName?: string; }
 
@@ -18,7 +21,9 @@ export default function DashboardReports() {
   const { printReport, siteName } = usePrintHeaderFooter();
   const [incomes, setIncomes] = useState<Record[]>([]);
   const [expenses, setExpenses] = useState<Record[]>([]);
-  const [filterMonth, setFilterMonth] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>();
+  const [customDateTo, setCustomDateTo] = useState<Date | undefined>();
   const [filterPond, setFilterPond] = useState("all");
   const [ponds, setPonds] = useState<{ id: string; name: string }[]>([]);
 
