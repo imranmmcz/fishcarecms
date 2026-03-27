@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import SeoHead from "@/components/SeoHead";
 import AdUnit from "@/components/AdUnit";
 import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
+import { FISH_SPECIES_WITH_ALL } from "@/data/fishSpeciesOptions";
 
 // ── Types ──
 interface Treatment {
@@ -74,10 +75,7 @@ const symptomOptions = [
   { value: "mass_death", label: "গণমৃত্যু (Mass Mortality)", keywords: ["মৃত্যু", "death", "মরে যাচ্ছে", "গণমৃত্যু"] },
 ];
 
-const fishSpeciesOptions = (() => {
-  const { FISH_SPECIES_WITH_ALL } = require("@/data/fishSpeciesOptions");
-  return FISH_SPECIES_WITH_ALL;
-})();
+const fishSpeciesOptions = FISH_SPECIES_WITH_ALL;
 
 const waterConditions = [
   { value: "all", label: "সকল অবস্থা" },
