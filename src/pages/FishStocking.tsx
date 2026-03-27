@@ -31,10 +31,14 @@ export default function FishStocking() {
 
   // Build fish types from DB params
   const fishTypes = useMemo(() => {
-    const fishKeys = ["rohu", "katla", "mrigal", "silver", "grass", "tilapia", "pangas", "shing", "magur"];
+    const fishKeys = ["rohu", "katla", "mrigal", "silver", "grass", "tilapia", "pangas", "shing", "magur", "koi", "pabda", "gulsha", "tengra", "golda", "bagda", "shol", "boal", "thai_koi", "thai_pangas", "thai_magur", "bata", "chital"];
     const fishLabels: Record<string, string> = {
       rohu: "রুই", katla: "কাতলা", mrigal: "মৃগেল", silver: "সিলভার কার্প",
       grass: "গ্রাস কার্প", tilapia: "তেলাপিয়া", pangas: "পাঙ্গাশ", shing: "শিং", magur: "মাগুর",
+      koi: "কই", pabda: "পাবদা", gulsha: "গুলশা", tengra: "টেংরা",
+      golda: "গলদা চিংড়ি", bagda: "বাগদা চিংড়ি", shol: "শোল", boal: "বোয়াল",
+      thai_koi: "থাই কই", thai_pangas: "থাই পাঙ্গাশ", thai_magur: "থাই মাগুর",
+      bata: "বাটা", chital: "চিতল",
     };
     // Fallback defaults
     const defaults: Record<string, { dMin: number; dMax: number; wMin: number; wMax: number }> = {
@@ -47,6 +51,19 @@ export default function FishStocking() {
       pangas: { dMin: 30, dMax: 50, wMin: 5, wMax: 10 },
       shing: { dMin: 20, dMax: 30, wMin: 2, wMax: 5 },
       magur: { dMin: 20, dMax: 30, wMin: 2, wMax: 5 },
+      koi: { dMin: 15, dMax: 25, wMin: 3, wMax: 8 },
+      pabda: { dMin: 15, dMax: 25, wMin: 2, wMax: 5 },
+      gulsha: { dMin: 20, dMax: 35, wMin: 1, wMax: 3 },
+      tengra: { dMin: 15, dMax: 30, wMin: 1, wMax: 4 },
+      golda: { dMin: 3, dMax: 6, wMin: 1, wMax: 3 },
+      bagda: { dMin: 3, dMax: 5, wMin: 0.5, wMax: 2 },
+      shol: { dMin: 2, dMax: 4, wMin: 15, wMax: 30 },
+      boal: { dMin: 1, dMax: 3, wMin: 30, wMax: 60 },
+      thai_koi: { dMin: 20, dMax: 35, wMin: 3, wMax: 8 },
+      thai_pangas: { dMin: 25, dMax: 45, wMin: 5, wMax: 10 },
+      thai_magur: { dMin: 10, dMax: 20, wMin: 5, wMax: 10 },
+      bata: { dMin: 8, dMax: 15, wMin: 5, wMax: 15 },
+      chital: { dMin: 1, dMax: 3, wMin: 20, wMax: 40 },
     };
 
     return fishKeys.map((key) => {

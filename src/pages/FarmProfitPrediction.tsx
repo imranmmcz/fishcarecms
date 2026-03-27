@@ -15,13 +15,9 @@ import { Calculator, TrendingUp, DollarSign, Fish, Save, FileText, History, Tras
 import { format } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { FISH_SPECIES_OPTIONS } from "@/data/fishSpeciesOptions";
 
-const FISH_SPECIES = [
-  "রুই (Rohu)", "কাতলা (Catla)", "মৃগেল (Mrigal)", "পাঙ্গাস (Pangasius)",
-  "তেলাপিয়া (Tilapia)", "কই (Koi)", "শিং (Shing)", "মাগুর (Magur)",
-  "পাবদা (Pabda)", "গুলশা (Gulsha)", "শোল (Shol)", "বোয়াল (Boal)",
-  "সিলভার কার্প (Silver Carp)", "গ্রাস কার্প (Grass Carp)", "মিরর কার্প (Mirror Carp)",
-];
+const FISH_SPECIES = FISH_SPECIES_OPTIONS.map(f => f.label);
 
 const FEED_TYPES = [
   "ভাসমান খাবার (Floating Feed)", "ডুবন্ত খাবার (Sinking Feed)",

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Waves, Edit, Fish, ShoppingCart, Receipt, Scale, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { FISH_SPECIES_NAMES } from "@/data/fishSpeciesOptions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
@@ -86,10 +87,7 @@ interface PondRecord {
   totalStockingCost?: number;
 }
 
-const fishTypeOptions = [
-  "রুই", "কাতলা", "মৃগেল", "সিলভার কার্প", "গ্রাস কার্প",
-  "কমন কার্প", "তেলাপিয়া", "পাঙ্গাস", "শিং", "মাগুর", "কই", "পাবদা"
-];
+const fishTypeOptions = FISH_SPECIES_NAMES;
 
 const statusOptions = [
   { value: "active", label: "চলমান", color: "bg-green-500" },
