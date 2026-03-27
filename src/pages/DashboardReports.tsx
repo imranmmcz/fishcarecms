@@ -137,9 +137,35 @@ export default function DashboardReports() {
           </div>
         </div>
 
-        <Card className="shadow-elegant"><CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />ফিল্টার</CardTitle></CardHeader>
-          <CardContent><div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2"><Label>মাস</Label><Select value={filterMonth} onValueChange={setFilterMonth}><SelectTrigger><SelectValue placeholder="সব মাস" /></SelectTrigger><SelectContent><SelectItem value="all">সব মাস</SelectItem>{months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent></Select></div>
+        <Card className="shadow-elegant"><CardHeader><CardTitle className="flex items-center gap-2"><Filter className="h-5 w-5" />ফিল্টার</CardTitle></CardHeader>
+          <CardContent><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+            <div className="space-y-2"><Label>সময়কাল</Label>
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger><SelectValue placeholder="সব" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">আজ</SelectItem>
+                  <SelectItem value="yesterday">গতকাল</SelectItem>
+                  <SelectItem value="this_week">এই সপ্তাহ</SelectItem>
+                  <SelectItem value="this_month">এই মাস</SelectItem>
+                  <SelectItem value="last_month">গত মাস</SelectItem>
+                  <SelectItem value="30days">৩০ দিন</SelectItem>
+                  <SelectItem value="all">সব</SelectItem>
+                  <SelectItem value="custom">কাস্টম</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {dateFilter === "custom" && (
+              <>
+                <div className="space-y-2"><Label>শুরু</Label>
+                  <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{customDateFrom ? format(customDateFrom, "yyyy-MM-dd") : "তারিখ নির্বাচন"}</Button></PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customDateFrom} onSelect={setCustomDateFrom} /></PopoverContent></Popover>
+                </div>
+                <div className="space-y-2"><Label>শেষ</Label>
+                  <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{customDateTo ? format(customDateTo, "yyyy-MM-dd") : "তারিখ নির্বাচন"}</Button></PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customDateTo} onSelect={setCustomDateTo} /></PopoverContent></Popover>
+                </div>
+              </>
+            )}
             <div className="space-y-2"><Label>পুকুর</Label><Select value={filterPond} onValueChange={setFilterPond}><SelectTrigger><SelectValue placeholder="সব পুকুর" /></SelectTrigger><SelectContent><SelectItem value="all">সব পুকুর</SelectItem>{ponds.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent></Select></div>
           </div></CardContent>
         </Card>
