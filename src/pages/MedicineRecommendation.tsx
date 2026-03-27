@@ -74,18 +74,10 @@ const symptomOptions = [
   { value: "mass_death", label: "গণমৃত্যু (Mass Mortality)", keywords: ["মৃত্যু", "death", "মরে যাচ্ছে", "গণমৃত্যু"] },
 ];
 
-const fishSpeciesOptions = [
-  { value: "all", label: "সকল প্রজাতি" },
-  { value: "রুই", label: "রুই (Rohu)" },
-  { value: "কাতলা", label: "কাতলা (Catla)" },
-  { value: "পাঙ্গাস", label: "পাঙ্গাস (Pangasius)" },
-  { value: "তেলাপিয়া", label: "তেলাপিয়া (Tilapia)" },
-  { value: "শিং", label: "শিং (Stinging Catfish)" },
-  { value: "মাগুর", label: "মাগুর (Walking Catfish)" },
-  { value: "কৈ", label: "কৈ (Climbing Perch)" },
-  { value: "সিলভার কার্প", label: "সিলভার কার্প" },
-  { value: "মৃগেল", label: "মৃগেল (Mrigal)" },
-];
+const fishSpeciesOptions = (() => {
+  const { FISH_SPECIES_WITH_ALL } = require("@/data/fishSpeciesOptions");
+  return FISH_SPECIES_WITH_ALL;
+})();
 
 const waterConditions = [
   { value: "all", label: "সকল অবস্থা" },
