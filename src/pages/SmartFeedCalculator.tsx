@@ -16,6 +16,7 @@ import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { registerBanglaFont, setBanglaFont } from "@/lib/pdfBanglaFont";
+import { FISH_SPECIES_OPTIONS } from "@/data/fishSpeciesOptions";
 
 interface FormData {
   fishSpecies: string;
