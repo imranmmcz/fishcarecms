@@ -48,20 +48,32 @@ export default function DashboardReports() {
     fetchData();
   }, [user]);
 
-  const months = [
-    { value: "01", label: "জানুয়ারি" }, { value: "02", label: "ফেব্রুয়ারি" },
-    { value: "03", label: "মার্চ" }, { value: "04", label: "এপ্রিল" },
-    { value: "05", label: "মে" }, { value: "06", label: "জুন" },
-    { value: "07", label: "জুলাই" }, { value: "08", label: "আগস্ট" },
-    { value: "09", label: "সেপ্টেম্বর" }, { value: "10", label: "অক্টোবর" },
-    { value: "11", label: "নভেম্বর" }, { value: "12", label: "ডিসেম্বর" },
-  ];
+  const getDateRange = useMemo(() => {
+    const now = new Date();
+    switch (dateFilter) {
+      case "today": return { from: startOfDay(now), to: endOfDay(now) };
+      case "yesterday": return { from: startOfDay(subDays(now, 1)), to: endOfDay(subDays(now, 1)) };
+      case "this_week": return { from: startOfWeek(now, { weekStartsOn: 6 }), to: endOfDay(now) };
+      case "this_month": return { from: startOfMonth(now), to: endOfDay(now) };
+      case "last_month": return { from: startOfMonth(subMonths(now, 1)), to: endOfMonth(subMonths(now, 1)) };
+      case "30days": return { from: startOfDay(subDays(now, 30)), to: endOfDay(now) };
+      case "custom": return { from: customDateFrom ? startOfDay(customDateFrom) : undefined, to: customDateTo ? endOfDay(customDateTo) : undefined };
+      default: return { from: undefined, to: undefined };
+    }
+  }, [dateFilter, customDateFrom, customDateTo]);
 
-  const filterByMonth = (date: string) => filterMonth === "all" || date.substring(5, 7) === filterMonth;
+  const filterByDate = (date: string) => {
+    if (dateFilter === "all") return true;
+    const d = new Date(date);
+    const { from, to } = getDateRange;
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  };
   const filterByPond = (pondName?: string) => filterPond === "all" || pondName === filterPond;
 
-  const filteredIncomes = incomes.filter((i) => filterByMonth(i.date) && filterByPond(i.pondName));
-  const filteredExpenses = expenses.filter((e) => filterByMonth(e.date) && filterByPond(e.pondName));
+  const filteredIncomes = incomes.filter((i) => filterByDate(i.date) && filterByPond(i.pondName));
+  const filteredExpenses = expenses.filter((e) => filterByDate(e.date) && filterByPond(e.pondName));
 
   const totalIncome = filteredIncomes.reduce((sum, i) => sum + i.amount, 0);
   const totalExpense = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
