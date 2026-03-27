@@ -1,15 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, TrendingUp, TrendingDown, Calculator, Calendar, Printer, Download } from "lucide-react";
+import { FileText, TrendingUp, TrendingDown, Calculator, Filter, Printer, Download, Calendar as CalendarIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrintHeaderFooter } from "@/hooks/usePrintHeaderFooter";
+import { format, startOfDay, endOfDay, subDays, startOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 interface Record { id: string; date: string; category: string; amount: number; description: string; pondName?: string; }
 
@@ -18,7 +21,9 @@ export default function DashboardReports() {
   const { printReport, siteName } = usePrintHeaderFooter();
   const [incomes, setIncomes] = useState<Record[]>([]);
   const [expenses, setExpenses] = useState<Record[]>([]);
-  const [filterMonth, setFilterMonth] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>();
+  const [customDateTo, setCustomDateTo] = useState<Date | undefined>();
   const [filterPond, setFilterPond] = useState("all");
   const [ponds, setPonds] = useState<{ id: string; name: string }[]>([]);
 
@@ -43,20 +48,32 @@ export default function DashboardReports() {
     fetchData();
   }, [user]);
 
-  const months = [
-    { value: "01", label: "জানুয়ারি" }, { value: "02", label: "ফেব্রুয়ারি" },
-    { value: "03", label: "মার্চ" }, { value: "04", label: "এপ্রিল" },
-    { value: "05", label: "মে" }, { value: "06", label: "জুন" },
-    { value: "07", label: "জুলাই" }, { value: "08", label: "আগস্ট" },
-    { value: "09", label: "সেপ্টেম্বর" }, { value: "10", label: "অক্টোবর" },
-    { value: "11", label: "নভেম্বর" }, { value: "12", label: "ডিসেম্বর" },
-  ];
+  const getDateRange = useMemo(() => {
+    const now = new Date();
+    switch (dateFilter) {
+      case "today": return { from: startOfDay(now), to: endOfDay(now) };
+      case "yesterday": return { from: startOfDay(subDays(now, 1)), to: endOfDay(subDays(now, 1)) };
+      case "this_week": return { from: startOfWeek(now, { weekStartsOn: 6 }), to: endOfDay(now) };
+      case "this_month": return { from: startOfMonth(now), to: endOfDay(now) };
+      case "last_month": return { from: startOfMonth(subMonths(now, 1)), to: endOfMonth(subMonths(now, 1)) };
+      case "30days": return { from: startOfDay(subDays(now, 30)), to: endOfDay(now) };
+      case "custom": return { from: customDateFrom ? startOfDay(customDateFrom) : undefined, to: customDateTo ? endOfDay(customDateTo) : undefined };
+      default: return { from: undefined, to: undefined };
+    }
+  }, [dateFilter, customDateFrom, customDateTo]);
 
-  const filterByMonth = (date: string) => filterMonth === "all" || date.substring(5, 7) === filterMonth;
+  const filterByDate = (date: string) => {
+    if (dateFilter === "all") return true;
+    const d = new Date(date);
+    const { from, to } = getDateRange;
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  };
   const filterByPond = (pondName?: string) => filterPond === "all" || pondName === filterPond;
 
-  const filteredIncomes = incomes.filter((i) => filterByMonth(i.date) && filterByPond(i.pondName));
-  const filteredExpenses = expenses.filter((e) => filterByMonth(e.date) && filterByPond(e.pondName));
+  const filteredIncomes = incomes.filter((i) => filterByDate(i.date) && filterByPond(i.pondName));
+  const filteredExpenses = expenses.filter((e) => filterByDate(e.date) && filterByPond(e.pondName));
 
   const totalIncome = filteredIncomes.reduce((sum, i) => sum + i.amount, 0);
   const totalExpense = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -120,9 +137,35 @@ export default function DashboardReports() {
           </div>
         </div>
 
-        <Card className="shadow-elegant"><CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />ফিল্টার</CardTitle></CardHeader>
-          <CardContent><div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2"><Label>মাস</Label><Select value={filterMonth} onValueChange={setFilterMonth}><SelectTrigger><SelectValue placeholder="সব মাস" /></SelectTrigger><SelectContent><SelectItem value="all">সব মাস</SelectItem>{months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent></Select></div>
+        <Card className="shadow-elegant"><CardHeader><CardTitle className="flex items-center gap-2"><Filter className="h-5 w-5" />ফিল্টার</CardTitle></CardHeader>
+          <CardContent><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+            <div className="space-y-2"><Label>সময়কাল</Label>
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger><SelectValue placeholder="সব" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">আজ</SelectItem>
+                  <SelectItem value="yesterday">গতকাল</SelectItem>
+                  <SelectItem value="this_week">এই সপ্তাহ</SelectItem>
+                  <SelectItem value="this_month">এই মাস</SelectItem>
+                  <SelectItem value="last_month">গত মাস</SelectItem>
+                  <SelectItem value="30days">৩০ দিন</SelectItem>
+                  <SelectItem value="all">সব</SelectItem>
+                  <SelectItem value="custom">কাস্টম</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {dateFilter === "custom" && (
+              <>
+                <div className="space-y-2"><Label>শুরু</Label>
+                  <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{customDateFrom ? format(customDateFrom, "yyyy-MM-dd") : "তারিখ নির্বাচন"}</Button></PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customDateFrom} onSelect={setCustomDateFrom} /></PopoverContent></Popover>
+                </div>
+                <div className="space-y-2"><Label>শেষ</Label>
+                  <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{customDateTo ? format(customDateTo, "yyyy-MM-dd") : "তারিখ নির্বাচন"}</Button></PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customDateTo} onSelect={setCustomDateTo} /></PopoverContent></Popover>
+                </div>
+              </>
+            )}
             <div className="space-y-2"><Label>পুকুর</Label><Select value={filterPond} onValueChange={setFilterPond}><SelectTrigger><SelectValue placeholder="সব পুকুর" /></SelectTrigger><SelectContent><SelectItem value="all">সব পুকুর</SelectItem>{ponds.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent></Select></div>
           </div></CardContent>
         </Card>
