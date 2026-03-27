@@ -44,18 +44,14 @@ interface CalcResult {
   feedStage: string;
 }
 
-const fishSpeciesOptions = [
-  { value: "rui", label: "রুই (Rohu)", feedRec: "ভাসমান খাদ্য" },
-  { value: "katla", label: "কাতলা (Catla)", feedRec: "ভাসমান খাদ্য" },
-  { value: "pangasius", label: "পাঙ্গাস (Pangasius)", feedRec: "ডুবন্ত খাদ্য" },
-  { value: "tilapia", label: "তেলাপিয়া (Tilapia)", feedRec: "ভাসমান খাদ্য" },
-  { value: "shing", label: "শিং (Stinging Catfish)", feedRec: "উচ্চ প্রোটিন ডুবন্ত খাদ্য" },
-  { value: "magur", label: "মাগুর (Walking Catfish)", feedRec: "উচ্চ প্রোটিন ডুবন্ত খাদ্য" },
-  { value: "koi", label: "কৈ (Climbing Perch)", feedRec: "ভাসমান খাদ্য" },
-  { value: "silver_carp", label: "সিলভার কার্প", feedRec: "ভাসমান খাদ্য" },
-  { value: "mrigal", label: "মৃগেল (Mrigal)", feedRec: "ডুবন্ত খাদ্য" },
-  { value: "other", label: "অন্যান্য", feedRec: "ভাসমান খাদ্য" },
-];
+const fishSpeciesOptions = FISH_SPECIES_OPTIONS.map(f => ({
+  value: f.key, label: f.label,
+  feedRec: ["shing", "magur", "thai_magur", "pabda", "gulsha", "tengra", "boal", "ayre"].includes(f.key)
+    ? "উচ্চ প্রোটিন ডুবন্ত খাদ্য"
+    : ["pangas", "thai_pangas", "mrigal"].includes(f.key)
+      ? "ডুবন্ত খাদ্য"
+      : "ভাসমান খাদ্য",
+})).concat([{ value: "other", label: "অন্যান্য", feedRec: "ভাসমান খাদ্য" }]);
 
 const feedTypes = [
   { value: "floating", label: "ভাসমান খাদ্য (Floating Feed)" },
