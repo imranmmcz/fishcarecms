@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { FISH_SPECIES_NAMES } from "@/data/fishSpeciesOptions";
 import { Link } from "react-router-dom";
 import {
   Camera, Upload, Search, AlertTriangle, Shield, Pill, Stethoscope,
@@ -58,10 +59,7 @@ const symptomOptions = [
   { value: "রঙ বিবর্ণ হয়ে যাওয়া", label: "রঙ বিবর্ণ হয়ে যাওয়া" },
 ];
 
-const fishTypes = [
-  "রুই", "কাতলা", "মৃগেল", "সিলভার কার্প", "গ্রাস কার্প", "মিরর কার্প",
-  "তেলাপিয়া", "পাঙ্গাস", "শিং", "মাগুর", "কৈ", "শোল", "পাবদা", "গুলশা", "চিংড়ি",
-];
+const fishTypes = FISH_SPECIES_NAMES;
 
 const DashboardDiseaseDetect = () => {
   const { language } = useLanguage();
