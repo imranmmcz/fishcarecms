@@ -140,6 +140,59 @@ const GlobalSeoSettings = () => {
 
   return (
     <div className="space-y-6">
+      {/* Browser Tab Title Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            ব্রাউজার ট্যাব টাইটেল সেটিংস
+          </CardTitle>
+          <CardDescription>
+            ব্রাউজারের ট্যাবে যে নাম দেখাবে তা এখানে সেট করুন
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-2">
+            <Label>হোম পেজ ট্যাব টাইটেল</Label>
+            <Input
+              value={seoSettings.seo_browser_tab_title}
+              onChange={(e) => setSeoSettings((prev) => ({ ...prev, seo_browser_tab_title: e.target.value }))}
+              placeholder="বৈজ্ঞানিক মাছ চাষ ব্যবস্থাপনা | মৎস্য খাত ক্যালকুলেটর"
+            />
+            <p className="text-xs text-muted-foreground">এটি হোম পেজে ব্রাউজার ট্যাবে দেখাবে</p>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>সাইটের নাম (সাফিক্স)</Label>
+            <Input
+              value={seoSettings.seo_site_name_suffix}
+              onChange={(e) => setSeoSettings((prev) => ({ ...prev, seo_site_name_suffix: e.target.value }))}
+              placeholder="FishCare BD"
+            />
+            <p className="text-xs text-muted-foreground">
+              অন্যান্য পেজে টাইটেলের শেষে যুক্ত হবে। যেমন: "শপ | FishCare BD"
+            </p>
+          </div>
+
+          {/* Preview */}
+          <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+            <p className="text-xs text-muted-foreground font-medium">ব্রাউজার ট্যাব প্রিভিউ:</p>
+            <div className="flex items-center gap-2 bg-background border rounded-md px-3 py-2">
+              <div className="h-4 w-4 rounded bg-primary/20 flex-shrink-0" />
+              <span className="text-sm truncate">
+                {seoSettings.seo_browser_tab_title || "বৈজ্ঞানিক মাছ চাষ ব্যবস্থাপনা | মৎস্য খাত ক্যালকুলেটর"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 bg-background border rounded-md px-3 py-2">
+              <div className="h-4 w-4 rounded bg-primary/20 flex-shrink-0" />
+              <span className="text-sm truncate">
+                শপ | {seoSettings.seo_site_name_suffix || "FishCare BD"}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Default Meta Settings */}
       <Card>
         <CardHeader>
