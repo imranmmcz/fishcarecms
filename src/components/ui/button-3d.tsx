@@ -51,10 +51,10 @@ const button3dVariants = cva(
         ],
       },
       size: {
-        sm: "h-9 px-4 text-sm rounded-lg border-b-[4px] active:border-b-[1px] active:translate-y-[3px]",
-        md: "h-11 px-6 text-base",
-        lg: "h-14 px-8 text-lg rounded-2xl border-b-[8px] active:border-b-[3px] active:translate-y-[5px]",
-        xl: "h-16 px-10 text-xl rounded-2xl border-b-[10px] active:border-b-[4px] active:translate-y-[6px]",
+        sm: "h-8 px-3 text-xs sm:h-9 sm:px-4 sm:text-sm rounded-lg border-b-[3px] sm:border-b-[4px] active:border-b-[1px] active:translate-y-[2px] sm:active:translate-y-[3px]",
+        md: "h-9 px-4 text-sm sm:h-11 sm:px-6 sm:text-base",
+        lg: "h-10 px-5 text-sm sm:h-14 sm:px-8 sm:text-lg rounded-xl sm:rounded-2xl border-b-[5px] sm:border-b-[8px] active:border-b-[2px] sm:active:border-b-[3px] active:translate-y-[3px] sm:active:translate-y-[5px]",
+        xl: "h-12 px-6 text-base sm:h-16 sm:px-10 sm:text-xl rounded-xl sm:rounded-2xl border-b-[6px] sm:border-b-[10px] active:border-b-[2px] sm:active:border-b-[4px] active:translate-y-[4px] sm:active:translate-y-[6px]",
       },
     },
     defaultVariants: {
