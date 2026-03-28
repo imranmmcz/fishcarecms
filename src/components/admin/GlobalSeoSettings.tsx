@@ -13,6 +13,8 @@ const GlobalSeoSettings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [seoSettings, setSeoSettings] = useState({
+    seo_browser_tab_title: "",
+    seo_site_name_suffix: "",
     seo_default_title: "",
     seo_default_description: "",
     seo_site_keywords: "",
@@ -30,6 +32,8 @@ const GlobalSeoSettings = () => {
         .from("system_settings")
         .select("*")
         .in("setting_key", [
+          "seo_browser_tab_title",
+          "seo_site_name_suffix",
           "seo_default_title",
           "seo_default_description",
           "seo_site_keywords",
