@@ -424,32 +424,33 @@ export default function AdminPageBuilder() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Layout className="h-8 w-8 text-primary" />
+            <h1 className="text-xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3">
+              <Layout className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               পেজ বিল্ডার
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground text-xs sm:text-base mt-1">
               হোমপেজের সকল সেকশন এডিট করুন
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={fetchSections} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              রিফ্রেশ
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={fetchSections} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">রিফ্রেশ</span>
             </Button>
-            <Button onClick={saveAllSections} disabled={saving}>
+            <Button size="sm" onClick={saveAllSections} disabled={saving}>
               {saving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
               ) : (
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4 mr-1.5" />
               )}
-              সব সংরক্ষণ করুন
+              <span className="hidden sm:inline">সব সংরক্ষণ করুন</span>
+              <span className="sm:hidden">সংরক্ষণ</span>
             </Button>
-            <Button variant="secondary" asChild>
+            <Button variant="secondary" size="sm" asChild>
               <a href="/" target="_blank">
-                <Eye className="h-4 w-4 mr-2" />
+                <Eye className="h-4 w-4 mr-1.5" />
                 প্রিভিউ
               </a>
             </Button>

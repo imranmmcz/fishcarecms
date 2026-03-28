@@ -14,29 +14,31 @@ export default function AdminNotificationTemplates() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Bell className="h-6 w-6 text-primary" />
-            {t("নোটিফিকেশন টেমপ্লেট সিস্টেম", "Notification Template System")}
+          <h1 className="text-lg sm:text-2xl font-bold text-foreground flex items-center gap-2">
+            <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            {t("নোটিফিকেশন টেমপ্লেট", "Notification Templates")}
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {t("ইমেইল, SMS, WhatsApp এবং ইন-অ্যাপ নোটিফিকেশন পরিচালনা করুন", "Manage Email, SMS, WhatsApp and In-App notifications")}
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+            {t("ইমেইল, SMS, WhatsApp এবং ইন-অ্যাপ নোটিফিকেশন পরিচালনা করুন", "Manage notifications")}
           </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="templates" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              {t("টেমপ্লেট", "Templates")}
+            <TabsTrigger value="templates" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{t("টেমপ্লেট", "Templates")}</span>
+              <span className="sm:hidden">{t("টেমপ্লেট", "Tmpl")}</span>
             </TabsTrigger>
-            <TabsTrigger value="quick-send" className="flex items-center gap-2">
-              <Send className="h-4 w-4" />
-              {t("দ্রুত পাঠান", "Quick Send")}
+            <TabsTrigger value="quick-send" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{t("দ্রুত পাঠান", "Quick Send")}</span>
+              <span className="sm:hidden">{t("পাঠান", "Send")}</span>
             </TabsTrigger>
-            <TabsTrigger value="logs" className="flex items-center gap-2">
-              <ClipboardList className="h-4 w-4" />
+            <TabsTrigger value="logs" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <ClipboardList className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               {t("লগ", "Logs")}
             </TabsTrigger>
           </TabsList>
