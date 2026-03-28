@@ -289,77 +289,77 @@ export default function AdminFarmingReports() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="space-y-4 md:space-y-6 px-1 sm:px-0">
+        <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Fish className="h-6 w-6 text-primary" />
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground flex items-center gap-2">
+              <Fish className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               {t("ফার্মিং রিপোর্ট ম্যানেজমেন্ট", "Farming Report Management")}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">
               {t("কৃষকদের ফার্মিং ডেটা বিশ্লেষণ ও রিপোর্ট", "Analyze and report farming data")}
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={exportCSV} variant="outline" size="sm" className="gap-1.5">
-              <Download className="h-4 w-4" /> CSV
+            <Button onClick={exportCSV} variant="outline" size="sm" className="gap-1.5 text-xs">
+              <Download className="h-3.5 w-3.5" /> CSV
             </Button>
-            <Button onClick={exportPDF} variant="outline" size="sm" className="gap-1.5">
-              <FileText className="h-4 w-4" /> PDF
+            <Button onClick={exportPDF} variant="outline" size="sm" className="gap-1.5 text-xs">
+              <FileText className="h-3.5 w-3.5" /> PDF
             </Button>
           </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t("মোট ফার্মিং খরচ", "Total Farming Cost")}</p>
-                  <p className="text-xl font-bold mt-1">৳{stats.totalFarmingCost.toLocaleString()}</p>
+            <CardContent className="pt-4 pb-3 px-3 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{t("মোট ফার্মিং খরচ", "Total Farming Cost")}</p>
+                  <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">৳{stats.totalFarmingCost.toLocaleString()}</p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-rose-500 to-red-600">
-                  <DollarSign className="h-5 w-5 text-white" />
+                <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-rose-500 to-red-600 shrink-0">
+                  <DollarSign className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t("মোট ওষুধ খরচ", "Total Medicine Cost")}</p>
-                  <p className="text-xl font-bold mt-1">৳{stats.totalMedicine.toLocaleString()}</p>
+            <CardContent className="pt-4 pb-3 px-3 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{t("মোট ওষুধ খরচ", "Total Medicine Cost")}</p>
+                  <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">৳{stats.totalMedicine.toLocaleString()}</p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
-                  <Pill className="h-5 w-5 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t("পুকুর রিপোর্ট", "Pond Reports")}</p>
-                  <p className="text-xl font-bold mt-1">{stats.totalPondReports}</p>
-                </div>
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600">
-                  <ClipboardList className="h-5 w-5 text-white" />
+                <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shrink-0">
+                  <Pill className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t("সর্বাধিক ব্যবহৃত পণ্য", "Most Used Product")}</p>
-                  <p className="text-xl font-bold mt-1 truncate">{stats.mostUsedProduct}</p>
+            <CardContent className="pt-4 pb-3 px-3 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{t("পুকুর রিপোর্ট", "Pond Reports")}</p>
+                  <p className="text-sm sm:text-xl font-bold mt-0.5">{stats.totalPondReports}</p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600">
-                  <Package className="h-5 w-5 text-white" />
+                <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shrink-0">
+                  <ClipboardList className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-3 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{t("সর্বাধিক ব্যবহৃত পণ্য", "Most Used Product")}</p>
+                  <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">{stats.mostUsedProduct}</p>
+                </div>
+                <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shrink-0">
+                  <Package className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -380,7 +380,7 @@ export default function AdminFarmingReports() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3">
               {/* User filter */}
               <div>
                 <Label className="text-xs mb-1 block">{t("কৃষক", "Farmer")}</Label>
@@ -495,23 +495,24 @@ export default function AdminFarmingReports() {
         ) : (
           <>
             {/* Charts */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
               {/* Farmer Breakdown */}
               {farmerBreakdown.length > 0 && (
                 <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4 text-primary" />
+                  <CardHeader className="pb-2 px-3 sm:px-6">
+                    <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+                      <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                       {t("কৃষকভিত্তিক আয়-ব্যয়", "Farmer-wise Income vs Expense")}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={280}>
-                      <BarChart data={farmerBreakdown}>
+                  <CardContent className="px-1 sm:px-6">
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={farmerBreakdown} margin={{ left: -15, right: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                        <YAxis tick={{ fontSize: 10 }} />
+                        <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} angle={-30} textAnchor="end" height={50} />
+                        <YAxis tick={{ fontSize: 9 }} width={45} />
                         <Tooltip formatter={(v: number) => `৳${v.toLocaleString()}`} />
+                        <Legend wrapperStyle={{ fontSize: '10px' }} />
                         <Bar dataKey="income" fill="#10b981" name={t("আয়", "Income")} />
                         <Bar dataKey="expense" fill="#ef4444" name={t("ব্যয়", "Expense")} />
                       </BarChart>
@@ -523,21 +524,22 @@ export default function AdminFarmingReports() {
               {/* Category Pie */}
               {stats.categoryData.length > 0 && (
                 <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-primary" />
+                  <CardHeader className="pb-2 px-3 sm:px-6">
+                    <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+                      <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                       {t("খরচের ক্যাটাগরি বিশ্লেষণ", "Expense Category Breakdown")}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={280}>
+                  <CardContent className="px-1 sm:px-6">
+                    <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
-                        <Pie data={stats.categoryData} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+                        <Pie data={stats.categoryData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={9}>
                           {stats.categoryData.map((_, i) => (
                             <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                           ))}
                         </Pie>
                         <Tooltip formatter={(v: number) => `৳${v.toLocaleString()}`} />
+                        <Legend wrapperStyle={{ fontSize: '10px' }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -547,45 +549,45 @@ export default function AdminFarmingReports() {
 
             {/* Data Table */}
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center justify-between">
+              <CardHeader className="pb-2 px-3 sm:px-6">
+                <CardTitle className="text-sm sm:text-base flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <ClipboardList className="h-4 w-4" />
+                    <ClipboardList className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     {t("রিপোর্ট ডেটা", "Report Data")}
                   </span>
-                  <Badge variant="secondary">{reportData.length} {t("টি রেকর্ড", " records")}</Badge>
+                  <Badge variant="secondary" className="text-[10px] sm:text-xs">{reportData.length} {t("টি রেকর্ড", " records")}</Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
+              <CardContent className="px-0 sm:px-6">
+                <div className="overflow-x-auto -mx-0">
+                  <Table className="text-[11px] sm:text-sm">
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t("তারিখ", "Date")}</TableHead>
-                        <TableHead>{t("ধরন", "Type")}</TableHead>
-                        <TableHead>{t("কৃষক", "Farmer")}</TableHead>
-                        <TableHead>{t("পুকুর", "Pond")}</TableHead>
-                        <TableHead>{t("ক্যাটাগরি", "Category")}</TableHead>
-                        <TableHead>{t("পণ্য", "Product")}</TableHead>
-                        <TableHead className="text-right">{t("পরিমাণ", "Amount")}</TableHead>
-                        <TableHead>{t("বিবরণ", "Description")}</TableHead>
+                        <TableHead className="whitespace-nowrap px-2 sm:px-4">{t("তারিখ", "Date")}</TableHead>
+                        <TableHead className="px-2 sm:px-4">{t("ধরন", "Type")}</TableHead>
+                        <TableHead className="px-2 sm:px-4">{t("কৃষক", "Farmer")}</TableHead>
+                        <TableHead className="hidden sm:table-cell px-2 sm:px-4">{t("পুকুর", "Pond")}</TableHead>
+                        <TableHead className="px-2 sm:px-4">{t("ক্যাটাগরি", "Category")}</TableHead>
+                        <TableHead className="hidden md:table-cell px-2 sm:px-4">{t("পণ্য", "Product")}</TableHead>
+                        <TableHead className="text-right px-2 sm:px-4">{t("পরিমাণ", "Amount")}</TableHead>
+                        <TableHead className="hidden lg:table-cell px-2 sm:px-4">{t("বিবরণ", "Description")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {reportData.slice(0, 100).map(r => (
                         <TableRow key={`${r.type}-${r.id}`}>
-                          <TableCell className="text-xs whitespace-nowrap">{r.date}</TableCell>
-                          <TableCell>
-                            <Badge variant={r.type === "expense" ? "destructive" : "default"} className="text-[10px]">
-                              {r.type === "expense" ? t("ব্যয়", "Expense") : t("আয়", "Income")}
+                          <TableCell className="whitespace-nowrap px-2 sm:px-4">{r.date}</TableCell>
+                          <TableCell className="px-2 sm:px-4">
+                            <Badge variant={r.type === "expense" ? "destructive" : "default"} className="text-[9px] sm:text-[10px] px-1 sm:px-1.5">
+                              {r.type === "expense" ? t("ব্যয়", "Exp") : t("আয়", "Inc")}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-sm font-medium">{r.farmer_name}</TableCell>
-                          <TableCell className="text-sm">{r.pond_name}</TableCell>
-                          <TableCell className="text-sm">{r.category}</TableCell>
-                          <TableCell className="text-sm">{r.product_used}</TableCell>
-                          <TableCell className="text-right font-medium">৳{r.amount.toLocaleString()}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{r.description}</TableCell>
+                          <TableCell className="font-medium px-2 sm:px-4 max-w-[80px] sm:max-w-none truncate">{r.farmer_name}</TableCell>
+                          <TableCell className="hidden sm:table-cell px-2 sm:px-4">{r.pond_name}</TableCell>
+                          <TableCell className="px-2 sm:px-4">{r.category}</TableCell>
+                          <TableCell className="hidden md:table-cell px-2 sm:px-4">{r.product_used}</TableCell>
+                          <TableCell className="text-right font-medium px-2 sm:px-4 whitespace-nowrap">৳{r.amount.toLocaleString()}</TableCell>
+                          <TableCell className="hidden lg:table-cell text-muted-foreground max-w-[150px] truncate px-2 sm:px-4">{r.description}</TableCell>
                         </TableRow>
                       ))}
                       {reportData.length === 0 && (
