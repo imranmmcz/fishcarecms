@@ -239,61 +239,72 @@ const AdminSettings = () => {
 
         <Tabs defaultValue={initialTab} key={initialTab} className="w-full">
           <TabsList className="flex flex-wrap h-auto gap-1 w-full lg:w-auto">
-            <TabsTrigger value="language" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              {language === "bn" ? "ভাষা" : "Language"}
+            <TabsTrigger value="language" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "ভাষা" : "Language"}</span>
+              <span className="sm:hidden">ভাষা</span>
             </TabsTrigger>
-            <TabsTrigger value="font" className="flex items-center gap-2">
-              <Type className="h-4 w-4" />
-              {language === "bn" ? "ফন্ট" : "Font"}
+            <TabsTrigger value="font" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <Type className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "ফন্ট" : "Font"}</span>
+              <span className="sm:hidden">ফন্ট</span>
             </TabsTrigger>
-            <TabsTrigger value="theme" className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              {language === "bn" ? "থিম" : "Theme"}
+            <TabsTrigger value="theme" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "থিম" : "Theme"}</span>
+              <span className="sm:hidden">থিম</span>
             </TabsTrigger>
-            <TabsTrigger value="currency" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              {language === "bn" ? "মুদ্রা" : "Currency"}
+            <TabsTrigger value="currency" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "মুদ্রা" : "Currency"}</span>
+              <span className="sm:hidden">মুদ্রা</span>
             </TabsTrigger>
-            <TabsTrigger value="payment" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              {language === "bn" ? "পেমেন্ট" : "Payment"}
+            <TabsTrigger value="payment" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "পেমেন্ট" : "Payment"}</span>
+              <span className="sm:hidden">পেমেন্ট</span>
             </TabsTrigger>
-            <TabsTrigger value="email" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              {language === "bn" ? "ইমেইল" : "Email"}
+            <TabsTrigger value="email" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "ইমেইল" : "Email"}</span>
+              <span className="sm:hidden">ইমেইল</span>
             </TabsTrigger>
-            <TabsTrigger value="general" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              {language === "bn" ? "সাধারণ" : "General"}
+            <TabsTrigger value="general" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "সাধারণ" : "General"}</span>
+              <span className="sm:hidden">সাধারণ</span>
             </TabsTrigger>
-            <TabsTrigger value="seo" className="flex items-center gap-2">
-              <Search className="h-4 w-4" />
+            <TabsTrigger value="seo" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               SEO
             </TabsTrigger>
-            <TabsTrigger value="invoice" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              {language === "bn" ? "ইনভয়েস" : "Invoice"}
+            <TabsTrigger value="invoice" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "ইনভয়েস" : "Invoice"}</span>
+              <span className="sm:hidden">ইনভয়েস</span>
             </TabsTrigger>
-            <TabsTrigger value="courier" className="flex items-center gap-2">
-              <Truck className="h-4 w-4" />
-              {language === "bn" ? "কুরিয়ার" : "Courier"}
+            <TabsTrigger value="courier" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "কুরিয়ার" : "Courier"}</span>
+              <span className="sm:hidden">কুরিয়ার</span>
             </TabsTrigger>
-            <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-              <MessageCircle className="h-4 w-4" />
+            <TabsTrigger value="whatsapp" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               WhatsApp
             </TabsTrigger>
-            <TabsTrigger value="sms" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
+            <TabsTrigger value="sms" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               SMS
             </TabsTrigger>
-            <TabsTrigger value="pos-print" className="flex items-center gap-2">
-              <Printer className="h-4 w-4" />
-              {language === "bn" ? "POS প্রিন্ট" : "POS Print"}
+            <TabsTrigger value="pos-print" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "POS প্রিন্ট" : "POS Print"}</span>
+              <span className="sm:hidden">POS</span>
             </TabsTrigger>
-            <TabsTrigger value="chatbot" className="flex items-center gap-2">
-              <Bot className="h-4 w-4" />
-              {language === "bn" ? "চ্যাটবট" : "Chatbot"}
+            <TabsTrigger value="chatbot" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3">
+              <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "চ্যাটবট" : "Chatbot"}</span>
+              <span className="sm:hidden">বট</span>
             </TabsTrigger>
           </TabsList>
 

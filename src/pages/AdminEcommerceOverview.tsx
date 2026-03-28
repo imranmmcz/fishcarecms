@@ -194,13 +194,13 @@ const AdminEcommerceOverview = () => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <BarChart2 className="h-6 w-6 text-primary" />
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground flex items-center gap-2">
+              <BarChart2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               ই-কমার্স ওভারভিউ
             </h1>
-            <p className="text-muted-foreground text-sm">অনলাইন অর্ডারের সারসংক্ষেপ</p>
+            <p className="text-muted-foreground text-xs sm:text-sm">অনলাইন অর্ডারের সারসংক্ষেপ</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {rangeButtons.map(btn => (
@@ -352,47 +352,49 @@ const AdminEcommerceOverview = () => {
             ) : recentOrders.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">কোনো অর্ডার পাওয়া যায়নি</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>অর্ডার নম্বর</TableHead>
-                    <TableHead>কাস্টমার</TableHead>
-                    <TableHead>মোট টাকা</TableHead>
-                    <TableHead>পেমেন্ট</TableHead>
-                    <TableHead>স্ট্যাটাস</TableHead>
-                    <TableHead>তারিখ</TableHead>
-                    <TableHead className="text-right">অ্যাকশন</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentOrders.map((order) => {
-                    const sCfg = statusConfig[order.status] || statusConfig.pending;
-                    return (
-                      <TableRow key={order.id} className="cursor-pointer" onClick={() => navigate(`/admin/orders?order=${order.id}`)}>
-                        <TableCell className="font-medium">{order.order_number}</TableCell>
-                        <TableCell>{order.customer_name}</TableCell>
-                        <TableCell>৳{Number(order.total_amount).toLocaleString("en-IN")}</TableCell>
-                        <TableCell>
-                          <Badge variant={order.payment_status === "paid" ? "default" : "secondary"} className="text-xs">
-                            {order.payment_status === "paid" ? "পেইড" : "পেন্ডিং"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={cn("text-xs", `border-${order.status === "delivered" ? "emerald" : order.status === "processing" ? "blue" : order.status === "shipped" ? "violet" : order.status === "cancelled" ? "destructive" : "amber"}-500`)}>
-                            {sCfg.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{format(new Date(order.created_at), "dd/MM/yy hh:mm a")}</TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/admin/orders?order=${order.id}`); }}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>অর্ডার নম্বর</TableHead>
+                      <TableHead className="hidden sm:table-cell">কাস্টমার</TableHead>
+                      <TableHead>মোট টাকা</TableHead>
+                      <TableHead className="hidden md:table-cell">পেমেন্ট</TableHead>
+                      <TableHead>স্ট্যাটাস</TableHead>
+                      <TableHead className="hidden md:table-cell">তারিখ</TableHead>
+                      <TableHead className="text-right">অ্যাকশন</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentOrders.map((order) => {
+                      const sCfg = statusConfig[order.status] || statusConfig.pending;
+                      return (
+                        <TableRow key={order.id} className="cursor-pointer" onClick={() => navigate(`/admin/orders?order=${order.id}`)}>
+                          <TableCell className="font-medium text-xs sm:text-sm">{order.order_number}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{order.customer_name}</TableCell>
+                          <TableCell className="text-xs sm:text-sm">৳{Number(order.total_amount).toLocaleString("en-IN")}</TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <Badge variant={order.payment_status === "paid" ? "default" : "secondary"} className="text-xs">
+                              {order.payment_status === "paid" ? "পেইড" : "পেন্ডিং"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={cn("text-xs", `border-${order.status === "delivered" ? "emerald" : order.status === "processing" ? "blue" : order.status === "shipped" ? "violet" : order.status === "cancelled" ? "destructive" : "amber"}-500`)}>
+                              {sCfg.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{format(new Date(order.created_at), "dd/MM/yy hh:mm a")}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/admin/orders?order=${order.id}`); }}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

@@ -412,27 +412,27 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
                     <TableRow>
                       <TableHead>নাম</TableHead>
                       <TableHead>ফোন</TableHead>
-                      <TableHead>ইমেইল</TableHead>
-                      <TableHead>ঠিকানা</TableHead>
-                      <TableHead className="text-center">মোট অর্ডার</TableHead>
-                      <TableHead className="text-right">মোট খরচ</TableHead>
-                      <TableHead>শেষ অর্ডার</TableHead>
+                      <TableHead className="hidden md:table-cell">ইমেইল</TableHead>
+                      <TableHead className="hidden lg:table-cell">ঠিকানা</TableHead>
+                      <TableHead className="text-center">অর্ডার</TableHead>
+                      <TableHead className="hidden sm:table-cell text-right">মোট খরচ</TableHead>
+                      <TableHead className="hidden md:table-cell">শেষ অর্ডার</TableHead>
                       <TableHead className="text-center">অ্যাকশন</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCustomers.map((customer, index) => (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">{customer.customer_name}</TableCell>
+                        <TableCell className="font-medium text-sm">{customer.customer_name}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 text-xs sm:text-sm">
                             <Phone className="h-3 w-3 text-muted-foreground" />
                             {customer.customer_phone}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           {customer.customer_email ? (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 text-sm">
                               <Mail className="h-3 w-3 text-muted-foreground" />
                               {customer.customer_email}
                             </div>
@@ -440,19 +440,19 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 max-w-[200px] truncate">
+                        <TableCell className="hidden lg:table-cell">
+                          <div className="flex items-center gap-1 max-w-[200px] truncate text-sm">
                             <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
                             {[customer.upazila, customer.district, customer.division].filter(Boolean).join(', ') || customer.shipping_address}
                           </div>
                         </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="secondary">{customer.total_orders}</Badge>
+                        <TableCell className="text-center font-semibold text-sm">
+                          {customer.total_orders}
                         </TableCell>
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="hidden sm:table-cell text-right font-semibold text-sm">
                           ৳{customer.total_spent.toLocaleString()}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                           {new Date(customer.last_order_date).toLocaleDateString('bn-BD')}
                         </TableCell>
                         <TableCell className="text-center">

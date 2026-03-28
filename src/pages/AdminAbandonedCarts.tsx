@@ -305,11 +305,11 @@ const AdminAbandonedCarts = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>{isBn ? "গ্রাহক" : "Customer"}</TableHead>
-                      <TableHead>{isBn ? "যোগাযোগ" : "Contact"}</TableHead>
-                      <TableHead>{isBn ? "পণ্য" : "Items"}</TableHead>
+                      <TableHead className="hidden md:table-cell">{isBn ? "যোগাযোগ" : "Contact"}</TableHead>
+                      <TableHead className="hidden sm:table-cell">{isBn ? "পণ্য" : "Items"}</TableHead>
                       <TableHead>{isBn ? "মূল্য" : "Value"}</TableHead>
-                      <TableHead>{isBn ? "সোর্স" : "Source"}</TableHead>
-                      <TableHead>{isBn ? "সময়" : "Time"}</TableHead>
+                      <TableHead className="hidden lg:table-cell">{isBn ? "সোর্স" : "Source"}</TableHead>
+                      <TableHead className="hidden md:table-cell">{isBn ? "সময়" : "Time"}</TableHead>
                       <TableHead>{isBn ? "স্ট্যাটাস" : "Status"}</TableHead>
                       <TableHead className="text-right">{isBn ? "অ্যাকশন" : "Actions"}</TableHead>
                     </TableRow>
@@ -325,7 +325,7 @@ const AdminAbandonedCarts = () => {
                             <div className="text-xs text-muted-foreground">{cart.district}</div>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           {cart.customer_phone && (
                             <div className="flex items-center gap-1 text-xs">
                               <Phone className="h-3 w-3" /> {cart.customer_phone}
@@ -337,12 +337,12 @@ const AdminAbandonedCarts = () => {
                             </div>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <Badge variant="secondary">{(cart.cart_items || []).length} {isBn ? "টি" : ""}</Badge>
                         </TableCell>
-                        <TableCell className="font-semibold">{formatPrice(cart.cart_total)}</TableCell>
-                        <TableCell>{getSourceBadge(cart.source)}</TableCell>
-                        <TableCell>
+                        <TableCell className="font-semibold text-xs sm:text-sm">{formatPrice(cart.cart_total)}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{getSourceBadge(cart.source)}</TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <div className="text-xs text-muted-foreground">
                             {formatDistanceToNow(new Date(cart.created_at), {
                               addSuffix: true,
