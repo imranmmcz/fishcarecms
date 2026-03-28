@@ -765,7 +765,7 @@ const ProductDetails = () => {
                 <ArrowLeft className="h-3 w-3 rotate-180" />
               </Link>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               {relatedProducts.map((p) => {
                 const pDiscounted = getDiscountedPrice(p.price, p.discount_percentage);
                 const pInCart = isInCart(p.id);
