@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SeoHeadProps {
   title?: string;
@@ -10,10 +11,39 @@ interface SeoHeadProps {
   imageAlt?: string;
 }
 
-/**
- * Dynamically updates document meta tags for SEO, Open Graph, and Twitter Cards.
- * Place in any page component to override defaults from index.html.
- */
+// Cache for tab title settings to avoid repeated queries
+let cachedTabTitle: string | null = null;
+let cachedSuffix: string | null = null;
+let fetchPromise: Promise<void> | null = null;
+
+const fetchTabTitleSettings = async () => {
+  if (cachedTabTitle !== null) return;
+  if (fetchPromise) {
+    await fetchPromise;
+    return;
+  }
+  fetchPromise = (async () => {
+    try {
+      const { data } = await supabase
+        .from("system_settings")
+        .select("setting_key, setting_value")
+        .in("setting_key", ["seo_browser_tab_title", "seo_site_name_suffix"]);
+
+      if (data) {
+        const titleRow = data.find(d => d.setting_key === "seo_browser_tab_title");
+        const suffixRow = data.find(d => d.setting_key === "seo_site_name_suffix");
+        cachedTabTitle = titleRow?.setting_value || "";
+        cachedSuffix = suffixRow?.setting_value || "";
+      }
+    } catch (err) {
+      console.error("Error fetching tab title settings:", err);
+      cachedTabTitle = "";
+      cachedSuffix = "";
+    }
+  })();
+  await fetchPromise;
+};
+
 const SeoHead = ({
   title,
   description,
@@ -23,19 +53,34 @@ const SeoHead = ({
   keywords,
   imageAlt,
 }: SeoHeadProps) => {
+  const [tabSettings, setTabSettings] = useState({ title: cachedTabTitle, suffix: cachedSuffix });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchTabTitleSettings().then(() => {
+      if (!cancelled) {
+        setTabSettings({ title: cachedTabTitle, suffix: cachedSuffix });
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     const baseUrl = "https://fishcal.lovable.app";
     const defaultImage = `${baseUrl}/icons/icon-512x512.png`;
 
+    const defaultTabTitle = tabSettings.title || "বৈজ্ঞানিক মাছ চাষ ব্যবস্থাপনা | মৎস্য খাত ক্যালকুলেটর";
+    const siteNameSuffix = tabSettings.suffix || "FishCare BD";
+
     const fullTitle = title
-      ? `${title} | FishCare BD`
-      : "বৈজ্ঞানিক মাছ চাষ ব্যবস্থাপনা | মৎস্য খাত ক্যালকুলেটর";
+      ? `${title} | ${siteNameSuffix}`
+      : defaultTabTitle;
     const fullUrl = url ? `${baseUrl}${url}` : baseUrl;
     const metaImage = image || defaultImage;
     const metaDesc =
       description ||
       "বাংলাদেশের মৎস্য খাতের জন্য সমন্বিত ক্যালকুলেটর সিস্টেম।";
-    const metaAlt = imageAlt || title || "FishCare BD";
+    const metaAlt = imageAlt || title || siteNameSuffix;
 
     // Update document title
     document.title = fullTitle;
@@ -62,7 +107,7 @@ const SeoHead = ({
     setMeta("property", "og:url", fullUrl);
     setMeta("property", "og:image", metaImage);
     setMeta("property", "og:image:alt", metaAlt);
-    setMeta("property", "og:site_name", "FishCare BD");
+    setMeta("property", "og:site_name", siteNameSuffix);
     setMeta("property", "og:locale", "bn_BD");
 
     // Twitter Card
@@ -83,9 +128,9 @@ const SeoHead = ({
 
     // Cleanup: restore defaults on unmount
     return () => {
-      document.title = "বৈজ্ঞানিক মাছ চাষ ব্যবস্থাপনা | মৎস্য খাত ক্যালকুলেটর";
+      document.title = defaultTabTitle;
     };
-  }, [title, description, image, url, type, keywords, imageAlt]);
+  }, [title, description, image, url, type, keywords, imageAlt, tabSettings]);
 
   return null;
 };
