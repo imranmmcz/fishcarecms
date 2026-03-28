@@ -560,34 +560,34 @@ export default function AdminFarmingReports() {
               </CardHeader>
               <CardContent className="px-0 sm:px-6">
                 <div className="overflow-x-auto -mx-0">
-                  <Table>
+                  <Table className="text-[11px] sm:text-sm">
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t("তারিখ", "Date")}</TableHead>
-                        <TableHead>{t("ধরন", "Type")}</TableHead>
-                        <TableHead>{t("কৃষক", "Farmer")}</TableHead>
-                        <TableHead>{t("পুকুর", "Pond")}</TableHead>
-                        <TableHead>{t("ক্যাটাগরি", "Category")}</TableHead>
-                        <TableHead>{t("পণ্য", "Product")}</TableHead>
-                        <TableHead className="text-right">{t("পরিমাণ", "Amount")}</TableHead>
-                        <TableHead>{t("বিবরণ", "Description")}</TableHead>
+                        <TableHead className="whitespace-nowrap px-2 sm:px-4">{t("তারিখ", "Date")}</TableHead>
+                        <TableHead className="px-2 sm:px-4">{t("ধরন", "Type")}</TableHead>
+                        <TableHead className="px-2 sm:px-4">{t("কৃষক", "Farmer")}</TableHead>
+                        <TableHead className="hidden sm:table-cell px-2 sm:px-4">{t("পুকুর", "Pond")}</TableHead>
+                        <TableHead className="px-2 sm:px-4">{t("ক্যাটাগরি", "Category")}</TableHead>
+                        <TableHead className="hidden md:table-cell px-2 sm:px-4">{t("পণ্য", "Product")}</TableHead>
+                        <TableHead className="text-right px-2 sm:px-4">{t("পরিমাণ", "Amount")}</TableHead>
+                        <TableHead className="hidden lg:table-cell px-2 sm:px-4">{t("বিবরণ", "Description")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {reportData.slice(0, 100).map(r => (
                         <TableRow key={`${r.type}-${r.id}`}>
-                          <TableCell className="text-xs whitespace-nowrap">{r.date}</TableCell>
-                          <TableCell>
-                            <Badge variant={r.type === "expense" ? "destructive" : "default"} className="text-[10px]">
-                              {r.type === "expense" ? t("ব্যয়", "Expense") : t("আয়", "Income")}
+                          <TableCell className="whitespace-nowrap px-2 sm:px-4">{r.date}</TableCell>
+                          <TableCell className="px-2 sm:px-4">
+                            <Badge variant={r.type === "expense" ? "destructive" : "default"} className="text-[9px] sm:text-[10px] px-1 sm:px-1.5">
+                              {r.type === "expense" ? t("ব্যয়", "Exp") : t("আয়", "Inc")}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-sm font-medium">{r.farmer_name}</TableCell>
-                          <TableCell className="text-sm">{r.pond_name}</TableCell>
-                          <TableCell className="text-sm">{r.category}</TableCell>
-                          <TableCell className="text-sm">{r.product_used}</TableCell>
-                          <TableCell className="text-right font-medium">৳{r.amount.toLocaleString()}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{r.description}</TableCell>
+                          <TableCell className="font-medium px-2 sm:px-4 max-w-[80px] sm:max-w-none truncate">{r.farmer_name}</TableCell>
+                          <TableCell className="hidden sm:table-cell px-2 sm:px-4">{r.pond_name}</TableCell>
+                          <TableCell className="px-2 sm:px-4">{r.category}</TableCell>
+                          <TableCell className="hidden md:table-cell px-2 sm:px-4">{r.product_used}</TableCell>
+                          <TableCell className="text-right font-medium px-2 sm:px-4 whitespace-nowrap">৳{r.amount.toLocaleString()}</TableCell>
+                          <TableCell className="hidden lg:table-cell text-muted-foreground max-w-[150px] truncate px-2 sm:px-4">{r.description}</TableCell>
                         </TableRow>
                       ))}
                       {reportData.length === 0 && (
