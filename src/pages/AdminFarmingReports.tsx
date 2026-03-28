@@ -495,23 +495,24 @@ export default function AdminFarmingReports() {
         ) : (
           <>
             {/* Charts */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
               {/* Farmer Breakdown */}
               {farmerBreakdown.length > 0 && (
                 <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4 text-primary" />
+                  <CardHeader className="pb-2 px-3 sm:px-6">
+                    <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+                      <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                       {t("কৃষকভিত্তিক আয়-ব্যয়", "Farmer-wise Income vs Expense")}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={280}>
-                      <BarChart data={farmerBreakdown}>
+                  <CardContent className="px-1 sm:px-6">
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={farmerBreakdown} margin={{ left: -15, right: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                        <YAxis tick={{ fontSize: 10 }} />
+                        <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} angle={-30} textAnchor="end" height={50} />
+                        <YAxis tick={{ fontSize: 9 }} width={45} />
                         <Tooltip formatter={(v: number) => `৳${v.toLocaleString()}`} />
+                        <Legend wrapperStyle={{ fontSize: '10px' }} />
                         <Bar dataKey="income" fill="#10b981" name={t("আয়", "Income")} />
                         <Bar dataKey="expense" fill="#ef4444" name={t("ব্যয়", "Expense")} />
                       </BarChart>
@@ -523,21 +524,22 @@ export default function AdminFarmingReports() {
               {/* Category Pie */}
               {stats.categoryData.length > 0 && (
                 <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-primary" />
+                  <CardHeader className="pb-2 px-3 sm:px-6">
+                    <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+                      <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                       {t("খরচের ক্যাটাগরি বিশ্লেষণ", "Expense Category Breakdown")}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={280}>
+                  <CardContent className="px-1 sm:px-6">
+                    <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
-                        <Pie data={stats.categoryData} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+                        <Pie data={stats.categoryData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={9}>
                           {stats.categoryData.map((_, i) => (
                             <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                           ))}
                         </Pie>
                         <Tooltip formatter={(v: number) => `৳${v.toLocaleString()}`} />
+                        <Legend wrapperStyle={{ fontSize: '10px' }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </CardContent>
