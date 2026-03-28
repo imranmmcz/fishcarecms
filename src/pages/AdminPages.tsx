@@ -428,15 +428,15 @@ export default function AdminPages() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <FileText className="h-6 w-6 text-primary" />
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground flex items-center gap-2">
+              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               পেজ ম্যানেজমেন্ট
             </h1>
-            <p className="text-muted-foreground text-sm">কাস্টম পেজ তৈরি, সম্পাদনা ও পরিচালনা করুন</p>
+            <p className="text-muted-foreground text-xs sm:text-sm">কাস্টম পেজ তৈরি, সম্পাদনা ও পরিচালনা করুন</p>
           </div>
-          <Button onClick={openCreate} className="gap-2">
+          <Button onClick={openCreate} size="sm" className="gap-2 self-start">
             <Plus className="h-4 w-4" /> নতুন পেজ তৈরি করুন
           </Button>
         </div>

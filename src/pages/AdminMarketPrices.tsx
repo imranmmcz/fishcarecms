@@ -257,81 +257,67 @@ const AdminMarketPrices = () => {
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : prices.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
+               <div className="overflow-x-auto">
+                <Table className="text-xs sm:text-sm">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>মাছ</TableHead>
-                      <TableHead className="text-right">দাম (৳/কেজি)</TableHead>
-                      <TableHead>পরিসীমা</TableHead>
-                      <TableHead>অবস্থান</TableHead>
-                      <TableHead>বাজার</TableHead>
-                      <TableHead>আপডেট</TableHead>
-                      <TableHead className="text-right">অ্যাকশন</TableHead>
+                      <TableHead className="px-2 sm:px-4">মাছ</TableHead>
+                      <TableHead className="text-right px-2 sm:px-4">দাম (৳/কেজি)</TableHead>
+                      <TableHead className="hidden sm:table-cell px-2 sm:px-4">পরিসীমা</TableHead>
+                      <TableHead className="px-2 sm:px-4">অবস্থান</TableHead>
+                      <TableHead className="hidden md:table-cell px-2 sm:px-4">বাজার</TableHead>
+                      <TableHead className="hidden sm:table-cell px-2 sm:px-4">আপডেট</TableHead>
+                      <TableHead className="text-right px-2 sm:px-4">অ্যাকশন</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {prices.map((price) => (
                       <TableRow key={price.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Fish className="h-4 w-4 text-primary" />
-                            <div>
-                              <div className="font-medium">{price.fish_name_bn}</div>
-                              <div className="text-xs text-muted-foreground">{price.fish_name}</div>
+                        <TableCell className="px-2 sm:px-4">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <Fish className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
+                            <div className="min-w-0">
+                              <div className="font-medium truncate">{price.fish_name_bn}</div>
+                              <div className="text-[10px] sm:text-xs text-muted-foreground">{price.fish_name}</div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <span className="font-bold text-primary">৳{formatPrice(price.price_per_kg)}</span>
+                        <TableCell className="text-right px-2 sm:px-4">
+                          <span className="font-bold text-primary whitespace-nowrap">৳{formatPrice(price.price_per_kg)}</span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell px-2 sm:px-4">
                           {price.min_price && price.max_price ? (
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-muted-foreground whitespace-nowrap">
                               ৳{formatPrice(price.min_price)} - ৳{formatPrice(price.max_price)}
                             </span>
-                          ) : (
-                            "-"
-                          )}
+                          ) : "-"}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-2 sm:px-4">
                           <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 text-muted-foreground" />
-                            <div className="text-sm">
-                              <div>{price.upazila}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {price.district}, {price.division}
+                            <MapPin className="h-3 w-3 text-muted-foreground shrink-0 hidden sm:block" />
+                            <div className="min-w-0">
+                              <div className="truncate">{price.upazila}</div>
+                              <div className="text-[10px] text-muted-foreground truncate">
+                                {price.district}
                               </div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{price.market_name || "-"}</span>
+                        <TableCell className="hidden md:table-cell px-2 sm:px-4">
+                          {price.market_name || "-"}
                         </TableCell>
-                        <TableCell>
-                          <span className="text-xs text-muted-foreground">
+                        <TableCell className="hidden sm:table-cell px-2 sm:px-4">
+                          <span className="text-muted-foreground whitespace-nowrap">
                             {format(new Date(price.updated_at), "dd/MM/yyyy")}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleOpenDialog(price)}
-                            >
-                              <Pencil className="h-4 w-4" />
+                        <TableCell className="text-right px-2 sm:px-4">
+                          <div className="flex items-center justify-end gap-0.5">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenDialog(price)}>
+                              <Pencil className="h-3.5 w-3.5" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => {
-                                setSelectedPrice(price);
-                                setDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => { setSelectedPrice(price); setDeleteDialogOpen(true); }}>
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </TableCell>
@@ -361,7 +347,7 @@ const AdminMarketPrices = () => {
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fish_name">মাছের নাম (English) *</Label>
                 <Input
@@ -382,7 +368,7 @@ const AdminMarketPrices = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="price_per_kg">দাম (৳/কেজি) *</Label>
                 <Input
@@ -415,7 +401,7 @@ const AdminMarketPrices = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>বিভাগ *</Label>
                 <Select

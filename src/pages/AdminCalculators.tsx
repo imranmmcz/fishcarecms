@@ -54,31 +54,31 @@ export default function AdminCalculators() {
 
   return (
     <AdminLayout>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 px-1 sm:px-0">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <Calculator className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">সমন্বিত ক্যালকুলেটর মডিউল</h1>
+            <Calculator className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
+            <h1 className="text-lg sm:text-2xl font-bold truncate">সমন্বিত ক্যালকুলেটর মডিউল</h1>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => { setShowFormulas(!showFormulas); setFormulaModule(null); }}
               className={cn(
-                "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                "flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all",
                 showFormulas && !formulaModule
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              <Settings2 className="h-4 w-4" />
+              <Settings2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               সকল সূত্র সেটিংস
             </button>
           </div>
         </div>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground text-xs sm:text-sm">
           {showFormulas
             ? `${formulaModule ? (modules.find(m => m.id === formulaModule)?.title || '') + ' — ' : ''}ক্যালকুলেটরের ধ্রুবক ও প্যারামিটার পরিবর্তন করুন।`
-            : "সকল মৎস্য চাষ ক্যালকুলেটর মডিউল এখানে একত্রে পাবেন। যেকোনো ট্যাবে ক্লিক করে ব্যবহার করুন।"}
+            : "সকল মৎস্য চাষ ক্যালকুলেটর মডিউল এখানে একত্রে পাবেন।"}
         </p>
 
         {showFormulas ? (
@@ -86,26 +86,26 @@ export default function AdminCalculators() {
         ) : (
           <>
             {/* Tab Navigation */}
-            <div className="flex flex-wrap gap-2 border-b pb-3">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 border-b pb-3">
               {modules.map((mod) => (
                 <div key={mod.id} className="flex items-center gap-0.5">
                   <button
                     onClick={() => setActiveTab(mod.id)}
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-2 rounded-l-lg text-sm font-medium transition-all",
+                      "flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-l-lg text-xs sm:text-sm font-medium transition-all",
                       activeTab === mod.id
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
-                    <mod.icon className="h-4 w-4" />
+                    <mod.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span className="hidden sm:inline">{mod.title}</span>
                   </button>
                   <button
                     onClick={() => { setShowFormulas(true); setFormulaModule(mod.id); }}
                     title={`${mod.title} সূত্র সেটিংস`}
                     className={cn(
-                      "flex items-center px-1.5 py-2 rounded-r-lg text-xs transition-all border-l",
+                      "flex items-center px-1 py-1.5 sm:px-1.5 sm:py-2 rounded-r-lg text-xs transition-all border-l",
                       activeTab === mod.id
                         ? "bg-primary/80 text-primary-foreground border-primary-foreground/20"
                         : "bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground border-border"

@@ -216,17 +216,17 @@ const AdminFlashSales = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Zap className="h-6 w-6 text-amber-500" />
+            <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+              <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
               {isBn ? "ফ্ল্যাশ সেল" : "Flash Sales"}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">
               {isBn ? "সময়-সীমিত বিশেষ অফার পরিচালনা করুন" : "Manage time-limited special offers"}
             </p>
           </div>
-          <Button onClick={openCreate} className="gap-2">
+          <Button onClick={openCreate} size="sm" className="gap-2 self-start sm:self-auto">
             <Plus className="h-4 w-4" />
             {isBn ? "নতুন ফ্ল্যাশ সেল" : "New Flash Sale"}
           </Button>
@@ -244,35 +244,35 @@ const AdminFlashSales = () => {
               const status = getSaleStatus(sale);
               return (
                 <Card key={sale.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Zap className="h-5 w-5 text-amber-500" />
-                          <h3 className="font-semibold text-lg">{isBn && sale.title_bn ? sale.title_bn : sale.title}</h3>
-                          <Badge variant={status.variant}>{status.label}</Badge>
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div className="flex-1 space-y-2 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 shrink-0" />
+                          <h3 className="font-semibold text-sm sm:text-lg truncate">{isBn && sale.title_bn ? sale.title_bn : sale.title}</h3>
+                          <Badge variant={status.variant} className="text-[10px] sm:text-xs">{status.label}</Badge>
                         </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            {format(new Date(sale.start_time), "dd/MM/yyyy HH:mm")}
+                            <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                            {format(new Date(sale.start_time), "dd/MM/yy HH:mm")}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {format(new Date(sale.end_time), "dd/MM/yyyy HH:mm")}
+                            <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                            {format(new Date(sale.end_time), "dd/MM/yy HH:mm")}
                           </span>
                           <span className="flex items-center gap-1">
-                            {sale.discount_type === "percentage" ? <Percent className="h-4 w-4" /> : <DollarSign className="h-4 w-4" />}
+                            {sale.discount_type === "percentage" ? <Percent className="h-3 w-3 sm:h-4 sm:w-4" /> : <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />}
                             {sale.discount_value}{sale.discount_type === "percentage" ? "%" : "৳"} {isBn ? "ছাড়" : "off"}
                           </span>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 self-end sm:self-auto">
                         <Button variant="outline" size="sm" onClick={() => openEdit(sale)}>
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
                         <Button variant="destructive" size="sm" onClick={() => handleDelete(sale.id)}>
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </div>
