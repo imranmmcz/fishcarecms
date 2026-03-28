@@ -251,11 +251,11 @@ const Shop = () => {
       </div>
       
       {/* Hero */}
-      <section className="bg-gradient-hero py-12 text-white">
+      <section className="bg-gradient-hero py-8 sm:py-12 text-white">
         <div className="container text-center">
-          <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-80" />
-          <h1 className="text-3xl md:text-4xl font-bold">{t.products}</h1>
-          <p className="text-white/80 mt-2">{t.productsForFishing}</p>
+          <ShoppingBag className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 opacity-80" />
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">{t.products}</h1>
+          <p className="text-white/80 mt-2 text-sm sm:text-base">{t.productsForFishing}</p>
         </div>
       </section>
 
@@ -365,12 +365,12 @@ const Shop = () => {
         </div>
 
         {/* Category Filters */}
-        <div className="flex flex-wrap gap-3 justify-center mb-8">
+        <div className="flex flex-wrap gap-2 sm:gap-3 justify-center mb-6 sm:mb-8">
           {productCategories.map((cat) => (
             <button
               key={cat.value}
               onClick={() => setActiveCategory(cat.value)}
-              className={`px-5 py-2.5 rounded-xl font-bold transition-all duration-200 border-b-4 ${
+              className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-sm sm:text-base font-bold transition-all duration-200 border-b-4 ${
                 activeCategory === cat.value
                   ? "bg-primary text-primary-foreground border-primary/70 shadow-md"
                   : "bg-muted text-muted-foreground border-muted-foreground/20 hover:bg-muted/80"
@@ -435,7 +435,7 @@ const Shop = () => {
                         <h2 className="text-2xl font-bold">{label}</h2>
                         <span className="text-muted-foreground">({products.length})</span>
                       </div>
-                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                         {products.map((product) => (
                           <ProductCard key={`${product.isFromDatabase ? 'db' : 'static'}-${product.id}`} product={product} />
                         ))}
@@ -446,7 +446,7 @@ const Shop = () => {
               </div>
             ) : (
               // Filtered view (non-grouped) with pagination
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                 {paginatedProducts.map((product) => (
                   <ProductCard key={`${product.isFromDatabase ? 'db' : 'static'}-${product.id}`} product={product} />
                 ))}

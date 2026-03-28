@@ -141,7 +141,7 @@ const Footer = () => {
                   </p>
                   <div className="rounded-md overflow-hidden" style={{ colorScheme: 'light' }}>
                     <iframe
-                      src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(fbUrl)}&tabs=&width=280&height=130&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true&appId`}
+                      src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(fbUrl)}&tabs=&width=240&height=130&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true&appId`}
                       width="100%"
                       height="130"
                       style={{ border: 'none', overflow: 'hidden', borderRadius: '6px' }}

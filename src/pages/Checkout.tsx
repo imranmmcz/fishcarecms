@@ -333,8 +333,8 @@ const Checkout = () => {
           </Link>
         </Button>
 
-        <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
-          <ShoppingBag className="h-8 w-8" />
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 flex items-center gap-3">
+          <ShoppingBag className="h-6 w-6 sm:h-8 sm:w-8" />
           {translations.checkout}
         </h1>
 
@@ -373,7 +373,7 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  <div className="grid sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>{translations.division}</Label>
                       <Select

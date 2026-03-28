@@ -331,9 +331,9 @@ const ProductDetails = () => {
         </Button>
 
         {/* Main Product Section */}
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-12">
           {/* Product Image with Zoom & Gallery */}
-          <div className="relative sticky top-24 space-y-3">
+          <div className="relative lg:sticky lg:top-24 space-y-3">
             {/* Main Image */}
             <div 
               ref={imageContainerRef}
@@ -537,7 +537,7 @@ const ProductDetails = () => {
             </Badge>
 
             {/* Title */}
-            <h1 className="text-3xl lg:text-4xl font-bold">{product.name}</h1>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">{product.name}</h1>
 
             {/* SKU & Stock */}
             <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -559,8 +559,8 @@ const ProductDetails = () => {
             </div>
 
             {/* Price */}
-            <div className="flex items-baseline gap-4">
-              <span className="text-4xl font-bold text-primary">
+            <div className="flex items-baseline gap-2 sm:gap-4 flex-wrap">
+              <span className="text-3xl sm:text-4xl font-bold text-primary">
                 {formatPrice(discountedPrice)}
               </span>
               {product.discount_percentage > 0 && (
@@ -765,7 +765,7 @@ const ProductDetails = () => {
                 <ArrowLeft className="h-3 w-3 rotate-180" />
               </Link>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               {relatedProducts.map((p) => {
                 const pDiscounted = getDiscountedPrice(p.price, p.discount_percentage);
                 const pInCart = isInCart(p.id);

@@ -330,16 +330,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </Link>
 
       {/* Product Info */}
-      <div className="p-5 space-y-3">
+      <div className="p-3 sm:p-5 space-y-2 sm:space-y-3">
         <div>
           {product.isFromDatabase ? (
             <Link to={`/product/${product.id}`}>
-              <h3 className="text-lg font-bold text-foreground line-clamp-1 hover:text-primary transition-colors cursor-pointer">
+              <h3 className="text-sm sm:text-lg font-bold text-foreground line-clamp-1 hover:text-primary transition-colors cursor-pointer">
                 {product.name}
               </h3>
             </Link>
           ) : (
-            <h3 className="text-lg font-bold text-foreground line-clamp-1">
+            <h3 className="text-sm sm:text-lg font-bold text-foreground line-clamp-1">
               {product.name}
             </h3>
           )}
@@ -348,13 +348,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
         </div>
 
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed hidden sm:block">
           {product.description}
         </p>
 
         {/* Price */}
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-primary">{formatPrice(displayPrice)}</span>
+          <span className="text-lg sm:text-2xl font-bold text-primary">{formatPrice(displayPrice)}</span>
           {(flashPrice || product.originalPrice) && (
             <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice || product.price)}</span>
           )}
