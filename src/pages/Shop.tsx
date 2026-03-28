@@ -435,7 +435,7 @@ const Shop = () => {
                         <h2 className="text-2xl font-bold">{label}</h2>
                         <span className="text-muted-foreground">({products.length})</span>
                       </div>
-                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                         {products.map((product) => (
                           <ProductCard key={`${product.isFromDatabase ? 'db' : 'static'}-${product.id}`} product={product} />
                         ))}
@@ -446,7 +446,7 @@ const Shop = () => {
               </div>
             ) : (
               // Filtered view (non-grouped) with pagination
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                 {paginatedProducts.map((product) => (
                   <ProductCard key={`${product.isFromDatabase ? 'db' : 'static'}-${product.id}`} product={product} />
                 ))}
