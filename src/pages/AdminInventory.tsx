@@ -551,26 +551,31 @@ const AdminInventory = ({ Layout = AdminLayout }: { Layout?: React.ComponentType
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5 lg:w-[600px]">
-            <TabsTrigger value="stock" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              {translations.stock}
+          <TabsList className="flex flex-wrap h-auto gap-1 w-full lg:w-[600px]">
+            <TabsTrigger value="stock" className="flex items-center gap-1 text-xs sm:text-sm">
+              <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{translations.stock}</span>
+              <span className="sm:hidden">স্টক</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" />
-              {language === "bn" ? "হিস্ট্রি" : "History"}
+            <TabsTrigger value="history" className="flex items-center gap-1 text-xs sm:text-sm">
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{language === "bn" ? "হিস্ট্রি" : "History"}</span>
+              <span className="sm:hidden">হিস্ট্রি</span>
             </TabsTrigger>
-            <TabsTrigger value="companies" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              {translations.companies}
+            <TabsTrigger value="companies" className="flex items-center gap-1 text-xs sm:text-sm">
+              <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{translations.companies}</span>
+              <span className="sm:hidden">কোম্পানি</span>
             </TabsTrigger>
-            <TabsTrigger value="brands" className="flex items-center gap-2">
-              <Tag className="h-4 w-4" />
-              {translations.brands}
+            <TabsTrigger value="brands" className="flex items-center gap-1 text-xs sm:text-sm">
+              <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{translations.brands}</span>
+              <span className="sm:hidden">ব্র্যান্ড</span>
             </TabsTrigger>
-            <TabsTrigger value="purchases" className="flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              {translations.purchases}
+            <TabsTrigger value="purchases" className="flex items-center gap-1 text-xs sm:text-sm">
+              <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{translations.purchases}</span>
+              <span className="sm:hidden">ক্রয়</span>
             </TabsTrigger>
           </TabsList>
 
@@ -619,15 +624,15 @@ const AdminInventory = ({ Layout = AdminLayout }: { Layout?: React.ComponentType
                           <TableHead className="cursor-pointer select-none" onClick={() => handleSort("name")}>
                             <span className="flex items-center">{translations.product}<SortIcon field="name" /></span>
                           </TableHead>
-                          <TableHead className="cursor-pointer select-none" onClick={() => handleSort("category")}>
+                          <TableHead className="hidden sm:table-cell cursor-pointer select-none" onClick={() => handleSort("category")}>
                             <span className="flex items-center">{translations.category}<SortIcon field="category" /></span>
                           </TableHead>
-                          <TableHead>{translations.brands}</TableHead>
-                          <TableHead>{translations.companies}</TableHead>
+                          <TableHead className="hidden lg:table-cell">{translations.brands}</TableHead>
+                          <TableHead className="hidden lg:table-cell">{translations.companies}</TableHead>
                           <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("stock_quantity")}>
                             <span className="flex items-center justify-end">{translations.stockQty}<SortIcon field="stock_quantity" /></span>
                           </TableHead>
-                          <TableHead className="text-right cursor-pointer select-none" onClick={() => handleSort("reorder_level")}>
+                          <TableHead className="hidden md:table-cell text-right cursor-pointer select-none" onClick={() => handleSort("reorder_level")}>
                             <span className="flex items-center justify-end">{translations.reorderLevel}<SortIcon field="reorder_level" /></span>
                           </TableHead>
                           <TableHead className="cursor-pointer select-none" onClick={() => handleSort("status")}>
@@ -640,20 +645,20 @@ const AdminInventory = ({ Layout = AdminLayout }: { Layout?: React.ComponentType
                           const status = getStockStatus(product);
                           return (
                             <TableRow key={product.id}>
-                              <TableCell className="font-medium">{product.name}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline">{product.category}</Badge>
+                              <TableCell className="font-medium text-sm">{product.name}</TableCell>
+                              <TableCell className="hidden sm:table-cell">
+                                <Badge variant="outline" className="text-xs">{product.category}</Badge>
                               </TableCell>
-                              <TableCell>{getBrandName(product.brand_id)}</TableCell>
-                              <TableCell>{getCompanyName(product.company_id)}</TableCell>
-                              <TableCell className="text-right font-medium">
+                              <TableCell className="hidden lg:table-cell text-sm">{getBrandName(product.brand_id)}</TableCell>
+                              <TableCell className="hidden lg:table-cell text-sm">{getCompanyName(product.company_id)}</TableCell>
+                              <TableCell className="text-right font-medium text-sm">
                                 {product.stock_quantity} {product.unit}
                               </TableCell>
-                              <TableCell className="text-right text-muted-foreground">
+                              <TableCell className="hidden md:table-cell text-right text-muted-foreground text-sm">
                                 {product.reorder_level}
                               </TableCell>
                               <TableCell>
-                                <Badge className={`${status.color} text-white`}>
+                                <Badge className={`${status.color} text-white text-xs`}>
                                   {status.label}
                                 </Badge>
                               </TableCell>

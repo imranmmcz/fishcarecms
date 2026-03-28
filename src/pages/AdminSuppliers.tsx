@@ -252,11 +252,11 @@ export default function AdminSuppliers({ Layout = AdminLayout }: { Layout?: Reac
                   <TableHeader>
                     <TableRow>
                       <TableHead>কোম্পানির নাম</TableHead>
-                      <TableHead>যোগাযোগ ব্যক্তি</TableHead>
+                      <TableHead className="hidden md:table-cell">যোগাযোগ ব্যক্তি</TableHead>
                       <TableHead>ফোন</TableHead>
-                      <TableHead>ইমেইল</TableHead>
-                      <TableHead>ঠিকানা</TableHead>
-                      <TableHead>স্ট্যাটাস</TableHead>
+                      <TableHead className="hidden lg:table-cell">ইমেইল</TableHead>
+                      <TableHead className="hidden lg:table-cell">ঠিকানা</TableHead>
+                      <TableHead className="hidden sm:table-cell">স্ট্যাটাস</TableHead>
                       <TableHead className="text-center">অ্যাকশন</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -265,15 +265,15 @@ export default function AdminSuppliers({ Layout = AdminLayout }: { Layout?: Reac
                       <TableRow key={supplier.id}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{supplier.name}</div>
+                            <div className="font-medium text-sm">{supplier.name}</div>
                             {supplier.name_bn && (
-                              <div className="text-sm text-muted-foreground">{supplier.name_bn}</div>
+                              <div className="text-xs text-muted-foreground">{supplier.name_bn}</div>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           {supplier.contact_person ? (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 text-sm">
                               <User className="h-3 w-3 text-muted-foreground" />
                               {supplier.contact_person}
                             </div>
@@ -283,7 +283,7 @@ export default function AdminSuppliers({ Layout = AdminLayout }: { Layout?: Reac
                         </TableCell>
                         <TableCell>
                           {supplier.phone ? (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 text-xs sm:text-sm">
                               <Phone className="h-3 w-3 text-muted-foreground" />
                               {supplier.phone}
                             </div>
@@ -291,9 +291,9 @@ export default function AdminSuppliers({ Layout = AdminLayout }: { Layout?: Reac
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {supplier.email ? (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 text-sm">
                               <Mail className="h-3 w-3 text-muted-foreground" />
                               {supplier.email}
                             </div>
@@ -301,26 +301,26 @@ export default function AdminSuppliers({ Layout = AdminLayout }: { Layout?: Reac
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
+                        <TableCell className="hidden lg:table-cell max-w-[200px] truncate text-sm">
                           {supplier.address || <span className="text-muted-foreground">-</span>}
                         </TableCell>
-                        <TableCell>
-                          <Badge variant={supplier.is_active ? "default" : "secondary"}>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge variant={supplier.is_active ? "default" : "secondary"} className="text-xs">
                             {supplier.is_active ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center justify-center gap-1">
                             <Button
                               variant="ghost"
-                              size="sm"
+                              size="icon"
                               onClick={() => handleOpenDialog(supplier)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
-                              size="sm"
+                              size="icon"
                               className="text-destructive hover:text-destructive"
                               onClick={() => handleOpenDeleteDialog(supplier)}
                             >

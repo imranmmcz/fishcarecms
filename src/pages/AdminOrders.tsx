@@ -477,12 +477,12 @@ const AdminOrders = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Package className="h-6 w-6" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+            <Package className="h-5 w-5 sm:h-6 sm:w-6" />
             {translations.orderManagement}
           </h1>
-          <Button variant="outline" onClick={() => { fetchOrders(); fetchStats(); }} disabled={isLoading}>
+          <Button variant="outline" size="sm" onClick={() => { fetchOrders(); fetchStats(); }} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             {language === "bn" ? "রিফ্রেশ" : "Refresh"}
           </Button>
@@ -680,67 +680,70 @@ const AdminOrders = () => {
         ) : (
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{language === "bn" ? "অর্ডার" : "Order"}</TableHead>
-                    <TableHead>{translations.customer}</TableHead>
-                    <TableHead>{language === "bn" ? "তারিখ" : "Date"}</TableHead>
-                    <TableHead>{language === "bn" ? "স্ট্যাটাস" : "Status"}</TableHead>
-                    <TableHead>{language === "bn" ? "পেমেন্ট" : "Payment"}</TableHead>
-                    <TableHead>{language === "bn" ? "মোট" : "Total"}</TableHead>
-                    <TableHead className="text-right">{language === "bn" ? "অ্যাকশন" : "Actions"}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{order.order_number}</p>
-                          <p className="text-xs text-muted-foreground">{order.items?.length || 0} {language === "bn" ? "পণ্য" : "items"}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{order.customer_name}</p>
-                          <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(order.created_at).toLocaleDateString(language === "bn" ? "bn-BD" : "en-US")}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(order.status)}</TableCell>
-                      <TableCell>
-                        <Badge variant={order.payment_status === 'paid' ? 'default' : order.payment_status === 'verification_pending' ? 'outline' : 'secondary'}>
-                          {order.payment_status === 'verification_pending'
-                            ? (language === "bn" ? "ভেরিফাই পেন্ডিং" : "Verify Pending")
-                            : order.payment_status === 'paid'
-                              ? (language === "bn" ? "পেইড" : "Paid")
-                              : (language === "bn" ? "পেন্ডিং" : "Pending")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-semibold">{formatPrice(order.total_amount)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <SteadfastOrderButton
-                            order={order}
-                            onSuccess={() => fetchOrders()}
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewDetails(order.id)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            {language === "bn" ? "দেখুন" : "View"}
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{language === "bn" ? "অর্ডার" : "Order"}</TableHead>
+                      <TableHead className="hidden sm:table-cell">{translations.customer}</TableHead>
+                      <TableHead className="hidden md:table-cell">{language === "bn" ? "তারিখ" : "Date"}</TableHead>
+                      <TableHead>{language === "bn" ? "স্ট্যাটাস" : "Status"}</TableHead>
+                      <TableHead className="hidden md:table-cell">{language === "bn" ? "পেমেন্ট" : "Payment"}</TableHead>
+                      <TableHead>{language === "bn" ? "মোট" : "Total"}</TableHead>
+                      <TableHead className="text-right">{language === "bn" ? "অ্যাকশন" : "Actions"}</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredOrders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-xs sm:text-sm">{order.order_number}</p>
+                            <p className="text-xs text-muted-foreground">{order.items?.length || 0} {language === "bn" ? "পণ্য" : "items"}</p>
+                            <p className="text-xs text-muted-foreground sm:hidden">{order.customer_name}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <div>
+                            <p className="font-medium">{order.customer_name}</p>
+                            <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">
+                          {new Date(order.created_at).toLocaleDateString(language === "bn" ? "bn-BD" : "en-US")}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(order.status)}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge variant={order.payment_status === 'paid' ? 'default' : order.payment_status === 'verification_pending' ? 'outline' : 'secondary'} className="text-xs">
+                            {order.payment_status === 'verification_pending'
+                              ? (language === "bn" ? "ভেরিফাই পেন্ডিং" : "Verify Pending")
+                              : order.payment_status === 'paid'
+                                ? (language === "bn" ? "পেইড" : "Paid")
+                                : (language === "bn" ? "পেন্ডিং" : "Pending")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-semibold text-xs sm:text-sm">{formatPrice(order.total_amount)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <SteadfastOrderButton
+                              order={order}
+                              onSuccess={() => fetchOrders()}
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDetails(order.id)}
+                            >
+                              <Eye className="h-4 w-4" />
+                              <span className="hidden sm:inline ml-1">{language === "bn" ? "দেখুন" : "View"}</span>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -757,7 +760,7 @@ const AdminOrders = () => {
 
             {selectedOrder && (
               <Tabs defaultValue="details" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
                   <TabsTrigger value="details">{language === "bn" ? "বিস্তারিত" : "Details"}</TabsTrigger>
                   <TabsTrigger value="items">{translations.items}</TabsTrigger>
                   <TabsTrigger value="tracking">{language === "bn" ? "ট্র্যাকিং" : "Tracking"}</TabsTrigger>
