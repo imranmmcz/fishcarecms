@@ -289,77 +289,77 @@ export default function AdminFarmingReports() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="space-y-4 md:space-y-6 px-1 sm:px-0">
+        <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Fish className="h-6 w-6 text-primary" />
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground flex items-center gap-2">
+              <Fish className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               {t("ফার্মিং রিপোর্ট ম্যানেজমেন্ট", "Farming Report Management")}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">
               {t("কৃষকদের ফার্মিং ডেটা বিশ্লেষণ ও রিপোর্ট", "Analyze and report farming data")}
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={exportCSV} variant="outline" size="sm" className="gap-1.5">
-              <Download className="h-4 w-4" /> CSV
+            <Button onClick={exportCSV} variant="outline" size="sm" className="gap-1.5 text-xs">
+              <Download className="h-3.5 w-3.5" /> CSV
             </Button>
-            <Button onClick={exportPDF} variant="outline" size="sm" className="gap-1.5">
-              <FileText className="h-4 w-4" /> PDF
+            <Button onClick={exportPDF} variant="outline" size="sm" className="gap-1.5 text-xs">
+              <FileText className="h-3.5 w-3.5" /> PDF
             </Button>
           </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t("মোট ফার্মিং খরচ", "Total Farming Cost")}</p>
-                  <p className="text-xl font-bold mt-1">৳{stats.totalFarmingCost.toLocaleString()}</p>
+            <CardContent className="pt-4 pb-3 px-3 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{t("মোট ফার্মিং খরচ", "Total Farming Cost")}</p>
+                  <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">৳{stats.totalFarmingCost.toLocaleString()}</p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-rose-500 to-red-600">
-                  <DollarSign className="h-5 w-5 text-white" />
+                <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-rose-500 to-red-600 shrink-0">
+                  <DollarSign className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t("মোট ওষুধ খরচ", "Total Medicine Cost")}</p>
-                  <p className="text-xl font-bold mt-1">৳{stats.totalMedicine.toLocaleString()}</p>
+            <CardContent className="pt-4 pb-3 px-3 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{t("মোট ওষুধ খরচ", "Total Medicine Cost")}</p>
+                  <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">৳{stats.totalMedicine.toLocaleString()}</p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
-                  <Pill className="h-5 w-5 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t("পুকুর রিপোর্ট", "Pond Reports")}</p>
-                  <p className="text-xl font-bold mt-1">{stats.totalPondReports}</p>
-                </div>
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600">
-                  <ClipboardList className="h-5 w-5 text-white" />
+                <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shrink-0">
+                  <Pill className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t("সর্বাধিক ব্যবহৃত পণ্য", "Most Used Product")}</p>
-                  <p className="text-xl font-bold mt-1 truncate">{stats.mostUsedProduct}</p>
+            <CardContent className="pt-4 pb-3 px-3 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{t("পুকুর রিপোর্ট", "Pond Reports")}</p>
+                  <p className="text-sm sm:text-xl font-bold mt-0.5">{stats.totalPondReports}</p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600">
-                  <Package className="h-5 w-5 text-white" />
+                <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shrink-0">
+                  <ClipboardList className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3 px-3 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{t("সর্বাধিক ব্যবহৃত পণ্য", "Most Used Product")}</p>
+                  <p className="text-sm sm:text-xl font-bold mt-0.5 truncate">{stats.mostUsedProduct}</p>
+                </div>
+                <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shrink-0">
+                  <Package className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-white" />
                 </div>
               </div>
             </CardContent>
