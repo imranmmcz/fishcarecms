@@ -159,7 +159,7 @@ export function HeroSlider() {
             return (
               <CarouselItem key={slide.id}>
                 <div
-                  className="py-20 relative min-h-[400px] flex items-center"
+                  className="py-12 sm:py-20 relative min-h-[300px] sm:min-h-[400px] flex items-center"
                   style={
                     slide.background_type === 'image' && slide.background_value
                       ? {
@@ -187,7 +187,7 @@ export function HeroSlider() {
                             {slide.tagline}
                           </div>
                         )}
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                        <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                           {slide.title}
                         </h1>
                         {slide.subtitle && (
