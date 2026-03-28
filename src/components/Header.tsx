@@ -45,8 +45,10 @@ const MobileSearchToggle = () => {
 /* ── Top utility bar ── */
 const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
   const { user, isAdmin, signOut } = useAuth();
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [showMenu, setShowMenu] = useState(false);
+
+  const toggleLanguage = () => setLanguage(language === "bn" ? "en" : "bn");
 
   const email = headerData?.topBarEmail || "info@fishcare.com.bd";
 
