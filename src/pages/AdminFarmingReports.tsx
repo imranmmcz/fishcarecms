@@ -380,7 +380,7 @@ export default function AdminFarmingReports() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3">
               {/* User filter */}
               <div>
                 <Label className="text-xs mb-1 block">{t("কৃষক", "Farmer")}</Label>
@@ -549,17 +549,17 @@ export default function AdminFarmingReports() {
 
             {/* Data Table */}
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center justify-between">
+              <CardHeader className="pb-2 px-3 sm:px-6">
+                <CardTitle className="text-sm sm:text-base flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <ClipboardList className="h-4 w-4" />
+                    <ClipboardList className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     {t("রিপোর্ট ডেটা", "Report Data")}
                   </span>
-                  <Badge variant="secondary">{reportData.length} {t("টি রেকর্ড", " records")}</Badge>
+                  <Badge variant="secondary" className="text-[10px] sm:text-xs">{reportData.length} {t("টি রেকর্ড", " records")}</Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
+              <CardContent className="px-0 sm:px-6">
+                <div className="overflow-x-auto -mx-0">
                   <Table>
                     <TableHeader>
                       <TableRow>
