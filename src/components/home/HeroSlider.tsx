@@ -111,7 +111,7 @@ export function HeroSlider() {
               <div className="inline-block rounded-full bg-white/20 px-4 py-1 text-sm backdrop-blur-sm">
                 {t.heroTagline}
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 {t.heroTitle}
               </h1>
               <p className="text-lg md:text-xl text-white/90 leading-relaxed">
