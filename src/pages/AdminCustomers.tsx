@@ -446,13 +446,13 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
                             {[customer.upazila, customer.district, customer.division].filter(Boolean).join(', ') || customer.shipping_address}
                           </div>
                         </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="secondary">{customer.total_orders}</Badge>
+                        <TableCell className="text-center font-semibold text-sm">
+                          {customer.total_orders}
                         </TableCell>
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="hidden sm:table-cell text-right font-semibold text-sm">
                           ৳{customer.total_spent.toLocaleString()}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                           {new Date(customer.last_order_date).toLocaleDateString('bn-BD')}
                         </TableCell>
                         <TableCell className="text-center">
