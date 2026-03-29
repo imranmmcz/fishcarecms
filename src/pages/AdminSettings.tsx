@@ -730,17 +730,17 @@ const AdminSettings = () => {
           {/* Courier Settings Tab */}
           <TabsContent value="courier" className="space-y-6 mt-6">
             <Tabs defaultValue="steadfast" className="w-full">
-              <TabsList className="w-full">
-                <TabsTrigger value="steadfast" className="flex-1">
-                  <Truck className="h-4 w-4 mr-2" />
+              <TabsList className="w-full flex">
+                <TabsTrigger value="steadfast" className="flex-1 text-xs sm:text-sm px-2 sm:px-3">
+                  <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   Steadfast
                 </TabsTrigger>
-                <TabsTrigger value="sundarban" className="flex-1">
-                  <Truck className="h-4 w-4 mr-2" />
+                <TabsTrigger value="sundarban" className="flex-1 text-xs sm:text-sm px-2 sm:px-3">
+                  <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   সুন্দরবন
                 </TabsTrigger>
-                <TabsTrigger value="redx" className="flex-1">
-                  <Truck className="h-4 w-4 mr-2" />
+                <TabsTrigger value="redx" className="flex-1 text-xs sm:text-sm px-2 sm:px-3">
+                  <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   RedX
                 </TabsTrigger>
               </TabsList>

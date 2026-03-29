@@ -265,7 +265,7 @@ export const WhatsAppSettings = () => {
                 value={settings.api_version}
                 onValueChange={(v) => setSettings((s) => ({ ...s, api_version: v }))}
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

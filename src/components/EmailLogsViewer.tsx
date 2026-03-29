@@ -238,35 +238,35 @@ const EmailLogsViewer = () => {
                 <TableRow>
                   <TableHead>{translations.orderNumber}</TableHead>
                   <TableHead>{translations.recipient}</TableHead>
-                  <TableHead>{translations.template}</TableHead>
+                  <TableHead className="hidden sm:table-cell">{translations.template}</TableHead>
                   <TableHead>{translations.status}</TableHead>
-                  <TableHead>{translations.sentAt}</TableHead>
-                  <TableHead>{translations.error}</TableHead>
+                  <TableHead className="hidden md:table-cell">{translations.sentAt}</TableHead>
+                  <TableHead className="hidden md:table-cell">{translations.error}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredLogs.map((log) => (
                   <TableRow key={log.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-xs sm:text-sm">
                       {log.order_number || translations.na}
                     </TableCell>
-                    <TableCell>{log.recipient_email}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
+                    <TableCell className="text-xs sm:text-sm max-w-[120px] truncate">{log.recipient_email}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant="outline" className="text-xs">
                         {templateLabels[log.template_type] || log.template_type}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={log.status} />
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                       {formatDate(log.sent_at || log.created_at)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {log.error_message ? (
-                        <div className="flex items-center gap-1 text-destructive text-sm">
-                          <AlertCircle className="h-4 w-4" />
-                          <span className="max-w-[200px] truncate" title={log.error_message}>
+                        <div className="flex items-center gap-1 text-destructive text-xs">
+                          <AlertCircle className="h-3 w-3" />
+                          <span className="max-w-[150px] truncate" title={log.error_message}>
                             {log.error_message}
                           </span>
                         </div>

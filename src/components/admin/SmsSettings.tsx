@@ -310,11 +310,11 @@ export const SmsSettings = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>তারিখ</TableHead>
-                    <TableHead>ফোন</TableHead>
-                    <TableHead>ধরন</TableHead>
-                    <TableHead>স্ট্যাটাস</TableHead>
-                    <TableHead>মেসেজ</TableHead>
+                    <TableHead className="text-xs">তারিখ</TableHead>
+                    <TableHead className="text-xs">ফোন</TableHead>
+                    <TableHead className="hidden sm:table-cell text-xs">ধরন</TableHead>
+                    <TableHead className="text-xs">স্ট্যাটাস</TableHead>
+                    <TableHead className="hidden sm:table-cell text-xs">মেসেজ</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -324,7 +324,7 @@ export const SmsSettings = () => {
                         {format(new Date(log.created_at), "dd/MM/yy HH:mm")}
                       </TableCell>
                       <TableCell className="text-sm">{log.recipient_phone}</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Badge variant="secondary" className="text-xs">{log.message_type}</Badge>
                       </TableCell>
                       <TableCell>
@@ -332,7 +332,7 @@ export const SmsSettings = () => {
                           {log.status === "sent" ? "সফল" : log.status === "failed" ? "ব্যর্থ" : "অপেক্ষমাণ"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs max-w-[200px] truncate">{log.message}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-xs max-w-[200px] truncate">{log.message}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
