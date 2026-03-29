@@ -239,17 +239,17 @@ export default function DeliverySettingsAdmin() {
       {/* General Delivery Settings */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <Truck className="h-5 w-5 text-primary" />
+              <Truck className="h-5 w-5 text-primary flex-shrink-0" />
               <div>
-                <CardTitle>{language === "bn" ? "ডেলিভারি চার্জ সেটিংস" : "Delivery Charge Settings"}</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-sm sm:text-base">{language === "bn" ? "ডেলিভারি চার্জ সেটিংস" : "Delivery Charge Settings"}</CardTitle>
+                <CardDescription className="text-xs">
                   {language === "bn" ? "ডেলিভারি চার্জ এবং ফ্রি ডেলিভারি কনফিগার করুন" : "Configure delivery charges and free delivery"}
                 </CardDescription>
               </div>
             </div>
-            <Button onClick={saveSystemSettings} disabled={isSaving} size="sm">
+            <Button onClick={saveSystemSettings} disabled={isSaving} size="sm" className="w-full sm:w-auto">
               {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
               {language === "bn" ? "সেভ" : "Save"}
             </Button>
@@ -463,7 +463,7 @@ export default function DeliverySettingsAdmin() {
 
           {/* Existing Rules Table */}
           {rules.length > 0 ? (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>

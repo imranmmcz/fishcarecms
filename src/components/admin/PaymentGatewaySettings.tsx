@@ -142,18 +142,18 @@ export default function PaymentGatewaySettings() {
   return (
     <div className="space-y-6">
       {/* Header with Save button */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-base sm:text-lg font-semibold">
             {language === "bn" ? "পেমেন্ট গেটওয়ে সেটিংস" : "Payment Gateway Settings"}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {language === "bn"
               ? "বিকাশ ও নগদ মার্চেন্ট API কনফিগার করুন। API credentials সেট করলে পেমেন্ট স্বয়ংক্রিয়ভাবে ভেরিফাই হবে।"
               : "Configure bKash & Nagad Merchant API. When configured, payments will be verified automatically."}
           </p>
         </div>
-        <Button onClick={saveSettings} disabled={isSaving}>
+        <Button onClick={saveSettings} disabled={isSaving} size="sm" className="w-full sm:w-auto">
           {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           {language === "bn" ? "সেভ করুন" : "Save"}
         </Button>
@@ -179,20 +179,20 @@ export default function PaymentGatewaySettings() {
       {/* bKash Merchant API */}
       <Card className="border-pink-500/20">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-pink-500 flex items-center justify-center text-white font-bold text-sm">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-pink-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
                 bK
               </div>
               <div>
-                <CardTitle>{language === "bn" ? "বিকাশ মার্চেন্ট API" : "bKash Merchant API"}</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-sm sm:text-base">{language === "bn" ? "বিকাশ মার্চেন্ট API" : "bKash Merchant API"}</CardTitle>
+                <CardDescription className="text-xs">
                   {language === "bn" ? "বিকাশ পেমেন্ট গেটওয়ে ইন্টিগ্রেশন" : "bKash Payment Gateway Integration"}
                 </CardDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant={settings.bkash_merchant_api_enabled === "true" ? "default" : "secondary"}>
+              <Badge variant={settings.bkash_merchant_api_enabled === "true" ? "default" : "secondary"} className="text-xs">
                 {settings.bkash_merchant_api_enabled === "true"
                   ? (language === "bn" ? "সক্রিয়" : "Active")
                   : (language === "bn" ? "নিষ্ক্রিয়" : "Inactive")}
@@ -284,20 +284,20 @@ export default function PaymentGatewaySettings() {
       {/* Nagad Merchant API */}
       <Card className="border-orange-500/20">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold text-sm">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
                 N
               </div>
               <div>
-                <CardTitle>{language === "bn" ? "নগদ মার্চেন্ট API" : "Nagad Merchant API"}</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-sm sm:text-base">{language === "bn" ? "নগদ মার্চেন্ট API" : "Nagad Merchant API"}</CardTitle>
+                <CardDescription className="text-xs">
                   {language === "bn" ? "নগদ পেমেন্ট গেটওয়ে ইন্টিগ্রেশন" : "Nagad Payment Gateway Integration"}
                 </CardDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant={settings.nagad_merchant_api_enabled === "true" ? "default" : "secondary"}>
+              <Badge variant={settings.nagad_merchant_api_enabled === "true" ? "default" : "secondary"} className="text-xs">
                 {settings.nagad_merchant_api_enabled === "true"
                   ? (language === "bn" ? "সক্রিয়" : "Active")
                   : (language === "bn" ? "নিষ্ক্রিয়" : "Inactive")}

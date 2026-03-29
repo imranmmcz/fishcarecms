@@ -265,7 +265,7 @@ export const WhatsAppSettings = () => {
                 value={settings.api_version}
                 onValueChange={(v) => setSettings((s) => ({ ...s, api_version: v }))}
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -485,11 +485,11 @@ export const WhatsAppSettings = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>সময়</TableHead>
-                    <TableHead>ফোন</TableHead>
-                    <TableHead>ধরন</TableHead>
-                    <TableHead>অর্ডার</TableHead>
-                    <TableHead>স্ট্যাটাস</TableHead>
+                    <TableHead className="text-xs">সময়</TableHead>
+                    <TableHead className="text-xs">ফোন</TableHead>
+                    <TableHead className="hidden sm:table-cell text-xs">ধরন</TableHead>
+                    <TableHead className="hidden sm:table-cell text-xs">অর্ডার</TableHead>
+                    <TableHead className="text-xs">স্ট্যাটাস</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -499,10 +499,10 @@ export const WhatsAppSettings = () => {
                         {new Date(log.created_at).toLocaleString("bn-BD")}
                       </TableCell>
                       <TableCell className="text-xs font-mono">{log.recipient_phone}</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Badge variant="outline" className="text-xs">{log.message_type}</Badge>
                       </TableCell>
-                      <TableCell className="text-xs">{log.order_number || "-"}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-xs">{log.order_number || "-"}</TableCell>
                       <TableCell>
                         <Badge variant={log.status === "sent" ? "default" : "destructive"} className="text-xs">
                           {log.status === "sent" ? "✅ সফল" : "❌ ব্যর্থ"}
