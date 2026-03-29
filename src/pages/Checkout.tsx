@@ -45,7 +45,7 @@ import {
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, subtotal, clearCart } = useCart();
-  const { user, isLoading: isAuthLoading, signUp } = useAuth();
+  const { user, profile, isLoading: isAuthLoading, signUp } = useAuth();
   const { language } = useLanguage();
   const { formatPrice } = useCurrency();
   const { settings: paymentSettings, isLoading: isLoadingPayment } = usePaymentSettings();
@@ -66,10 +66,24 @@ const Checkout = () => {
     shipping_address: "",
     payment_method: "cod",
     customer_note: "",
-    // Manual payment fields
     payment_trx_id: "",
     payment_sender_number: "",
   });
+
+  // Auto-fill from profile
+  useEffect(() => {
+    if (user && profile) {
+      setFormData(prev => ({
+        ...prev,
+        shipping_name: prev.shipping_name || user.full_name || "",
+        shipping_mobile: prev.shipping_mobile || profile.mobile || "",
+        shipping_division: prev.shipping_division || profile.division || "",
+        shipping_district: prev.shipping_district || profile.district || "",
+        shipping_upazila: prev.shipping_upazila || profile.upazila || "",
+        shipping_address: prev.shipping_address || profile.village || "",
+      }));
+    }
+  }, [user, profile]);
 
   const districts = formData.shipping_division 
     ? districtsByDivision[formData.shipping_division] || []
