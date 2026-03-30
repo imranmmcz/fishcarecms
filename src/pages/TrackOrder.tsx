@@ -82,6 +82,9 @@ const TrackOrder = () => {
     noTracking: language === "bn" ? "কুরিয়ার তথ্য এখনো যোগ হয়নি" : "Courier info not yet available",
     placeholder_order: "ORD-20260223-0001",
     placeholder_phone: "01XXXXXXXXX",
+    cancelOrder: language === "bn" ? "অর্ডার বাতিল করুন" : "Cancel Order",
+    confirmCancel: language === "bn" ? "আপনি কি নিশ্চিত এই অর্ডার বাতিল করতে চান?" : "Are you sure you want to cancel this order?",
+    cancelSuccess: language === "bn" ? "অর্ডার সফলভাবে বাতিল করা হয়েছে" : "Order cancelled successfully",
   };
 
   const handleTrack = async () => {
