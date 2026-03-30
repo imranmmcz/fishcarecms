@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { order_number, phone } = await req.json();
+    const { order_number, phone, action } = await req.json();
 
     if (!order_number || !phone) {
       return new Response(
