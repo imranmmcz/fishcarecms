@@ -282,6 +282,25 @@ const TrackOrder = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Cancel Button for pending orders */}
+                {result.order.status === "pending" && (
+                  <div className="border-t pt-4 mt-4">
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={handleCancelOrder}
+                      disabled={isCancelling}
+                    >
+                      {isCancelling ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mr-2" />
+                      )}
+                      {t.cancelOrder}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
