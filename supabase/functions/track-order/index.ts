@@ -64,6 +64,31 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Handle cancel action
+    if (action === "cancel") {
+      if (order.status !== "pending") {
+        return new Response(
+          JSON.stringify({ error: "শুধুমাত্র পেন্ডিং অর্ডার বাতিল করা যায়" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({ status: "cancelled" })
+        .eq("id", order.id);
+
+      if (updateError) {
+        return new Response(
+          JSON.stringify({ error: "অর্ডার বাতিল করতে সমস্যা হয়েছে" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      return new Response(
+        JSON.stringify({ success: true, message: "অর্ডার সফলভাবে বাতিল করা হয়েছে" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Get order items
     const { data: items } = await supabase
       .from("order_items")
