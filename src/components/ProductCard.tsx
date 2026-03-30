@@ -361,48 +361,48 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {product.isFromDatabase && (
             <>
               {inCart ? (
-                <div className="flex items-center justify-between bg-muted rounded-lg p-2">
+                <div className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1 flex-1">
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-6 w-6 sm:h-7 sm:w-7"
                     onClick={() => updateQuantity(String(product.id), quantity - 1)}
                   >
-                    <Minus className="h-4 w-4" />
+                    <Minus className="h-3 w-3" />
                   </Button>
-                  <span className="font-bold text-lg">{quantity}</span>
+                  <span className="font-bold text-sm flex-1 text-center">{quantity}</span>
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-6 w-6 sm:h-7 sm:w-7"
                     onClick={() => updateQuantity(String(product.id), quantity + 1)}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
               ) : (
                 <Button3D 
                   variant="primary" 
                   size="sm" 
-                  className="w-full gap-2"
+                  className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5"
                   onClick={handleAddToCart}
                 >
-                  <ShoppingCart className="h-4 w-4" />
-                  {translations.addToCart}
+                  <ShoppingCart className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{translations.addToCart}</span>
                 </Button3D>
               )}
 
               <Button3D 
                 variant="success"
                 size="sm" 
-                className="w-full gap-2"
+                className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5"
                 onClick={handleOrderNow}
               >
-                <Package className="h-4 w-4" />
+                <Package className="h-3.5 w-3.5" />
                 {translations.orderNow}
               </Button3D>
             </>
@@ -412,11 +412,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <Button3D 
               variant="warning"
               size="sm" 
-              className="w-full gap-2"
+              className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5"
               onClick={handleOrderClick}
             >
-              <ExternalLink className="h-4 w-4" />
-              {language === "bn" ? "বাহ্যিক লিংক" : "External Link"}
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{language === "bn" ? "বাহ্যিক লিংক" : "External Link"}</span>
             </Button3D>
           )}
         </div>
