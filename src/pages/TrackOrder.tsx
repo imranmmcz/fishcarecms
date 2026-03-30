@@ -123,6 +123,31 @@ const TrackOrder = () => {
     return idx >= 0 ? idx : (status === "cancelled" ? -1 : 1);
   };
 
+  const handleCancelOrder = async () => {
+    if (!result || !confirm(t.confirmCancel)) return;
+    setIsCancelling(true);
+    try {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/track-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_number: orderNumber.trim(), phone: phone.trim(), action: "cancel" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Cancel failed");
+      } else {
+        toast.success(t.cancelSuccess);
+        // Refresh tracking result
+        handleTrack();
+      }
+    } catch {
+      toast.error(language === "bn" ? "বাতিল করতে সমস্যা হয়েছে" : "Failed to cancel");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <SeoHead
