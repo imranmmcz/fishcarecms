@@ -70,7 +70,10 @@ export function HeroFeaturedProduct({ productId }: HeroFeaturedProductProps) {
         )}
       </div>
 
-      <div className="flex items-baseline gap-1 sm:gap-1.5 mt-1 sm:mt-1.5">
+      <h3 className="text-[10px] sm:text-xs md:text-sm font-medium text-white/90 line-clamp-1 mt-1 sm:mt-1.5">
+        {product.name}
+      </h3>
+      <div className="flex items-baseline gap-1 sm:gap-1.5 mt-0.5">
         <span className="text-[11px] sm:text-xs md:text-sm font-bold text-white">
           ৳{Math.round(discountedPrice)}
         </span>
