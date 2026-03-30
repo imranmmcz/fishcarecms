@@ -242,7 +242,7 @@ export function HeroSlider() {
               />
             ))}
           </div>
-          <CarouselNext className="static translate-y-0 bg-white/20 hover:bg-white/40 border-white/30 text-white" />
+          <CarouselNext className="static translate-y-0 bg-white/20 hover:bg-white/40 border-white/30 text-white h-7 w-7 sm:h-8 sm:w-8" />
         </div>
       </Carousel>
     </section>

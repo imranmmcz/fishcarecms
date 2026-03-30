@@ -48,7 +48,7 @@ export function HeroFeaturedProduct({ productId }: HeroFeaturedProductProps) {
   return (
     <Link
       to={`/product/${product.id}`}
-      className="relative block bg-transparent rounded-xl p-3 hover:bg-white/10 transition-all duration-300 group w-[180px]"
+      className="relative block bg-white/5 backdrop-blur-sm rounded-xl p-2 sm:p-3 hover:bg-white/10 transition-all duration-300 group w-[120px] sm:w-[150px] md:w-[180px]"
     >
       {product.discount_percentage && product.discount_percentage > 0 && (
         <span className="absolute -top-1.5 -right-1.5 z-10 bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
