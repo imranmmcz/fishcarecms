@@ -61,6 +61,7 @@ const TrackOrder = () => {
   const [phone, setPhone] = useState("");
   const [result, setResult] = useState<TrackingResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState("");
 
   const t = {
@@ -81,6 +82,9 @@ const TrackOrder = () => {
     noTracking: language === "bn" ? "কুরিয়ার তথ্য এখনো যোগ হয়নি" : "Courier info not yet available",
     placeholder_order: "ORD-20260223-0001",
     placeholder_phone: "01XXXXXXXXX",
+    cancelOrder: language === "bn" ? "অর্ডার বাতিল করুন" : "Cancel Order",
+    confirmCancel: language === "bn" ? "আপনি কি নিশ্চিত এই অর্ডার বাতিল করতে চান?" : "Are you sure you want to cancel this order?",
+    cancelSuccess: language === "bn" ? "অর্ডার সফলভাবে বাতিল করা হয়েছে" : "Order cancelled successfully",
   };
 
   const handleTrack = async () => {
@@ -117,6 +121,31 @@ const TrackOrder = () => {
   const getCurrentStep = (status: string) => {
     const idx = statusSteps.indexOf(status);
     return idx >= 0 ? idx : (status === "cancelled" ? -1 : 1);
+  };
+
+  const handleCancelOrder = async () => {
+    if (!result || !confirm(t.confirmCancel)) return;
+    setIsCancelling(true);
+    try {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/track-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_number: orderNumber.trim(), phone: phone.trim(), action: "cancel" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Cancel failed");
+      } else {
+        toast.success(t.cancelSuccess);
+        // Refresh tracking result
+        handleTrack();
+      }
+    } catch {
+      toast.error(language === "bn" ? "বাতিল করতে সমস্যা হয়েছে" : "Failed to cancel");
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   return (
@@ -253,6 +282,25 @@ const TrackOrder = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Cancel Button for pending orders */}
+                {result.order.status === "pending" && (
+                  <div className="border-t pt-4 mt-4">
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={handleCancelOrder}
+                      disabled={isCancelling}
+                    >
+                      {isCancelling ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mr-2" />
+                      )}
+                      {t.cancelOrder}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
