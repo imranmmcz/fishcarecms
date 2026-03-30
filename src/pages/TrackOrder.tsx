@@ -61,6 +61,7 @@ const TrackOrder = () => {
   const [phone, setPhone] = useState("");
   const [result, setResult] = useState<TrackingResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState("");
 
   const t = {
