@@ -51,20 +51,13 @@ const iconMap: Record<string, React.ElementType> = {
 
 const getButtonVariant = (variant: string | null): "primary" | "success" | "warning" | "purple" | "danger" | "pink" => {
   switch (variant) {
-    case "primary":
-      return "primary";
-    case "success":
-      return "success";
-    case "warning":
-      return "warning";
-    case "purple":
-      return "purple";
-    case "danger":
-      return "danger";
-    case "pink":
-      return "pink";
-    default:
-      return "primary";
+    case "primary": return "primary";
+    case "success": return "success";
+    case "warning": return "warning";
+    case "purple": return "purple";
+    case "danger": return "danger";
+    case "pink": return "pink";
+    default: return "primary";
   }
 };
 
@@ -74,7 +67,6 @@ export function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [api, setApi] = useState<any>(null);
   
-  // Autoplay plugin with 5 second delay
   const autoplayPlugin = useRef(
     Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
   );
@@ -93,7 +85,7 @@ export function HeroSlider() {
 
   if (loading) {
     return (
-      <section className="relative overflow-hidden bg-gradient-hero text-white py-20">
+      <section className="relative overflow-hidden bg-gradient-hero text-white py-12 sm:py-20">
         <div className="container flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
@@ -101,32 +93,31 @@ export function HeroSlider() {
     );
   }
 
-  // Fallback if no slides
   if (slides.length === 0) {
     return (
       <section className="relative overflow-hidden bg-gradient-hero text-white">
-        <div className="py-20">
+        <div className="py-12 sm:py-20">
           <div className="container relative z-10">
-            <div className="max-w-3xl mx-auto text-center space-y-6 animate-fade-in">
-              <div className="inline-block rounded-full bg-white/20 px-4 py-1 text-sm backdrop-blur-sm">
+            <div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6 animate-fade-in px-2">
+              <div className="inline-block rounded-full bg-white/20 px-3 py-0.5 sm:px-4 sm:py-1 text-xs sm:text-sm backdrop-blur-sm">
                 {t.heroTagline}
               </div>
-              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
                 {t.heroTitle}
               </h1>
-              <p className="text-lg md:text-xl text-white/90 leading-relaxed">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 leading-relaxed">
                 {t.heroDescription}
               </p>
-              <div className="flex gap-4 justify-center flex-wrap">
+              <div className="flex gap-3 sm:gap-4 justify-center flex-wrap">
                 <Link to="/pond-calculator">
-                  <Button3D size="lg" variant="success">
-                    <Calculator className="mr-2 h-5 w-5" />
+                  <Button3D size="sm" variant="success" className="sm:!px-5 sm:!py-2.5 text-xs sm:text-sm">
+                    <Calculator className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                     {t.startNow}
                   </Button3D>
                 </Link>
                 <Link to="/dashboard">
-                  <Button3D size="lg" variant="purple">
-                    <LayoutDashboard className="mr-2 h-5 w-5" />
+                  <Button3D size="sm" variant="purple" className="sm:!px-5 sm:!py-2.5 text-xs sm:text-sm">
+                    <LayoutDashboard className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                     {t.dashboard}
                   </Button3D>
                 </Link>
@@ -142,10 +133,7 @@ export function HeroSlider() {
   return (
     <section className="relative overflow-hidden text-white">
       <Carousel
-        opts={{
-          align: "start",
-          loop: true,
-        }}
+        opts={{ align: "start", loop: true }}
         plugins={[autoplayPlugin.current]}
         onMouseEnter={() => autoplayPlugin.current.stop()}
         onMouseLeave={() => autoplayPlugin.current.play()}
@@ -159,7 +147,7 @@ export function HeroSlider() {
             return (
               <CarouselItem key={slide.id}>
                 <div
-                  className="py-12 sm:py-20 relative min-h-[300px] sm:min-h-[400px] flex items-center"
+                  className="py-8 sm:py-12 md:py-20 relative min-h-[240px] sm:min-h-[300px] md:min-h-[400px] flex items-center"
                   style={
                     slide.background_type === 'image' && slide.background_value
                       ? {
@@ -171,7 +159,6 @@ export function HeroSlider() {
                       : { background: slide.background_value || undefined }
                   }
                 >
-                  {/* Dark overlay for image backgrounds */}
                   {slide.background_type === 'image' && (
                     <div
                       className="absolute inset-0 bg-black pointer-events-none"
@@ -179,64 +166,57 @@ export function HeroSlider() {
                     />
                   )}
                   <div className="container relative z-10">
-                    <div className="flex items-center gap-6">
-                      <div className="flex-1 text-center space-y-6 animate-fade-in">
+                    <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
+                      <div className="flex-1 text-center space-y-3 sm:space-y-4 md:space-y-6 animate-fade-in px-1 sm:px-0">
                         {slide.tagline && (
-                          <div className="inline-block rounded-full bg-white/20 px-4 py-1 text-sm backdrop-blur-sm">
-                            <IconComponent className="inline h-4 w-4 mr-1" />
+                          <div className="inline-block rounded-full bg-white/20 px-3 py-0.5 sm:px-4 sm:py-1 text-[11px] sm:text-sm backdrop-blur-sm">
+                            <IconComponent className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             {slide.tagline}
                           </div>
                         )}
-                        <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                        <h1 className="text-lg sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
                           {slide.title}
                         </h1>
                         {slide.subtitle && (
-                          <p className="text-lg md:text-xl text-white/90 leading-relaxed">
+                          <p className="text-xs sm:text-sm md:text-lg lg:text-xl text-white/90 leading-relaxed line-clamp-2 sm:line-clamp-none">
                             {slide.subtitle}
                           </p>
                         )}
                         {slide.button_text && slide.button_link && (
-                          <div className="flex gap-4 justify-center flex-wrap">
+                          <div className="flex gap-3 justify-center flex-wrap">
                             <Link to={slide.button_link}>
-                              <Button3D size="lg" variant={getButtonVariant(slide.button_variant)}>
-                                <IconComponent className="mr-2 h-5 w-5" />
+                              <Button3D size="sm" variant={getButtonVariant(slide.button_variant)} className="text-xs sm:text-sm sm:!px-5 sm:!py-2.5">
+                                <IconComponent className="mr-1.5 h-3.5 w-3.5 sm:h-5 sm:w-5" />
                                 {slide.button_text}
                               </Button3D>
                             </Link>
                           </div>
                         )}
                       </div>
-                      {/* Desktop featured product */}
                       {slide.featured_product_id && (
-                        <div className="hidden md:block flex-shrink-0">
+                        <div className="flex-shrink-0 mt-2 md:mt-0">
                           <HeroFeaturedProduct productId={slide.featured_product_id} />
                         </div>
                       )}
                     </div>
                   </div>
-                  {/* Mobile featured product */}
-                  {slide.featured_product_id && (
-                    <div className="md:hidden flex justify-center mt-4 relative z-10">
-                      <HeroFeaturedProduct productId={slide.featured_product_id} />
-                    </div>
-                  )}
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/20 pointer-events-none" />
                 </div>
               </CarouselItem>
             );
           })}
         </CarouselContent>
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
-          <CarouselPrevious className="static translate-y-0 bg-white/20 hover:bg-white/40 border-white/30 text-white" />
-          <div className="flex gap-1.5">
+        <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3 z-10">
+          <CarouselPrevious className="static translate-y-0 bg-white/20 hover:bg-white/40 border-white/30 text-white h-7 w-7 sm:h-8 sm:w-8" />
+          <div className="flex gap-1 sm:gap-1.5">
             {slides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => api?.scrollTo(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
                   index === currentSlide
-                    ? "w-6 bg-white"
-                    : "w-2 bg-white/40 hover:bg-white/60"
+                    ? "w-5 sm:w-6 bg-white"
+                    : "w-1.5 sm:w-2 bg-white/40 hover:bg-white/60"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />

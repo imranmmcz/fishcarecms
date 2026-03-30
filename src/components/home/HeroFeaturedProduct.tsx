@@ -48,10 +48,10 @@ export function HeroFeaturedProduct({ productId }: HeroFeaturedProductProps) {
   return (
     <Link
       to={`/product/${product.id}`}
-      className="relative block bg-white/5 backdrop-blur-sm rounded-xl p-2 sm:p-3 hover:bg-white/10 transition-all duration-300 group w-[120px] sm:w-[150px] md:w-[180px]"
+      className="relative block bg-white/5 backdrop-blur-sm rounded-xl p-1.5 sm:p-2 md:p-3 hover:bg-white/10 transition-all duration-300 group w-[100px] sm:w-[130px] md:w-[160px] lg:w-[180px]"
     >
       {product.discount_percentage && product.discount_percentage > 0 && (
-        <span className="absolute -top-1.5 -right-1.5 z-10 bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+        <span className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 z-10 bg-destructive text-destructive-foreground text-[8px] sm:text-[10px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full">
           -{product.discount_percentage}%
         </span>
       )}
@@ -65,17 +65,17 @@ export function HeroFeaturedProduct({ productId }: HeroFeaturedProductProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-white/5">
-            <ShoppingCart className="h-8 w-8 text-white/30" />
+            <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white/30" />
           </div>
         )}
       </div>
 
-      <div className="flex items-baseline gap-1.5 mt-1.5">
-        <span className="text-sm font-bold text-white">
+      <div className="flex items-baseline gap-1 sm:gap-1.5 mt-1 sm:mt-1.5">
+        <span className="text-[11px] sm:text-xs md:text-sm font-bold text-white">
           ৳{Math.round(discountedPrice)}
         </span>
         {product.discount_percentage && product.discount_percentage > 0 && (
-          <span className="text-[10px] text-white/50 line-through">
+          <span className="text-[8px] sm:text-[10px] text-white/50 line-through">
             ৳{product.price}
           </span>
         )}
