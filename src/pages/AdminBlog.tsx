@@ -90,7 +90,60 @@ const AdminBlog = () => {
           </Select>
         </div>
 
-        <Card>
+        {/* Mobile Card View */}
+        <div className="block sm:hidden space-y-3">
+          {loading ? (
+            <Card><CardContent className="p-6 text-center text-muted-foreground">{language === "bn" ? "লোড হচ্ছে..." : "Loading..."}</CardContent></Card>
+          ) : posts.length === 0 ? (
+            <Card><CardContent className="p-6 text-center text-muted-foreground">{language === "bn" ? "কোনো পোস্ট নেই" : "No posts"}</CardContent></Card>
+          ) : posts.map(post => (
+            <Card key={post.id}>
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    {post.is_pinned && <Pin className="h-3 w-3 text-primary shrink-0" />}
+                    <span className="font-medium text-sm truncate">{post.title}</span>
+                  </div>
+                  <Badge variant={post.status === "approved" ? "default" : post.status === "pending" ? "secondary" : "destructive"} className="text-[10px] shrink-0">
+                    {post.status}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>{post.author_name}</span>
+                  <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{post.view_count}</span>
+                  <span className="flex items-center gap-0.5"><MessageSquare className="h-3 w-3" />{post.comment_count}</span>
+                  <span>{format(new Date(post.created_at), "dd/MM/yy")}</span>
+                </div>
+                <div className="flex items-center gap-1 pt-1 border-t border-border">
+                  {post.status !== "approved" && (
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-secondary gap-1" onClick={() => updatePost(post.id, { status: "approved" })}>
+                      <Check className="h-3.5 w-3.5" />{language === "bn" ? "অনুমোদন" : "Approve"}
+                    </Button>
+                  )}
+                  {post.status !== "rejected" && (
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive gap-1" onClick={() => updatePost(post.id, { status: "rejected" })}>
+                      <X className="h-3.5 w-3.5" />{language === "bn" ? "বাতিল" : "Reject"}
+                    </Button>
+                  )}
+                  <div className="ml-auto flex items-center gap-0.5">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updatePost(post.id, { is_pinned: !post.is_pinned })}>
+                      <Pin className={`h-3.5 w-3.5 ${post.is_pinned ? "text-primary" : ""}`} />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => updatePost(post.id, { is_comments_locked: !post.is_comments_locked })}>
+                      {post.is_comments_locked ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deletePost(post.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <Card className="hidden sm:block">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
