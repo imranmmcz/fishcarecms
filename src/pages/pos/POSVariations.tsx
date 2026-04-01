@@ -47,7 +47,8 @@ export default function POSVariations() {
                 <span className="text-muted-foreground text-sm font-normal">({(items as any[]).length} টি পণ্য)</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0 sm:p-6">
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
