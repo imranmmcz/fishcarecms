@@ -64,7 +64,8 @@ export default function POSUnits() {
               <Input placeholder="ইউনিট খুঁজুন..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-sm" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -87,6 +88,7 @@ export default function POSUnits() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

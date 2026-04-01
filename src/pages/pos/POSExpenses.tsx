@@ -85,9 +85,9 @@ export default function POSExpenses() {
   return (
     <POSLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">{bn ? "খরচ ব্যবস্থাপনা" : "Expense Management"}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">{bn ? "খরচ ব্যবস্থাপনা" : "Expense Management"}</h1>
             <p className="text-muted-foreground text-sm">{bn ? "ব্যবসার খরচ ট্র্যাক ও ক্যাটাগরি ব্যবস্থাপনা" : "Track business expenses & manage categories"}</p>
           </div>
         </div>

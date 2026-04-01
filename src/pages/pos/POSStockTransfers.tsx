@@ -87,7 +87,7 @@ export default function POSStockTransfers() {
   return (
     <POSLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <ArrowLeftRight className="h-6 w-6 text-emerald-500" /> স্টক ট্রান্সফার
@@ -106,7 +106,8 @@ export default function POSStockTransfers() {
               <Input placeholder="পণ্যের নাম দিয়ে খুঁজুন..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-sm" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -143,6 +144,7 @@ export default function POSStockTransfers() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
 

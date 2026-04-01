@@ -172,8 +172,8 @@ export default function POSOnlineOrders() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="অর্ডার নং, কাস্টমার নাম বা ফোন..."
@@ -182,8 +182,9 @@ export default function POSOnlineOrders() {
               className="pl-10"
             />
           </div>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[130px] sm:w-[150px]">
               <SelectValue placeholder="স্ট্যাটাস" />
             </SelectTrigger>
             <SelectContent>
@@ -194,7 +195,7 @@ export default function POSOnlineOrders() {
             </SelectContent>
           </Select>
           <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[120px] sm:w-[150px]">
               <SelectValue placeholder="পেমেন্ট" />
             </SelectTrigger>
             <SelectContent>
@@ -204,7 +205,7 @@ export default function POSOnlineOrders() {
             </SelectContent>
           </Select>
           <Select value={dateFilter} onValueChange={setDateFilter}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[140px] sm:w-[160px]">
               <CalendarDays className="h-4 w-4 mr-1.5 text-muted-foreground" />
               <SelectValue placeholder="তারিখ" />
             </SelectTrigger>
@@ -218,10 +219,48 @@ export default function POSOnlineOrders() {
               <SelectItem value="lastMonth">গত মাস</SelectItem>
             </SelectContent>
           </Select>
+          </div>
         </div>
 
-        {/* Orders Table */}
-        <Card>
+        {/* Mobile Card View */}
+        <div className="block sm:hidden space-y-3">
+          {loading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          ) : filtered.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">কোনো অনলাইন অর্ডার পাওয়া যায়নি</p>
+          ) : filtered.map(order => {
+            const sCfg = statusConfig[order.status] || statusConfig.pending;
+            return (
+              <Card key={order.id}>
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-medium">{order.order_number}</span>
+                    <Badge variant={sCfg.variant} className="text-[10px]">{sCfg.label}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>{order.customer_name}</span>
+                    <span className="font-bold">৳{Number(order.total_amount).toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{order.customer_phone}</span>
+                    <Badge variant={order.payment_status === "paid" ? "default" : "secondary"} className="text-[10px]">
+                      {order.payment_status === "paid" ? "পেইড" : "পেন্ডিং"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{format(new Date(order.created_at), "dd/MM/yy hh:mm a")}</span>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => handleView(order)}>
+                      <Eye className="h-3 w-3 mr-1" /> দেখুন
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View */}
+        <Card className="hidden sm:block">
           <CardContent className="p-0">
             {loading ? (
               <div className="flex justify-center py-12">
@@ -230,6 +269,7 @@ export default function POSOnlineOrders() {
             ) : filtered.length === 0 ? (
               <p className="text-center text-muted-foreground py-12">কোনো অনলাইন অর্ডার পাওয়া যায়নি</p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -258,9 +298,7 @@ export default function POSOnlineOrders() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={sCfg.variant} className="text-xs">
-                            {sCfg.label}
-                          </Badge>
+                          <Badge variant={sCfg.variant} className="text-xs">{sCfg.label}</Badge>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {format(new Date(order.created_at), "dd/MM/yy hh:mm a")}
@@ -275,6 +313,7 @@ export default function POSOnlineOrders() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
