@@ -106,7 +106,8 @@ export default function POSStockTransfers() {
               <Input placeholder="পণ্যের নাম দিয়ে খুঁজুন..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-sm" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
