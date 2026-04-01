@@ -86,7 +86,7 @@ export default function POSBrands() {
   return (
     <POSLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Award className="h-6 w-6 text-emerald-500" /> ব্র্যান্ড ব্যবস্থাপনা
