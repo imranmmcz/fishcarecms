@@ -172,8 +172,8 @@ export default function POSOnlineOrders() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="অর্ডার নং, কাস্টমার নাম বা ফোন..."
@@ -182,8 +182,9 @@ export default function POSOnlineOrders() {
               className="pl-10"
             />
           </div>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[130px] sm:w-[150px]">
               <SelectValue placeholder="স্ট্যাটাস" />
             </SelectTrigger>
             <SelectContent>
@@ -194,7 +195,7 @@ export default function POSOnlineOrders() {
             </SelectContent>
           </Select>
           <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[120px] sm:w-[150px]">
               <SelectValue placeholder="পেমেন্ট" />
             </SelectTrigger>
             <SelectContent>
@@ -204,7 +205,7 @@ export default function POSOnlineOrders() {
             </SelectContent>
           </Select>
           <Select value={dateFilter} onValueChange={setDateFilter}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[140px] sm:w-[160px]">
               <CalendarDays className="h-4 w-4 mr-1.5 text-muted-foreground" />
               <SelectValue placeholder="তারিখ" />
             </SelectTrigger>
@@ -218,6 +219,7 @@ export default function POSOnlineOrders() {
               <SelectItem value="lastMonth">গত মাস</SelectItem>
             </SelectContent>
           </Select>
+          </div>
         </div>
 
         {/* Orders Table */}
