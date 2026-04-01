@@ -105,8 +105,8 @@ export default function POSBrands() {
               <Input placeholder="ব্র্যান্ড খুঁজুন..." value={search} onChange={e => setSearch(e.target.value)} className="max-w-sm" />
             </div>
           </CardHeader>
-          <CardContent>
-            <Table>
+          <CardContent className="p-0 sm:p-6">
+            <div className="overflow-x-auto">
               <TableHeader>
                 <TableRow>
                   <TableHead>নাম</TableHead>
