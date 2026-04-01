@@ -107,6 +107,7 @@ export default function POSBrands() {
           </CardHeader>
           <CardContent className="p-0 sm:p-6">
             <div className="overflow-x-auto">
+            <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>নাম</TableHead>
