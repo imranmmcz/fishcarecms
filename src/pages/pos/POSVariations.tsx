@@ -278,6 +278,31 @@ export default function POSVariations() {
                     </Select>
                   </div>
                 </div>
+                {/* Preset quick-select buttons */}
+                {WEIGHT_PRESETS[form.unit] && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">দ্রুত নির্বাচন (ক্লিক করে বাছাই করুন, পরে এডিট করতে পারবেন)</Label>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {WEIGHT_PRESETS[form.unit].map((preset) => (
+                        <Button
+                          key={preset.label}
+                          type="button"
+                          size="sm"
+                          variant={form.variation_name === preset.label ? "default" : "outline"}
+                          className="text-xs h-7 px-2.5"
+                          onClick={() => setForm({
+                            ...form,
+                            variation_name: preset.label,
+                            unit: preset.unit,
+                            weight_value: preset.value,
+                          })}
+                        >
+                          {preset.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label>পরিমাণ/ওজন</Label>
