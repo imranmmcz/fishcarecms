@@ -144,7 +144,7 @@ export default function POSStockTransfers() {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
+          </div>
         </Card>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

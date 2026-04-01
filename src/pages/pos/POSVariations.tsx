@@ -79,8 +79,9 @@ export default function POSVariations() {
                       </TableCell>
                     </TableRow>
                   ))}
-                </TableBody>
               </Table>
+              </div>
+            </CardContent>
             </CardContent>
           </Card>
         ))}
