@@ -30,6 +30,54 @@ const UNIT_OPTIONS = [
   { value: "seer", label: "সের" },
 ];
 
+// Preset weight/volume options per unit type
+const WEIGHT_PRESETS: Record<string, { value: number; unit: string; label: string }[]> = {
+  kg: [
+    { value: 100, unit: "g", label: "১০০ গ্রাম" },
+    { value: 200, unit: "g", label: "২০০ গ্রাম" },
+    { value: 250, unit: "g", label: "২৫০ গ্রাম" },
+    { value: 500, unit: "g", label: "৫০০ গ্রাম" },
+    { value: 1, unit: "kg", label: "১ কেজি" },
+    { value: 2, unit: "kg", label: "২ কেজি" },
+    { value: 5, unit: "kg", label: "৫ কেজি" },
+    { value: 10, unit: "kg", label: "১০ কেজি" },
+    { value: 25, unit: "kg", label: "২৫ কেজি" },
+  ],
+  g: [
+    { value: 100, unit: "g", label: "১০০ গ্রাম" },
+    { value: 200, unit: "g", label: "২০০ গ্রাম" },
+    { value: 250, unit: "g", label: "২৫০ গ্রাম" },
+    { value: 500, unit: "g", label: "৫০০ গ্রাম" },
+    { value: 1, unit: "kg", label: "১ কেজি" },
+    { value: 2, unit: "kg", label: "২ কেজি" },
+    { value: 5, unit: "kg", label: "৫ কেজি" },
+    { value: 10, unit: "kg", label: "১০ কেজি" },
+    { value: 25, unit: "kg", label: "২৫ কেজি" },
+  ],
+  liter: [
+    { value: 100, unit: "ml", label: "১০০ মিলি" },
+    { value: 200, unit: "ml", label: "২০০ মিলি" },
+    { value: 250, unit: "ml", label: "২৫০ মিলি" },
+    { value: 500, unit: "ml", label: "৫০০ মিলি" },
+    { value: 1, unit: "liter", label: "১ লিটার" },
+    { value: 2, unit: "liter", label: "২ লিটার" },
+    { value: 5, unit: "liter", label: "৫ লিটার" },
+    { value: 10, unit: "liter", label: "১০ লিটার" },
+    { value: 25, unit: "liter", label: "২৫ লিটার" },
+  ],
+  ml: [
+    { value: 100, unit: "ml", label: "১০০ মিলি" },
+    { value: 200, unit: "ml", label: "২০০ মিলি" },
+    { value: 250, unit: "ml", label: "২৫০ মিলি" },
+    { value: 500, unit: "ml", label: "৫০০ মিলি" },
+    { value: 1, unit: "liter", label: "১ লিটার" },
+    { value: 2, unit: "liter", label: "২ লিটার" },
+    { value: 5, unit: "liter", label: "৫ লিটার" },
+    { value: 10, unit: "liter", label: "১০ লিটার" },
+    { value: 25, unit: "liter", label: "২৫ লিটার" },
+  ],
+};
+
 interface Variation {
   id: string;
   product_id: string;
