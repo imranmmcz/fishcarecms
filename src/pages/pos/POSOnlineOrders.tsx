@@ -222,8 +222,45 @@ export default function POSOnlineOrders() {
           </div>
         </div>
 
-        {/* Orders Table */}
-        <Card>
+        {/* Mobile Card View */}
+        <div className="block sm:hidden space-y-3">
+          {loading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          ) : filtered.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">কোনো অনলাইন অর্ডার পাওয়া যায়নি</p>
+          ) : filtered.map(order => {
+            const sCfg = statusConfig[order.status] || statusConfig.pending;
+            return (
+              <Card key={order.id}>
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-medium">{order.order_number}</span>
+                    <Badge variant={sCfg.variant} className="text-[10px]">{sCfg.label}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>{order.customer_name}</span>
+                    <span className="font-bold">৳{Number(order.total_amount).toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{order.customer_phone}</span>
+                    <Badge variant={order.payment_status === "paid" ? "default" : "secondary"} className="text-[10px]">
+                      {order.payment_status === "paid" ? "পেইড" : "পেন্ডিং"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{format(new Date(order.created_at), "dd/MM/yy hh:mm a")}</span>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => handleView(order)}>
+                      <Eye className="h-3 w-3 mr-1" /> দেখুন
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View */}
+        <Card className="hidden sm:block">
           <CardContent className="p-0">
             {loading ? (
               <div className="flex justify-center py-12">
@@ -232,6 +269,7 @@ export default function POSOnlineOrders() {
             ) : filtered.length === 0 ? (
               <p className="text-center text-muted-foreground py-12">কোনো অনলাইন অর্ডার পাওয়া যায়নি</p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -260,9 +298,7 @@ export default function POSOnlineOrders() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={sCfg.variant} className="text-xs">
-                            {sCfg.label}
-                          </Badge>
+                          <Badge variant={sCfg.variant} className="text-xs">{sCfg.label}</Badge>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {format(new Date(order.created_at), "dd/MM/yy hh:mm a")}
@@ -277,6 +313,7 @@ export default function POSOnlineOrders() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>

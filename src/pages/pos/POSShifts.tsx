@@ -34,8 +34,43 @@ export default function POSShifts() {
           <p className="text-muted-foreground text-sm">সকল শিফটের বিস্তারিত তথ্য</p>
         </div>
 
-        <Card>
+        {/* Mobile Card View */}
+        <div className="block sm:hidden space-y-3">
+          {shifts.map(shift => (
+            <Card key={shift.id}>
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-semibold">{shift.shift_number}</span>
+                  <Badge variant={shift.status === "open" ? "default" : "secondary"}>
+                    {shift.status === "open" ? "চলছে" : "বন্ধ"}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div><span className="text-muted-foreground">প্রারম্ভিক:</span> <span className="font-medium">৳{shift.opening_amount?.toLocaleString()}</span></div>
+                  <div><span className="text-muted-foreground">সমাপনী:</span> <span className="font-medium">{shift.closing_amount != null ? `৳${shift.closing_amount.toLocaleString()}` : "-"}</span></div>
+                  <div><span className="text-muted-foreground">ক্যাশ:</span> <span className="font-medium text-green-600">৳{shift.cash_sales?.toLocaleString()}</span></div>
+                  <div><span className="text-muted-foreground">মোবাইল:</span> <span className="font-medium text-blue-600">৳{shift.mobile_banking_sales?.toLocaleString()}</span></div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">ট্রানজেকশন: {shift.total_transactions}</span>
+                  <span className="font-bold">মোট: ৳{shift.total_sales?.toLocaleString()}</span>
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {new Date(shift.opened_at).toLocaleString("bn-BD")}
+                  {shift.closed_at && ` — ${new Date(shift.closed_at).toLocaleString("bn-BD")}`}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {shifts.length === 0 && (
+            <p className="text-center text-muted-foreground py-8">কোনো শিফট পাওয়া যায়নি</p>
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <Card className="hidden sm:block">
           <CardContent className="p-0">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -75,6 +110,7 @@ export default function POSShifts() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

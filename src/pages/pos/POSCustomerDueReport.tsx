@@ -166,9 +166,46 @@ export default function POSCustomerDueReport() {
           />
         </div>
 
-        {/* Customer Due Table */}
-        <Card>
+        {/* Mobile Card View */}
+        <div className="block sm:hidden space-y-3">
+          {filtered.map((customer, idx) => (
+            <Card key={idx}>
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm">{customer.customer_name}</span>
+                  <Badge variant="outline" className="text-[10px]">{customer.sale_count}টি বিক্রয়</Badge>
+                </div>
+                <div className="text-xs text-muted-foreground">{customer.customer_phone || "-"}</div>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div><span className="text-muted-foreground">মোট:</span> <span className="font-medium">৳{customer.total_sales.toLocaleString()}</span></div>
+                  <div><span className="text-muted-foreground">প্রদত্ত:</span> <span className="font-medium text-green-600">৳{customer.total_paid.toLocaleString()}</span></div>
+                  <div><span className="text-muted-foreground">বাকি:</span> <span className="font-bold text-destructive">৳{customer.total_due.toLocaleString()}</span></div>
+                </div>
+                <div className="flex gap-1.5 pt-1">
+                  <Button size="sm" variant="outline" className="flex-1 gap-1 text-xs h-7" onClick={() => setSelectedCustomer(customer)}>
+                    বিস্তারিত
+                  </Button>
+                  {customer.customer_phone && (
+                    <Button size="sm" variant="outline" className="gap-1 text-xs h-7 text-green-600 hover:text-green-700"
+                      onClick={() => sendWhatsAppReminder(customer)}
+                      disabled={isSendingWA === customer.customer_phone}>
+                      <MessageCircle className="h-3 w-3" />
+                      {isSendingWA === customer.customer_phone ? "..." : "WA"}
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {filtered.length === 0 && (
+            <p className="text-center text-muted-foreground py-12">কোনো বাকি কাস্টমার নেই</p>
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <Card className="hidden sm:block">
           <CardContent className="p-0">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -223,6 +260,7 @@ export default function POSCustomerDueReport() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
 

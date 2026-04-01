@@ -248,8 +248,54 @@ export default function POSHistory() {
           <Input placeholder="রিসিপ্ট নং, কাস্টমার নাম বা ফোন..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
         </div>
 
-        <Card>
+        {/* Mobile Card View */}
+        <div className="block sm:hidden space-y-3">
+          {filtered.map(sale => (
+            <Card key={sale.id}>
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-semibold">{sale.sale_number}</span>
+                  <Badge variant={sale.payment_method === "cash" ? "default" : sale.payment_method === "due" ? "destructive" : "secondary"} className="text-[10px]">
+                    {sale.payment_method === "cash" ? "ক্যাশ" : sale.payment_method === "due" ? "বাকি" : "মোবাইল"}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{sale.customer_name || "-"}</span>
+                  <span className="font-bold">৳{sale.total_amount}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{sale.customer_phone || "-"}</span>
+                  <span>{formatDate(sale.created_at)}</span>
+                </div>
+                {sale.discount_amount > 0 && (
+                  <p className="text-xs text-destructive">ডিসকাউন্ট: -৳{sale.discount_amount}</p>
+                )}
+                <div className="flex gap-1 pt-1">
+                  <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => handleView(sale)}>
+                    <Eye className="h-3 w-3 mr-1" /> দেখুন
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleEditOpen(sale)}>
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handlePrint(sale)}>
+                    <Printer className="h-3 w-3" />
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs text-destructive" onClick={() => handleDeleteOpen(sale)}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {filtered.length === 0 && (
+            <p className="text-center text-muted-foreground py-8">কোনো বিক্রি পাওয়া যায়নি</p>
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <Card className="hidden sm:block">
           <CardContent className="p-0">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -309,6 +355,7 @@ export default function POSHistory() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

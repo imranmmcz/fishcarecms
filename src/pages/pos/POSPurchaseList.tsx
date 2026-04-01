@@ -38,7 +38,7 @@ export default function POSPurchaseList() {
   return (
     <POSLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <ListOrdered className="h-6 w-6 text-emerald-500" /> ক্রয় তালিকা
@@ -58,6 +58,37 @@ export default function POSPurchaseList() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Mobile Card View */}
+            <div className="block sm:hidden space-y-3">
+              {isLoading ? (
+                <p className="text-center py-8">লোড হচ্ছে...</p>
+              ) : filtered.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">কোনো ক্রয় অর্ডার পাওয়া যায়নি</p>
+              ) : filtered.map((p: any) => {
+                const st = statusLabels[p.status] || { label: p.status, variant: "outline" as const };
+                return (
+                  <Card key={p.id}>
+                    <CardContent className="p-3 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-semibold text-xs">{p.order_number}</span>
+                        <Badge variant={st.variant}>{st.label}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">{p.companies?.name || "-"}</span>
+                        <span className="font-semibold">৳ {p.total_amount?.toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{new Date(p.order_date).toLocaleDateString("bn-BD")}</span>
+                        <span>{p.purchase_order_items?.length || 0} টি আইটেম</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -90,6 +121,7 @@ export default function POSPurchaseList() {
                 })}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

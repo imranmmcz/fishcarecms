@@ -210,9 +210,49 @@ export default function POSDueCollections() {
           />
         </div>
 
-        {/* Due Sales Table */}
-        <Card>
+        {/* Mobile Card View */}
+        <div className="block sm:hidden space-y-3">
+          {filteredSales.map(sale => (
+            <Card key={sale.id}>
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-semibold">{sale.sale_number}</span>
+                  <span className="font-bold text-destructive">বাকি: ৳{sale.due_amount.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>{sale.customer_name || '-'}</span>
+                  <span className="text-xs text-muted-foreground">{sale.customer_phone || '-'}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>মোট: ৳{sale.total_amount.toLocaleString()} | প্রদত্ত: ৳{sale.paid_amount.toLocaleString()}</span>
+                </div>
+                <div className="flex gap-1.5 pt-1">
+                  <Button size="sm" variant="default" className="flex-1 gap-1 h-8 text-xs" onClick={() => openPaymentDialog(sale)}>
+                    <HandCoins className="h-3.5 w-3.5" /> আদায়
+                  </Button>
+                  {sale.customer_phone && (
+                    <Button size="sm" variant="outline" className="gap-1 h-8 text-xs text-green-600 hover:text-green-700"
+                      onClick={() => sendWhatsAppReminder(sale)}
+                      disabled={isSendingWA === sale.id}>
+                      <MessageCircle className="h-3.5 w-3.5" /> WA
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {filteredSales.length === 0 && (
+            <div className="text-center text-muted-foreground py-12">
+              <CheckCircle className="h-10 w-10 mx-auto mb-2 text-green-500" />
+              কোনো বাকি বিক্রয় নেই
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <Card className="hidden sm:block">
           <CardContent className="p-0">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -262,6 +302,7 @@ export default function POSDueCollections() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
 
