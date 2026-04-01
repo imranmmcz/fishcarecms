@@ -30,6 +30,54 @@ const UNIT_OPTIONS = [
   { value: "seer", label: "সের" },
 ];
 
+// Preset weight/volume options per unit type
+const WEIGHT_PRESETS: Record<string, { value: number; unit: string; label: string }[]> = {
+  kg: [
+    { value: 100, unit: "g", label: "১০০ গ্রাম" },
+    { value: 200, unit: "g", label: "২০০ গ্রাম" },
+    { value: 250, unit: "g", label: "২৫০ গ্রাম" },
+    { value: 500, unit: "g", label: "৫০০ গ্রাম" },
+    { value: 1, unit: "kg", label: "১ কেজি" },
+    { value: 2, unit: "kg", label: "২ কেজি" },
+    { value: 5, unit: "kg", label: "৫ কেজি" },
+    { value: 10, unit: "kg", label: "১০ কেজি" },
+    { value: 25, unit: "kg", label: "২৫ কেজি" },
+  ],
+  g: [
+    { value: 100, unit: "g", label: "১০০ গ্রাম" },
+    { value: 200, unit: "g", label: "২০০ গ্রাম" },
+    { value: 250, unit: "g", label: "২৫০ গ্রাম" },
+    { value: 500, unit: "g", label: "৫০০ গ্রাম" },
+    { value: 1, unit: "kg", label: "১ কেজি" },
+    { value: 2, unit: "kg", label: "২ কেজি" },
+    { value: 5, unit: "kg", label: "৫ কেজি" },
+    { value: 10, unit: "kg", label: "১০ কেজি" },
+    { value: 25, unit: "kg", label: "২৫ কেজি" },
+  ],
+  liter: [
+    { value: 100, unit: "ml", label: "১০০ মিলি" },
+    { value: 200, unit: "ml", label: "২০০ মিলি" },
+    { value: 250, unit: "ml", label: "২৫০ মিলি" },
+    { value: 500, unit: "ml", label: "৫০০ মিলি" },
+    { value: 1, unit: "liter", label: "১ লিটার" },
+    { value: 2, unit: "liter", label: "২ লিটার" },
+    { value: 5, unit: "liter", label: "৫ লিটার" },
+    { value: 10, unit: "liter", label: "১০ লিটার" },
+    { value: 25, unit: "liter", label: "২৫ লিটার" },
+  ],
+  ml: [
+    { value: 100, unit: "ml", label: "১০০ মিলি" },
+    { value: 200, unit: "ml", label: "২০০ মিলি" },
+    { value: 250, unit: "ml", label: "২৫০ মিলি" },
+    { value: 500, unit: "ml", label: "৫০০ মিলি" },
+    { value: 1, unit: "liter", label: "১ লিটার" },
+    { value: 2, unit: "liter", label: "২ লিটার" },
+    { value: 5, unit: "liter", label: "৫ লিটার" },
+    { value: 10, unit: "liter", label: "১০ লিটার" },
+    { value: 25, unit: "liter", label: "২৫ লিটার" },
+  ],
+};
+
 interface Variation {
   id: string;
   product_id: string;
@@ -230,6 +278,31 @@ export default function POSVariations() {
                     </Select>
                   </div>
                 </div>
+                {/* Preset quick-select buttons */}
+                {WEIGHT_PRESETS[form.unit] && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">দ্রুত নির্বাচন (ক্লিক করে বাছাই করুন, পরে এডিট করতে পারবেন)</Label>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {WEIGHT_PRESETS[form.unit].map((preset) => (
+                        <Button
+                          key={preset.label}
+                          type="button"
+                          size="sm"
+                          variant={form.variation_name === preset.label ? "default" : "outline"}
+                          className="text-xs h-7 px-2.5"
+                          onClick={() => setForm({
+                            ...form,
+                            variation_name: preset.label,
+                            unit: preset.unit,
+                            weight_value: preset.value,
+                          })}
+                        >
+                          {preset.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label>পরিমাণ/ওজন</Label>
