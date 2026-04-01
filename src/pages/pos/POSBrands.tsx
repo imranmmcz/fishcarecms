@@ -145,7 +145,8 @@ export default function POSBrands() {
                 ))}
               </TableBody>
             </Table>
-          </div>
+            </div>
+          </CardContent>
         </Card>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

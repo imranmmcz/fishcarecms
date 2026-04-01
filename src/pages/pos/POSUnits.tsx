@@ -88,7 +88,8 @@ export default function POSUnits() {
                 ))}
               </TableBody>
             </Table>
-          </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </POSLayout>
