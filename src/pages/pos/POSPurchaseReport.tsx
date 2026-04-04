@@ -84,34 +84,34 @@ export default function POSPurchaseReport() {
 
   return (
     <POSLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6 text-emerald-500" /> ক্রয় রিপোর্ট
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-500" /> ক্রয় রিপোর্ট
           </h1>
-          <p className="text-muted-foreground text-sm">ক্রয় সম্পর্কিত সারসংক্ষেপ</p>
+          <p className="text-muted-foreground text-xs sm:text-sm">ক্রয় সম্পর্কিত সারসংক্ষেপ</p>
         </div>
 
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 px-3 sm:px-6">
             <CardTitle className="text-sm flex items-center gap-2"><Filter className="h-4 w-4" /> ফিল্টার</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">
+          <CardContent className="space-y-4 px-3 sm:px-6">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {periods.map(p => (
                 <Button
                   key={p.value}
                   size="sm"
                   variant={period === p.value ? "default" : "outline"}
                   onClick={() => handlePeriod(p.value)}
-                  className="text-xs"
+                  className="text-[10px] sm:text-xs px-2 sm:px-3 h-7 sm:h-8"
                 >
-                  <Calendar className="h-3 w-3 mr-1" />
+                  <Calendar className="h-3 w-3 mr-1 hidden sm:inline" />
                   {p.label}
                 </Button>
               ))}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">শুরুর তারিখ</Label>
                 <Input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPeriod("custom"); }} />
@@ -140,16 +140,16 @@ export default function POSPurchaseReport() {
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">লোড হচ্ছে...</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {cards.map(card => (
               <Card key={card.title}>
-                <CardContent className="pt-6">
+                <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
                   <div className="flex items-center gap-3">
-                    <card.icon className={`h-8 w-8 ${card.color}`} />
-                    <div>
-                      <p className="text-sm text-muted-foreground">{card.title}</p>
-                      <p className="text-2xl font-bold">{card.value}</p>
-                      <p className="text-sm font-semibold text-emerald-600">৳ {card.amount.toLocaleString("en-IN")}</p>
+                    <card.icon className={`h-6 w-6 sm:h-8 sm:w-8 ${card.color} shrink-0`} />
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground">{card.title}</p>
+                      <p className="text-xl sm:text-2xl font-bold">{card.value}</p>
+                      <p className="text-xs sm:text-sm font-semibold text-emerald-600">৳ {card.amount.toLocaleString("en-IN")}</p>
                     </div>
                   </div>
                 </CardContent>

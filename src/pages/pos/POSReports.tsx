@@ -60,15 +60,15 @@ function DateFilter({ period, setPeriod, dateFrom, setDateFrom, dateTo, setDateT
   };
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 px-3 sm:px-6">
         <CardTitle className="text-sm flex items-center gap-2"><Filter className="h-4 w-4" /> ফিল্টার</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex flex-wrap gap-2">
+      <CardContent className="space-y-3 px-3 sm:px-6">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {periods.map(p => (
             <Button key={p.value} size="sm" variant={period === p.value ? "default" : "outline"}
-              onClick={() => handlePeriod(p.value)} className="text-xs">
-              <Calendar className="h-3 w-3 mr-1" />{p.label}
+              onClick={() => handlePeriod(p.value)} className="text-[10px] sm:text-xs px-2 sm:px-3 h-7 sm:h-8">
+              <Calendar className="h-3 w-3 mr-1 hidden sm:inline" />{p.label}
             </Button>
           ))}
         </div>
@@ -90,12 +90,12 @@ function DateFilter({ period, setPeriod, dateFrom, setDateFrom, dateTo, setDateT
 function StatCard({ icon: Icon, title, value, color }: { icon: any; title: string; value: string; color: string }) {
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-          <Icon className={`h-4 w-4 ${color}`} /> {title}
+      <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6">
+        <CardTitle className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+          <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${color}`} /> {title}
         </CardTitle>
       </CardHeader>
-      <CardContent><p className="text-xl font-bold">{value}</p></CardContent>
+      <CardContent className="px-3 sm:px-6"><p className="text-base sm:text-xl font-bold truncate">{value}</p></CardContent>
     </Card>
   );
 }
@@ -158,9 +158,9 @@ function SalesReportTab() {
   return (
     <div className="space-y-4">
       <DateFilter period={period} setPeriod={setPeriod} dateFrom={dateFrom} setDateFrom={setDateFrom} dateTo={dateTo} setDateTo={setDateTo} />
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
         <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="পেমেন্ট" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="পেমেন্ট" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">সকল পেমেন্ট</SelectItem>
             <SelectItem value="cash">ক্যাশ</SelectItem>
@@ -168,15 +168,42 @@ function SalesReportTab() {
             <SelectItem value="due">বাকি</SelectItem>
           </SelectContent>
         </Select>
-        <Button size="sm" variant="outline" onClick={handleDownload}><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
+        <Button size="sm" variant="outline" onClick={handleDownload} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         <StatCard icon={TrendingUp} title="মোট বিক্রি" value={`৳${totalSales.toLocaleString()}`} color="text-emerald-500" />
         <StatCard icon={Banknote} title="ক্যাশ বিক্রি" value={`৳${cashSales.toLocaleString()}`} color="text-green-500" />
         <StatCard icon={CreditCard} title="মোবাইল ব্যাংকিং" value={`৳${mobileSales.toLocaleString()}`} color="text-blue-500" />
         <StatCard icon={FileText} title="মোট ডিসকাউন্ট" value={`৳${totalDiscount.toLocaleString()}`} color="text-orange-500" />
       </div>
-      <Card>
+
+      {/* Mobile Card View */}
+      <div className="block sm:hidden space-y-2">
+        {filtered.slice(0, 50).map((s, i) => (
+          <Card key={s.id}>
+            <CardContent className="p-3 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold">{s.sale_number}</span>
+                <Badge variant={s.payment_method === "cash" ? "default" : s.payment_method === "due" ? "destructive" : "secondary"} className="text-[10px]">
+                  {s.payment_method === "cash" ? "ক্যাশ" : s.payment_method === "mobile_banking" ? "মোবাইল" : "বাকি"}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground text-xs">{s.customer_name || "-"}</span>
+                <span className="font-bold">৳{(s.total_amount || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>{new Date(s.created_at).toLocaleDateString("bn-BD")}</span>
+                {s.due_amount > 0 && <span className="text-destructive font-medium">বাকি: ৳{s.due_amount.toLocaleString()}</span>}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {filtered.length === 0 && <p className="text-center py-8 text-muted-foreground text-sm">কোনো ডাটা নেই</p>}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden sm:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -249,13 +276,35 @@ function PurchaseReportTab() {
   return (
     <div className="space-y-4">
       <DateFilter period={period} setPeriod={setPeriod} dateFrom={dateFrom} setDateFrom={setDateFrom} dateTo={dateTo} setDateTo={setDateTo} />
-      <Button size="sm" variant="outline" onClick={handleDownload}><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <Button size="sm" variant="outline" onClick={handleDownload} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
         <StatCard icon={ShoppingCart} title="মোট ক্রয়" value={`৳${totalAmount.toLocaleString()}`} color="text-purple-500" />
         <StatCard icon={Package} title="মোট অর্ডার" value={`${filtered.length} টি`} color="text-blue-500" />
         <StatCard icon={Package} title="প্রাপ্ত অর্ডার" value={`${received} টি`} color="text-green-500" />
       </div>
-      <Card>
+
+      {/* Mobile Card View */}
+      <div className="block sm:hidden space-y-2">
+        {filtered.slice(0, 50).map((p, i) => (
+          <Card key={p.id}>
+            <CardContent className="p-3 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold">{p.order_number}</span>
+                <Badge variant={p.status === "received" ? "default" : "secondary"} className="text-[10px]">{p.status}</Badge>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground text-xs">{(p.companies as any)?.name || "-"}</span>
+                <span className="font-bold">৳{(p.total_amount || 0).toLocaleString()}</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">{new Date(p.created_at).toLocaleDateString("bn-BD")}</p>
+            </CardContent>
+          </Card>
+        ))}
+        {filtered.length === 0 && <p className="text-center py-8 text-muted-foreground text-sm">কোনো ডাটা নেই</p>}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden sm:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -326,24 +375,47 @@ function StockReportTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
         <Select value={stockFilter} onValueChange={setStockFilter}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">সকল পণ্য</SelectItem>
             <SelectItem value="low">লো স্টক</SelectItem>
             <SelectItem value="out">স্টক শেষ</SelectItem>
           </SelectContent>
         </Select>
-        <Button size="sm" variant="outline" onClick={handleDownload}><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
+        <Button size="sm" variant="outline" onClick={handleDownload} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         <StatCard icon={Package} title="মোট পণ্য" value={`${products.length} টি`} color="text-blue-500" />
         <StatCard icon={DollarSign} title="স্টক মূল্য" value={`৳${totalStockValue.toLocaleString()}`} color="text-emerald-500" />
         <StatCard icon={Package} title="লো স্টক" value={`${lowStock} টি`} color="text-yellow-500" />
         <StatCard icon={Package} title="স্টক শেষ" value={`${outOfStock} টি`} color="text-red-500" />
       </div>
-      <Card>
+
+      {/* Mobile Card View */}
+      <div className="block sm:hidden space-y-2">
+        {filtered.slice(0, 100).map((p, i) => (
+          <Card key={p.id}>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-sm truncate flex-1 mr-2">{p.name}</span>
+                <Badge variant={p.stock_quantity <= 0 ? "destructive" : p.stock_quantity <= (p.reorder_level || 10) ? "secondary" : "default"} className="text-[10px] shrink-0">
+                  {p.stock_quantity}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                <span>{p.sku || "-"}</span>
+                <span className="font-medium">৳{(p.price || 0).toLocaleString()}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {filtered.length === 0 && <p className="text-center py-8 text-muted-foreground text-sm">কোনো ডাটা নেই</p>}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden sm:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -448,8 +520,8 @@ function ProfitLossReportTab() {
   return (
     <div className="space-y-4">
       <DateFilter period={period} setPeriod={setPeriod} dateFrom={dateFrom} setDateFrom={setDateFrom} dateTo={dateTo} setDateTo={setDateTo} />
-      <Button size="sm" variant="outline" onClick={handleDownload}><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <Button size="sm" variant="outline" onClick={handleDownload} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
         <StatCard icon={TrendingUp} title="মোট বিক্রি" value={`৳${totalRevenue.toLocaleString()}`} color="text-emerald-500" />
         <StatCard icon={ShoppingCart} title="পণ্য খরচ (COGS)" value={`৳${totalCost.toLocaleString()}`} color="text-red-500" />
         <StatCard icon={DollarSign} title="গ্রস লাভ" value={`৳${grossProfit.toLocaleString()}`} color={grossProfit >= 0 ? "text-green-500" : "text-red-500"} />
@@ -458,7 +530,7 @@ function ProfitLossReportTab() {
         <StatCard icon={DollarSign} title="নেট লাভ" value={`৳${netProfit.toLocaleString()}`} color={netProfit >= 0 ? "text-emerald-500" : "text-red-500"} />
       </div>
       <Card>
-        <CardContent className="p-4 space-y-3">
+        <CardContent className="p-3 sm:p-4 space-y-3">
           {[
             { label: "মোট বিক্রি রাজস্ব", value: totalRevenue, color: "text-emerald-600" },
             { label: "(-) পণ্য খরচ", value: totalCost, color: "text-red-600" },
@@ -467,8 +539,8 @@ function ProfitLossReportTab() {
             { label: "= নেট লাভ", value: netProfit, color: netProfit >= 0 ? "text-emerald-700" : "text-red-700" },
           ].map(row => (
             <div key={row.label} className="flex justify-between items-center border-b last:border-b-0 pb-2">
-              <span className="text-sm font-medium">{row.label}</span>
-              <span className={`text-sm font-bold ${row.color}`}>৳{row.value.toLocaleString()}</span>
+              <span className="text-xs sm:text-sm font-medium">{row.label}</span>
+              <span className={`text-xs sm:text-sm font-bold ${row.color}`}>৳{row.value.toLocaleString()}</span>
             </div>
           ))}
         </CardContent>
@@ -519,13 +591,36 @@ function DueReportTab() {
   return (
     <div className="space-y-4">
       <DateFilter period={period} setPeriod={setPeriod} dateFrom={dateFrom} setDateFrom={setDateFrom} dateTo={dateTo} setDateTo={setDateTo} />
-      <Button size="sm" variant="outline" onClick={handleDownload}><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <Button size="sm" variant="outline" onClick={handleDownload} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
         <StatCard icon={HandCoins} title="মোট বাকি" value={`৳${totalDue.toLocaleString()}`} color="text-red-500" />
         <StatCard icon={Users} title="বাকিদার সংখ্যা" value={`${customerMap.length} জন`} color="text-orange-500" />
         <StatCard icon={FileText} title="বাকি বিক্রয়" value={`${filtered.length} টি`} color="text-yellow-500" />
       </div>
-      <Card>
+
+      {/* Mobile Card View */}
+      <div className="block sm:hidden space-y-2">
+        {customerMap.map((c, i) => (
+          <Card key={i}>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1 mr-2">
+                  <p className="font-medium text-sm truncate">{c.name}</p>
+                  <p className="text-xs text-muted-foreground">{c.phone}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-bold text-sm text-destructive">৳{c.total_due.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground">{c.count} বিক্রয়</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {customerMap.length === 0 && <p className="text-center py-8 text-muted-foreground text-sm">কোনো বাকি নেই</p>}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden sm:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -594,14 +689,39 @@ function ShiftReportTab() {
   return (
     <div className="space-y-4">
       <DateFilter period={period} setPeriod={setPeriod} dateFrom={dateFrom} setDateFrom={setDateFrom} dateTo={dateTo} setDateTo={setDateTo} />
-      <Button size="sm" variant="outline" onClick={handleDownload}><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <Button size="sm" variant="outline" onClick={handleDownload} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> PDF ডাউনলোড</Button>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         <StatCard icon={Clock} title="মোট শিফট" value={`${filtered.length} টি`} color="text-blue-500" />
         <StatCard icon={TrendingUp} title="মোট বিক্রি" value={`৳${totalShiftSales.toLocaleString()}`} color="text-emerald-500" />
         <StatCard icon={Banknote} title="ক্যাশ বিক্রি" value={`৳${totalCash.toLocaleString()}`} color="text-green-500" />
         <StatCard icon={CreditCard} title="মোবাইল বিক্রি" value={`৳${totalMobile.toLocaleString()}`} color="text-blue-500" />
       </div>
-      <Card>
+
+      {/* Mobile Card View */}
+      <div className="block sm:hidden space-y-2">
+        {filtered.slice(0, 50).map((s, i) => (
+          <Card key={s.id}>
+            <CardContent className="p-3 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-semibold">{s.shift_number}</span>
+                {!s.closed_at ? <Badge className="text-[10px]">চলমান</Badge> : <span className="text-[10px] text-muted-foreground">{new Date(s.closed_at).toLocaleDateString("bn-BD")}</span>}
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-xs text-muted-foreground">{new Date(s.opened_at).toLocaleDateString("bn-BD")}</span>
+                <span className="font-bold">৳{(s.total_sales || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>ক্যাশ: ৳{(s.cash_sales || 0).toLocaleString()}</span>
+                <span>{s.total_transactions} ট্রানজেকশন</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {filtered.length === 0 && <p className="text-center py-8 text-muted-foreground text-sm">কোনো ডাটা নেই</p>}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden sm:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -644,20 +764,20 @@ export default function POSReports() {
     <POSLayout>
       <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <FileText className="h-6 w-6" /> POS রিপোর্ট
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6" /> POS রিপোর্ট
           </h1>
-          <p className="text-muted-foreground text-sm">সকল রিপোর্ট এক জায়গায় — ফিল্টার করুন ও PDF ডাউনলোড করুন</p>
+          <p className="text-muted-foreground text-xs sm:text-sm">সকল রিপোর্ট এক জায়গায় — ফিল্টার করুন ও PDF ডাউনলোড করুন</p>
         </div>
 
         <Tabs defaultValue="sales" className="w-full">
-          <TabsList className="flex flex-wrap h-auto gap-1">
-            <TabsTrigger value="sales" className="text-xs"><ShoppingCart className="h-3.5 w-3.5 mr-1" /> বিক্রি</TabsTrigger>
-            <TabsTrigger value="purchase" className="text-xs"><Package className="h-3.5 w-3.5 mr-1" /> ক্রয়</TabsTrigger>
-            <TabsTrigger value="stock" className="text-xs"><Package className="h-3.5 w-3.5 mr-1" /> স্টক</TabsTrigger>
-            <TabsTrigger value="profitloss" className="text-xs"><DollarSign className="h-3.5 w-3.5 mr-1" /> লাভ-ক্ষতি</TabsTrigger>
-            <TabsTrigger value="due" className="text-xs"><HandCoins className="h-3.5 w-3.5 mr-1" /> বাকি</TabsTrigger>
-            <TabsTrigger value="shift" className="text-xs"><Clock className="h-3.5 w-3.5 mr-1" /> শিফট</TabsTrigger>
+          <TabsList className="flex flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="sales" className="text-[10px] sm:text-xs px-2 sm:px-3"><ShoppingCart className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" /> বিক্রি</TabsTrigger>
+            <TabsTrigger value="purchase" className="text-[10px] sm:text-xs px-2 sm:px-3"><Package className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" /> ক্রয়</TabsTrigger>
+            <TabsTrigger value="stock" className="text-[10px] sm:text-xs px-2 sm:px-3"><Package className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" /> স্টক</TabsTrigger>
+            <TabsTrigger value="profitloss" className="text-[10px] sm:text-xs px-2 sm:px-3"><DollarSign className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" /> লাভ-ক্ষতি</TabsTrigger>
+            <TabsTrigger value="due" className="text-[10px] sm:text-xs px-2 sm:px-3"><HandCoins className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" /> বাকি</TabsTrigger>
+            <TabsTrigger value="shift" className="text-[10px] sm:text-xs px-2 sm:px-3"><Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" /> শিফট</TabsTrigger>
           </TabsList>
           <TabsContent value="sales"><SalesReportTab /></TabsContent>
           <TabsContent value="purchase"><PurchaseReportTab /></TabsContent>
