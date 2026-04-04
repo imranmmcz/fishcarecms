@@ -87,32 +87,32 @@ export default function POSSalesReport() {
     <POSLayout>
       <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <FileText className="h-6 w-6" /> বিক্রি রিপোর্ট
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6" /> বিক্রি রিপোর্ট
           </h1>
-          <p className="text-muted-foreground text-sm">সকল বিক্রির সামগ্রিক রিপোর্ট</p>
+          <p className="text-muted-foreground text-xs sm:text-sm">সকল বিক্রির সামগ্রিক রিপোর্ট</p>
         </div>
 
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 px-3 sm:px-6">
             <CardTitle className="text-sm flex items-center gap-2"><Filter className="h-4 w-4" /> ফিল্টার</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">
+          <CardContent className="space-y-4 px-3 sm:px-6">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {periods.map(p => (
                 <Button
                   key={p.value}
                   size="sm"
                   variant={period === p.value ? "default" : "outline"}
                   onClick={() => handlePeriod(p.value)}
-                  className="text-xs"
+                  className="text-[10px] sm:text-xs px-2 sm:px-3 h-7 sm:h-8"
                 >
-                  <Calendar className="h-3 w-3 mr-1" />
+                  <Calendar className="h-3 w-3 mr-1 hidden sm:inline" />
                   {p.label}
                 </Button>
               ))}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">শুরুর তারিখ</Label>
                 <Input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPeriod("custom"); }} />
@@ -147,22 +147,22 @@ export default function POSSalesReport() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
           {stats.map(s => (
             <Card key={s.title}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <s.icon className={`h-4 w-4 ${s.color}`} /> {s.title}
+              <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6">
+                <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+                  <s.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${s.color}`} /> {s.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{s.value}</p>
+              <CardContent className="px-3 sm:px-6">
+                <p className="text-base sm:text-2xl font-bold truncate">{s.value}</p>
               </CardContent>
             </Card>
           ))}
         </div>
         <Card>
-          <CardHeader><CardTitle className="text-base">মোট ট্রানজেকশন: {filtered.length}</CardTitle></CardHeader>
+          <CardHeader className="px-3 sm:px-6"><CardTitle className="text-sm sm:text-base">মোট ট্রানজেকশন: {filtered.length}</CardTitle></CardHeader>
         </Card>
       </div>
     </POSLayout>
