@@ -906,8 +906,11 @@ export const generateInvoicePDF = async (order: Order, options: Partial<InvoiceO
     format: isPOS ? [80, 200] : "a4",
   });
 
-  // Register Nikosh font for Bengali
-  await registerBanglaFont(doc);
+  // Register Bengali font with error handling
+  const fontRegistered = await registerBanglaFont(doc);
+  if (!fontRegistered && (s.languageMode === "bn" || s.languageMode === "dual")) {
+    console.warn("⚠️ Bengali font registration failed - PDF may have garbled Bengali text");
+  }
 
   switch (s.template) {
     case "minimal":
