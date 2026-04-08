@@ -186,6 +186,7 @@ const InvoiceSettings = () => {
   }
 
   const templates = [
+    { id: "premium", name: tt("প্রিমিয়াম", "Premium"), desc: tt("আকর্ষণীয় ডায়াগোনাল হেডার ও স্বাক্ষর সহ", "Stunning diagonal header with signature") },
     { id: "minimal", name: tt("মিনিমাল", "Minimal"), desc: tt("সাদামাটা ও পরিচ্ছন্ন ডিজাইন", "Clean and simple design") },
     { id: "modern", name: tt("মডার্ন বিজনেস", "Modern Business"), desc: tt("রঙিন ও প্রফেশনাল ডিজাইন", "Colorful professional layout") },
     { id: "pos", name: tt("POS রিসিট", "POS Receipt"), desc: tt("৮০mm থার্মাল প্রিন্টার", "80mm thermal printer layout") },
