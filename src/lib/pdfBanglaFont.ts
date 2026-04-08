@@ -34,15 +34,16 @@ async function loadFontBuffer(url: string): Promise<ArrayBuffer | null> {
 
   const promise = (async () => {
     try {
-      // Try fetching with cache
-      const response = await fetch(url, { cache: "force-cache" });
+      const response = await fetch(url, {
+        cache: "force-cache",
+        mode: url.startsWith("http") && !url.startsWith(window.location.origin) ? "cors" : "same-origin",
+      });
       if (!response.ok) {
         console.warn(`Font fetch failed: ${url} (${response.status})`);
         return null;
       }
 
       const contentType = response.headers.get("content-type") || "";
-      // If we get HTML back, it's a 404 page
       if (contentType.includes("text/html")) {
         console.warn(`Font URL returned HTML (likely 404): ${url}`);
         return null;
@@ -72,62 +73,50 @@ interface FontDef {
   boldUrls: string[];
 }
 
+/**
+ * Build absolute URL for local font paths to prevent resolution issues in deployed builds
+ */
+function toAbsoluteUrl(path: string): string {
+  if (path.startsWith("http")) return path;
+  try {
+    return `${window.location.origin}${path}`;
+  } catch {
+    return path;
+  }
+}
+
 const FONT_CHAIN: FontDef[] = [
   {
     name: "Nikosh",
     urls: [
-      "/fonts/Nikosh.ttf",
+      toAbsoluteUrl("/fonts/Nikosh.ttf"),
       "https://cdn.jsdelivr.net/gh/AbiruzzamanMolla/Bangla-Font@main/Nikosh.ttf",
     ],
     boldUrls: [
-      "/fonts/Nikosh.ttf",
+      toAbsoluteUrl("/fonts/Nikosh.ttf"),
       "https://cdn.jsdelivr.net/gh/AbiruzzamanMolla/Bangla-Font@main/Nikosh.ttf",
     ],
   },
   {
     name: "HindSiliguri",
     urls: [
-      "/fonts/HindSiliguri-Regular.ttf",
+      toAbsoluteUrl("/fonts/HindSiliguri-Regular.ttf"),
       "https://cdn.jsdelivr.net/gh/nicholasgasior/font-hind-siliguri@master/fonts/ttf/HindSiliguri-Regular.ttf",
-      "https://cdn.jsdelivr.net/gh/nicholasgasior/font-hind-siliguri@master/fonts/ttf/hindsiliguri-regular-webfont.ttf",
     ],
     boldUrls: [
-      "/fonts/HindSiliguri-Bold.ttf",
+      toAbsoluteUrl("/fonts/HindSiliguri-Bold.ttf"),
       "https://cdn.jsdelivr.net/gh/nicholasgasior/font-hind-siliguri@master/fonts/ttf/HindSiliguri-Bold.ttf",
     ],
   },
   {
     name: "NotoSansBengali",
     urls: [
-      "/fonts/NotoSansBengali-Regular.ttf",
-      "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansbengali/NotoSansBengali%5Bwdth%2Cwght%5D.ttf",
+      toAbsoluteUrl("/fonts/NotoSansBengali-Regular.ttf"),
       "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSansBengali/NotoSansBengali-Regular.ttf",
     ],
     boldUrls: [
-      "/fonts/NotoSansBengali-Regular.ttf",
+      toAbsoluteUrl("/fonts/NotoSansBengali-Regular.ttf"),
       "https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@main/hinted/ttf/NotoSansBengali/NotoSansBengali-Bold.ttf",
-    ],
-  },
-  {
-    name: "BalooDa2",
-    urls: [
-      "/fonts/BalooDa2-Regular.ttf",
-      "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/balooda2/BalooDa2%5Bwght%5D.ttf",
-    ],
-    boldUrls: [
-      "/fonts/BalooDa2-Regular.ttf",
-      "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/balooda2/BalooDa2%5Bwght%5D.ttf",
-    ],
-  },
-  {
-    name: "AnekBangla",
-    urls: [
-      "/fonts/AnekBangla-Regular.ttf",
-      "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anekbangla/AnekBangla%5Bwdth%2Cwght%5D.ttf",
-    ],
-    boldUrls: [
-      "/fonts/AnekBangla-Regular.ttf",
-      "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anekbangla/AnekBangla%5Bwdth%2Cwght%5D.ttf",
     ],
   },
 ];
@@ -234,7 +223,25 @@ export async function preloadBanglaFont(): Promise<boolean> {
   for (const fontDef of FONT_CHAIN) {
     const buffer = await loadFontFromUrls(fontDef.urls);
     if (buffer) {
-      console.log(`✅ Bengali font pre-loaded: ${fontDef.name}`);
+      // Verify end-to-end by registering on a temp doc
+      try {
+        const tempDoc = new jsPDF();
+        const b64 = arrayBufferToBase64(buffer);
+        const regFile = `${fontDef.name}-Regular.ttf`;
+        tempDoc.addFileToVFS(regFile, b64);
+        tempDoc.addFont(regFile, fontDef.name, "normal");
+        tempDoc.setFont(fontDef.name, "normal");
+        const current = tempDoc.getFont();
+        if (current.fontName === fontDef.name) {
+          console.log(`✅ Bengali font pre-loaded & verified: ${fontDef.name}`);
+          return true;
+        }
+        console.warn(`⚠️ Font pre-load verification failed for ${fontDef.name}`);
+      } catch (err) {
+        console.warn(`⚠️ Font pre-load verification error for ${fontDef.name}:`, err);
+      }
+      // Even if verification failed, the buffer is cached for later use
+      console.log(`✅ Bengali font pre-loaded (buffer cached): ${fontDef.name}`);
       return true;
     }
   }
