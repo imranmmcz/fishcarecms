@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Header } from "@/components/Header";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -215,6 +216,21 @@ export default function SmartFeedCalculator() {
     { name: "মাসিক", value: result.monthlyFeed },
   ] : [];
 
+  const { user } = useAuth();
+
+  if (user) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-4 py-4"><AdUnit position="header" className="mb-4" /></div>
+        <div className="px-4 py-8">
+          <div className="max-w-5xl mx-auto">
+            {renderContent()}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
@@ -222,6 +238,13 @@ export default function SmartFeedCalculator() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
+          {renderContent()}
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
           {/* Header */}
           <div className="mb-8 animate-fade-in">
             <div className="flex items-center gap-3 mb-4">
