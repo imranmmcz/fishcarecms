@@ -192,24 +192,31 @@ export async function registerBanglaFont(doc: jsPDF): Promise<boolean> {
  */
 export function setBanglaFont(doc: jsPDF, isBn: boolean, style: "normal" | "bold" = "normal") {
   if (isBn) {
-    const name = docFontName.get(doc) || "Nikosh";
-    try {
-      doc.setFont(name, style);
-    } catch {
+    const name = docFontName.get(doc);
+    if (name) {
       try {
-        doc.setFont("helvetica", style);
-      } catch {}
+        doc.setFont(name, style);
+        return;
+      } catch {
+        console.warn(`Failed to set Bengali font: ${name}, falling back to helvetica`);
+      }
     }
-  } else {
-    doc.setFont("helvetica", style);
   }
+  try {
+    doc.setFont("helvetica", style);
+  } catch {}
 }
 
 /**
  * Get font name for autoTable usage.
+ * Returns the actually registered font name, not a hardcoded fallback.
  */
 export function getDocFontName(doc: jsPDF, isBn: boolean): string {
-  return isBn ? (docFontName.get(doc) || "Nikosh") : "helvetica";
+  if (isBn) {
+    const name = docFontName.get(doc);
+    if (name) return name;
+  }
+  return "helvetica";
 }
 
 export function getFontName(isBn: boolean): string {
