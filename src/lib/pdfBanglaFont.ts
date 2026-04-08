@@ -242,7 +242,7 @@ export function getDocFontName(doc: jsPDF, isBn: boolean): string {
 }
 
 export function getFontName(isBn: boolean): string {
-  return isBn ? "Nikosh" : "helvetica";
+  return isBn ? "Kalpurush" : "helvetica";
 }
 
 /**
