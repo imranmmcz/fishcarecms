@@ -453,6 +453,29 @@ export default function SmartFeedCalculator() {
           <RecommendedProductsSlider category="calculator_related" titleBn="প্রস্তাবিত মাছের খাদ্য" />
 
           <div className="mt-8"><AdUnit position="footer" /></div>
+    </>
+  );
+
+  if (user) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-4 py-4"><AdUnit position="header" className="mb-4" /></div>
+        <div className="px-4 py-8">
+          <div className="max-w-5xl mx-auto">
+            {renderContent()}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <Header />
+      <div className="container mx-auto px-4 py-4"><AdUnit position="header" className="mb-4" /></div>
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto">
+          {renderContent()}
         </div>
       </main>
       <Footer />
