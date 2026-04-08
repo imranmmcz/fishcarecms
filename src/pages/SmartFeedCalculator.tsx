@@ -216,7 +216,6 @@ export default function SmartFeedCalculator() {
     { name: "মাসিক", value: result.monthlyFeed },
   ] : [];
 
-  const { user } = useAuth();
 
   const renderContent = () => (
     <>
