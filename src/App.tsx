@@ -116,7 +116,19 @@ import ProductDetails from "./pages/ProductDetails";
 import Wishlist from "./pages/Wishlist";
 import TrackOrder from "./pages/TrackOrder";
 
-const queryClient = new QueryClient();
+import { GLOBAL_QUERY_DEFAULTS } from "@/lib/queryConfig";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: GLOBAL_QUERY_DEFAULTS.staleTime,
+      gcTime: GLOBAL_QUERY_DEFAULTS.gcTime,
+      refetchOnWindowFocus: GLOBAL_QUERY_DEFAULTS.refetchOnWindowFocus,
+      retry: GLOBAL_QUERY_DEFAULTS.retry,
+      refetchOnMount: GLOBAL_QUERY_DEFAULTS.refetchOnMount,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
