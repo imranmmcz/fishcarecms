@@ -38,7 +38,7 @@ const defaultSettings: Record<SettingKey, string> = {
   invoice_company_email: "support@fishcare.com.bd",
   invoice_company_website: "www.fishcare.com.bd",
   invoice_company_logo: "",
-  invoice_template: "modern",
+  invoice_template: "premium",
   invoice_language_mode: "bn",
   invoice_paper_size: "a4",
   invoice_logo_position: "left",
