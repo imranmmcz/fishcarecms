@@ -87,14 +87,36 @@ function toAbsoluteUrl(path: string): string {
 
 const FONT_CHAIN: FontDef[] = [
   {
-    name: "Nikosh",
+    name: "Kalpurush",
     urls: [
-      toAbsoluteUrl("/fonts/Nikosh.ttf"),
-      "https://cdn.jsdelivr.net/gh/AbiruzzamanMolla/Bangla-Font@main/Nikosh.ttf",
+      toAbsoluteUrl("/fonts/Kalpurush.ttf"),
+      "https://raw.githubusercontent.com/hmoazzem/bangla-fonts/master/kalpurush.ttf",
     ],
     boldUrls: [
-      toAbsoluteUrl("/fonts/Nikosh.ttf"),
-      "https://cdn.jsdelivr.net/gh/AbiruzzamanMolla/Bangla-Font@main/Nikosh.ttf",
+      toAbsoluteUrl("/fonts/Kalpurush.ttf"),
+      "https://raw.githubusercontent.com/hmoazzem/bangla-fonts/master/kalpurush.ttf",
+    ],
+  },
+  {
+    name: "SolaimanLipi",
+    urls: [
+      toAbsoluteUrl("/fonts/SolaimanLipi.ttf"),
+      "https://raw.githubusercontent.com/hmoazzem/bangla-fonts/master/SolaimanLipi_20-04-07.ttf",
+    ],
+    boldUrls: [
+      toAbsoluteUrl("/fonts/SolaimanLipi.ttf"),
+      "https://raw.githubusercontent.com/hmoazzem/bangla-fonts/master/SolaimanLipi_20-04-07.ttf",
+    ],
+  },
+  {
+    name: "SiyamRupali",
+    urls: [
+      toAbsoluteUrl("/fonts/SiyamRupali.ttf"),
+      "https://raw.githubusercontent.com/hmoazzem/bangla-fonts/master/Siyamrupali.ttf",
+    ],
+    boldUrls: [
+      toAbsoluteUrl("/fonts/SiyamRupali.ttf"),
+      "https://raw.githubusercontent.com/hmoazzem/bangla-fonts/master/Siyamrupali.ttf",
     ],
   },
   {
@@ -220,7 +242,7 @@ export function getDocFontName(doc: jsPDF, isBn: boolean): string {
 }
 
 export function getFontName(isBn: boolean): string {
-  return isBn ? "Nikosh" : "helvetica";
+  return isBn ? "Kalpurush" : "helvetica";
 }
 
 /**
