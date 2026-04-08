@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface InvoicePrintSettings {
-  template: "minimal" | "modern" | "pos" | "detailed";
+  template: "minimal" | "modern" | "pos" | "detailed" | "premium";
   languageMode: "bn" | "en" | "dual";
   paperSize: "a4" | "pos80";
   logoPosition: "left" | "center" | "right";
@@ -29,7 +29,7 @@ export interface InvoicePrintSettings {
 }
 
 const defaults: InvoicePrintSettings = {
-  template: "modern",
+  template: "premium",
   languageMode: "bn",
   paperSize: "a4",
   logoPosition: "left",
