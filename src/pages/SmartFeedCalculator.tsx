@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Header } from "@/components/Header";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -215,23 +216,19 @@ export default function SmartFeedCalculator() {
     { name: "মাসিক", value: result.monthlyFeed },
   ] : [];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header />
-      <div className="container mx-auto px-4 py-4"><AdUnit position="header" className="mb-4" /></div>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="mb-8 animate-fade-in">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="rounded-lg bg-primary p-3"><Wheat className="h-8 w-8 text-primary-foreground" /></div>
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold">স্মার্ট ফিড ক্যালকুলেটর</h1>
-                <p className="text-muted-foreground mt-1">দৈনিক খাদ্যের পরিমাণ ও খরচ সঠিকভাবে নির্ধারণ করুন</p>
-              </div>
-            </div>
+  const renderContent = () => (
+    <>
+      {/* Header */}
+      <div className="mb-8 animate-fade-in">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="rounded-lg bg-primary p-3"><Wheat className="h-8 w-8 text-primary-foreground" /></div>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold">স্মার্ট ফিড ক্যালকুলেটর</h1>
+            <p className="text-muted-foreground mt-1">দৈনিক খাদ্যের পরিমাণ ও খরচ সঠিকভাবে নির্ধারণ করুন</p>
           </div>
+        </div>
+      </div>
 
           {/* Input Form */}
           <Card className="shadow-elegant animate-slide-in mb-6">
@@ -455,6 +452,29 @@ export default function SmartFeedCalculator() {
           <RecommendedProductsSlider category="calculator_related" titleBn="প্রস্তাবিত মাছের খাদ্য" />
 
           <div className="mt-8"><AdUnit position="footer" /></div>
+    </>
+  );
+
+  if (user) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-4 py-4"><AdUnit position="header" className="mb-4" /></div>
+        <div className="px-4 py-8">
+          <div className="max-w-5xl mx-auto">
+            {renderContent()}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <Header />
+      <div className="container mx-auto px-4 py-4"><AdUnit position="header" className="mb-4" /></div>
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto">
+          {renderContent()}
         </div>
       </main>
       <Footer />
