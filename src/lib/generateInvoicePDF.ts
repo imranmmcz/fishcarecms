@@ -908,7 +908,7 @@ export const generateInvoicePDF = async (order: Order, options: Partial<InvoiceO
 
   // Register Bengali font with error handling
   const fontRegistered = await registerBanglaFont(doc);
-  if (!fontRegistered && (s.languageMode === "bn" || s.languageMode === "dual")) {
+  if (!fontRegistered && (s.langMode === "bn" || s.langMode === "dual")) {
     console.warn("⚠️ Bengali font registration failed - PDF may have garbled Bengali text");
   }
 
