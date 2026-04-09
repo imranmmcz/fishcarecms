@@ -464,6 +464,7 @@ export default function ThemeColorSettings() {
   const saveColors = async () => {
     setSaving(true);
     try {
+      // Save colors
       for (const [key, value] of Object.entries(colors)) {
         const { data: existing } = await supabase
           .from("system_settings")
@@ -482,7 +483,27 @@ export default function ThemeColorSettings() {
             .insert({ setting_key: key, setting_value: value, description: `Theme color: ${key}` });
         }
       }
-      toast.success(language === "bn" ? "থিম কালার সংরক্ষিত হয়েছে" : "Theme colors saved");
+
+      // Save layout
+      const { data: existingLayout } = await supabase
+        .from("system_settings")
+        .select("id")
+        .eq("setting_key", "theme_layout")
+        .maybeSingle();
+
+      if (existingLayout) {
+        await supabase
+          .from("system_settings")
+          .update({ setting_value: selectedLayout })
+          .eq("setting_key", "theme_layout");
+      } else {
+        await supabase
+          .from("system_settings")
+          .insert({ setting_key: "theme_layout", setting_value: selectedLayout, description: "Site layout theme" });
+      }
+
+      setLayout(selectedLayout);
+      toast.success(language === "bn" ? "থিম ও লেআউট সংরক্ষিত হয়েছে" : "Theme & layout saved");
     } catch (err) {
       console.error("Error saving theme:", err);
       toast.error(language === "bn" ? "সংরক্ষণে সমস্যা হয়েছে" : "Failed to save");
