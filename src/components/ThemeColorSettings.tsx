@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Palette, Save, Loader2, RotateCcw, Check, Sparkles } from "lucide-react";
+import { Palette, Save, Loader2, RotateCcw, Check, Sparkles, Layout, Monitor, ShoppingBag, Store } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useLayout, type LayoutType } from "@/contexts/LayoutContext";
 
 interface ThemePreset {
   name_bn: string;
