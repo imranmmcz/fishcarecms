@@ -103,7 +103,7 @@ export const MegaShopHome = () => {
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground">{t.integratedModules}</h2>
             </div>
             <Link to="/modules">
-              <Button3D variant="outline" size="sm" className="gap-1">
+              <Button3D variant="primary" size="sm" className="gap-1">
                 {language === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-4 w-4" />
               </Button3D>
             </Link>
@@ -133,7 +133,7 @@ export const MegaShopHome = () => {
               </Button3D>
             </Link>
             <Link to="/shop">
-              <Button3D size="lg" variant="outline" className="border-white text-white hover:bg-white/20">
+              <Button3D size="lg" variant="primary" className="border-white text-white hover:bg-white/20">
                 <ShoppingBag className="mr-2 h-5 w-5" />
                 {language === "bn" ? "শপ দেখুন" : "Browse Shop"}
               </Button3D>

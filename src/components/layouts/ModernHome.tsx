@@ -80,7 +80,7 @@ export const ModernHome = () => {
               <p className="text-muted-foreground mt-1 text-sm">{t.integratedModulesDesc}</p>
             </div>
             <Link to="/modules">
-              <Button3D variant="outline" size="sm" className="hidden sm:flex gap-1">
+              <Button3D variant="primary" size="sm" className="hidden sm:flex gap-1">
                 {language === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-4 w-4" />
               </Button3D>
             </Link>
