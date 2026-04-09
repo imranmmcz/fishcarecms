@@ -423,6 +423,10 @@ export default function ThemeColorSettings() {
   const [selectedLayout, setSelectedLayout] = useState<LayoutType>(layout);
 
   useEffect(() => {
+    setSelectedLayout(layout);
+  }, [layout]);
+
+  useEffect(() => {
     loadColors();
   }, []);
 
