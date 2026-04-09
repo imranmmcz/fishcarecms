@@ -142,6 +142,7 @@ const App = () => (
               <FarmingProvider>
                 <AdSettingsProvider>
                   <TooltipProvider>
+                    <LayoutProvider>
                     <ThemeLoader />
                     <GoogleAnalyticsLoader />
                     <Toaster />
@@ -253,6 +254,7 @@ const App = () => (
                     </Routes>
                     <FloatingChatbot />
                   </BrowserRouter>
+                </LayoutProvider>
                 </TooltipProvider>
               </AdSettingsProvider>
             </FarmingProvider>
