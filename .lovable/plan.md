@@ -1,41 +1,44 @@
 
+# ২টি নতুন ই-কমার্স লেআউট থিম
 
-# Invoice Bangla Font Broken - Fix Plan
+## বর্তমান অবস্থা
+- একটি ডিফল্ট লেআউট আছে (3-row header, 4-column footer, hero slider)
+- ৮টি কালার প্রিসেট আছে কিন্তু লেআউট পরিবর্তন হয় না
 
-## Problem Analysis
+## পরিকল্পনা
 
-The Bangla font system for invoice PDFs has a robust multi-font fallback chain (Nikosh → HindSiliguri → NotoSansBengali → BalooDa2 → AnekBangla). Local font files exist in `/public/fonts/` and are valid TrueType files. The code structure is correct.
+### লেআউট ১: "ক্লাসিক" (বর্তমান - ডিফল্ট)
+- 3-row header (utility → logo/search → nav)
+- Hero slider + featured products carousel
+- Module cards grid
+- 4-column footer with underwater effect
 
-The likely root causes of broken Bangla text:
+### লেআউট ২: "মডার্ন মিনিমাল"
+- **হেডার**: Single-row sticky header — লোগো বামে, সেন্টার্ড নেভিগেশন, ডানে অ্যাকশন আইকন (search, cart, user)
+- **হিরো**: Full-width split layout — বাম পাশে টেক্সট + CTA, ডান পাশে প্রোডাক্ট ইমেজ/ক্যারোউসেল
+- **প্রোডাক্ট সেকশন**: Large card grid with hover zoom effect, category tabs
+- **ফুটার**: 3-column clean footer with newsletter signup, no underwater effect
 
-1. **Font loading race condition**: The `registerBanglaFont` function uses `fetch()` with `force-cache`, but in some browsers/environments the local font path `/fonts/Nikosh.ttf` may not resolve correctly (especially in deployed builds or certain CDN configurations).
+### লেআউট ৩: "মেগা শপ"  
+- **হেডার**: 2-row header — টপে লোগো + mega search bar, নিচে ক্যাটাগরি dropdown menu + deals banner
+- **হিরো**: Banner grid layout — বড় ব্যানার + ২টি ছোট সাইড ব্যানার
+- **প্রোডাক্ট সেকশন**: Category-wise sections with "See All" links, horizontal scroll
+- **ফুটার**: Full-width dark footer with app download CTA + payment icons + multi-column links
 
-2. **Missing error recovery in autoTable**: If font registration silently fails, autoTable falls back to Helvetica which cannot render Bengali characters, producing garbled/box text.
+## প্রযুক্তিগত বাস্তবায়ন
 
-3. **No verification after font registration**: The code checks `doc.getFont().fontName` but doesn't verify actual Bengali glyph rendering capability.
+1. **DB**: `system_settings` এ `theme_layout` কী যোগ (value: `classic` | `modern` | `megashop`)
+2. **Layout Components**: 
+   - `src/components/layouts/ModernHeader.tsx`
+   - `src/components/layouts/ModernFooter.tsx`
+   - `src/components/layouts/ModernHome.tsx`
+   - `src/components/layouts/MegaShopHeader.tsx`
+   - `src/components/layouts/MegaShopFooter.tsx`
+   - `src/components/layouts/MegaShopHome.tsx`
+3. **Layout Context**: `src/contexts/LayoutContext.tsx` — লেআউট সিলেকশন ম্যানেজ করবে
+4. **Theme Settings UI**: লেআউট প্রিভিউ কার্ড + সিলেকশন যোগ
+5. **Header/Footer/Index**: LayoutContext থেকে সঠিক কম্পোনেন্ট রেন্ডার
 
-## Fix Plan
-
-### Step 1: Strengthen font loading with inline base64 fallback
-- Add a small inline base64-encoded Bengali font subset as a last-resort fallback in `pdfBanglaFont.ts`
-- This ensures fonts work even when fetch fails (offline, CORS issues, CDN down)
-
-### Step 2: Add robust error handling in generateInvoicePDF.ts
-- After `registerBanglaFont(doc)`, check the return value and warn the user via toast if font loading failed
-- Ensure `fontName` defaults to a registered font name (not just "Nikosh" which may not exist)
-
-### Step 3: Fix font path resolution
-- Use absolute URLs with `window.location.origin` prefix for local font paths instead of relative `/fonts/Nikosh.ttf`
-- This prevents path resolution issues in different deployment environments
-
-### Step 4: Add font preload verification
-- In `preloadBanglaFont()`, actually create a temporary jsPDF doc and register the font to verify it works end-to-end
-- Show a console warning if preload fails
-
-### Technical Details
-
-**File changes:**
-- `src/lib/pdfBanglaFont.ts` — Fix URL resolution, add origin prefix, improve error handling
-- `src/lib/generateInvoicePDF.ts` — Add toast notification on font failure, verify fontName before use
-- `src/main.tsx` or `src/App.tsx` — Ensure `preloadBanglaFont()` runs on app startup (verify current behavior)
-
+## ফাইল পরিবর্তন
+- নতুন: ৭টি ফাইল (৬ layout components + 1 context)
+- পরিবর্তন: `Header.tsx`, `Footer.tsx`, `Index.tsx`, `ThemeColorSettings.tsx`, `ThemeLoader.tsx`

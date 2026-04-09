@@ -11,6 +11,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { AdSettingsProvider } from "@/contexts/AdSettingsContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { LayoutProvider } from "@/contexts/LayoutContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeLoader } from "@/components/ThemeLoader";
@@ -141,6 +142,7 @@ const App = () => (
               <FarmingProvider>
                 <AdSettingsProvider>
                   <TooltipProvider>
+                    <LayoutProvider>
                     <ThemeLoader />
                     <GoogleAnalyticsLoader />
                     <Toaster />
@@ -252,6 +254,7 @@ const App = () => (
                     </Routes>
                     <FloatingChatbot />
                   </BrowserRouter>
+                </LayoutProvider>
                 </TooltipProvider>
               </AdSettingsProvider>
             </FarmingProvider>

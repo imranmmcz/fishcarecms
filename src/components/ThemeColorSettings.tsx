@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Palette, Save, Loader2, RotateCcw, Check, Sparkles } from "lucide-react";
+import { Palette, Save, Loader2, RotateCcw, Check, Sparkles, Layout, Monitor, ShoppingBag, Store } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useLayout, type LayoutType } from "@/contexts/LayoutContext";
 
 interface ThemePreset {
   name_bn: string;
@@ -415,9 +416,15 @@ export function applyThemeColors(colors: Record<string, string>) {
 
 export default function ThemeColorSettings() {
   const { language } = useLanguage();
+  const { layout, setLayout } = useLayout();
   const [colors, setColors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedLayout, setSelectedLayout] = useState<LayoutType>(layout);
+
+  useEffect(() => {
+    setSelectedLayout(layout);
+  }, [layout]);
 
   useEffect(() => {
     loadColors();
@@ -457,6 +464,7 @@ export default function ThemeColorSettings() {
   const saveColors = async () => {
     setSaving(true);
     try {
+      // Save colors
       for (const [key, value] of Object.entries(colors)) {
         const { data: existing } = await supabase
           .from("system_settings")
@@ -475,7 +483,27 @@ export default function ThemeColorSettings() {
             .insert({ setting_key: key, setting_value: value, description: `Theme color: ${key}` });
         }
       }
-      toast.success(language === "bn" ? "থিম কালার সংরক্ষিত হয়েছে" : "Theme colors saved");
+
+      // Save layout
+      const { data: existingLayout } = await supabase
+        .from("system_settings")
+        .select("id")
+        .eq("setting_key", "theme_layout")
+        .maybeSingle();
+
+      if (existingLayout) {
+        await supabase
+          .from("system_settings")
+          .update({ setting_value: selectedLayout })
+          .eq("setting_key", "theme_layout");
+      } else {
+        await supabase
+          .from("system_settings")
+          .insert({ setting_key: "theme_layout", setting_value: selectedLayout, description: "Site layout theme" });
+      }
+
+      setLayout(selectedLayout);
+      toast.success(language === "bn" ? "থিম ও লেআউট সংরক্ষিত হয়েছে" : "Theme & layout saved");
     } catch (err) {
       console.error("Error saving theme:", err);
       toast.error(language === "bn" ? "সংরক্ষণে সমস্যা হয়েছে" : "Failed to save");
@@ -520,6 +548,173 @@ export default function ThemeColorSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Layout Selection */}
+        <div>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
+            <Layout className="h-4 w-4" />
+            {language === "bn" ? "লেআউট ডিজাইন" : "Layout Design"}
+          </h4>
+          <p className="text-xs text-muted-foreground mb-4">
+            {language === "bn"
+              ? "সাইটের সম্পূর্ণ লেআউট (হেডার, ফুটার, হোমপেজ) পরিবর্তন করুন। সেভ করার পর প্রযোজ্য হবে।"
+              : "Change the entire site layout (header, footer, homepage). Applied after saving."}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Classic */}
+            <button
+              onClick={() => setSelectedLayout("classic")}
+              className={`relative rounded-xl border-2 p-4 transition-all hover:scale-[1.02] hover:shadow-medium cursor-pointer text-left ${
+                selectedLayout === "classic" ? "border-primary ring-2 ring-primary/30 shadow-medium" : "border-border hover:border-primary/40"
+              }`}
+            >
+              {selectedLayout === "classic" && (
+                <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-0.5 z-10">
+                  <Check className="h-3.5 w-3.5" />
+                </div>
+              )}
+              <div className="space-y-2">
+                <div className="rounded-lg border border-border overflow-hidden">
+                  <div className="h-2 bg-primary" />
+                  <div className="h-3 bg-card border-b border-border" />
+                  <div className="h-2 bg-foreground/80" />
+                  <div className="h-8 bg-muted/30 flex items-center justify-center">
+                    <div className="w-2/3 h-4 bg-primary/20 rounded" />
+                  </div>
+                  <div className="h-6 bg-card p-1">
+                    <div className="grid grid-cols-3 gap-0.5 h-full">
+                      <div className="bg-muted rounded-sm" />
+                      <div className="bg-muted rounded-sm" />
+                      <div className="bg-muted rounded-sm" />
+                    </div>
+                  </div>
+                  <div className="h-3 bg-foreground/80" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Monitor className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-sm font-bold">{language === "bn" ? "ক্লাসিক" : "Classic"}</p>
+                    <p className="text-[10px] text-muted-foreground">{language === "bn" ? "৩-সারি হেডার, মডিউল গ্রিড" : "3-row header, module grid"}</p>
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            {/* Modern */}
+            <button
+              onClick={() => setSelectedLayout("modern")}
+              className={`relative rounded-xl border-2 p-4 transition-all hover:scale-[1.02] hover:shadow-medium cursor-pointer text-left ${
+                selectedLayout === "modern" ? "border-primary ring-2 ring-primary/30 shadow-medium" : "border-border hover:border-primary/40"
+              }`}
+            >
+              {selectedLayout === "modern" && (
+                <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-0.5 z-10">
+                  <Check className="h-3.5 w-3.5" />
+                </div>
+              )}
+              <div className="space-y-2">
+                <div className="rounded-lg border border-border overflow-hidden">
+                  <div className="h-4 bg-card flex items-center justify-between px-1">
+                    <div className="w-3 h-2 bg-primary rounded" />
+                    <div className="flex gap-0.5">
+                      <div className="w-2 h-1.5 bg-muted rounded-full" />
+                      <div className="w-2 h-1.5 bg-muted rounded-full" />
+                      <div className="w-2 h-1.5 bg-muted rounded-full" />
+                    </div>
+                    <div className="w-2 h-2 bg-primary rounded-full" />
+                  </div>
+                  <div className="h-8 bg-primary/10 flex items-center justify-center">
+                    <div className="w-1/2 h-4 bg-primary/20 rounded-full" />
+                  </div>
+                  <div className="h-2 bg-primary/5 flex items-center justify-center">
+                    <div className="flex gap-1">
+                      <div className="w-3 h-1 bg-primary/30 rounded" />
+                      <div className="w-3 h-1 bg-primary/30 rounded" />
+                      <div className="w-3 h-1 bg-primary/30 rounded" />
+                    </div>
+                  </div>
+                  <div className="h-6 bg-card p-1">
+                    <div className="grid grid-cols-4 gap-0.5 h-full">
+                      <div className="bg-muted rounded" />
+                      <div className="bg-muted rounded" />
+                      <div className="bg-muted rounded" />
+                      <div className="bg-muted rounded" />
+                    </div>
+                  </div>
+                  <div className="h-3 bg-foreground/80" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-sm font-bold">{language === "bn" ? "মডার্ন মিনিমাল" : "Modern Minimal"}</p>
+                    <p className="text-[10px] text-muted-foreground">{language === "bn" ? "সিঙ্গেল হেডার, পিল নেভ" : "Single header, pill nav"}</p>
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            {/* MegaShop */}
+            <button
+              onClick={() => setSelectedLayout("megashop")}
+              className={`relative rounded-xl border-2 p-4 transition-all hover:scale-[1.02] hover:shadow-medium cursor-pointer text-left ${
+                selectedLayout === "megashop" ? "border-primary ring-2 ring-primary/30 shadow-medium" : "border-border hover:border-primary/40"
+              }`}
+            >
+              {selectedLayout === "megashop" && (
+                <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-0.5 z-10">
+                  <Check className="h-3.5 w-3.5" />
+                </div>
+              )}
+              <div className="space-y-2">
+                <div className="rounded-lg border border-border overflow-hidden">
+                  <div className="h-1.5 bg-primary" />
+                  <div className="h-4 bg-card flex items-center gap-0.5 px-1">
+                    <div className="w-3 h-2 bg-primary rounded" />
+                    <div className="flex-1 h-2 bg-muted rounded mx-0.5" />
+                    <div className="w-2 h-2 bg-muted rounded" />
+                  </div>
+                  <div className="h-2 bg-foreground/80 flex items-center px-1">
+                    <div className="w-4 h-1 bg-primary rounded mr-0.5" />
+                    <div className="flex gap-0.5">
+                      <div className="w-2 h-1 bg-white/30 rounded" />
+                      <div className="w-2 h-1 bg-white/30 rounded" />
+                    </div>
+                    <div className="ml-auto w-3 h-1 bg-yellow-400 rounded" />
+                  </div>
+                  <div className="h-7 bg-muted/30 p-0.5 grid grid-cols-4 gap-0.5">
+                    <div className="col-span-3 bg-primary/15 rounded" />
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex-1 bg-primary/20 rounded" />
+                      <div className="flex-1 bg-accent/20 rounded" />
+                    </div>
+                  </div>
+                  <div className="h-5 bg-card p-0.5">
+                    <div className="grid grid-cols-4 gap-0.5 h-full">
+                      <div className="bg-muted rounded" />
+                      <div className="bg-muted rounded" />
+                      <div className="bg-muted rounded" />
+                      <div className="bg-muted rounded" />
+                    </div>
+                  </div>
+                  <div className="h-2 bg-muted/50 flex items-center justify-center gap-1 px-1">
+                    <div className="w-2 h-1 bg-primary/30 rounded" />
+                    <div className="w-2 h-1 bg-primary/30 rounded" />
+                    <div className="w-2 h-1 bg-primary/30 rounded" />
+                    <div className="w-2 h-1 bg-primary/30 rounded" />
+                  </div>
+                  <div className="h-3 bg-foreground/80" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Store className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-sm font-bold">{language === "bn" ? "মেগা শপ" : "Mega Shop"}</p>
+                    <p className="text-[10px] text-muted-foreground">{language === "bn" ? "মেগা সার্চ, ক্যাটাগরি ড্রপডাউন" : "Mega search, category dropdown"}</p>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* Theme Presets */}
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
