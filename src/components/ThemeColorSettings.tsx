@@ -416,9 +416,11 @@ export function applyThemeColors(colors: Record<string, string>) {
 
 export default function ThemeColorSettings() {
   const { language } = useLanguage();
+  const { layout, setLayout } = useLayout();
   const [colors, setColors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedLayout, setSelectedLayout] = useState<LayoutType>(layout);
 
   useEffect(() => {
     loadColors();
