@@ -558,6 +558,29 @@ export default function ThemeColorSettings() {
       }
       applyButtonStyle(buttonStyle);
 
+      // Save per-page button animation overrides (JSON array)
+      const overridesJson = JSON.stringify(buttonOverrides);
+      const { data: existingOverrides } = await supabase
+        .from("system_settings")
+        .select("id")
+        .eq("setting_key", "button_animation_overrides")
+        .maybeSingle();
+      if (existingOverrides) {
+        await supabase
+          .from("system_settings")
+          .update({ setting_value: overridesJson })
+          .eq("setting_key", "button_animation_overrides");
+      } else {
+        await supabase
+          .from("system_settings")
+          .insert({
+            setting_key: "button_animation_overrides",
+            setting_value: overridesJson,
+            description: "Per-page button animation style overrides (JSON array)",
+          });
+      }
+      invalidateButtonStyleCache();
+
       setLayout(selectedLayout);
       toast.success(language === "bn" ? "থিম ও লেআউট সংরক্ষিত হয়েছে" : "Theme & layout saved");
     } catch (err) {
