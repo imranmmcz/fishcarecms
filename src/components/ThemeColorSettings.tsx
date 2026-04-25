@@ -849,6 +849,106 @@ export default function ThemeColorSettings() {
           </div>
         </div>
 
+        {/* Per-Page Button Animation Overrides */}
+        <div>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
+            <RouteIcon className="h-4 w-4" />
+            {language === "bn" ? "পেজ-ভিত্তিক বাটন এনিমেশন" : "Per-Page Button Animation"}
+          </h4>
+          <p className="text-xs text-muted-foreground mb-4">
+            {language === "bn"
+              ? "নির্দিষ্ট পেজে আলাদা বাটন এনিমেশন প্রয়োগ করুন। প্যাটার্ন উদাহরণ: \"/\" (শুধু হোমপেজ), \"/shop\" (নির্দিষ্ট পেজ), \"/blog/*\" (সাব-পেজসহ), \"*\" (সব)। যেসব পেজে কোনো ওভাররাইড নেই, সেখানে গ্লোবাল স্টাইল প্রযোজ্য হবে।"
+              : "Apply different button animations on specific pages. Pattern examples: \"/\" (homepage only), \"/shop\" (single page), \"/blog/*\" (with sub-pages), \"*\" (all). Pages without a match fall back to the global style."}
+          </p>
+
+          {buttonOverrides.length === 0 && (
+            <div className="rounded-lg border border-dashed border-border p-4 text-center text-xs text-muted-foreground mb-3">
+              {language === "bn"
+                ? "কোনো পেজ-ভিত্তিক ওভাররাইড নেই — গ্লোবাল স্টাইল সর্বত্র প্রযোজ্য।"
+                : "No per-page overrides yet — global style applies everywhere."}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {buttonOverrides.map((ovr, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center p-3 rounded-lg border border-border bg-muted/20"
+              >
+                <div className="flex-1">
+                  <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {language === "bn" ? "পেজ প্যাটার্ন" : "Page Pattern"}
+                  </Label>
+                  <Input
+                    value={ovr.pattern}
+                    placeholder="/, /shop, /blog/*"
+                    onChange={(e) => {
+                      const next = [...buttonOverrides];
+                      next[idx] = { ...next[idx], pattern: e.target.value };
+                      setButtonOverrides(next);
+                    }}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="sm:w-44">
+                  <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {language === "bn" ? "এনিমেশন" : "Animation"}
+                  </Label>
+                  <select
+                    value={ovr.style}
+                    onChange={(e) => {
+                      const next = [...buttonOverrides];
+                      next[idx] = { ...next[idx], style: e.target.value as ButtonAnimationStyle };
+                      setButtonOverrides(next);
+                    }}
+                    className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                  >
+                    {buttonStylePresets.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {language === "bn" ? p.name_bn : p.name_en}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex sm:items-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 mt-1"
+                    onClick={() => setButtonOverrides(buttonOverrides.filter((_, i) => i !== idx))}
+                    aria-label={language === "bn" ? "মুছুন" : "Remove"}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() =>
+              setButtonOverrides([
+                ...buttonOverrides,
+                { pattern: "/", style: "default" },
+              ])
+            }
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {language === "bn" ? "পেজ ওভাররাইড যোগ করুন" : "Add Page Override"}
+          </Button>
+
+          <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+            {language === "bn"
+              ? "💡 টিপস: একই পেজের জন্য একাধিক প্যাটার্ন মিললে নির্দিষ্টতা অনুযায়ী হিসাব হয় — হুবহু মিল > প্রিফিক্স (/x/*) > ওয়াইল্ডকার্ড (*)।"
+              : "💡 Tip: When multiple patterns match a page, the most specific one wins — exact match > prefix (/x/*) > wildcard (*)."}
+          </p>
+        </div>
+
         {/* Theme Presets */}
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
