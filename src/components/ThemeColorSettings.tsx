@@ -968,7 +968,7 @@ export default function ThemeColorSettings() {
               return (
                 <button
                   key={preset.name_en}
-                  onClick={() => {
+                  onClick={async () => {
                     const newColors = { ...colors, ...preset.colors };
                     setColors(newColors);
                     // Live preview all colors
@@ -979,9 +979,30 @@ export default function ThemeColorSettings() {
                         vars.forEach((v) => document.documentElement.style.setProperty(v, hsl));
                       }
                     });
-                    toast.success(language === "bn" 
-                      ? `"${preset.name_bn}" থিম প্রয়োগ হয়েছে` 
-                      : `"${preset.name_en}" theme applied`);
+                    // Persist preset colors to DB so the theme stays until admin changes it
+                    try {
+                      const rows = Object.entries(preset.colors).map(([key, value]) => ({
+                        setting_key: key,
+                        setting_value: value,
+                        description: `Theme color: ${key}`,
+                      }));
+                      const { error } = await supabase
+                        .from("system_settings")
+                        .upsert(rows, { onConflict: "setting_key" });
+                      if (error) throw error;
+                      toast.success(
+                        language === "bn"
+                          ? `"${preset.name_bn}" থিম প্রয়োগ ও সংরক্ষিত হয়েছে`
+                          : `"${preset.name_en}" theme applied & saved`
+                      );
+                    } catch (err) {
+                      console.error("Failed to save preset:", err);
+                      toast.error(
+                        language === "bn"
+                          ? "থিম সংরক্ষণে সমস্যা হয়েছে"
+                          : "Failed to save theme"
+                      );
+                    }
                   }}
                   className={`relative rounded-xl border-2 p-3 transition-all hover:scale-[1.03] hover:shadow-medium cursor-pointer text-left ${
                     isActive 
