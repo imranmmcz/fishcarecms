@@ -8,6 +8,26 @@ import { toast } from "sonner";
 import { Palette, Save, Loader2, RotateCcw, Check, Sparkles, Layout, Monitor, ShoppingBag, Store } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLayout, type LayoutType } from "@/contexts/LayoutContext";
+import { applyButtonStyle, type ButtonAnimationStyle } from "@/components/ThemeLoader";
+
+interface ButtonStylePreset {
+  id: ButtonAnimationStyle;
+  name_bn: string;
+  name_en: string;
+  description_bn: string;
+  description_en: string;
+}
+
+const buttonStylePresets: ButtonStylePreset[] = [
+  { id: "default", name_bn: "ডিফল্ট", name_en: "Default", description_bn: "সাধারণ স্টাইল, কোনো অতিরিক্ত এনিমেশন নয়", description_en: "Standard style, no extra animation" },
+  { id: "scale", name_bn: "স্কেল", name_en: "Scale", description_bn: "হোভারে বড় হবে, ক্লিকে ছোট হবে", description_en: "Grows on hover, shrinks on click" },
+  { id: "lift", name_bn: "লিফট", name_en: "Lift", description_bn: "শ্যাডো সহ উপরে উঠবে", description_en: "Lifts up with shadow on hover" },
+  { id: "glow", name_bn: "গ্লো", name_en: "Glow", description_bn: "চারপাশে আলোর আভা", description_en: "Glowing halo around button" },
+  { id: "shine", name_bn: "শাইন", name_en: "Shine", description_bn: "তির্যক আলোর ঝলক চলবে", description_en: "Diagonal light sweep" },
+  { id: "push", name_bn: "পুশ", name_en: "Push", description_bn: "৩ডি প্রেস হবে চাবির মত", description_en: "3D press like a key" },
+  { id: "pulse", name_bn: "পালস", name_en: "Pulse", description_bn: "হোভারে স্পন্দন তরঙ্গ", description_en: "Pulse wave on hover" },
+  { id: "neon", name_bn: "নিয়ন", name_en: "Neon", description_bn: "নিয়ন গ্লো আউটলাইন", description_en: "Neon glow outline" },
+];
 
 interface ThemePreset {
   name_bn: string;
@@ -421,6 +441,7 @@ export default function ThemeColorSettings() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedLayout, setSelectedLayout] = useState<LayoutType>(layout);
+  const [buttonStyle, setButtonStyle] = useState<ButtonAnimationStyle>("default");
 
   useEffect(() => {
     setSelectedLayout(layout);
@@ -436,7 +457,7 @@ export default function ThemeColorSettings() {
       const { data } = await supabase
         .from("system_settings")
         .select("*")
-        .like("setting_key", "theme_%");
+        .or("setting_key.like.theme_%,setting_key.eq.button_animation_style");
 
       const map: Record<string, string> = {};
       colorConfigs.forEach((c) => {
@@ -444,6 +465,10 @@ export default function ThemeColorSettings() {
         map[c.key] = found?.setting_value || c.defaultValue;
       });
       setColors(map);
+      const btn = data?.find((d) => d.setting_key === "button_animation_style");
+      if (btn?.setting_value) {
+        setButtonStyle(btn.setting_value as ButtonAnimationStyle);
+      }
     } catch (err) {
       console.error("Error loading theme colors:", err);
     } finally {
@@ -501,6 +526,25 @@ export default function ThemeColorSettings() {
           .from("system_settings")
           .insert({ setting_key: "theme_layout", setting_value: selectedLayout, description: "Site layout theme" });
       }
+
+      // Save button animation style
+      const { data: existingBtn } = await supabase
+        .from("system_settings")
+        .select("id")
+        .eq("setting_key", "button_animation_style")
+        .maybeSingle();
+
+      if (existingBtn) {
+        await supabase
+          .from("system_settings")
+          .update({ setting_value: buttonStyle })
+          .eq("setting_key", "button_animation_style");
+      } else {
+        await supabase
+          .from("system_settings")
+          .insert({ setting_key: "button_animation_style", setting_value: buttonStyle, description: "Global button animation style" });
+      }
+      applyButtonStyle(buttonStyle);
 
       setLayout(selectedLayout);
       toast.success(language === "bn" ? "থিম ও লেআউট সংরক্ষিত হয়েছে" : "Theme & layout saved");
