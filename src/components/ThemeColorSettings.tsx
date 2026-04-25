@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Palette, Save, Loader2, RotateCcw, Check, Sparkles, Layout, Monitor, ShoppingBag, Store } from "lucide-react";
+import { Palette, Save, Loader2, RotateCcw, Check, Sparkles, Layout, Monitor, ShoppingBag, Store, Plus, Trash2, Route as RouteIcon } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLayout, type LayoutType } from "@/contexts/LayoutContext";
-import { applyButtonStyle, type ButtonAnimationStyle } from "@/components/ThemeLoader";
+import { applyButtonStyle, invalidateButtonStyleCache, type ButtonAnimationStyle, type ButtonStyleOverride } from "@/components/ThemeLoader";
 
 interface ButtonStylePreset {
   id: ButtonAnimationStyle;
