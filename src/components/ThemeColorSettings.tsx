@@ -759,6 +759,61 @@ export default function ThemeColorSettings() {
           </div>
         </div>
 
+        {/* Button Animation Style */}
+        <div>
+          <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            {language === "bn" ? "বাটন এনিমেশন স্টাইল" : "Button Animation Style"}
+          </h4>
+          <p className="text-xs text-muted-foreground mb-4">
+            {language === "bn"
+              ? "একটি স্টাইল বেছে নিন — পুরো ওয়েবসাইটের সকল বাটনে এই এনিমেশন প্রয়োগ হবে। লাইভ প্রিভিউ দেখতে হোভার করুন।"
+              : "Pick a style — it will be applied to every button across the website. Hover to see the live preview."}
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {buttonStylePresets.map((preset) => {
+              const isActive = buttonStyle === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => {
+                    setButtonStyle(preset.id);
+                    applyButtonStyle(preset.id);
+                  }}
+                  className={`relative rounded-xl border-2 p-3 transition-all hover:shadow-medium cursor-pointer text-left ${
+                    isActive
+                      ? "border-primary ring-2 ring-primary/30 shadow-medium bg-primary/5"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-0.5 z-10">
+                      <Check className="h-3.5 w-3.5" />
+                    </div>
+                  )}
+                  <p className="text-sm font-bold mb-1">
+                    {language === "bn" ? preset.name_bn : preset.name_en}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mb-3 leading-snug min-h-[28px]">
+                    {language === "bn" ? preset.description_bn : preset.description_en}
+                  </p>
+                  {/* Demo button — temporarily wraps the data attribute so this preview always shows the preset effect */}
+                  <div data-btn-style={preset.id === "default" ? undefined : preset.id} className="flex justify-center">
+                    <span
+                      role="button"
+                      tabIndex={-1}
+                      className="inline-flex items-center justify-center px-4 py-2 rounded-md text-xs font-medium bg-primary text-primary-foreground select-none"
+                    >
+                      {language === "bn" ? "প্রিভিউ" : "Preview"}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Theme Presets */}
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
