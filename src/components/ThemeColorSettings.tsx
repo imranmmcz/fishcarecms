@@ -442,6 +442,7 @@ export default function ThemeColorSettings() {
   const [loading, setLoading] = useState(true);
   const [selectedLayout, setSelectedLayout] = useState<LayoutType>(layout);
   const [buttonStyle, setButtonStyle] = useState<ButtonAnimationStyle>("default");
+  const [buttonOverrides, setButtonOverrides] = useState<ButtonStyleOverride[]>([]);
 
   useEffect(() => {
     setSelectedLayout(layout);
@@ -457,7 +458,9 @@ export default function ThemeColorSettings() {
       const { data } = await supabase
         .from("system_settings")
         .select("*")
-        .or("setting_key.like.theme_%,setting_key.eq.button_animation_style");
+        .or(
+          "setting_key.like.theme_%,setting_key.eq.button_animation_style,setting_key.eq.button_animation_overrides"
+        );
 
       const map: Record<string, string> = {};
       colorConfigs.forEach((c) => {
@@ -468,6 +471,15 @@ export default function ThemeColorSettings() {
       const btn = data?.find((d) => d.setting_key === "button_animation_style");
       if (btn?.setting_value) {
         setButtonStyle(btn.setting_value as ButtonAnimationStyle);
+      }
+      const ovr = data?.find((d) => d.setting_key === "button_animation_overrides");
+      if (ovr?.setting_value) {
+        try {
+          const parsed = JSON.parse(ovr.setting_value);
+          if (Array.isArray(parsed)) setButtonOverrides(parsed);
+        } catch {
+          /* ignore malformed */
+        }
       }
     } catch (err) {
       console.error("Error loading theme colors:", err);
