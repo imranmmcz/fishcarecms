@@ -14,7 +14,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { LayoutProvider } from "@/contexts/LayoutContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { ThemeLoader } from "@/components/ThemeLoader";
+import { ThemeLoader, ButtonStyleRouteSync } from "@/components/ThemeLoader";
 import { POSLayout } from "@/components/POSLayout";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import GoogleAnalyticsLoader from "@/components/GoogleAnalyticsLoader";
@@ -149,6 +149,7 @@ const App = () => (
                     <Sonner />
                   <BrowserRouter>
                     <ActivityLogger />
+                    <ButtonStyleRouteSync />
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
