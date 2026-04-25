@@ -166,3 +166,123 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* ============================================
+   GLOBAL BUTTON ANIMATION STYLES
+   Controlled by [data-btn-style] on <html>.
+   Applies to all <button> and role="button" elements.
+   ============================================ */
+@layer utilities {
+  /* Base smoothing for every button when a style is active */
+  html[data-btn-style] button,
+  html[data-btn-style] [role="button"] {
+    transition: transform 0.2s ease, box-shadow 0.25s ease, filter 0.2s ease, background-color 0.2s ease;
+  }
+
+  /* 1. SCALE — gentle grow on hover, press shrink */
+  html[data-btn-style="scale"] button:not(:disabled):hover,
+  html[data-btn-style="scale"] [role="button"]:not([aria-disabled="true"]):hover {
+    transform: scale(1.05);
+  }
+  html[data-btn-style="scale"] button:not(:disabled):active,
+  html[data-btn-style="scale"] [role="button"]:not([aria-disabled="true"]):active {
+    transform: scale(0.96);
+  }
+
+  /* 2. LIFT — rises with shadow on hover */
+  html[data-btn-style="lift"] button:not(:disabled):hover,
+  html[data-btn-style="lift"] [role="button"]:not([aria-disabled="true"]):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px -6px hsl(var(--primary) / 0.35);
+  }
+  html[data-btn-style="lift"] button:not(:disabled):active,
+  html[data-btn-style="lift"] [role="button"]:not([aria-disabled="true"]):active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px -2px hsl(var(--primary) / 0.25);
+  }
+
+  /* 3. GLOW — soft animated halo around the button */
+  html[data-btn-style="glow"] button:not(:disabled),
+  html[data-btn-style="glow"] [role="button"]:not([aria-disabled="true"]) {
+    position: relative;
+  }
+  html[data-btn-style="glow"] button:not(:disabled):hover,
+  html[data-btn-style="glow"] [role="button"]:not([aria-disabled="true"]):hover {
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18), 0 0 20px hsl(var(--primary) / 0.45);
+    filter: brightness(1.08);
+  }
+
+  /* 4. SHINE — diagonal light sweep */
+  html[data-btn-style="shine"] button:not(:disabled),
+  html[data-btn-style="shine"] [role="button"]:not([aria-disabled="true"]) {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  html[data-btn-style="shine"] button:not(:disabled)::before,
+  html[data-btn-style="shine"] [role="button"]:not([aria-disabled="true"])::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.45) 50%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    transition: transform 0.7s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+  html[data-btn-style="shine"] button:not(:disabled):hover::before,
+  html[data-btn-style="shine"] [role="button"]:not([aria-disabled="true"]):hover::before {
+    transform: translateX(120%);
+  }
+
+  /* 5. PUSH — 3D press-down, like a physical key */
+  html[data-btn-style="push"] button:not(:disabled),
+  html[data-btn-style="push"] [role="button"]:not([aria-disabled="true"]) {
+    box-shadow: 0 4px 0 0 hsl(var(--primary) / 0.45);
+  }
+  html[data-btn-style="push"] button:not(:disabled):hover,
+  html[data-btn-style="push"] [role="button"]:not([aria-disabled="true"]):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 0 hsl(var(--primary) / 0.5);
+  }
+  html[data-btn-style="push"] button:not(:disabled):active,
+  html[data-btn-style="push"] [role="button"]:not([aria-disabled="true"]):active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.45);
+  }
+
+  /* 6. PULSE — continuous gentle attention pulse on hover */
+  @keyframes btn-pulse-anim {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.5); }
+    50% { box-shadow: 0 0 0 8px hsl(var(--primary) / 0); }
+  }
+  html[data-btn-style="pulse"] button:not(:disabled):hover,
+  html[data-btn-style="pulse"] [role="button"]:not([aria-disabled="true"]):hover {
+    animation: btn-pulse-anim 1.2s ease-out infinite;
+  }
+
+  /* 7. NEON — animated gradient border / neon outline */
+  html[data-btn-style="neon"] button:not(:disabled):hover,
+  html[data-btn-style="neon"] [role="button"]:not([aria-disabled="true"]):hover {
+    box-shadow:
+      0 0 5px hsl(var(--primary)),
+      0 0 12px hsl(var(--primary) / 0.7),
+      0 0 22px hsl(var(--primary) / 0.4);
+    filter: brightness(1.1);
+  }
+
+  /* Respect users who prefer no motion */
+  @media (prefers-reduced-motion: reduce) {
+    html[data-btn-style] button,
+    html[data-btn-style] [role="button"] {
+      transition: none !important;
+      animation: none !important;
+      transform: none !important;
+    }
+  }
+}
