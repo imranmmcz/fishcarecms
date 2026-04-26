@@ -185,7 +185,19 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   return (
-    <div className="group relative bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-elegant transition-all duration-300 border border-border/50">
+    <div
+      className={[
+        "group relative h-full flex flex-col",
+        "bg-card rounded-2xl overflow-hidden",
+        "shadow-soft hover:shadow-elegant",
+        "border border-border/50 hover:border-primary/40",
+        // Keep hover effects from changing layout / card height
+        "transform-gpu transition-[box-shadow,border-color,filter] duration-300",
+        "hover:-translate-y-0 hover:scale-100",
+        // Isolate so child transforms (image zoom, button presses) don't affect siblings
+        "isolate will-change-[box-shadow]",
+      ].join(" ")}
+    >
       {/* Product Image Gallery */}
       <Link 
         to={product.isFromDatabase ? `/product/${product.id}` : "#"} 
