@@ -342,7 +342,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </Link>
 
       {/* Product Info */}
-      <div className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3 flex flex-col">
+      <div className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3 flex flex-col flex-1">
         <div className="min-h-[2.25rem] sm:min-h-[3rem] md:min-h-[3.5rem]">
           {product.isFromDatabase ? (
             <Link to={`/product/${product.id}`}>
@@ -372,8 +372,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Action Buttons — fixed row height so hover/scale never resizes the card */}
+        <div className="mt-auto flex items-center gap-1.5 sm:gap-2 min-h-[2.25rem] sm:min-h-[2.5rem]">
           {product.isFromDatabase && (
             <>
               {inCart ? (
