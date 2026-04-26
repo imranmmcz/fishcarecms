@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Header } from "@/components/Header";
+import { CalculatorSwitcher } from "@/components/CalculatorSwitcher";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -471,6 +472,7 @@ export default function SmartFeedCalculator() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
+      <CalculatorSwitcher />
       <div className="container mx-auto px-4 py-4"><AdUnit position="header" className="mb-4" /></div>
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
