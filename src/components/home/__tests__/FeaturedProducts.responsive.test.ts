@@ -63,4 +63,31 @@ describe("ProductCard responsive alignment", () => {
   it("info container scales padding with breakpoints", () => {
     expect(productCardSrc).toMatch(/p-3\s+sm:p-4\s+md:p-5/);
   });
+
+  it("card fills row height (h-full + flex-col) for equal heights in grid", () => {
+    expect(productCardSrc).toMatch(/h-full/);
+    expect(productCardSrc).toMatch(/flex flex-col/);
+  });
+
+  it("hover transition is limited to box-shadow / border / filter (no size jump)", () => {
+    expect(productCardSrc).toMatch(
+      /transition-\[box-shadow,border-color,filter\]/
+    );
+    expect(productCardSrc).toMatch(/hover:scale-100/);
+    expect(productCardSrc).toMatch(/hover:-translate-y-0/);
+  });
+
+  it("info container grows (flex-1) so footer buttons stay aligned", () => {
+    expect(productCardSrc).toMatch(/flex flex-col flex-1/);
+  });
+
+  it("action row is bottom-pinned with a fixed min-height", () => {
+    expect(productCardSrc).toMatch(/mt-auto/);
+    expect(productCardSrc).toMatch(/min-h-\[2\.25rem\]\s+sm:min-h-\[2\.5rem\]/);
+  });
+
+  it("card isolates transforms so image zoom doesn't affect siblings", () => {
+    expect(productCardSrc).toMatch(/\bisolate\b/);
+    expect(productCardSrc).toMatch(/transform-gpu/);
+  });
 });
