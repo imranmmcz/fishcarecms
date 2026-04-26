@@ -986,21 +986,36 @@ export default function ThemeColorSettings() {
                         setting_value: value,
                         description: `Theme color: ${key}`,
                       }));
-                      const { error } = await supabase
+                      const { data, error } = await supabase
                         .from("system_settings")
-                        .upsert(rows, { onConflict: "setting_key" });
+                        .upsert(rows, { onConflict: "setting_key" })
+                        .select("setting_key");
                       if (error) throw error;
+                      const savedCount = data?.length ?? rows.length;
                       toast.success(
                         language === "bn"
-                          ? `"${preset.name_bn}" থিম প্রয়োগ ও সংরক্ষিত হয়েছে`
-                          : `"${preset.name_en}" theme applied & saved`
+                          ? `"${preset.name_bn}" থিম সফলভাবে ডাটাবেসে সংরক্ষিত হয়েছে`
+                          : `"${preset.name_en}" theme saved to database successfully`,
+                        {
+                          description:
+                            language === "bn"
+                              ? `${savedCount}টি কালার সেটিং আপডেট হয়েছে`
+                              : `${savedCount} color settings updated`,
+                        }
                       );
-                    } catch (err) {
+                    } catch (err: any) {
                       console.error("Failed to save preset:", err);
                       toast.error(
                         language === "bn"
-                          ? "থিম সংরক্ষণে সমস্যা হয়েছে"
-                          : "Failed to save theme"
+                          ? "থিম ডাটাবেসে সংরক্ষণ ব্যর্থ হয়েছে"
+                          : "Failed to save theme to database",
+                        {
+                          description:
+                            err?.message ??
+                            (language === "bn"
+                              ? "অজানা ত্রুটি"
+                              : "Unknown error"),
+                        }
                       );
                     }
                   }}
