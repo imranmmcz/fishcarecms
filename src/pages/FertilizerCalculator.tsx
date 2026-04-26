@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
+import { CalculatorSwitcher } from "@/components/CalculatorSwitcher";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -113,6 +114,7 @@ const FertilizerCalculator = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <CalculatorSwitcher />
       
       {/* Header Ad */}
       <div className="container mx-auto px-4 py-4">

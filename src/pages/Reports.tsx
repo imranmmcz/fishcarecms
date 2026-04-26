@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
+import { CalculatorSwitcher } from "@/components/CalculatorSwitcher";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ const Reports = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <CalculatorSwitcher />
       
       <div className="container py-8">
         <div className="max-w-4xl mx-auto space-y-6">

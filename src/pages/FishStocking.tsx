@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
+import { CalculatorSwitcher } from "@/components/CalculatorSwitcher";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -128,6 +129,7 @@ export default function FishStocking() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
+      <CalculatorSwitcher />
       
       {/* Header Ad */}
       <div className="container mx-auto px-4 py-4">
