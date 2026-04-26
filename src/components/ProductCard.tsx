@@ -330,16 +330,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </Link>
 
       {/* Product Info */}
-      <div className="p-3 sm:p-5 space-y-2 sm:space-y-3">
-        <div>
+      <div className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3 flex flex-col">
+        <div className="min-h-[2.25rem] sm:min-h-[3rem] md:min-h-[3.5rem]">
           {product.isFromDatabase ? (
             <Link to={`/product/${product.id}`}>
-              <h3 className="text-sm sm:text-lg font-bold text-foreground line-clamp-1 hover:text-primary transition-colors cursor-pointer">
+              <h3 className="text-sm sm:text-base md:text-lg font-bold text-foreground line-clamp-1 sm:line-clamp-2 leading-snug min-h-[1.25rem] sm:min-h-[2.75rem] md:min-h-[3rem] hover:text-primary transition-colors cursor-pointer">
                 {product.name}
               </h3>
             </Link>
           ) : (
-            <h3 className="text-sm sm:text-lg font-bold text-foreground line-clamp-1">
+            <h3 className="text-sm sm:text-base md:text-lg font-bold text-foreground line-clamp-1 sm:line-clamp-2 leading-snug min-h-[1.25rem] sm:min-h-[2.75rem] md:min-h-[3rem]">
               {product.name}
             </h3>
           )}
@@ -348,15 +348,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
         </div>
 
-        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed hidden sm:block">
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed hidden sm:block min-h-[2.5rem]">
           {product.description}
         </p>
 
         {/* Price */}
-        <div className="flex items-center gap-2">
-          <span className="text-lg sm:text-2xl font-bold text-primary">{formatPrice(displayPrice)}</span>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 min-h-[1.75rem] sm:min-h-[2.25rem]">
+          <span className="text-base sm:text-xl md:text-2xl font-bold text-primary">{formatPrice(displayPrice)}</span>
           {(flashPrice || product.originalPrice) && (
-            <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice || product.price)}</span>
+            <span className="text-xs sm:text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice || product.price)}</span>
           )}
         </div>
 
