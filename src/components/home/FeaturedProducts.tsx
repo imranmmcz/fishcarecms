@@ -53,10 +53,10 @@ export const FeaturedProducts = () => {
   };
 
   return (
-    <section className="py-16 bg-muted/20">
-      <div className="container">
+    <section className="py-10 sm:py-12 md:py-14 lg:py-16 bg-muted/20">
+      <div className="container px-3 sm:px-4 md:px-6">
         {/* Section Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between gap-3 mb-5 sm:mb-6 md:mb-8">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-gradient-to-br from-primary/80 to-primary p-2.5 shadow-md">
               <Star className="h-6 w-6 text-primary-foreground" />
@@ -86,17 +86,17 @@ export const FeaturedProducts = () => {
           opts={{ align: "start", loop: true }}
           className="w-full"
         >
-          <CarouselContent className="-ml-2 sm:-ml-3 md:-ml-4">
+          <CarouselContent className="-ml-2 sm:-ml-3 md:-ml-4 lg:-ml-5">
             {featured.map((product) => (
               <CarouselItem
                 key={product.id}
-                className="pl-2 sm:pl-3 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
+                className="pl-2 sm:pl-3 md:pl-4 lg:pl-5 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
               >
                 <ProductCard product={toDisplay(product)} />
               </CarouselItem>
             ))}
           </CarouselContent>
-          <div className="flex justify-center gap-2 mt-6">
+          <div className="flex justify-center gap-2 mt-4 sm:mt-5 md:mt-6">
             <CarouselPrevious className="static translate-y-0 bg-background hover:bg-primary hover:text-primary-foreground" />
             <CarouselNext className="static translate-y-0 bg-background hover:bg-primary hover:text-primary-foreground" />
           </div>
