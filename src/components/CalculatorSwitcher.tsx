@@ -50,7 +50,7 @@ export function CalculatorSwitcher() {
     return language === "bn" ? m.fallbackBn : m.fallbackEn;
   };
 
-  // Show all OTHER modules as quick-switch buttons
+  const active = MODULES.find((m) => m.path === location.pathname) ?? null;
   const others = MODULES.filter((m) => m.path !== location.pathname);
 
   return (
@@ -69,6 +69,23 @@ export function CalculatorSwitcher() {
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
+          {active && (
+            <span
+              aria-current="page"
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full",
+                "border-2 border-primary bg-primary text-primary-foreground",
+                "px-3 py-1.5 text-xs font-semibold shadow-sm",
+                "ring-2 ring-primary/30"
+              )}
+            >
+              <active.icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="whitespace-nowrap">{getTitle(active)}</span>
+              <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+                {language === "bn" ? "চালু" : "Active"}
+              </span>
+            </span>
+          )}
           {others.map((m) => {
             const Icon = m.icon;
             return (
