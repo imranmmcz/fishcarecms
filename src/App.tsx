@@ -25,6 +25,7 @@ import { preloadBanglaFont } from "@/lib/pdfBanglaFont";
 preloadBanglaFont();
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
+import Button3DShowcase from "./pages/Button3DShowcase";
 import PondCalculator from "./pages/PondCalculator";
 import FishStocking from "./pages/FishStocking";
 import StockingDensity from "./pages/StockingDensity";
@@ -152,6 +153,7 @@ const App = () => (
                     <ButtonStyleRouteSync />
                     <Routes>
                       <Route path="/" element={<Index />} />
+                      <Route path="/_showcase/button-3d" element={<Button3DShowcase />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/register" element={<Register />} />
                       <Route path="/forgot-password" element={<ForgotPassword />} />
