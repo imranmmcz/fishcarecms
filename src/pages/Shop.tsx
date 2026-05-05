@@ -420,7 +420,7 @@ const Shop = () => {
 
         {/* Category Filters */}
         <div className="flex flex-wrap gap-2 sm:gap-3 justify-center mb-6 sm:mb-8">
-          {productCategories.map((cat) => (
+          {topLevelCategories.map((cat) => (
             <button
               key={cat.value}
               onClick={() => setActiveCategory(cat.value)}
@@ -434,6 +434,25 @@ const Shop = () => {
             </button>
           ))}
         </div>
+
+        {/* Subcategory Filters (shown when a parent category is active) */}
+        {subCategories.length > 0 && (
+          <div className="flex flex-wrap gap-2 justify-center mb-6">
+            {subCategories.map((sub) => (
+              <button
+                key={sub.value}
+                onClick={() => setActiveCategory(sub.value)}
+                className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all border ${
+                  activeCategory === sub.value
+                    ? "bg-primary/10 text-primary border-primary"
+                    : "bg-card text-muted-foreground border-border hover:bg-muted"
+                }`}
+              >
+                {sub.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Results Count & Sort */}
         <div className="mb-6 flex flex-col sm:flex-row items-center justify-between gap-3">
