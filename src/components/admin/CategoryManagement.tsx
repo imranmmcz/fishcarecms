@@ -34,6 +34,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, FolderOpen, Loader2, GripVertical } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function CategoryManagement() {
   const { categories, loading, createCategory, updateCategory, deleteCategory, toggleCategoryStatus } = useCategories();
@@ -50,6 +51,7 @@ export function CategoryManagement() {
     icon: '',
     is_active: true,
     display_order: 0,
+    parent_id: null,
   });
 
   const resetForm = () => {
@@ -61,6 +63,7 @@ export function CategoryManagement() {
       icon: '',
       is_active: true,
       display_order: categories.length,
+      parent_id: null,
     });
     setEditingCategory(null);
   };
@@ -76,6 +79,7 @@ export function CategoryManagement() {
         icon: category.icon || '',
         is_active: category.is_active,
         display_order: category.display_order,
+        parent_id: category.parent_id ?? null,
       });
     } else {
       resetForm();
@@ -172,6 +176,7 @@ export function CategoryManagement() {
                   <TableHead>নাম (ইংরেজি)</TableHead>
                   <TableHead>নাম (বাংলা)</TableHead>
                   <TableHead>স্লাগ</TableHead>
+                  <TableHead>প্যারেন্ট</TableHead>
                   <TableHead className="text-center">স্ট্যাটাস</TableHead>
                   <TableHead className="text-right">অ্যাকশন</TableHead>
                 </TableRow>
@@ -189,6 +194,11 @@ export function CategoryManagement() {
                     <TableCell>{category.name_bn}</TableCell>
                     <TableCell>
                       <code className="text-xs bg-muted px-2 py-1 rounded">{category.slug}</code>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {category.parent_id
+                        ? categories.find((c) => c.id === category.parent_id)?.name_bn || '—'
+                        : '—'}
                     </TableCell>
                     <TableCell className="text-center">
                       <Switch
@@ -294,6 +304,34 @@ export function CategoryManagement() {
                   placeholder="ক্যাটাগরির বিবরণ..."
                   rows={3}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="parent_id">প্যারেন্ট ক্যাটাগরি (সাব ক্যাটাগরির জন্য)</Label>
+                <Select
+                  value={formData.parent_id || 'none'}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, parent_id: value === 'none' ? null : value })
+                  }
+                >
+                  <SelectTrigger id="parent_id">
+                    <SelectValue placeholder="কোনোটি নয় (টপ লেভেল)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">কোনোটি নয় (টপ লেভেল)</SelectItem>
+                    {categories
+                      .filter((c) => !editingCategory || c.id !== editingCategory.id)
+                      .filter((c) => !c.parent_id) // only allow top-level as parents (1 level subcategory)
+                      .map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name_bn} ({c.name})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  সাব ক্যাটাগরি বানাতে প্যারেন্ট ক্যাটাগরি নির্বাচন করুন
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
