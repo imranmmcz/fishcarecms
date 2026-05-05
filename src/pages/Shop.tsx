@@ -4,7 +4,8 @@ import Footer from "@/components/Footer";
 import { ProductCard, DisplayProduct } from "@/components/ProductCard";
 import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fishProducts as staticProducts, productCategories } from "@/data/fishProductData";
+import { fishProducts as staticProducts } from "@/data/fishProductData";
+import { useCategories } from "@/hooks/useCategories";
 import { ShoppingBag, Search, X, SlidersHorizontal, Pill, Utensils, Wrench, ArrowUpDown } from "lucide-react";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,44 @@ const Shop = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const { products: dbProducts, isLoading } = useProducts();
   const { t, language } = useLanguage();
+  const { categories: dbCategories } = useCategories();
+
+  // Build dynamic category list (active only) merging DB categories with legacy static ones
+  const dynamicCategories = useMemo(() => {
+    const active = dbCategories.filter((c) => c.is_active);
+    const list: { value: string; label: string; parent_id: string | null; id?: string }[] = [
+      { value: "all", label: language === "bn" ? "সকল পণ্য" : "All Products", parent_id: null },
+    ];
+    active.forEach((c) => {
+      list.push({
+        id: c.id,
+        value: c.slug,
+        label: language === "bn" ? c.name_bn : c.name,
+        parent_id: c.parent_id,
+      });
+    });
+    // Fallback legacy categories if DB empty
+    if (active.length === 0) {
+      list.push(
+        { value: "medicine", label: language === "bn" ? "ঔষধ" : "Medicine", parent_id: null },
+        { value: "food", label: language === "bn" ? "খাবার" : "Food", parent_id: null },
+        { value: "accessories", label: language === "bn" ? "সরঞ্জাম" : "Accessories", parent_id: null },
+      );
+    }
+    return list;
+  }, [dbCategories, language]);
+
+  const topLevelCategories = useMemo(
+    () => dynamicCategories.filter((c) => c.value === "all" || !c.parent_id),
+    [dynamicCategories]
+  );
+
+  // Subcategories of currently active category
+  const activeCategoryObj = dynamicCategories.find((c) => c.value === activeCategory);
+  const subCategories = useMemo(() => {
+    if (!activeCategoryObj || !activeCategoryObj.id) return [];
+    return dynamicCategories.filter((c) => c.parent_id === activeCategoryObj.id);
+  }, [dynamicCategories, activeCategoryObj]);
 
   // Combine database products with static products
   const allProducts = useMemo((): DisplayProduct[] => [
@@ -66,8 +105,11 @@ const Shop = () => {
       originalPrice: p.discount_percentage > 0 ? p.price : undefined,
       image: p.image_url || undefined,
       image_url: p.image_url || undefined,
-      category: p.category as "medicine" | "food" | "accessories",
-      categoryLabel: p.category === "medicine" ? (language === "bn" ? "ঔষধ" : "Medicine") : p.category === "food" ? (language === "bn" ? "খাবার" : "Food") : (language === "bn" ? "সরঞ্জাম" : "Accessories"),
+      category: p.category as DisplayProduct["category"],
+      categoryLabel: (() => {
+        const found = dynamicCategories.find((c) => c.value === p.category);
+        return found ? found.label : p.category;
+      })(),
       featured: false,
       externalLink: p.external_link || undefined,
       external_link: p.external_link || undefined,
@@ -90,7 +132,7 @@ const Shop = () => {
       company: "FishCare BD",
       isFromDatabase: false,
     })),
-  ], [dbProducts, language]);
+  ], [dbProducts, language, dynamicCategories]);
 
   // Calculate max price for slider
   const maxPrice = useMemo(() => {
@@ -130,7 +172,7 @@ const Shop = () => {
     });
 
     // Category matches
-    productCategories.forEach((cat) => {
+    topLevelCategories.forEach((cat) => {
       if (cat.label.toLowerCase().includes(query) && cat.value !== "all") {
         if (!results.find((r) => r.value === cat.value)) {
           results.push({ type: categoryLabel, value: cat.value, label: cat.label });
@@ -139,12 +181,24 @@ const Shop = () => {
     });
 
     return results.slice(0, 8);
-  }, [searchQuery, allProducts, language]);
+  }, [searchQuery, allProducts, language, topLevelCategories]);
 
   // Filter products based on all criteria
   const filteredProducts = useMemo(() => {
+    // If active category has children, allow products of self OR any child
+    const acceptedCategoryValues = (() => {
+      if (activeCategory === "all") return null;
+      const values = [activeCategory];
+      if (activeCategoryObj?.id) {
+        dynamicCategories
+          .filter((c) => c.parent_id === activeCategoryObj.id)
+          .forEach((c) => values.push(c.value));
+      }
+      return values;
+    })();
+
     let result = allProducts.filter((product) => {
-      if (activeCategory !== "all" && product.category !== activeCategory) return false;
+      if (acceptedCategoryValues && !acceptedCategoryValues.includes(product.category as string)) return false;
       if (product.price < appliedPriceRange[0] || product.price > appliedPriceRange[1]) return false;
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
@@ -174,7 +228,7 @@ const Shop = () => {
     }
 
     return result;
-  }, [allProducts, activeCategory, appliedPriceRange, searchQuery, sortBy]);
+  }, [allProducts, activeCategory, appliedPriceRange, searchQuery, sortBy, activeCategoryObj, dynamicCategories]);
 
   // Reset page when filters change
   useEffect(() => {
