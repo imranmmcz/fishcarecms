@@ -34,6 +34,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, FolderOpen, Loader2, GripVertical } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function CategoryManagement() {
   const { categories, loading, createCategory, updateCategory, deleteCategory, toggleCategoryStatus } = useCategories();
@@ -50,6 +51,7 @@ export function CategoryManagement() {
     icon: '',
     is_active: true,
     display_order: 0,
+    parent_id: null,
   });
 
   const resetForm = () => {
@@ -61,6 +63,7 @@ export function CategoryManagement() {
       icon: '',
       is_active: true,
       display_order: categories.length,
+      parent_id: null,
     });
     setEditingCategory(null);
   };
@@ -76,6 +79,7 @@ export function CategoryManagement() {
         icon: category.icon || '',
         is_active: category.is_active,
         display_order: category.display_order,
+        parent_id: category.parent_id ?? null,
       });
     } else {
       resetForm();
