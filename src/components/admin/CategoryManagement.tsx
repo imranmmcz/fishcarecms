@@ -306,6 +306,34 @@ export function CategoryManagement() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="parent_id">প্যারেন্ট ক্যাটাগরি (সাব ক্যাটাগরির জন্য)</Label>
+                <Select
+                  value={formData.parent_id || 'none'}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, parent_id: value === 'none' ? null : value })
+                  }
+                >
+                  <SelectTrigger id="parent_id">
+                    <SelectValue placeholder="কোনোটি নয় (টপ লেভেল)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">কোনোটি নয় (টপ লেভেল)</SelectItem>
+                    {categories
+                      .filter((c) => !editingCategory || c.id !== editingCategory.id)
+                      .filter((c) => !c.parent_id) // only allow top-level as parents (1 level subcategory)
+                      .map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name_bn} ({c.name})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  সাব ক্যাটাগরি বানাতে প্যারেন্ট ক্যাটাগরি নির্বাচন করুন
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="display_order">প্রদর্শন ক্রম</Label>
