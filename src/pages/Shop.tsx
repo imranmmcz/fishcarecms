@@ -245,18 +245,12 @@ const Shop = () => {
 
   // Group filtered products by category
   const groupedProducts = useMemo(() => {
-    const groups: Record<string, typeof filteredProducts> = {
-      medicine: [],
-      food: [],
-      accessories: [],
-    };
-
+    const groups: Record<string, typeof filteredProducts> = {};
     filteredProducts.forEach((product) => {
-      if (groups[product.category]) {
-        groups[product.category].push(product);
-      }
+      const key = product.category as string;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(product);
     });
-
     return groups;
   }, [filteredProducts]);
 
@@ -497,13 +491,20 @@ const Shop = () => {
                   if (products.length === 0) return null;
                   
                   const categoryInfo = categoryLabels[category];
-                  const label = language === "bn" ? categoryInfo.bn : categoryInfo.en;
+                  const dyn = dynamicCategories.find((c) => c.value === category);
+                  const label = dyn
+                    ? dyn.label
+                    : categoryInfo
+                    ? language === "bn"
+                      ? categoryInfo.bn
+                      : categoryInfo.en
+                    : category;
                   
                   return (
                     <section key={category}>
                       <div className="flex items-center gap-3 mb-6">
                         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
-                          {categoryIcons[category]}
+                          {categoryIcons[category] || <ShoppingBag className="h-5 w-5" />}
                         </div>
                         <h2 className="text-2xl font-bold">{label}</h2>
                         <span className="text-muted-foreground">({products.length})</span>
