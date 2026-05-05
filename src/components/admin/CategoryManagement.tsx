@@ -176,6 +176,7 @@ export function CategoryManagement() {
                   <TableHead>নাম (ইংরেজি)</TableHead>
                   <TableHead>নাম (বাংলা)</TableHead>
                   <TableHead>স্লাগ</TableHead>
+                  <TableHead>প্যারেন্ট</TableHead>
                   <TableHead className="text-center">স্ট্যাটাস</TableHead>
                   <TableHead className="text-right">অ্যাকশন</TableHead>
                 </TableRow>
@@ -193,6 +194,11 @@ export function CategoryManagement() {
                     <TableCell>{category.name_bn}</TableCell>
                     <TableCell>
                       <code className="text-xs bg-muted px-2 py-1 rounded">{category.slug}</code>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {category.parent_id
+                        ? categories.find((c) => c.id === category.parent_id)?.name_bn || '—'
+                        : '—'}
                     </TableCell>
                     <TableCell className="text-center">
                       <Switch
