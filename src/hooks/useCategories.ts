@@ -11,6 +11,7 @@ export interface Category {
   icon: string | null;
   is_active: boolean;
   display_order: number;
+  parent_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,6 +24,7 @@ export interface CategoryFormData {
   icon?: string;
   is_active?: boolean;
   display_order?: number;
+  parent_id?: string | null;
 }
 
 export function useCategories() {
