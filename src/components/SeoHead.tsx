@@ -66,7 +66,7 @@ const SeoHead = ({
   }, []);
 
   useEffect(() => {
-    const baseUrl = "https://fishcal.lovable.app";
+    const baseUrl = "https://fishcare.lovable.app";
     const defaultImage = `${baseUrl}/icons/icon-512x512.png`;
 
     const defaultTabTitle = tabSettings.title || "বৈজ্ঞানিক মাছ চাষ ব্যবস্থাপনা | মৎস্য খাত ক্যালকুলেটর";

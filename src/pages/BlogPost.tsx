@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
+import JsonLd from "@/components/JsonLd";
 import { useBlogPost, useBlogComments, useBlogActions, BLOG_CATEGORIES, BlogComment } from "@/hooks/useBlog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -95,6 +96,30 @@ const BlogPostPage = () => {
         description={post.meta_description || post.content?.replace(/<[^>]*>/g, "").substring(0, 160)}
         url={`/blog/${post.slug}`}
         image={post.og_image || post.images?.[0]?.image_url}
+      />
+      <JsonLd
+        id="ld-json-article"
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: post.title,
+          description:
+            post.meta_description ||
+            post.content?.replace(/<[^>]*>/g, "").substring(0, 160),
+          image: post.og_image || post.images?.[0]?.image_url || undefined,
+          author: { "@type": "Person", name: post.author_name },
+          datePublished: post.created_at,
+          dateModified: (post as any).updated_at || post.created_at,
+          mainEntityOfPage: `https://fishcare.lovable.app/blog/${post.slug}`,
+          publisher: {
+            "@type": "Organization",
+            name: "FishCare BD",
+            logo: {
+              "@type": "ImageObject",
+              url: "https://fishcare.lovable.app/icons/icon-512x512.png",
+            },
+          },
+        }}
       />
       <Header />
 
