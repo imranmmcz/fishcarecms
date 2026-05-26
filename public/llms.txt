@@ -1,0 +1,44 @@
+# FishCare BD
+
+> Bangladesh-focused fisheries management platform: scientific fish farming calculators, e-commerce shop for medicines/feed/accessories, disease advisory, daily market prices, and a community blog. Bengali-first, with full English support.
+
+FishCare BD helps fish farmers, hatcheries, and aquaculture businesses across Bangladesh plan and run their farms. The site combines a storefront for aquaculture products, calculators that handle pond sizing, stocking, feed, fertilizer, water quality, and cost, and reference content on fish species, diseases, and treatments.
+
+## Shop
+
+- [Shop](/shop): Browse fish medicines, feed, and accessories with filters and live search.
+- [Track Order](/track-order): Public order tracking by order number and phone.
+
+## Tools & Calculators
+
+- [Modules](/modules): Index of all farming modules and calculators.
+- [Pond Calculator](/pond-calculator): Calculate pond volume, surface area, and depth requirements.
+- [Fish Stocking](/fish-stocking): Plan species and quantity of fingerlings for a new pond.
+- [Stocking Density](/stocking-density): Recommended fish per decimal by species and system.
+- [Biomass Calculator](/biomass-calculator): Estimate total fish biomass from sample weights.
+- [Feed Management](/feed-management): Daily feed planning based on biomass and growth stage.
+- [Feed Formula Calculator](/feed-formula): Design custom feed mixes from local ingredients.
+- [Smart Feed Calculator](/smart-feed-calculator): AI-assisted feed-rate suggestions.
+- [Medicine Application](/medicine-application): Dosing guide for common aquaculture treatments.
+- [Medicine Recommendation](/medicine-recommendation): Suggested medicines per disease and species.
+- [Fertilizer Calculator](/fertilizer-calculator): Pond fertilization plans (urea, TSP, lime, compost).
+- [Water Quality](/water-quality): Interpret pH, ammonia, DO, alkalinity readings.
+- [Cost Calculator](/cost-calculator): Estimate per-cycle costs and break-even price.
+- [Reports](/reports): Public reporting layouts and printable summaries.
+
+## Knowledge
+
+- [Fish Species](/fish-species): Reference catalog of farmed fish species in Bangladesh.
+- [Disease Advice](/disease-advice): Common fish diseases, symptoms, and treatment guides.
+- [Fish Advice](/fish-advice): AI chat for farming questions.
+- [Market Price](/market-price): Crowd-sourced daily fish prices by district and market.
+- [Fisheries Contact](/fisheries-contact): Government fisheries office directory for Bangladesh.
+
+## Community
+
+- [Blog](/blog): Articles and tips from the fish-farming community.
+
+## Optional
+
+- [Sign In](/auth): Account sign-in for customers and farmers.
+- [Register](/register): Create a new account.
