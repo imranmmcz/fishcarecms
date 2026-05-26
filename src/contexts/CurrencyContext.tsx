@@ -115,8 +115,8 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
     
     // Format based on currency
     const formatted = new Intl.NumberFormat(currency === "BDT" ? "bn-BD" : "en-US", {
-      minimumFractionDigits: currency === "JPY" ? 0 : 2,
-      maximumFractionDigits: currency === "JPY" ? 0 : 2,
+      minimumFractionDigits: currency === "JPY" || currency === "BDT" ? 0 : 2,
+      maximumFractionDigits: currency === "JPY" || currency === "BDT" ? 0 : 2,
     }).format(convertedPrice);
 
     return `${currencyInfo.symbol}${formatted}`;

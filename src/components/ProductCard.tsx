@@ -360,9 +360,27 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
         </div>
 
-        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1 leading-relaxed hidden sm:block h-[1.25rem] sm:h-[1.4rem] overflow-hidden">
-          {product.description}
-        </p>
+        {(() => {
+          const desc = product.description || "";
+          const limit = 70;
+          const isLong = desc.length > limit;
+          const shortDesc = isLong ? desc.slice(0, limit).trimEnd() + "…" : desc;
+          return (
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed hidden sm:block h-[1.4rem] overflow-hidden">
+              <span className="line-clamp-1 align-middle">
+                {shortDesc}
+                {isLong && product.isFromDatabase && (
+                  <Link
+                    to={`/product/${product.id}`}
+                    className="ml-1 text-primary hover:underline font-medium whitespace-nowrap"
+                  >
+                    {language === "bn" ? "আরও পড়ুন" : "Read More"}
+                  </Link>
+                )}
+              </span>
+            </p>
+          );
+        })()}
 
         {/* Price */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 min-h-[1.75rem] sm:min-h-[2.25rem]">
@@ -397,38 +415,40 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                   </Button>
                 </div>
               ) : (
-                <Button3D 
-                  variant="primary" 
-                  size="sm" 
-                  className="flex-1 min-w-0 gap-1 text-[11px] sm:text-sm px-1.5 sm:px-3 py-1.5 truncate"
+                <Button3D
+                  variant="primary"
+                  size="sm"
+                  className="shrink-0 h-9 w-9 p-0 flex items-center justify-center"
                   onClick={handleAddToCart}
+                  aria-label={translations.addToCart}
+                  title={translations.addToCart}
                 >
-                  <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
-                  <span className="hidden sm:inline">{translations.addToCart}</span>
+                  <ShoppingCart className="h-4 w-4" />
                 </Button3D>
               )}
 
-              <Button3D 
+              <Button3D
                 variant="success"
-                size="sm" 
-                className="flex-1 min-w-0 gap-1 text-[11px] sm:text-sm px-1.5 sm:px-3 py-1.5 truncate"
+                size="sm"
+                className="flex-1 min-w-0 gap-1.5 text-xs sm:text-sm px-3 py-1.5 font-semibold"
                 onClick={handleOrderNow}
               >
-                <Package className="h-3.5 w-3.5 shrink-0" />
+                <Package className="h-4 w-4 shrink-0" />
                 <span className="truncate">{translations.orderNow}</span>
               </Button3D>
             </>
           )}
 
           {externalLink && (
-            <Button3D 
+            <Button3D
               variant="warning"
-              size="sm" 
-              className="flex-1 min-w-0 gap-1 text-[11px] sm:text-sm px-1.5 sm:px-3 py-1.5 truncate"
+              size="sm"
+              className="shrink-0 h-9 w-9 p-0 flex items-center justify-center"
               onClick={handleOrderClick}
+              aria-label={language === "bn" ? "বাহ্যিক লিংক" : "External Link"}
+              title={language === "bn" ? "বাহ্যিক লিংক" : "External Link"}
             >
-              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline">{language === "bn" ? "বাহ্যিক লিংক" : "External Link"}</span>
+              <ExternalLink className="h-4 w-4" />
             </Button3D>
           )}
         </div>
