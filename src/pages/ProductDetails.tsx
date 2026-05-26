@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
+import JsonLd from "@/components/JsonLd";
 import { supabase } from "@/integrations/supabase/client";
 import { useProducts, getDiscountedPrice } from "@/contexts/ProductsContext";
 import { useCart } from "@/contexts/CartContext";
@@ -300,6 +301,28 @@ const ProductDetails = () => {
         type="product"
         keywords={(product as any).focus_keyword || undefined}
         imageAlt={(product as any).image_alt_text || product.name}
+      />
+      <JsonLd
+        id="ld-json-product"
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: (product as any).meta_description || product.description || product.name,
+          image: product.image_url || undefined,
+          sku: (product as any).sku || product.id,
+          brand: { "@type": "Brand", name: "FishCare BD" },
+          offers: {
+            "@type": "Offer",
+            price: product.price,
+            priceCurrency: "BDT",
+            availability:
+              (product.stock_quantity ?? 1) > 0
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock",
+            url: `https://fishcare.lovable.app/product/${(product as any).seo_url || product.id}`,
+          },
+        }}
       />
       <Header />
       
