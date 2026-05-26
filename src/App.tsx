@@ -19,6 +19,7 @@ import { POSLayout } from "@/components/POSLayout";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import GoogleAnalyticsLoader from "@/components/GoogleAnalyticsLoader";
 import { ActivityLogger } from "@/components/ActivityLogger";
+import { RouteSeoHead } from "@/components/RouteSeoHead";
 import { preloadBanglaFont } from "@/lib/pdfBanglaFont";
 
 // Pre-load Nikosh font for PDF generation
@@ -151,6 +152,7 @@ const App = () => (
                   <BrowserRouter>
                     <ActivityLogger />
                     <ButtonStyleRouteSync />
+                    <RouteSeoHead />
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/_showcase/button-3d" element={<Button3DShowcase />} />
