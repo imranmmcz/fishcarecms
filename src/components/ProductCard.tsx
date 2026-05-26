@@ -360,7 +360,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           )}
         </div>
 
-        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed hidden sm:block min-h-[2.5rem]">
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1 leading-relaxed hidden sm:block h-[1.25rem] sm:h-[1.4rem] overflow-hidden">
           {product.description}
         </p>
 
@@ -373,11 +373,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </div>
 
         {/* Action Buttons — fixed row height so hover/scale never resizes the card */}
-        <div className="mt-auto flex items-center gap-1.5 sm:gap-2 min-h-[2.25rem] sm:min-h-[2.5rem]">
+        <div className="mt-auto flex flex-wrap items-center gap-1 sm:gap-2 min-h-[2.25rem] sm:min-h-[2.5rem]">
           {product.isFromDatabase && (
             <>
               {inCart ? (
-                <div className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1 flex-1">
+                <div className="flex items-center gap-1 bg-muted rounded-lg px-1.5 py-1 flex-1 min-w-0 basis-full sm:basis-0">
                   <Button
                     variant="outline"
                     size="icon"
@@ -400,10 +400,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 <Button3D 
                   variant="primary" 
                   size="sm" 
-                  className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5"
+                  className="flex-1 min-w-0 gap-1 text-[11px] sm:text-sm px-1.5 sm:px-3 py-1.5 truncate"
                   onClick={handleAddToCart}
                 >
-                  <ShoppingCart className="h-3.5 w-3.5" />
+                  <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
                   <span className="hidden sm:inline">{translations.addToCart}</span>
                 </Button3D>
               )}
@@ -411,11 +411,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               <Button3D 
                 variant="success"
                 size="sm" 
-                className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5"
+                className="flex-1 min-w-0 gap-1 text-[11px] sm:text-sm px-1.5 sm:px-3 py-1.5 truncate"
                 onClick={handleOrderNow}
               >
-                <Package className="h-3.5 w-3.5" />
-                {translations.orderNow}
+                <Package className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{translations.orderNow}</span>
               </Button3D>
             </>
           )}
@@ -424,10 +424,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <Button3D 
               variant="warning"
               size="sm" 
-              className="flex-1 gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5"
+              className="flex-1 min-w-0 gap-1 text-[11px] sm:text-sm px-1.5 sm:px-3 py-1.5 truncate"
               onClick={handleOrderClick}
             >
-              <ExternalLink className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
               <span className="hidden sm:inline">{language === "bn" ? "বাহ্যিক লিংক" : "External Link"}</span>
             </Button3D>
           )}
