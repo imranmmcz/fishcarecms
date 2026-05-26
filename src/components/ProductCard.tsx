@@ -373,6 +373,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                   <Link
                     to={`/product/${product.id}`}
                     className="ml-1 text-primary hover:underline font-medium whitespace-nowrap"
+                    aria-label={
+                      language === "bn"
+                        ? `${product.name} সম্পর্কে আরও পড়ুন`
+                        : `Read more about ${product.name}`
+                    }
                   >
                     {language === "bn" ? "আরও পড়ুন" : "Read More"}
                   </Link>
@@ -401,6 +406,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                     size="icon"
                     className="h-6 w-6 sm:h-7 sm:w-7"
                     onClick={() => updateQuantity(String(product.id), quantity - 1)}
+                    aria-label={language === "bn" ? `${product.name} এর পরিমাণ কমান` : `Decrease ${product.name} quantity`}
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
@@ -410,6 +416,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                     size="icon"
                     className="h-6 w-6 sm:h-7 sm:w-7"
                     onClick={() => updateQuantity(String(product.id), quantity + 1)}
+                    aria-label={language === "bn" ? `${product.name} এর পরিমাণ বাড়ান` : `Increase ${product.name} quantity`}
                   >
                     <Plus className="h-3 w-3" />
                   </Button>
