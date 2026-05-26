@@ -42,7 +42,7 @@ export function useReviews(productId?: string) {
     try {
       let query = supabase
         .from("product_reviews")
-        .select("*")
+        .select("id, product_id, user_id, user_name, rating, title, comment, is_verified_purchase, is_approved, helpful_count, created_at, updated_at")
         .eq("product_id", productId)
         .eq("is_approved", true);
 
@@ -62,7 +62,7 @@ export function useReviews(productId?: string) {
         product_id: r.product_id,
         user_id: r.user_id,
         user_name: r.user_name || "Anonymous",
-        user_email: r.user_email,
+        user_email: null,
         rating: r.rating,
         title: r.title,
         comment: r.comment,
