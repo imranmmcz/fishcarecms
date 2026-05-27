@@ -71,7 +71,7 @@ export function CartSheet() {
         {items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
             <ShoppingCart className="h-16 w-16 text-muted-foreground/50 mb-4" />
-            <h3 className="font-semibold text-lg mb-2">{translations.emptyCart}</h3>
+            <h2 className="font-semibold text-lg mb-2">{translations.emptyCart}</h2>
             <p className="text-muted-foreground text-sm mb-6">{translations.addProducts}</p>
             <Button variant="outline" onClick={() => setOpen(false)} asChild>
               <Link to="/shop">{translations.continueShopping}</Link>
@@ -129,6 +129,7 @@ export function CartSheet() {
                               size="icon"
                               className="h-7 w-7"
                               onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                              aria-label="Decrease quantity"
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
@@ -140,6 +141,7 @@ export function CartSheet() {
                               size="icon"
                               className="h-7 w-7"
                               onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                              aria-label="Increase quantity"
                             >
                               <Plus className="h-3 w-3" />
                             </Button>
@@ -153,6 +155,7 @@ export function CartSheet() {
                               size="icon"
                               className="h-7 w-7 text-destructive hover:text-destructive"
                               onClick={() => removeFromCart(item.product.id)}
+                              aria-label={`Remove ${item.product.name} from cart`}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
