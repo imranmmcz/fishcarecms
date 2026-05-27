@@ -225,9 +225,9 @@ export const Header = () => {
       <div className="border-b border-border relative z-[101]" style={{ backgroundColor: 'hsl(var(--header-bg, var(--background)))' }}>
         <div className="container flex h-16 md:h-20 items-center justify-between gap-2">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 shrink-0 transition-transform hover:scale-[1.02]">
+          <Link to="/" className="flex items-center gap-2.5 shrink-0 transition-transform hover:scale-[1.02]" aria-label={`${companyName} — Home`}>
             {headerData?.logoUrl ? (
-              <img src={headerData.logoUrl} alt={companyName} className="h-10 w-10 md:h-14 md:w-14 lg:h-16 lg:w-16 rounded-lg object-contain" />
+              <img src={headerData.logoUrl} alt={`${companyName} logo`} className="h-10 w-10 md:h-14 md:w-14 lg:h-16 lg:w-16 rounded-lg object-contain" />
             ) : (
               <div className="rounded-lg bg-foreground p-2 md:p-3">
                 <span className="text-sm md:text-lg font-bold text-background">FC</span>
