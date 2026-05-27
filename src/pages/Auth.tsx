@@ -180,7 +180,7 @@ const Auth = () => {
             {siteLogoUrl ? (
               <img 
                 src={siteLogoUrl} 
-                alt={loginHeading} 
+                alt={`${loginHeading} logo`} 
                 className="h-28 w-28 rounded-3xl object-contain mx-auto shadow-2xl ring-4 ring-primary-foreground/20 backdrop-blur-sm" 
               />
             ) : (
@@ -191,9 +191,9 @@ const Auth = () => {
           </div>
 
           {/* Heading */}
-          <h1 className="text-4xl xl:text-5xl font-bold text-primary-foreground mb-5 leading-tight tracking-tight">
+          <p role="heading" aria-level={2} className="text-4xl xl:text-5xl font-bold text-primary-foreground mb-5 leading-tight tracking-tight">
             {loginHeading}
-          </h1>
+          </p>
           <p className="text-primary-foreground/65 text-lg leading-relaxed max-w-sm mx-auto">
             আপনার মাছ চাষ ব্যবসা পরিচালনা করুন আধুনিক ও স্মার্ট পদ্ধতিতে
           </p>
@@ -228,7 +228,7 @@ const Auth = () => {
               {siteLogoUrl ? (
                 <img 
                   src={siteLogoUrl} 
-                  alt={loginHeading} 
+                  alt={`${loginHeading} logo`} 
                   className="h-18 w-18 rounded-2xl object-contain shadow-lg ring-2 ring-border" 
                 />
               ) : (
@@ -243,7 +243,7 @@ const Auth = () => {
 
           {/* Desktop welcome */}
           <div className="hidden lg:block space-y-1.5">
-            <h2 className="text-3xl font-bold text-foreground">স্বাগতম! 👋</h2>
+            <p role="heading" aria-level={2} className="text-3xl font-bold text-foreground">স্বাগতম! 👋</p>
             <p className="text-muted-foreground">{loginDesc}</p>
           </div>
 

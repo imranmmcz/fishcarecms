@@ -131,7 +131,8 @@ export function HeroSlider() {
   }
 
   return (
-    <section className="relative overflow-hidden text-white">
+    <section className="relative overflow-hidden text-white" aria-roledescription="carousel" aria-label="Hero highlights">
+      <h1 className="sr-only">{slides[0]?.title || "FishCare BD"}</h1>
       <Carousel
         opts={{ align: "start", loop: true }}
         plugins={[autoplayPlugin.current]}
@@ -174,9 +175,9 @@ export function HeroSlider() {
                             {slide.tagline}
                           </div>
                         )}
-                        <h1 className="text-lg sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
+                        <h2 className="text-lg sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
                           {slide.title}
-                        </h1>
+                        </h2>
                         {slide.subtitle && (
                           <p className="text-xs sm:text-sm md:text-lg lg:text-xl text-white/90 leading-relaxed line-clamp-2 sm:line-clamp-none">
                             {slide.subtitle}
