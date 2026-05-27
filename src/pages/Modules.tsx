@@ -246,7 +246,7 @@ const Modules = () => {
           {/* Quick Start */}
           <Card className="bg-gradient-primary text-white shadow-large">
             <CardContent className="py-8 text-center space-y-4">
-              <h3 className="text-2xl font-bold">{t.quickStart}</h3>
+              <h2 className="text-2xl font-bold">{t.quickStart}</h2>
               <p className="text-white/90">
                 {t.quickStartDesc}
               </p>
