@@ -131,7 +131,8 @@ export function HeroSlider() {
   }
 
   return (
-    <section className="relative overflow-hidden text-white">
+    <section className="relative overflow-hidden text-white" aria-roledescription="carousel" aria-label="Hero highlights">
+      <h1 className="sr-only">{slides[0]?.title || "FishCare BD"}</h1>
       <Carousel
         opts={{ align: "start", loop: true }}
         plugins={[autoplayPlugin.current]}
