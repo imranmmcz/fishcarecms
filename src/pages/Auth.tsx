@@ -180,7 +180,7 @@ const Auth = () => {
             {siteLogoUrl ? (
               <img 
                 src={siteLogoUrl} 
-                alt={loginHeading} 
+                alt={`${loginHeading} logo`} 
                 className="h-28 w-28 rounded-3xl object-contain mx-auto shadow-2xl ring-4 ring-primary-foreground/20 backdrop-blur-sm" 
               />
             ) : (
@@ -228,7 +228,7 @@ const Auth = () => {
               {siteLogoUrl ? (
                 <img 
                   src={siteLogoUrl} 
-                  alt={loginHeading} 
+                  alt={`${loginHeading} logo`} 
                   className="h-18 w-18 rounded-2xl object-contain shadow-lg ring-2 ring-border" 
                 />
               ) : (
