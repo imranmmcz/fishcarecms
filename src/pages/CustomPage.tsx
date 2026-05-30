@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import SeoHead from "@/components/SeoHead";
 import { FileText, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import DOMPurify from "dompurify";
 
 interface CustomPage {
   id: string;
@@ -103,7 +104,7 @@ export default function CustomPage() {
                   [&_th]:border [&_th]:border-border [&_th]:p-2 [&_th]:bg-muted [&_th]:font-semibold
                   [&_td]:border [&_td]:border-border [&_td]:p-2
                   [&_hr]:border-border [&_hr]:my-6"
-                dangerouslySetInnerHTML={{ __html: page.content || "" }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(page.content || "") }}
               />
             </article>
           </div>
