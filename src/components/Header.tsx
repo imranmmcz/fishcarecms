@@ -28,7 +28,13 @@ const MobileSearchToggle = () => {
 
   return (
     <div className="md:hidden">
-      <Button variant="ghost" size="icon" onClick={() => setOpen((v) => !v)}>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={open ? (language === "bn" ? "অনুসন্ধান বন্ধ করুন" : "Close search") : (language === "bn" ? "অনুসন্ধান খুলুন" : "Open search")}
+        aria-expanded={open}
+      >
         {open ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
       </Button>
       {open && (
@@ -107,6 +113,8 @@ const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
           <button
             className="flex items-center gap-1 hover:opacity-80"
             onClick={() => setShowMenu((v) => !v)}
+            aria-label={language === "bn" ? "অ্যাকাউন্ট মেনু" : "Account menu"}
+            aria-expanded={showMenu}
           >
             <User className="h-3.5 w-3.5" />
           </button>
@@ -268,7 +276,7 @@ export const Header = () => {
             {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" aria-label={language === "bn" ? "মেনু খুলুন" : "Open menu"}>
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>

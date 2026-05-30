@@ -189,10 +189,10 @@ export default function PondCalculator() {
           {/* Calculator Card */}
           <Card className="shadow-medium">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
                 <Ruler className="h-5 w-5 text-primary" />
                 পুকুরের তথ্য প্রদান করুন
-              </CardTitle>
+              </h2>
               <CardDescription>
                 পুকুরের আকৃতি নির্বাচন করুন এবং প্রয়োজনীয় মাপ দিন (মিটারে)
               </CardDescription>
@@ -414,10 +414,10 @@ export default function PondCalculator() {
           {results && (
             <Card className="shadow-medium border-primary/20 animate-fade-in">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary">
+                <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 text-primary">
                   <Droplets className="h-5 w-5" />
                   গণনার ফলাফল
-                </CardTitle>
+                </h2>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
