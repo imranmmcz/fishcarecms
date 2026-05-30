@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, Database, FileJson, FileCode, Loader2, RefreshCw, AlertCircle, Server } from "lucide-react";
+import { Download, Database, FileJson, FileCode, Loader2, RefreshCw, AlertCircle, Server, Upload, CheckCircle2, XCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import MySQLBackendSettings from "@/components/admin/MySQLBackendSettings";
+import { Input } from "@/components/ui/input";
 
 interface TableConfig {
   name: string;
@@ -34,6 +35,14 @@ export default function AdminDatabaseExport() {
   const [loading, setLoading] = useState(false);
   const [fetchingTables, setFetchingTables] = useState(true);
   const [exportFormat, setExportFormat] = useState<"json" | "mysql">("json");
+
+  // Import state
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<Record<string, any[]> | null>(null);
+  const [importSelected, setImportSelected] = useState<string[]>([]);
+  const [importMode, setImportMode] = useState<"upsert" | "insert">("upsert");
+  const [importing, setImporting] = useState(false);
+  const [importResults, setImportResults] = useState<{ table: string; ok: boolean; count: number; error?: string }[]>([]);
 
   useEffect(() => {
     fetchTables();
@@ -228,6 +237,88 @@ export default function AdminDatabaseExport() {
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setImportResults([]);
+    setImportPreview(null);
+    setImportSelected([]);
+    if (!file) {
+      setImportFile(null);
+      return;
+    }
+    setImportFile(file);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const tablesData: Record<string, any[]> =
+        parsed?.tables && typeof parsed.tables === "object" ? parsed.tables : parsed;
+      const valid: Record<string, any[]> = {};
+      Object.entries(tablesData).forEach(([k, v]) => {
+        if (Array.isArray(v)) valid[k] = v as any[];
+      });
+      if (Object.keys(valid).length === 0) {
+        toast.error("ফাইলে কোনো বৈধ টেবিল ডেটা পাওয়া যায়নি");
+        return;
+      }
+      setImportPreview(valid);
+      setImportSelected(Object.keys(valid));
+      toast.success(`${Object.keys(valid).length}টি টেবিল ফাইলে পাওয়া গেছে`);
+    } catch (err) {
+      console.error(err);
+      toast.error("JSON ফাইল পার্স করতে সমস্যা হয়েছে");
+    }
+  };
+
+  const toggleImportTable = (name: string) => {
+    setImportSelected(prev =>
+      prev.includes(name) ? prev.filter(t => t !== name) : [...prev, name]
+    );
+  };
+
+  const runImport = async () => {
+    if (!importPreview || importSelected.length === 0) {
+      toast.error("অন্তত একটি টেবিল নির্বাচন করুন");
+      return;
+    }
+    if (!confirm("আপনি কি নিশ্চিত? এই অপারেশন বিদ্যমান ডেটা পরিবর্তন/প্রতিস্থাপন করতে পারে।")) return;
+
+    setImporting(true);
+    setImportResults([]);
+    const results: { table: string; ok: boolean; count: number; error?: string }[] = [];
+
+    for (const tableName of importSelected) {
+      const rows = importPreview[tableName] || [];
+      if (rows.length === 0) {
+        results.push({ table: tableName, ok: true, count: 0 });
+        continue;
+      }
+      try {
+        const chunkSize = 500;
+        let inserted = 0;
+        for (let i = 0; i < rows.length; i += chunkSize) {
+          const chunk = rows.slice(i, i + chunkSize);
+          const query =
+            importMode === "upsert"
+              ? (supabase.from(tableName as any) as any).upsert(chunk, { onConflict: "id" })
+              : (supabase.from(tableName as any) as any).insert(chunk);
+          const { error } = await query;
+          if (error) throw error;
+          inserted += chunk.length;
+        }
+        results.push({ table: tableName, ok: true, count: inserted });
+      } catch (err: any) {
+        results.push({ table: tableName, ok: false, count: 0, error: err?.message || "Unknown error" });
+      }
+    }
+
+    setImportResults(results);
+    setImporting(false);
+    const okCount = results.filter(r => r.ok).length;
+    const failCount = results.length - okCount;
+    if (failCount === 0) toast.success(`সফলভাবে ${okCount}টি টেবিল ইম্পোর্ট হয়েছে`);
+    else toast.error(`${failCount}টি টেবিল ইম্পোর্ট ব্যর্থ হয়েছে`);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -246,6 +337,10 @@ export default function AdminDatabaseExport() {
             <TabsTrigger value="export" className="flex items-center gap-2">
               <Download className="h-4 w-4" />
               এক্সপোর্ট
+            </TabsTrigger>
+            <TabsTrigger value="import" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              ইম্পোর্ট
             </TabsTrigger>
             <TabsTrigger value="backend" className="flex items-center gap-2">
               <Server className="h-4 w-4" />
@@ -427,6 +522,149 @@ export default function AdminDatabaseExport() {
             </ul>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="import" className="space-y-6 mt-4">
+            <Alert className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-700 dark:text-amber-300">
+                ⚠️ <strong>সতর্কতা:</strong> ইম্পোর্টের আগে অবশ্যই বর্তমান ডাটাবেজের ব্যাকআপ নিন। Upsert মোডে একই <code>id</code> থাকা রেকর্ড আপডেট হবে।
+              </AlertDescription>
+            </Alert>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileJson className="h-5 w-5" />
+                    JSON ফাইল আপলোড করুন
+                  </CardTitle>
+                  <CardDescription>
+                    এক্সপোর্ট করা JSON ফাইল (<code>tables</code> অবজেক্ট সহ) নির্বাচন করুন
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Input type="file" accept="application/json,.json" onChange={handleFileSelect} />
+
+                  {importFile && (
+                    <p className="text-sm text-muted-foreground">
+                      নির্বাচিত: <strong>{importFile.name}</strong> ({Math.round(importFile.size / 1024)} KB)
+                    </p>
+                  )}
+
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium">ইম্পোর্ট মোড</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div
+                        onClick={() => setImportMode("upsert")}
+                        className={`cursor-pointer p-3 rounded-lg border-2 transition-all ${
+                          importMode === "upsert" ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="font-medium mb-1">Upsert</div>
+                        <p className="text-xs text-muted-foreground">একই id থাকলে আপডেট, না থাকলে নতুন তৈরি</p>
+                      </div>
+                      <div
+                        onClick={() => setImportMode("insert")}
+                        className={`cursor-pointer p-3 rounded-lg border-2 transition-all ${
+                          importMode === "insert" ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="font-medium mb-1">Insert Only</div>
+                        <p className="text-xs text-muted-foreground">শুধু নতুন রেকর্ড যোগ হবে (ডুপ্লিকেট হলে ব্যর্থ)</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>টেবিল নির্বাচন ও ইম্পোর্ট</CardTitle>
+                  <CardDescription>
+                    ফাইল থেকে যে টেবিলগুলো ইম্পোর্ট করতে চান সেগুলো নির্বাচন করুন
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!importPreview ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center">
+                      প্রথমে একটি JSON ফাইল আপলোড করুন
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setImportSelected(Object.keys(importPreview))}>
+                          সব নির্বাচন
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setImportSelected([])}>
+                          সব বাতিল
+                        </Button>
+                      </div>
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                        {Object.entries(importPreview).map(([name, rows]) => {
+                          const result = importResults.find(r => r.table === name);
+                          return (
+                            <div key={name} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50">
+                              <Checkbox
+                                id={`imp-${name}`}
+                                checked={importSelected.includes(name)}
+                                onCheckedChange={() => toggleImportTable(name)}
+                              />
+                              <Label htmlFor={`imp-${name}`} className="cursor-pointer flex-1 flex items-center justify-between">
+                                <span>
+                                  <span className="font-medium">{name}</span>
+                                  <span className="text-muted-foreground text-sm ml-2">({rows.length}টি রেকর্ড)</span>
+                                </span>
+                                {result && (
+                                  result.ok ? (
+                                    <span className="flex items-center gap-1 text-xs text-green-600">
+                                      <CheckCircle2 className="h-4 w-4" /> {result.count}
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center gap-1 text-xs text-destructive" title={result.error}>
+                                      <XCircle className="h-4 w-4" /> ব্যর্থ
+                                    </span>
+                                  )
+                                )}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        onClick={runImport}
+                        disabled={importing || importSelected.length === 0}
+                        className="w-full"
+                        size="lg"
+                      >
+                        {importing ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ইম্পোর্ট হচ্ছে...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            {importSelected.length}টি টেবিল ইম্পোর্ট করুন
+                          </>
+                        )}
+                      </Button>
+
+                      {importResults.some(r => !r.ok) && (
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription className="text-xs">
+                            কিছু টেবিল ইম্পোর্ট ব্যর্থ হয়েছে। RLS পলিসি বা স্কিমা অমিল হতে পারে। বিস্তারিত: {" "}
+                            {importResults.filter(r => !r.ok).map(r => `${r.table}: ${r.error}`).join(" | ")}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="backend" className="space-y-6 mt-4">
