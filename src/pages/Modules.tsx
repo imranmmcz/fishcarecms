@@ -133,6 +133,7 @@ const Modules = () => {
           </div>
 
           {/* Modules Grid */}
+          <h2 className="sr-only">{t.allModules}</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {modules.map((module, index) => (
               <>
@@ -157,10 +158,10 @@ const Modules = () => {
           {/* Progress Card */}
           <Card className="bg-gradient-card shadow-medium">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
                 <Info className="h-5 w-5 text-primary" />
                 {t.yourProgress}
-              </CardTitle>
+              </h2>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
@@ -209,10 +210,10 @@ const Modules = () => {
           {/* Workflow Guide */}
           <Card className="shadow-medium">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
                 <ArrowRight className="h-5 w-5 text-primary" />
                 {t.workflowGuide}
-              </CardTitle>
+              </h2>
               <CardDescription>
                 {t.workflowGuideDesc}
               </CardDescription>
