@@ -161,7 +161,7 @@ const BlogPostPage = () => {
           )}
 
           {/* Content */}
-          <div className="prose prose-sm max-w-none mb-6" dangerouslySetInnerHTML={{ __html: post.content || "" }} />
+          <div className="prose prose-sm max-w-none mb-6" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content || "") }} />
           
           {/* Share Buttons */}
           <ShareButtons
