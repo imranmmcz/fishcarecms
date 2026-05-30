@@ -2,21 +2,29 @@ import { Link } from "react-router-dom";
 import SeoHead from "@/components/SeoHead";
 import { MegaShopHeader } from "./MegaShopHeader";
 import { MegaShopFooter } from "./MegaShopFooter";
-import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { FlashSaleSection } from "@/components/home/FlashSaleSection";
 import { FishHealthAdvice } from "@/components/FishHealthAdvice";
 import { ProductSlider } from "@/components/ProductSlider";
+import { ProductCard, DisplayProduct } from "@/components/ProductCard";
+import { useProducts } from "@/contexts/ProductsContext";
 import AdUnit from "@/components/AdUnit";
 import { Button3D } from "@/components/ui/button-3d";
 import { ModuleCard } from "@/components/ModuleCard";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, FlaskConical, ShoppingBag, ArrowRight, Sparkles } from "lucide-react";
+import { Calculator, Droplets, Fish, Scale, Pill, TrendingUp, FileText, DollarSign, Package, MessageSquare, FlaskConical, ShoppingBag, ArrowRight, Sparkles, Leaf, Flame, Star } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
+
+const categoryLabels: Record<string, { bn: string; en: string }> = {
+  medicine: { bn: "ঔষধ", en: "Medicine" },
+  food: { bn: "খাদ্য", en: "Food" },
+  accessories: { bn: "সরঞ্জাম", en: "Accessories" },
+};
 
 export const MegaShopHome = () => {
   const { t, language } = useLanguage();
   const { categories } = useCategories();
+  const { products } = useProducts();
 
   const modules = [
     { id: 1, title: t.pondCalculator, description: t.pondCalculatorDesc, icon: Droplets, path: "/pond-calculator", isActive: true },
@@ -35,8 +43,43 @@ export const MegaShopHome = () => {
 
   const activeCategories = categories?.filter(c => c.is_active) || [];
 
+  // Featured products for editorial grid
+  const featured = [...(products || [])]
+    .filter((p) => p.stock_quantity >= 0)
+    .sort((a, b) => {
+      const da = a.discount_percentage || 0;
+      const db = b.discount_percentage || 0;
+      if (db !== da) return db - da;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    })
+    .slice(0, 7);
+
+  const toDisplay = (p: any): DisplayProduct => {
+    const disc = p.discount_percentage || 0;
+    const cat = (p.category || "medicine") as "medicine" | "food" | "accessories";
+    return {
+      id: p.id,
+      name: p.name,
+      description: p.description || "",
+      price: disc > 0 ? p.price * (1 - disc / 100) : p.price,
+      originalPrice: disc > 0 ? p.price : undefined,
+      image_url: p.image_url || undefined,
+      category: cat,
+      categoryLabel: categoryLabels[cat]?.[language] || cat,
+      discount_percentage: disc,
+      isFromDatabase: true,
+    };
+  };
+
+  const eyebrow = (en: string, bn: string) => (
+    <p className="inline-flex items-center gap-2 text-[11px] font-display font-semibold uppercase tracking-[0.18em] text-primary">
+      <span className="h-px w-6 bg-primary" />
+      {language === "bn" ? bn : en}
+    </p>
+  );
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="megashop-theme min-h-screen bg-background text-foreground">
       <SeoHead
         title={language === "bn" ? "বৈজ্ঞানিক মাছ চাষ ব্যবস্থাপনা" : "Scientific Fish Farming Management"}
         description={language === "bn" ? "আধুনিক প্রযুক্তি ব্যবহার করে মাছ চাষকে আরও লাভজনক এবং টেকসই করুন।" : "Make fish farming more profitable with modern technology."}
@@ -46,40 +89,68 @@ export const MegaShopHome = () => {
 
       <AdUnit position="header" className="py-2 container" />
 
-      {/* Hero with side banners grid */}
-      <section className="container py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
-          {/* Main Hero - Takes 3 cols */}
-          <div className="lg:col-span-3 rounded-xl overflow-hidden">
+      {/* MAGAZINE HERO — 10-column editorial cover */}
+      <section className="container py-6 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 lg:gap-5">
+          {/* Big hero slider (cols 1-7) */}
+          <div className="lg:col-span-7 rounded-2xl overflow-hidden shadow-magazine ring-1 ring-border/60">
             <HeroSlider />
           </div>
-          {/* Side Banners */}
-          <div className="hidden lg:flex flex-col gap-3">
-            <Link to="/shop" className="flex-1 rounded-xl bg-gradient-to-br from-primary to-primary/80 p-5 flex flex-col justify-between text-primary-foreground hover:opacity-90 transition-opacity">
-              <Sparkles className="h-6 w-6" />
-              <div>
-                <p className="text-lg font-bold">{language === "bn" ? "নতুন পণ্য" : "New Arrivals"}</p>
-                <p className="text-xs opacity-80">{language === "bn" ? "সর্বশেষ সংযোজন দেখুন" : "Check latest additions"}</p>
+
+          {/* Editorial column (cols 8-10) */}
+          <div className="lg:col-span-3 flex flex-col gap-4">
+            <div className="rounded-2xl p-6 bg-gradient-card border border-border/60 shadow-magazine flex flex-col justify-between min-h-[180px]">
+              {eyebrow("New Season", "নতুন সিজন")}
+              <h2 className="font-display text-2xl xl:text-3xl font-bold leading-[1.1] mt-3 text-foreground">
+                {language === "bn" ? "মাছ চাষের পূর্ণাঙ্গ সমাধান।" : "The complete fish-farming toolkit."}
+              </h2>
+              <div className="flex flex-wrap gap-2 mt-4">
+                <Link to="/shop">
+                  <Button3D variant="primary" size="sm" className="gap-1.5">
+                    <ShoppingBag className="h-4 w-4" />
+                    {language === "bn" ? "শপ" : "Shop"}
+                  </Button3D>
+                </Link>
+                <Link to="/modules">
+                  <Button3D variant="warning" size="sm" className="gap-1.5">
+                    <Calculator className="h-4 w-4" />
+                    {language === "bn" ? "টুলস" : "Tools"}
+                  </Button3D>
+                </Link>
               </div>
-            </Link>
-            <Link to="/shop" className="flex-1 rounded-xl bg-gradient-to-br from-accent to-accent/80 p-5 flex flex-col justify-between text-white hover:opacity-90 transition-opacity">
-              <ShoppingBag className="h-6 w-6" />
-              <div>
-                <p className="text-lg font-bold">{language === "bn" ? "সেরা বিক্রি" : "Best Sellers"}</p>
-                <p className="text-xs opacity-80">{language === "bn" ? "জনপ্রিয় পণ্যসমূহ" : "Most popular products"}</p>
+            </div>
+
+            <Link
+              to="/shop"
+              className="group relative rounded-2xl overflow-hidden p-5 bg-[image:var(--gradient-hero)] text-primary-foreground shadow-feature min-h-[140px] flex flex-col justify-between"
+            >
+              <div className="absolute -right-6 -top-6 opacity-20 group-hover:opacity-30 transition-opacity">
+                <Leaf className="h-24 w-24" />
+              </div>
+              <Sparkles className="h-5 w-5 relative" />
+              <div className="relative">
+                <p className="font-display text-lg font-bold leading-tight">
+                  {language === "bn" ? "নতুন পণ্য" : "New Arrivals"}
+                </p>
+                <p className="text-xs opacity-85 mt-0.5">
+                  {language === "bn" ? "সর্বশেষ সংযোজন" : "Just landed"}
+                </p>
               </div>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Category Quick Nav */}
+      {/* Category rail */}
       {activeCategories.length > 0 && (
-        <section className="container pb-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <section className="container pb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide border-y border-border/60 py-3">
             {activeCategories.map((cat) => (
-              <Link key={cat.id} to={`/shop?category=${cat.slug}`}
-                className="shrink-0 px-4 py-2 rounded-full border border-border bg-card hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all text-sm font-medium">
+              <Link
+                key={cat.id}
+                to={`/shop?category=${cat.slug}`}
+                className="shrink-0 px-4 py-2 rounded-full border border-border bg-card hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all text-sm font-medium font-display"
+              >
                 {language === "bn" ? cat.name_bn : cat.name}
               </Link>
             ))}
@@ -87,20 +158,63 @@ export const MegaShopHome = () => {
         </section>
       )}
 
-      <FlashSaleSection />
-      <FeaturedProducts />
+      {/* Flash sale band */}
+      <div className="bg-foreground/[0.03] border-y border-border/60">
+        <div className="container py-2">
+          <FlashSaleSection />
+        </div>
+      </div>
+
+      {/* FEATURED — editorial product grid (cover + 6) */}
+      {featured.length > 0 && (
+        <section className="py-12 lg:py-16">
+          <div className="container">
+            <div className="flex items-end justify-between mb-8 gap-4 flex-wrap">
+              <div>
+                {eyebrow("Editor's Picks", "সম্পাদকের পছন্দ")}
+                <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mt-2 text-foreground leading-[1.05]">
+                  {language === "bn" ? "জনপ্রিয় পণ্য" : "Featured Products"}
+                </h2>
+              </div>
+              <Link to="/shop">
+                <Button3D variant="primary" size="sm" className="gap-2">
+                  {language === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-4 w-4" />
+                </Button3D>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+              {/* Cover product 2×2 */}
+              {featured[0] && (
+                <div className="col-span-2 row-span-2 relative">
+                  <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-display font-semibold uppercase tracking-wider shadow-magazine">
+                    <Star className="h-3 w-3 fill-current" />
+                    {language === "bn" ? "কভার পিক" : "Cover Pick"}
+                  </div>
+                  <div className="h-full [&>*]:h-full">
+                    <ProductCard product={toDisplay(featured[0])} />
+                  </div>
+                </div>
+              )}
+              {featured.slice(1, 7).map((p) => (
+                <ProductCard key={p.id} product={toDisplay(p)} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <AdUnit position="between-modules" className="py-4 container" />
 
-      {/* Modules Grid - Compact */}
-      <section className="py-10 sm:py-16 bg-muted/30">
-        <div className="container px-3 sm:px-4">
-          <div className="flex items-center justify-between mb-6">
+      {/* MODULES — bento (1 large + 6 small) */}
+      <section className="py-12 lg:py-16 bg-muted/40 border-y border-border/60">
+        <div className="container">
+          <div className="flex items-end justify-between mb-8 gap-4 flex-wrap">
             <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">
-                {language === "bn" ? "মাছ চাষ টুলস" : "Farming Tools"}
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">{t.integratedModules}</h2>
+              {eyebrow("Farming Tools", "মাছ চাষ টুলস")}
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mt-2 text-foreground leading-[1.05]">
+                {t.integratedModules}
+              </h2>
             </div>
             <Link to="/modules">
               <Button3D variant="primary" size="sm" className="gap-1">
@@ -108,32 +222,95 @@ export const MegaShopHome = () => {
               </Button3D>
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {modules.slice(0, 8).map((module) => (
-              <ModuleCard key={module.id} title={module.title} description={module.description} icon={module.icon} path={module.path} isActive={module.isActive} />
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-fr">
+            {/* Hero tile — Pond Calculator */}
+            <Link
+              to={modules[0].path}
+              className="col-span-2 md:col-span-2 row-span-2 relative rounded-2xl overflow-hidden p-6 lg:p-8 bg-[image:var(--gradient-hero)] text-primary-foreground shadow-feature flex flex-col justify-between min-h-[220px] group"
+            >
+              <div className="absolute -right-10 -bottom-10 opacity-15 group-hover:opacity-25 transition-opacity">
+                <Droplets className="h-56 w-56" />
+              </div>
+              <div className="relative">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur text-[10px] font-display font-semibold uppercase tracking-wider">
+                  <Flame className="h-3 w-3" /> {language === "bn" ? "ফিচার্ড" : "Featured"}
+                </div>
+                <h3 className="font-display text-2xl lg:text-3xl xl:text-4xl font-bold mt-4 leading-[1.1]">
+                  {modules[0].title}
+                </h3>
+                <p className="text-sm lg:text-base opacity-85 mt-3 max-w-md">
+                  {modules[0].description}
+                </p>
+              </div>
+              <div className="relative inline-flex items-center gap-2 text-sm font-display font-semibold">
+                {language === "bn" ? "শুরু করুন" : "Get started"}
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* 6 small tiles */}
+            {modules.slice(1, 7).map((module) => (
+              <ModuleCard
+                key={module.id}
+                title={module.title}
+                description={module.description}
+                icon={module.icon}
+                path={module.path}
+                isActive={module.isActive}
+              />
             ))}
           </div>
         </div>
       </section>
 
-      <ProductSlider />
-      <AdUnit position="in-article" className="py-4 container" />
-      <FishHealthAdvice />
+      {/* "From the Field" — editorial split */}
+      <section className="py-12 lg:py-16">
+        <div className="container">
+          <div className="text-center mb-10">
+            {eyebrow("From the Field", "মাঠ থেকে")}
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mt-2 text-foreground leading-[1.05]">
+              {language === "bn" ? "পরামর্শ ও জনপ্রিয় পণ্য" : "Advice & Trending Products"}
+            </h2>
+          </div>
+          <FishHealthAdvice />
+        </div>
+      </section>
 
-      {/* CTA - Gradient Banner */}
-      <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 50%, hsl(var(--accent)) 100%)' }}>
-        <div className="container text-center space-y-5 px-4 relative z-10 text-white">
-          <h2 className="text-2xl sm:text-4xl font-bold">{t.startManagement}</h2>
-          <p className="text-lg text-white/80 max-w-xl mx-auto">{t.startManagementDesc}</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <AdUnit position="in-article" className="py-4 container" />
+
+      <ProductSlider />
+
+      {/* Asymmetric CTA */}
+      <section className="py-12 lg:py-20 relative overflow-hidden bg-[image:var(--gradient-hero)] text-primary-foreground">
+        <div className="absolute -right-20 -top-20 opacity-10">
+          <Leaf className="h-[28rem] w-[28rem]" />
+        </div>
+        <div className="absolute -left-16 -bottom-16 opacity-10">
+          <Fish className="h-72 w-72" />
+        </div>
+        <div className="container relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-8">
+            <p className="inline-flex items-center gap-2 text-[11px] font-display font-semibold uppercase tracking-[0.18em] opacity-90">
+              <span className="h-px w-6 bg-current" />
+              {language === "bn" ? "শুরু করুন আজই" : "Start today"}
+            </p>
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mt-3 leading-[1.05]">
+              {t.startManagement}
+            </h2>
+            <p className="text-base lg:text-lg opacity-85 mt-4 max-w-2xl">
+              {t.startManagementDesc}
+            </p>
+          </div>
+          <div className="lg:col-span-4 flex flex-col gap-3">
             <Link to="/pond-calculator">
-              <Button3D size="lg" variant="warning">
+              <Button3D size="lg" variant="warning" className="w-full justify-center">
                 <Calculator className="mr-2 h-5 w-5" />
                 {t.startPondMeasurement}
               </Button3D>
             </Link>
             <Link to="/shop">
-              <Button3D size="lg" variant="primary" className="border-white text-white hover:bg-white/20">
+              <Button3D size="lg" variant="primary" className="w-full justify-center border-white text-white hover:bg-white/20">
                 <ShoppingBag className="mr-2 h-5 w-5" />
                 {language === "bn" ? "শপ দেখুন" : "Browse Shop"}
               </Button3D>

@@ -56,6 +56,38 @@ All colors MUST be HSL.
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* MegaShop magazine theme — scoped to the homepage wrapper so other layouts are untouched */
+  .megashop-theme {
+    --background: 60 33% 97%;
+    --foreground: 130 35% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 130 35% 12%;
+    --primary: 113 55% 26%;
+    --primary-foreground: 60 33% 97%;
+    --primary-glow: 97 83% 37%;
+    --secondary: 97 83% 37%;
+    --secondary-foreground: 60 33% 97%;
+    --accent: 97 83% 37%;
+    --accent-foreground: 60 33% 97%;
+    --muted: 100 20% 92%;
+    --muted-foreground: 130 15% 35%;
+    --border: 100 15% 86%;
+    --ring: 113 55% 26%;
+    --gradient-primary: linear-gradient(135deg, hsl(113 55% 26%), hsl(97 83% 37%));
+    --gradient-hero: linear-gradient(135deg, hsl(113 55% 18%) 0%, hsl(113 55% 26%) 55%, hsl(97 83% 37%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(60 33% 99%), hsl(100 25% 95%));
+    --shadow-magazine: 0 1px 2px hsl(113 55% 10% / 0.06), 0 12px 28px -10px hsl(113 55% 10% / 0.18);
+    --shadow-feature: 0 4px 8px -2px hsl(113 55% 10% / 0.08), 0 24px 48px -16px hsl(113 55% 10% / 0.25);
+  }
+  .megashop-theme {
+    font-family: "DM Sans", "Hind Siliguri", sans-serif;
+  }
+  .megashop-theme h1, .megashop-theme h2, .megashop-theme h3,
+  .megashop-theme .font-display {
+    font-family: "Space Grotesk", "Hind Siliguri", sans-serif;
+    letter-spacing: -0.01em;
+  }
+
   .dark {
     --background: 200 20% 8%;
     --foreground: 210 20% 95%;

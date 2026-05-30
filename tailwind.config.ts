@@ -15,6 +15,8 @@ export default {
     extend: {
       fontFamily: {
         bangla: ["Hind Siliguri", "sans-serif"],
+        display: ["Space Grotesk", "Hind Siliguri", "sans-serif"],
+        sans: ["DM Sans", "Hind Siliguri", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -117,6 +119,8 @@ export default {
         soft: "var(--shadow-soft)",
         medium: "var(--shadow-medium)",
         large: "var(--shadow-large)",
+        magazine: "var(--shadow-magazine, var(--shadow-medium))",
+        feature: "var(--shadow-feature, var(--shadow-large))",
       },
     },
   },

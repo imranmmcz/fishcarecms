@@ -1,44 +1,79 @@
+## MegaShop Homepage Style Improvement
 
-# ২টি নতুন ই-কমার্স লেআউট থিম
+Refresh only the **MegaShop** homepage layout (`src/components/layouts/MegaShopHome.tsx` and its `MegaShopHeader`/`MegaShopFooter`) with a magazine-style composition, premium green palette, and modern tech typography. Classic and Modern layouts stay untouched.
 
-## বর্তমান অবস্থা
-- একটি ডিফল্ট লেআউট আছে (3-row header, 4-column footer, hero slider)
-- ৮টি কালার প্রিসেট আছে কিন্তু লেআউট পরিবর্তন হয় না
+### Design Tokens (added to `src/index.css` + `tailwind.config.ts`)
 
-## পরিকল্পনা
+- **Primary green**: `#25671E` → HSL `113 55% 26%`
+- **Accent lime**: `#4CAF10` → HSL `97 83% 37%`
+- **Supporting**: warm cream surface, deep forest text, soft sage muted
+- New gradient tokens: `--gradient-hero` (forest → lime), `--gradient-card` (cream → sage tint)
+- New shadow tokens: `--shadow-magazine` (soft layered), `--shadow-feature` (elevated)
+- **Fonts**: Space Grotesk (headings) + DM Sans (body), loaded via Google Fonts in `index.html`; mapped to `font-display` and `font-sans` in Tailwind. Bengali text continues using existing Bengali font stack as a fallback.
 
-### লেআউট ১: "ক্লাসিক" (বর্তমান - ডিফল্ট)
-- 3-row header (utility → logo/search → nav)
-- Hero slider + featured products carousel
-- Module cards grid
-- 4-column footer with underwater effect
+### Magazine Layout Structure
 
-### লেআউট ২: "মডার্ন মিনিমাল"
-- **হেডার**: Single-row sticky header — লোগো বামে, সেন্টার্ড নেভিগেশন, ডানে অ্যাকশন আইকন (search, cart, user)
-- **হিরো**: Full-width split layout — বাম পাশে টেক্সট + CTA, ডান পাশে প্রোডাক্ট ইমেজ/ক্যারোউসেল
-- **প্রোডাক্ট সেকশন**: Large card grid with hover zoom effect, category tabs
-- **ফুটার**: 3-column clean footer with newsletter signup, no underwater effect
+```text
+┌──────────────────────────────────────────────────┐
+│  MegaShopHeader (compact, refined spacing)       │
+├──────────────────────────────────────────────────┤
+│  FEATURED HERO STRIP (magazine cover)            │
+│  ┌──────────────┬──────────────┬──────────────┐  │
+│  │              │  Eyebrow     │ Side feature │  │
+│  │  Big Hero    │  Big H1      │ card (promo) │  │
+│  │  (7 cols)    │  CTA buttons ├──────────────┤  │
+│  │              │  (3 cols)    │ Side feature │  │
+│  └──────────────┴──────────────┴──────────────┘  │
+├──────────────────────────────────────────────────┤
+│  Category pill rail (kept, restyled)             │
+├──────────────────────────────────────────────────┤
+│  FLASH SALE band (full-width, dark green)        │
+├──────────────────────────────────────────────────┤
+│  FEATURED PRODUCTS — editorial grid              │
+│  [Big card 2×2] [Card] [Card]                    │
+│                 [Card] [Card]                    │
+├──────────────────────────────────────────────────┤
+│  FARMING TOOLS — bento (1 large + 6 small)       │
+├──────────────────────────────────────────────────┤
+│  "From the Field" editorial split                │
+│  (FishHealthAdvice on left, ProductSlider right) │
+├──────────────────────────────────────────────────┤
+│  CTA banner (forest→lime gradient, asymmetric)   │
+├──────────────────────────────────────────────────┤
+│  MegaShopFooter                                  │
+└──────────────────────────────────────────────────┘
+```
 
-### লেআউট ৩: "মেগা শপ"  
-- **হেডার**: 2-row header — টপে লোগো + mega search bar, নিচে ক্যাটাগরি dropdown menu + deals banner
-- **হিরো**: Banner grid layout — বড় ব্যানার + ২টি ছোট সাইড ব্যানার
-- **প্রোডাক্ট সেকশন**: Category-wise sections with "See All" links, horizontal scroll
-- **ফুটার**: Full-width dark footer with app download CTA + payment icons + multi-column links
+### Section-level Changes
 
-## প্রযুক্তিগত বাস্তবায়ন
+1. **Hero** — Replace the 3+1 grid with a 10-col magazine layout: HeroSlider on the left (cols 1–7), an editorial text block + dual CTAs (cols 8–10 top), two stacked promo cards (cols 8–10 bottom). Adds an eyebrow tag ("নতুন সিজন / New Season").
+2. **Category rail** — Pills get a subtle border, hover lifts with green accent underline.
+3. **Flash sale** — Wrapped in a full-bleed dark-green band with a magazine-style label ("সীমিত সময়ের অফার").
+4. **Featured Products** — Replace carousel with a 4-column editorial grid: first product spans 2×2 as a "cover product"; remaining 6 fill the rest. Adds section eyebrow + serif-feel display heading using Space Grotesk weight 700.
+5. **Modules** — Convert to bento: first tile (Pond Calculator) spans 2×2 with illustration treatment; 6 smaller tiles around it. Keeps existing `ModuleCard` props.
+6. **Editorial split** — New 2-column band combining `FishHealthAdvice` (left) and a compact `ProductSlider` (right) under a shared "From the Field / মাঠ থেকে" header.
+7. **CTA** — Asymmetric layout: large headline left, stacked CTAs right, decorative leaf/wave SVG accent using accent lime.
+8. **AdUnit slots** — Kept in the same positions but with magazine-styled containers (cream background, rounded-2xl).
 
-1. **DB**: `system_settings` এ `theme_layout` কী যোগ (value: `classic` | `modern` | `megashop`)
-2. **Layout Components**: 
-   - `src/components/layouts/ModernHeader.tsx`
-   - `src/components/layouts/ModernFooter.tsx`
-   - `src/components/layouts/ModernHome.tsx`
-   - `src/components/layouts/MegaShopHeader.tsx`
-   - `src/components/layouts/MegaShopFooter.tsx`
-   - `src/components/layouts/MegaShopHome.tsx`
-3. **Layout Context**: `src/contexts/LayoutContext.tsx` — লেআউট সিলেকশন ম্যানেজ করবে
-4. **Theme Settings UI**: লেআউট প্রিভিউ কার্ড + সিলেকশন যোগ
-5. **Header/Footer/Index**: LayoutContext থেকে সঠিক কম্পোনেন্ট রেন্ডার
+### Files to Edit
 
-## ফাইল পরিবর্তন
-- নতুন: ৭টি ফাইল (৬ layout components + 1 context)
-- পরিবর্তন: `Header.tsx`, `Footer.tsx`, `Index.tsx`, `ThemeColorSettings.tsx`, `ThemeLoader.tsx`
+- `src/index.css` — add HSL tokens, gradient/shadow tokens, font-family vars
+- `tailwind.config.ts` — register `font-display`, new color tokens, shadow tokens
+- `index.html` — add Space Grotesk + DM Sans Google Fonts preconnect/link
+- `src/components/layouts/MegaShopHome.tsx` — full restructure (magazine sections)
+- `src/components/layouts/MegaShopHeader.tsx` — spacing/typography polish only
+- `src/components/layouts/MegaShopFooter.tsx` — spacing/typography polish only
+
+### Out of Scope
+
+- Classic / Modern home layouts
+- Product card internals, header search/menu logic, business logic
+- Backend, data fetching, RLS, routes
+- Other pages (Shop, Product Details, etc.)
+
+### Responsive
+
+- Mobile (≤640px): magazine grid collapses to single column; bento becomes 2-col; cover product becomes full-width.
+- Tablet (768–1024px): 2-col editorial grids.
+- Desktop (≥1024px): full magazine layout as diagrammed.
+- Maintains 360px minimum per project standard.
