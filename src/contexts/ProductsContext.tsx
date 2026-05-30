@@ -46,7 +46,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select("id, name, description, price, discount_percentage, category, image_url, external_link, stock_quantity, sku, unit, reorder_level, company_id, brand_id, cost_price, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -56,8 +56,18 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         cost_price: p.cost_price || 0,
       })));
     } catch (error) {
-      console.error("Error fetching products:", error);
-      toast.error("পণ্য লোড করতে সমস্যা হয়েছে");
+      // Anonymous visitors don't have access to cost_price; retry without it
+      try {
+        const { data, error: retryError } = await supabase
+          .from("products")
+          .select("id, name, description, price, discount_percentage, category, image_url, external_link, stock_quantity, sku, unit, reorder_level, company_id, brand_id, created_at, updated_at")
+          .order("created_at", { ascending: false });
+        if (retryError) throw retryError;
+        setProducts((data || []).map(p => ({ ...p, cost_price: 0 })));
+      } catch (retryErr) {
+        console.error("Error fetching products:", retryErr);
+        toast.error("পণ্য লোড করতে সমস্যা হয়েছে");
+      }
     } finally {
       setIsLoading(false);
     }
