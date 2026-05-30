@@ -45,7 +45,7 @@ export function CartSheet() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative" aria-label={`${translations.cart}${itemCount > 0 ? ` (${itemCount})` : ""}`}>
           <ShoppingCart className="h-5 w-5" />
           {itemCount > 0 && (
             <Badge 

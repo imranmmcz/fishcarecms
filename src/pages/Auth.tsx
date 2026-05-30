@@ -243,7 +243,7 @@ const Auth = () => {
 
           {/* Desktop welcome */}
           <div className="hidden lg:block space-y-1.5">
-            <p role="heading" aria-level={2} className="text-3xl font-bold text-foreground">স্বাগতম! 👋</p>
+            <h1 className="text-3xl font-bold text-foreground">স্বাগতম! 👋</h1>
             <p className="text-muted-foreground">{loginDesc}</p>
           </div>
 
