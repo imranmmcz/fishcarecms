@@ -119,6 +119,8 @@ export default {
         soft: "var(--shadow-soft)",
         medium: "var(--shadow-medium)",
         large: "var(--shadow-large)",
+        magazine: "var(--shadow-magazine, var(--shadow-medium))",
+        feature: "var(--shadow-feature, var(--shadow-large))",
       },
     },
   },
