@@ -134,6 +134,20 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // Require authenticated caller
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: { user: caller } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (!caller) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body: VerifyPaymentRequest = await req.json();
     const { order_id, payment_method, transaction_id, sender_number, amount } = body;
 
@@ -142,6 +156,33 @@ serve(async (req) => {
         JSON.stringify({ success: false, error: "Missing required fields" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
+    }
+
+    // Verify caller owns this order (or is admin)
+    const { data: orderRow } = await supabase
+      .from("orders")
+      .select("id, user_id, total_amount, transaction_id")
+      .eq("id", order_id)
+      .maybeSingle();
+    if (!orderRow) {
+      return new Response(JSON.stringify({ success: false, error: "Order not found" }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: adminRole } = await supabase
+      .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").maybeSingle();
+    if (orderRow.user_id && orderRow.user_id !== caller.id && !adminRole) {
+      return new Response(JSON.stringify({ success: false, error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Reject reused transaction IDs (idempotency)
+    const { data: existingTx } = await supabase
+      .from("orders").select("id").eq("transaction_id", transaction_id).neq("id", order_id).maybeSingle();
+    if (existingTx) {
+      return new Response(JSON.stringify({ success: false, error: "Transaction ID already used" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Get merchant API settings from system_settings
