@@ -21,27 +21,33 @@ Deno.serve(async (req) => {
       },
     });
 
-    // Verify that the caller is an admin
+    // REQUIRE caller to be an authenticated admin — no anonymous fallback
     const authHeader = req.headers.get("Authorization");
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data: { user: callerUser } } = await supabaseAdmin.auth.getUser(token);
-      
-      if (callerUser) {
-        const { data: callerRole } = await supabaseAdmin
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", callerUser.id)
-          .eq("role", "admin")
-          .maybeSingle();
-        
-        if (!callerRole) {
-          return new Response(
-            JSON.stringify({ error: "Unauthorized: Admin access required", success: false }),
-            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      }
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Authentication required", success: false }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: callerUser } } = await supabaseAdmin.auth.getUser(token);
+    if (!callerUser) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Invalid token", success: false }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const { data: callerRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerUser.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!callerRole) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Admin access required", success: false }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const body = await req.json().catch(() => ({}));

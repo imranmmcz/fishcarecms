@@ -61,13 +61,33 @@ serve(async (req) => {
 
     if (orderNumberMatch) {
       const orderNumber = orderNumberMatch[0].toUpperCase();
+
+      // Only allow order PII lookup for the authenticated owner (or admin)
+      const authHeader = req.headers.get("Authorization");
+      let callerId: string | null = null;
+      let isAdmin = false;
+      if (authHeader?.startsWith("Bearer ")) {
+        const { data: { user: caller } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+        if (caller) {
+          callerId = caller.id;
+          const { data: roleRow } = await supabase
+            .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").maybeSingle();
+          isAdmin = !!roleRow;
+        }
+      }
+
       const { data: order } = await supabase
         .from("orders")
         .select("*")
         .eq("order_number", orderNumber)
-        .single();
+        .maybeSingle();
 
-      if (order) {
+      if (!order) {
+        orderInfo = `\n## ORDER NOT FOUND\nThe order number "${orderNumber}" was not found in the database. Tell the user politely that this order number was not found and ask them to double-check.`;
+      } else if (!callerId || (!isAdmin && order.user_id && order.user_id !== callerId)) {
+        // Caller is unauthenticated or not the owner — refuse to expose PII
+        orderInfo = `\n## ORDER ACCESS DENIED\nThe user asked about order ${orderNumber} but is not signed in as the owner of that order. Politely ask them to sign in with the account that placed the order, or use the public order tracking page with their phone number, instead of sharing any order details.`;
+      } else {
         const statusMap: Record<string, string> = {
           pending: "অপেক্ষমান", processing: "প্রসেসিং", shipped: "শিপ করা হয়েছে",
           delivered: "ডেলিভারি সম্পন্ন", cancelled: "বাতিল", confirmed: "নিশ্চিত",
@@ -101,8 +121,6 @@ IMPORTANT: When showing this order info, use this exact format:
 [ORDER_TRACK:${order.order_number}]
 
 Then add a brief summary in Bengali about the order status.`;
-      } else {
-        orderInfo = `\n## ORDER NOT FOUND\nThe order number "${orderNumber}" was not found in the database. Tell the user politely that this order number was not found and ask them to double-check.`;
       }
     }
 

@@ -11,6 +11,27 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require cron secret OR admin JWT
+  const cronSecret = req.headers.get('x-cron-secret');
+  const expected = Deno.env.get('CRON_SECRET');
+  const authHeader = req.headers.get('Authorization');
+  let allowed = expected && cronSecret === expected;
+  if (!allowed && authHeader?.startsWith('Bearer ')) {
+    try {
+      const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      const { data: { user } } = await sb.auth.getUser(authHeader.replace('Bearer ', ''));
+      if (user) {
+        const { data: role } = await sb.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle();
+        allowed = !!role;
+      }
+    } catch (_) { /* noop */ }
+  }
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

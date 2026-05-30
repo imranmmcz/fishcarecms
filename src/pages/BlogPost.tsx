@@ -16,6 +16,7 @@ import { ArrowLeft, MessageSquare, Eye, ThumbsUp, Clock, Reply, Lock, Send } fro
 import { format } from "date-fns";
 import { bn } from "date-fns/locale";
 import ShareButtons from "@/components/ShareButtons";
+import DOMPurify from "dompurify";
 
 const BlogPostPage = () => {
   const { slug } = useParams();
@@ -161,7 +162,7 @@ const BlogPostPage = () => {
           )}
 
           {/* Content */}
-          <div className="prose prose-sm max-w-none mb-6" dangerouslySetInnerHTML={{ __html: post.content || "" }} />
+          <div className="prose prose-sm max-w-none mb-6" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content || "") }} />
           
           {/* Share Buttons */}
           <ShareButtons
