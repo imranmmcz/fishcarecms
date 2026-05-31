@@ -30,6 +30,7 @@ const adminTranslations = {
     users: "ব্যবহারকারী",
     databaseExport: "ডাটাবেজ এক্সপোর্ট",
     systemBackup: "সিস্টেম ব্যাকআপ",
+    seoFiles: "SEO ফাইল ম্যানেজার",
     profile: "প্রোফাইল",
     dashboard: "ড্যাশবোর্ড",
     posSystem: "POS সিস্টেম",
