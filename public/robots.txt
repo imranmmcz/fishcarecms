@@ -1,3 +1,5 @@
+# Robots.txt for Fish Care - https://fishcare.com.bd
+
 User-agent: Googlebot
 Allow: /
 
@@ -12,5 +14,27 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /pos
+Disallow: /pos/
+Disallow: /checkout
+Disallow: /order-confirmation
+Disallow: /auth
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /profile
+Disallow: /wishlist
+Disallow: /install
+Disallow: /*?*utm_
+Disallow: /*?*ref=
 
-Sitemap: https://fishcare.lovable.app/sitemap.xml
+# Block AI scrapers (optional - remove if you want indexing)
+User-agent: GPTBot
+Disallow: /admin/
+Disallow: /dashboard/
+
+Sitemap: https://fishcare.com.bd/sitemap.xml

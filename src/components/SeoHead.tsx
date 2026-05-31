@@ -66,11 +66,11 @@ const SeoHead = ({
   }, []);
 
   useEffect(() => {
-    const baseUrl = "https://fishcare.lovable.app";
+    const baseUrl = "https://fishcare.com.bd";
     const defaultImage = `${baseUrl}/icons/icon-512x512.png`;
 
-    const defaultTabTitle = tabSettings.title || "বৈজ্ঞানিক মাছ চাষ ব্যবস্থাপনা | মৎস্য খাত ক্যালকুলেটর";
-    const siteNameSuffix = tabSettings.suffix || "FishCare BD";
+    const defaultTabTitle = tabSettings.title || "Fish Care | Fish Medicine, Pond Calculator & Aquaculture Solutions";
+    const siteNameSuffix = tabSettings.suffix || "Fish Care";
 
     const fullTitle = title
       ? `${title} | ${siteNameSuffix}`
@@ -79,7 +79,7 @@ const SeoHead = ({
     const metaImage = image || defaultImage;
     const metaDesc =
       description ||
-      "বাংলাদেশের মৎস্য খাতের জন্য সমন্বিত ক্যালকুলেটর সিস্টেম।";
+      "Fish Care provides fish medicine information, disease management, pond calculators, feed formulation, fish farming dashboard and aquaculture solutions in Bangladesh.";
     const metaAlt = imageAlt || title || siteNameSuffix;
 
     // Update document title
@@ -125,6 +125,21 @@ const SeoHead = ({
       document.head.appendChild(canonical);
     }
     canonical.setAttribute("href", fullUrl);
+
+    // hreflang alternates (en / bn / x-default)
+    const setHreflang = (lang: string, href: string) => {
+      let el = document.querySelector(`link[rel="alternate"][hreflang="${lang}"]`) as HTMLLinkElement | null;
+      if (!el) {
+        el = document.createElement("link");
+        el.setAttribute("rel", "alternate");
+        el.setAttribute("hreflang", lang);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("href", href);
+    };
+    setHreflang("en", fullUrl);
+    setHreflang("bn", `${fullUrl}${fullUrl.includes("?") ? "&" : "?"}lang=bn`);
+    setHreflang("x-default", fullUrl);
 
     // Cleanup: restore defaults on unmount
     return () => {
