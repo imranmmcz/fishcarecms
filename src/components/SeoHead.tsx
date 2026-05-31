@@ -66,11 +66,11 @@ const SeoHead = ({
   }, []);
 
   useEffect(() => {
-    const baseUrl = "https://fishcare.lovable.app";
+    const baseUrl = "https://fishcare.com.bd";
     const defaultImage = `${baseUrl}/icons/icon-512x512.png`;
 
-    const defaultTabTitle = tabSettings.title || "বৈজ্ঞানিক মাছ চাষ ব্যবস্থাপনা | মৎস্য খাত ক্যালকুলেটর";
-    const siteNameSuffix = tabSettings.suffix || "FishCare BD";
+    const defaultTabTitle = tabSettings.title || "Fish Care | Fish Medicine, Pond Calculator & Aquaculture Solutions";
+    const siteNameSuffix = tabSettings.suffix || "Fish Care";
 
     const fullTitle = title
       ? `${title} | ${siteNameSuffix}`
@@ -79,7 +79,7 @@ const SeoHead = ({
     const metaImage = image || defaultImage;
     const metaDesc =
       description ||
-      "বাংলাদেশের মৎস্য খাতের জন্য সমন্বিত ক্যালকুলেটর সিস্টেম।";
+      "Fish Care provides fish medicine information, disease management, pond calculators, feed formulation, fish farming dashboard and aquaculture solutions in Bangladesh.";
     const metaAlt = imageAlt || title || siteNameSuffix;
 
     // Update document title
