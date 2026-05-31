@@ -126,6 +126,21 @@ const SeoHead = ({
     }
     canonical.setAttribute("href", fullUrl);
 
+    // hreflang alternates (en / bn / x-default)
+    const setHreflang = (lang: string, href: string) => {
+      let el = document.querySelector(`link[rel="alternate"][hreflang="${lang}"]`) as HTMLLinkElement | null;
+      if (!el) {
+        el = document.createElement("link");
+        el.setAttribute("rel", "alternate");
+        el.setAttribute("hreflang", lang);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("href", href);
+    };
+    setHreflang("en", fullUrl);
+    setHreflang("bn", `${fullUrl}${fullUrl.includes("?") ? "&" : "?"}lang=bn`);
+    setHreflang("x-default", fullUrl);
+
     // Cleanup: restore defaults on unmount
     return () => {
       document.title = defaultTabTitle;
