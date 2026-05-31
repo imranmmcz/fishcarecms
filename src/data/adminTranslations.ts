@@ -125,6 +125,7 @@ const adminTranslations = {
     users: "Users",
     databaseExport: "Database Export",
     systemBackup: "System Backup",
+    seoFiles: "SEO Files Manager",
     profile: "Profile",
     dashboard: "Dashboard",
     posSystem: "POS System",
