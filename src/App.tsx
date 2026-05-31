@@ -66,6 +66,7 @@ import AdminAds from "./pages/AdminAds";
 import AdminPageBuilder from "./pages/AdminPageBuilder";
 import AdminMarketPrices from "./pages/AdminMarketPrices";
 import AdminDatabaseExport from "./pages/AdminDatabaseExport";
+import AdminSeoFiles from "./pages/AdminSeoFiles";
 import AdminBackup from "./pages/AdminBackup";
 import AdminEcommerceOverview from "./pages/AdminEcommerceOverview";
 import AdminPages from "./pages/AdminPages";
