@@ -215,6 +215,7 @@ export default function AdminSeoFiles() {
       const { error } = await supabase.from("system_settings").upsert(rows, { onConflict: "setting_key" });
       if (error) throw error;
       toast.success("Saved to database");
+      await pingBoth();
     } catch (e: any) {
       toast.error(e.message || "Save failed");
     } finally {
