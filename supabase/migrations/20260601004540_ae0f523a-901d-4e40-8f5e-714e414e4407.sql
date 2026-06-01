@@ -1,0 +1,1 @@
+INSERT INTO public.system_settings (setting_key, setting_value) VALUES ('theme_layout', 'megashop') ON CONFLICT (setting_key) DO UPDATE SET setting_value = 'megashop';
