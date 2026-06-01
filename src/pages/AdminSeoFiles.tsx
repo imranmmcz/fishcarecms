@@ -114,7 +114,7 @@ function download(filename: string, content: string, mime: string) {
 
 async function pingSearchEngine(url: string, label: string) {
   try {
-    const res = await fetch(url, { mode: "no-cors" });
+    await fetch(url, { mode: "no-cors" });
     toast.success(`${label} ping sent`);
   } catch {
     toast.error(`${label} ping failed`);
