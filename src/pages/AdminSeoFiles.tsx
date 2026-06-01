@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, Copy, RefreshCw, Save, Globe, FileText } from "lucide-react";
+import { Download, Copy, RefreshCw, Save, Globe, FileText, Send } from "lucide-react";
 
 type SitemapEntry = {
   loc: string;
@@ -112,6 +112,15 @@ function download(filename: string, content: string, mime: string) {
   URL.revokeObjectURL(url);
 }
 
+async function pingSearchEngine(url: string, label: string) {
+  try {
+    await fetch(url, { mode: "no-cors" });
+    toast.success(`${label} ping sent`);
+  } catch {
+    toast.error(`${label} ping failed`);
+  }
+}
+
 export default function AdminSeoFiles() {
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL);
   const [sitemap, setSitemap] = useState("");
@@ -120,6 +129,7 @@ export default function AdminSeoFiles() {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({ total: 0, products: 0, posts: 0, pages: 0 });
+  const [pinging, setPinging] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -215,6 +225,17 @@ export default function AdminSeoFiles() {
     toast.success(`${label} copied`);
   };
 
+  const handlePing = async (engine: "google" | "bing") => {
+    const sitemapUrl = `${baseUrl.replace(/\/$/, "")}/sitemap.xml`;
+    const label = engine === "google" ? "Google" : "Bing";
+    const url = engine === "google"
+      ? `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`
+      : `https://www.bing.com/webmaster/ping.aspx?siteMap=${encodeURIComponent(sitemapUrl)}`;
+    setPinging(label);
+    await pingSearchEngine(url, label);
+    setPinging(null);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 p-2 sm:p-4">
@@ -258,6 +279,14 @@ export default function AdminSeoFiles() {
                   </Button>
                   <Button variant="secondary" onClick={() => download("sitemap.xml", sitemap, "application/xml")} disabled={!sitemap}>
                     <Download className="h-4 w-4 mr-2" /> Download
+                  </Button>
+                  <Button variant="outline" onClick={() => handlePing("google")} disabled={!sitemap || !!pinging}>
+                    <Send className={`h-4 w-4 mr-2 ${pinging === "Google" ? "animate-pulse" : ""}`} />
+                    {pinging === "Google" ? "Pinging Google..." : "Ping Google"}
+                  </Button>
+                  <Button variant="outline" onClick={() => handlePing("bing")} disabled={!sitemap || !!pinging}>
+                    <Send className={`h-4 w-4 mr-2 ${pinging === "Bing" ? "animate-pulse" : ""}`} />
+                    {pinging === "Bing" ? "Pinging Bing..." : "Ping Bing"}
                   </Button>
                 </div>
                 {stats.total > 0 && (
