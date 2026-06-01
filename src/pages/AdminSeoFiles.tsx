@@ -225,6 +225,17 @@ export default function AdminSeoFiles() {
     toast.success(`${label} copied`);
   };
 
+  const handlePing = async (engine: "google" | "bing") => {
+    const sitemapUrl = `${baseUrl.replace(/\/$/, "")}/sitemap.xml`;
+    const label = engine === "google" ? "Google" : "Bing";
+    const url = engine === "google"
+      ? `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`
+      : `https://www.bing.com/webmaster/ping.aspx?siteMap=${encodeURIComponent(sitemapUrl)}`;
+    setPinging(label);
+    await pingSearchEngine(url, label);
+    setPinging(null);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 p-2 sm:p-4">
