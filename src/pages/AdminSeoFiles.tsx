@@ -189,6 +189,7 @@ export default function AdminSeoFiles() {
       setSitemap(xml);
       setStats({ total: entries.length, products: products.length, posts: posts.length, pages: pages.length });
       toast.success(`Sitemap generated: ${entries.length} URLs`);
+      await pingBoth();
     } catch (e: any) {
       toast.error(e.message || "Failed to generate sitemap");
     } finally {
@@ -196,10 +197,11 @@ export default function AdminSeoFiles() {
     }
   }, [baseUrl]);
 
-  const generateRobots = useCallback(() => {
+  const generateRobots = useCallback(async () => {
     setRobots(buildRobots(baseUrl, robotsOpts));
     toast.success("Robots.txt generated");
-  }, [baseUrl, robotsOpts]);
+    await pingBoth();
+  }, [baseUrl, robotsOpts, sitemap]);
 
   const saveAll = useCallback(async () => {
     setSaving(true);
@@ -213,6 +215,7 @@ export default function AdminSeoFiles() {
       const { error } = await supabase.from("system_settings").upsert(rows, { onConflict: "setting_key" });
       if (error) throw error;
       toast.success("Saved to database");
+      await pingBoth();
     } catch (e: any) {
       toast.error(e.message || "Save failed");
     } finally {
@@ -234,6 +237,13 @@ export default function AdminSeoFiles() {
     setPinging(label);
     await pingSearchEngine(url, label);
     setPinging(null);
+  };
+
+  const pingBoth = async () => {
+    if (!sitemap) return;
+    const sitemapUrl = `${baseUrl.replace(/\/$/, "")}/sitemap.xml`;
+    await pingSearchEngine(`https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`, "Google");
+    await pingSearchEngine(`https://www.bing.com/webmaster/ping.aspx?siteMap=${encodeURIComponent(sitemapUrl)}`, "Bing");
   };
 
   return (
