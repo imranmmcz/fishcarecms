@@ -199,8 +199,9 @@ export default function AdminSeoFiles() {
 
   const generateRobots = useCallback(() => {
     setRobots(buildRobots(baseUrl, robotsOpts));
-    toast.success("Robots.txt generated");
-  }, [baseUrl, robotsOpts]);
+      toast.success("Robots.txt generated");
+      await pingBoth();
+  }, [baseUrl, robotsOpts, sitemap]);
 
   const saveAll = useCallback(async () => {
     setSaving(true);
