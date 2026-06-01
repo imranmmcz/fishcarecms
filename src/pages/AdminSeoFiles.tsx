@@ -129,6 +129,7 @@ export default function AdminSeoFiles() {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({ total: 0, products: 0, posts: 0, pages: 0 });
+  const [pinging, setPinging] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
