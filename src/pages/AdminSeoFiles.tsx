@@ -112,6 +112,15 @@ function download(filename: string, content: string, mime: string) {
   URL.revokeObjectURL(url);
 }
 
+async function pingSearchEngine(url: string, label: string) {
+  try {
+    const res = await fetch(url, { mode: "no-cors" });
+    toast.success(`${label} ping sent`);
+  } catch {
+    toast.error(`${label} ping failed`);
+  }
+}
+
 export default function AdminSeoFiles() {
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL);
   const [sitemap, setSitemap] = useState("");
