@@ -280,6 +280,14 @@ export default function AdminSeoFiles() {
                   <Button variant="secondary" onClick={() => download("sitemap.xml", sitemap, "application/xml")} disabled={!sitemap}>
                     <Download className="h-4 w-4 mr-2" /> Download
                   </Button>
+                  <Button variant="outline" onClick={() => handlePing("google")} disabled={!sitemap || !!pinging}>
+                    <Send className={`h-4 w-4 mr-2 ${pinging === "Google" ? "animate-pulse" : ""}`} />
+                    {pinging === "Google" ? "Pinging Google..." : "Ping Google"}
+                  </Button>
+                  <Button variant="outline" onClick={() => handlePing("bing")} disabled={!sitemap || !!pinging}>
+                    <Send className={`h-4 w-4 mr-2 ${pinging === "Bing" ? "animate-pulse" : ""}`} />
+                    {pinging === "Bing" ? "Pinging Bing..." : "Ping Bing"}
+                  </Button>
                 </div>
                 {stats.total > 0 && (
                   <div className="text-sm text-muted-foreground">
