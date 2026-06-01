@@ -236,6 +236,13 @@ export default function AdminSeoFiles() {
     setPinging(null);
   };
 
+  const pingBoth = async () => {
+    if (!sitemap) return;
+    const sitemapUrl = `${baseUrl.replace(/\/$/, "")}/sitemap.xml`;
+    await pingSearchEngine(`https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`, "Google");
+    await pingSearchEngine(`https://www.bing.com/webmaster/ping.aspx?siteMap=${encodeURIComponent(sitemapUrl)}`, "Bing");
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 p-2 sm:p-4">
