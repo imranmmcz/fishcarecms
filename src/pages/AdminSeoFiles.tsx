@@ -189,6 +189,7 @@ export default function AdminSeoFiles() {
       setSitemap(xml);
       setStats({ total: entries.length, products: products.length, posts: posts.length, pages: pages.length });
       toast.success(`Sitemap generated: ${entries.length} URLs`);
+      await pingBoth();
     } catch (e: any) {
       toast.error(e.message || "Failed to generate sitemap");
     } finally {
