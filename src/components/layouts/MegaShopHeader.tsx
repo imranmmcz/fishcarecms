@@ -57,58 +57,50 @@ export const MegaShopHeader = () => {
     <header className="sticky top-0 z-50 w-full shadow-sm">
       {/* Top Utility Bar - Slim */}
       <div className="h-8 text-xs" style={{ backgroundColor: 'hsl(var(--header-utility-bg, var(--primary)))', color: 'hsl(var(--header-utility-text, var(--primary-foreground)))' }}>
-        <div className="container flex items-center justify-between h-full">
-          <div className="flex items-center gap-4">
-            <a href={`tel:${phone}`} className="flex items-center gap-1 hover:opacity-80">
-              <Phone className="h-3 w-3" />{phone}
+        <div className="container flex items-center justify-between h-full px-3 sm:px-4 gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <a href={`tel:${phone}`} className="flex items-center gap-1 hover:opacity-80 truncate">
+              <Phone className="h-3 w-3 shrink-0" /><span className="truncate">{phone}</span>
             </a>
             <a href={`mailto:${email}`} className="hidden sm:flex items-center gap-1 hover:opacity-80">
               <Mail className="h-3 w-3" />{email}
             </a>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button onClick={() => setLanguage(language === "bn" ? "en" : "bn")} className="flex items-center gap-1 hover:opacity-80 font-semibold">
               <Globe className="h-3 w-3" />{language === "bn" ? "EN" : "বাংলা"}
             </button>
             {user ? (
-              <button onClick={signOut} className="flex items-center gap-1 hover:opacity-80">
+              <button onClick={signOut} className="hidden xs:flex items-center gap-1 hover:opacity-80">
                 <LogOut className="h-3 w-3" />{language === "bn" ? "লগআউট" : "Logout"}
               </button>
             ) : (
-              <Link to="/auth" className="hover:opacity-80">{language === "bn" ? "লগইন / রেজিস্ট্রেশন" : "Login / Register"}</Link>
+              <Link to="/auth" className="hover:opacity-80 whitespace-nowrap">{language === "bn" ? "লগইন" : "Login"}</Link>
             )}
           </div>
         </div>
       </div>
 
       {/* Main Header - Logo + Mega Search */}
-      <div className="border-b border-border py-3" style={{ backgroundColor: 'hsl(var(--header-bg, var(--background)))' }}>
-        <div className="container flex items-center gap-4">
+      <div className="border-b border-border py-2.5 md:py-3" style={{ backgroundColor: 'hsl(var(--header-bg, var(--background)))' }}>
+        <div className="container px-3 sm:px-4 flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+          <Link to="/" className="flex items-center gap-2 shrink-0 mr-auto md:mr-0">
             {headerData?.logoUrl ? (
-              <img src={headerData.logoUrl} alt={companyName} className="h-10 w-10 md:h-12 md:w-12 rounded-lg object-contain" />
+              <img src={headerData.logoUrl} alt={companyName} className="h-9 w-9 md:h-12 md:w-12 rounded-lg object-contain" />
             ) : (
-              <div className="rounded-lg bg-primary p-2 md:p-2.5">
+              <div className="rounded-lg bg-primary p-1.5 md:p-2.5">
                 <span className="text-sm md:text-base font-bold text-primary-foreground">FC</span>
               </div>
             )}
-            <div className="hidden sm:flex flex-col">
-              <span className="text-base md:text-xl font-bold text-foreground leading-tight">{companyName}</span>
-              <span className="text-[10px] md:text-xs text-muted-foreground">{companySubtitle}</span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm md:text-xl font-bold text-foreground leading-tight truncate max-w-[140px] md:max-w-none">{companyName}</span>
+              <span className="hidden sm:block text-[10px] md:text-xs text-muted-foreground truncate">{companySubtitle}</span>
             </div>
           </Link>
 
-          {/* Mega Search Bar */}
-          <div className="flex-1 max-w-2xl">
-            <SearchSuggestions
-              placeholder={language === "bn" ? "পণ্য খুঁজুন — ঔষধ, খাদ্য, সরঞ্জাম..." : "Search products — medicines, food, accessories..."}
-              className="w-full"
-            />
-          </div>
-
           {/* Actions */}
-          <div className="flex items-center gap-1 md:gap-2 shrink-0">
+          <div className="flex items-center gap-0.5 md:gap-2 shrink-0 order-2 md:order-3">
             {user && (
               <Link to="/wishlist">
                 <Button variant="ghost" size="icon" className="relative">
@@ -147,6 +139,14 @@ export const MegaShopHeader = () => {
                 <Button size="sm" className="gap-1.5"><LogIn className="h-4 w-4" />{t.loginSignup}</Button>
               </Link>
             )}
+          </div>
+
+          {/* Mega Search Bar — full-width row on mobile */}
+          <div className="order-3 md:order-2 w-full md:flex-1 md:max-w-2xl">
+            <SearchSuggestions
+              placeholder={language === "bn" ? "পণ্য খুঁজুন..." : "Search products..."}
+              className="w-full"
+            />
           </div>
         </div>
       </div>
