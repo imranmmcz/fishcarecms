@@ -30,6 +30,7 @@ import { WhatsAppSettings } from "@/components/admin/WhatsAppSettings";
 import POSPrintSettings from "@/components/admin/POSPrintSettings";
 import SmsSettings from "@/components/admin/SmsSettings";
 import ChatbotSettings from "@/components/admin/ChatbotSettings";
+import ThemeLivePreview from "@/components/admin/ThemeLivePreview";
 
 
 interface SystemSetting {
@@ -312,6 +313,7 @@ const AdminSettings = () => {
           <TabsContent value="theme" className="space-y-6 mt-6">
             <ThemeColorSettings />
             <LoadingAnimationSettings />
+            <ThemeLivePreview />
           </TabsContent>
 
           {/* Language Settings Tab */}
