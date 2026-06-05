@@ -87,24 +87,24 @@ export const MegaShopHome = () => {
       />
       <MegaShopHeader />
 
-      <AdUnit position="header" className="py-2 container" />
+      <AdUnit position="header" className="py-2 container px-3 sm:px-4" />
 
       {/* MAGAZINE HERO — 10-column editorial cover */}
-      <section className="container py-6 lg:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 lg:gap-5">
+      <section className="container px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-3 sm:gap-4 lg:gap-5">
           {/* Big hero slider (cols 1-7) */}
-          <div className="lg:col-span-7 rounded-2xl overflow-hidden shadow-magazine ring-1 ring-border/60">
+          <div className="lg:col-span-7 rounded-xl sm:rounded-2xl overflow-hidden shadow-magazine ring-1 ring-border/60">
             <HeroSlider />
           </div>
 
           {/* Editorial column (cols 8-10) */}
-          <div className="lg:col-span-3 flex flex-col gap-4">
-            <div className="rounded-2xl p-6 bg-gradient-card border border-border/60 shadow-magazine flex flex-col justify-between min-h-[180px]">
+          <div className="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
+            <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-gradient-card border border-border/60 shadow-magazine flex flex-col justify-between min-h-[140px] sm:min-h-[180px]">
               {eyebrow("New Season", "নতুন সিজন")}
-              <h2 className="font-display text-2xl xl:text-3xl font-bold leading-[1.1] mt-3 text-foreground">
+              <h2 className="font-display text-xl sm:text-2xl xl:text-3xl font-bold leading-[1.1] mt-2 sm:mt-3 text-foreground">
                 {language === "bn" ? "মাছ চাষের পূর্ণাঙ্গ সমাধান।" : "The complete fish-farming toolkit."}
               </h2>
-              <div className="flex flex-wrap gap-2 mt-4">
+              <div className="flex flex-wrap gap-2 mt-3 sm:mt-4">
                 <Link to="/shop">
                   <Button3D variant="primary" size="sm" className="gap-1.5">
                     <ShoppingBag className="h-4 w-4" />
@@ -122,14 +122,14 @@ export const MegaShopHome = () => {
 
             <Link
               to="/shop"
-              className="group relative rounded-2xl overflow-hidden p-5 bg-[image:var(--gradient-hero)] text-primary-foreground shadow-feature min-h-[140px] flex flex-col justify-between"
+              className="group relative rounded-xl sm:rounded-2xl overflow-hidden p-4 sm:p-5 bg-[image:var(--gradient-hero)] text-primary-foreground shadow-feature min-h-[110px] sm:min-h-[140px] flex flex-col justify-between"
             >
               <div className="absolute -right-6 -top-6 opacity-20 group-hover:opacity-30 transition-opacity">
-                <Leaf className="h-24 w-24" />
+                <Leaf className="h-20 w-20 sm:h-24 sm:w-24" />
               </div>
               <Sparkles className="h-5 w-5 relative" />
               <div className="relative">
-                <p className="font-display text-lg font-bold leading-tight">
+                <p className="font-display text-base sm:text-lg font-bold leading-tight">
                   {language === "bn" ? "নতুন পণ্য" : "New Arrivals"}
                 </p>
                 <p className="text-xs opacity-85 mt-0.5">
@@ -143,13 +143,13 @@ export const MegaShopHome = () => {
 
       {/* Category rail */}
       {activeCategories.length > 0 && (
-        <section className="container pb-6">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide border-y border-border/60 py-3">
+        <section className="container px-3 sm:px-4 pb-4 sm:pb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide border-y border-border/60 py-2 sm:py-3 -mx-3 px-3 sm:mx-0 sm:px-0">
             {activeCategories.map((cat) => (
               <Link
                 key={cat.id}
                 to={`/shop?category=${cat.slug}`}
-                className="shrink-0 px-4 py-2 rounded-full border border-border bg-card hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all text-sm font-medium font-display"
+                className="shrink-0 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full border border-border bg-card hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all text-xs sm:text-sm font-medium font-display"
               >
                 {language === "bn" ? cat.name_bn : cat.name}
               </Link>
@@ -160,19 +160,19 @@ export const MegaShopHome = () => {
 
       {/* Flash sale band */}
       <div className="bg-foreground/[0.03] border-y border-border/60">
-        <div className="container py-2">
+        <div className="container px-3 sm:px-4 py-2">
           <FlashSaleSection />
         </div>
       </div>
 
       {/* FEATURED — editorial product grid (cover + 6) */}
       {featured.length > 0 && (
-        <section className="py-12 lg:py-16">
-          <div className="container">
-            <div className="flex items-end justify-between mb-8 gap-4 flex-wrap">
+        <section className="py-8 sm:py-12 lg:py-16">
+          <div className="container px-3 sm:px-4">
+            <div className="flex items-end justify-between mb-5 sm:mb-8 gap-3 sm:gap-4 flex-wrap">
               <div>
                 {eyebrow("Editor's Picks", "সম্পাদকের পছন্দ")}
-                <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mt-2 text-foreground leading-[1.05]">
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mt-2 text-foreground leading-[1.05]">
                   {language === "bn" ? "জনপ্রিয় পণ্য" : "Featured Products"}
                 </h2>
               </div>
@@ -183,11 +183,11 @@ export const MegaShopHome = () => {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
               {/* Cover product 2×2 */}
               {featured[0] && (
                 <div className="col-span-2 row-span-2 relative">
-                  <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-display font-semibold uppercase tracking-wider shadow-magazine">
+                  <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10 flex items-center gap-1 px-2 py-0.5 sm:gap-1.5 sm:px-2.5 sm:py-1 rounded-full bg-primary text-primary-foreground text-[9px] sm:text-[10px] font-display font-semibold uppercase tracking-wider shadow-magazine">
                     <Star className="h-3 w-3 fill-current" />
                     {language === "bn" ? "কভার পিক" : "Cover Pick"}
                   </div>
@@ -204,15 +204,15 @@ export const MegaShopHome = () => {
         </section>
       )}
 
-      <AdUnit position="between-modules" className="py-4 container" />
+      <AdUnit position="between-modules" className="py-4 container px-3 sm:px-4" />
 
       {/* MODULES — bento (1 large + 6 small) */}
-      <section className="py-12 lg:py-16 bg-muted/40 border-y border-border/60">
-        <div className="container">
-          <div className="flex items-end justify-between mb-8 gap-4 flex-wrap">
+      <section className="py-8 sm:py-12 lg:py-16 bg-muted/40 border-y border-border/60">
+        <div className="container px-3 sm:px-4">
+          <div className="flex items-end justify-between mb-5 sm:mb-8 gap-3 sm:gap-4 flex-wrap">
             <div>
               {eyebrow("Farming Tools", "মাছ চাষ টুলস")}
-              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mt-2 text-foreground leading-[1.05]">
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mt-2 text-foreground leading-[1.05]">
                 {t.integratedModules}
               </h2>
             </div>
@@ -223,27 +223,27 @@ export const MegaShopHome = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-fr">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 auto-rows-fr">
             {/* Hero tile — Pond Calculator */}
             <Link
               to={modules[0].path}
-              className="col-span-2 md:col-span-2 row-span-2 relative rounded-2xl overflow-hidden p-6 lg:p-8 bg-[image:var(--gradient-hero)] text-primary-foreground shadow-feature flex flex-col justify-between min-h-[220px] group"
+              className="col-span-2 md:col-span-2 row-span-2 relative rounded-xl sm:rounded-2xl overflow-hidden p-4 sm:p-6 lg:p-8 bg-[image:var(--gradient-hero)] text-primary-foreground shadow-feature flex flex-col justify-between min-h-[170px] sm:min-h-[220px] group"
             >
               <div className="absolute -right-10 -bottom-10 opacity-15 group-hover:opacity-25 transition-opacity">
-                <Droplets className="h-56 w-56" />
+                <Droplets className="h-40 w-40 sm:h-56 sm:w-56" />
               </div>
               <div className="relative">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur text-[10px] font-display font-semibold uppercase tracking-wider">
                   <Flame className="h-3 w-3" /> {language === "bn" ? "ফিচার্ড" : "Featured"}
                 </div>
-                <h3 className="font-display text-2xl lg:text-3xl xl:text-4xl font-bold mt-4 leading-[1.1]">
+                <h3 className="font-display text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mt-3 sm:mt-4 leading-[1.1]">
                   {modules[0].title}
                 </h3>
-                <p className="text-sm lg:text-base opacity-85 mt-3 max-w-md">
+                <p className="text-xs sm:text-sm lg:text-base opacity-85 mt-2 sm:mt-3 max-w-md line-clamp-2 sm:line-clamp-none">
                   {modules[0].description}
                 </p>
               </div>
-              <div className="relative inline-flex items-center gap-2 text-sm font-display font-semibold">
+              <div className="relative inline-flex items-center gap-2 text-xs sm:text-sm font-display font-semibold mt-2">
                 {language === "bn" ? "শুরু করুন" : "Get started"}
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -265,11 +265,11 @@ export const MegaShopHome = () => {
       </section>
 
       {/* "From the Field" — editorial split */}
-      <section className="py-12 lg:py-16">
-        <div className="container">
-          <div className="text-center mb-10">
+      <section className="py-8 sm:py-12 lg:py-16">
+        <div className="container px-3 sm:px-4">
+          <div className="text-center mb-6 sm:mb-10">
             {eyebrow("From the Field", "মাঠ থেকে")}
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mt-2 text-foreground leading-[1.05]">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mt-2 text-foreground leading-[1.05]">
               {language === "bn" ? "পরামর্শ ও জনপ্রিয় পণ্য" : "Advice & Trending Products"}
             </h2>
           </div>
@@ -277,40 +277,40 @@ export const MegaShopHome = () => {
         </div>
       </section>
 
-      <AdUnit position="in-article" className="py-4 container" />
+      <AdUnit position="in-article" className="py-4 container px-3 sm:px-4" />
 
       <ProductSlider />
 
       {/* Asymmetric CTA */}
-      <section className="py-12 lg:py-20 relative overflow-hidden bg-[image:var(--gradient-hero)] text-primary-foreground">
+      <section className="py-8 sm:py-12 lg:py-20 relative overflow-hidden bg-[image:var(--gradient-hero)] text-primary-foreground">
         <div className="absolute -right-20 -top-20 opacity-10">
-          <Leaf className="h-[28rem] w-[28rem]" />
+          <Leaf className="h-72 w-72 sm:h-[28rem] sm:w-[28rem]" />
         </div>
         <div className="absolute -left-16 -bottom-16 opacity-10">
-          <Fish className="h-72 w-72" />
+          <Fish className="h-56 w-56 sm:h-72 sm:w-72" />
         </div>
-        <div className="container relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div className="container px-3 sm:px-4 relative grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
           <div className="lg:col-span-8">
             <p className="inline-flex items-center gap-2 text-[11px] font-display font-semibold uppercase tracking-[0.18em] opacity-90">
               <span className="h-px w-6 bg-current" />
               {language === "bn" ? "শুরু করুন আজই" : "Start today"}
             </p>
-            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mt-3 leading-[1.05]">
+            <h2 className="font-display text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mt-3 leading-[1.05]">
               {t.startManagement}
             </h2>
-            <p className="text-base lg:text-lg opacity-85 mt-4 max-w-2xl">
+            <p className="text-sm sm:text-base lg:text-lg opacity-85 mt-3 sm:mt-4 max-w-2xl">
               {t.startManagementDesc}
             </p>
           </div>
-          <div className="lg:col-span-4 flex flex-col gap-3">
+          <div className="lg:col-span-4 flex flex-col gap-2.5 sm:gap-3 w-full">
             <Link to="/pond-calculator">
-              <Button3D size="lg" variant="warning" className="w-full justify-center">
+              <Button3D size="lg" variant="warning" className="w-full justify-center text-sm sm:text-base">
                 <Calculator className="mr-2 h-5 w-5" />
                 {t.startPondMeasurement}
               </Button3D>
             </Link>
             <Link to="/shop">
-              <Button3D size="lg" variant="primary" className="w-full justify-center border-white text-white hover:bg-white/20">
+              <Button3D size="lg" variant="primary" className="w-full justify-center text-sm sm:text-base border-white text-white hover:bg-white/20">
                 <ShoppingBag className="mr-2 h-5 w-5" />
                 {language === "bn" ? "শপ দেখুন" : "Browse Shop"}
               </Button3D>
@@ -319,7 +319,7 @@ export const MegaShopHome = () => {
         </div>
       </section>
 
-      <AdUnit position="footer" className="py-4 container" />
+      <AdUnit position="footer" className="py-4 container px-3 sm:px-4" />
       <MegaShopFooter />
     </div>
   );
