@@ -405,6 +405,7 @@ const AdminSettings = () => {
           {/* Font Settings Tab */}
           <TabsContent value="font" className="space-y-6 mt-6">
             <LanguageFontSettings />
+            <ThemeLivePreview />
           </TabsContent>
 
           {/* Currency Settings Tab */}
