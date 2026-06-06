@@ -119,6 +119,11 @@ import Install from "./pages/Install";
 import ProductDetails from "./pages/ProductDetails";
 import Wishlist from "./pages/Wishlist";
 import TrackOrder from "./pages/TrackOrder";
+import PartnerApply from "./pages/PartnerApply";
+import AdminPartners from "./pages/AdminPartners";
+import AdminPartnerCodes from "./pages/AdminPartnerCodes";
+import AdminPartnerCommissions from "./pages/AdminPartnerCommissions";
+import { ReferralCapture } from "./components/ReferralCapture";
 
 import { GLOBAL_QUERY_DEFAULTS } from "@/lib/queryConfig";
 
@@ -154,6 +159,7 @@ const App = () => (
                     <ActivityLogger />
                     <ButtonStyleRouteSync />
                     <RouteSeoHead />
+                    <ReferralCapture />
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/_showcase/button-3d" element={<Button3DShowcase />} />
@@ -231,6 +237,10 @@ const App = () => (
                       <Route path="/admin/flash-sales" element={<ProtectedRoute requireAdmin><AdminFlashSales /></ProtectedRoute>} />
                       <Route path="/admin/notification-templates" element={<ProtectedRoute requireAdmin><AdminNotificationTemplates /></ProtectedRoute>} />
                       <Route path="/admin/farming-reports" element={<ProtectedRoute requireAdmin><AdminFarmingReports /></ProtectedRoute>} />
+                      <Route path="/partner/apply" element={<PartnerApply />} />
+                      <Route path="/admin/partners" element={<ProtectedRoute requireAdmin><AdminPartners /></ProtectedRoute>} />
+                      <Route path="/admin/partners/codes" element={<ProtectedRoute requireAdmin><AdminPartnerCodes /></ProtectedRoute>} />
+                      <Route path="/admin/partners/commissions" element={<ProtectedRoute requireAdmin><AdminPartnerCommissions /></ProtectedRoute>} />
                       <Route path="/pos" element={<ProtectedRoute requireAdmin><POSDashboard /></ProtectedRoute>} />
                       <Route path="/pos/sell" element={<ProtectedRoute requireAdmin><AdminPOS /></ProtectedRoute>} />
                       <Route path="/pos/history" element={<ProtectedRoute requireAdmin><POSHistory /></ProtectedRoute>} />
