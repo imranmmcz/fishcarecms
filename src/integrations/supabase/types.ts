@@ -1943,8 +1943,11 @@ export type Database = {
           id: string
           notes: string | null
           order_number: string
+          partner_id: string | null
           payment_method: string
           payment_status: string
+          referral_code: string | null
+          referral_discount: number
           sender_number: string | null
           shipping_address: string
           shipping_cost: number
@@ -1967,8 +1970,11 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number: string
+          partner_id?: string | null
           payment_method?: string
           payment_status?: string
+          referral_code?: string | null
+          referral_discount?: number
           sender_number?: string | null
           shipping_address: string
           shipping_cost?: number
@@ -1991,8 +1997,11 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: string
+          partner_id?: string | null
           payment_method?: string
           payment_status?: string
+          referral_code?: string | null
+          referral_discount?: number
           sender_number?: string | null
           shipping_address?: string
           shipping_cost?: number
@@ -2036,6 +2045,295 @@ export type Database = {
           section_key?: string
           section_name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      partner_commissions: {
+        Row: {
+          approved_at: string | null
+          code_id: string | null
+          code_used: string
+          commission_amount: number
+          commission_type: string
+          commission_value: number
+          commissionable_amount: number
+          created_at: string
+          discount_amount: number
+          id: string
+          order_id: string
+          order_subtotal: number
+          paid_at: string | null
+          partner_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          code_id?: string | null
+          code_used: string
+          commission_amount?: number
+          commission_type: string
+          commission_value: number
+          commissionable_amount?: number
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          order_id: string
+          order_subtotal?: number
+          paid_at?: string | null
+          partner_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          code_id?: string | null
+          code_used?: string
+          commission_amount?: number
+          commission_type?: string
+          commission_value?: number
+          commissionable_amount?: number
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          order_id?: string
+          order_subtotal?: number
+          paid_at?: string | null
+          partner_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_commissions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "partner_referral_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_commissions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_referral_clicks: {
+        Row: {
+          clicked_at: string
+          code: string
+          id: string
+          ip_address: string | null
+          landing_url: string | null
+          partner_id: string | null
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          code: string
+          id?: string
+          ip_address?: string | null
+          landing_url?: string | null
+          partner_id?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          code?: string
+          id?: string
+          ip_address?: string | null
+          landing_url?: string | null
+          partner_id?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_referral_clicks_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_referral_codes: {
+        Row: {
+          code: string
+          commission_type: string
+          commission_value: number
+          created_at: string
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          partner_id: string
+          updated_at: string
+          usage_limit: number | null
+          used_count: number
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          commission_type?: string
+          commission_value?: number
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          partner_id: string
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          commission_type?: string
+          commission_value?: number
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          partner_id?: string
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_referral_codes_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partners: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          address: string | null
+          approved_at: string | null
+          approved_by: string | null
+          bank_name: string | null
+          bkash_number: string | null
+          branch: string | null
+          company_address: string | null
+          company_name: string | null
+          created_at: string
+          date_of_birth: string | null
+          district: string | null
+          email: string | null
+          experience: string | null
+          father_name: string | null
+          full_name: string
+          id: string
+          mobile: string
+          mother_name: string | null
+          nagad_number: string | null
+          nid_back_url: string | null
+          nid_front_url: string | null
+          nid_number: string | null
+          notes: string | null
+          profile_photo_url: string | null
+          rejection_reason: string | null
+          rocket_number: string | null
+          routing_number: string | null
+          social_links: Json | null
+          status: string
+          upazila: string | null
+          updated_at: string
+          user_id: string
+          village: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_name?: string | null
+          bkash_number?: string | null
+          branch?: string | null
+          company_address?: string | null
+          company_name?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          district?: string | null
+          email?: string | null
+          experience?: string | null
+          father_name?: string | null
+          full_name: string
+          id?: string
+          mobile: string
+          mother_name?: string | null
+          nagad_number?: string | null
+          nid_back_url?: string | null
+          nid_front_url?: string | null
+          nid_number?: string | null
+          notes?: string | null
+          profile_photo_url?: string | null
+          rejection_reason?: string | null
+          rocket_number?: string | null
+          routing_number?: string | null
+          social_links?: Json | null
+          status?: string
+          upazila?: string | null
+          updated_at?: string
+          user_id: string
+          village?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_name?: string | null
+          bkash_number?: string | null
+          branch?: string | null
+          company_address?: string | null
+          company_name?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          district?: string | null
+          email?: string | null
+          experience?: string | null
+          father_name?: string | null
+          full_name?: string
+          id?: string
+          mobile?: string
+          mother_name?: string | null
+          nagad_number?: string | null
+          nid_back_url?: string | null
+          nid_front_url?: string | null
+          nid_number?: string | null
+          notes?: string | null
+          profile_photo_url?: string | null
+          rejection_reason?: string | null
+          rocket_number?: string | null
+          routing_number?: string | null
+          social_links?: Json | null
+          status?: string
+          upazila?: string | null
+          updated_at?: string
+          user_id?: string
+          village?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -3329,6 +3627,7 @@ export type Database = {
         | "cashier"
         | "delivery_staff"
         | "blogger"
+        | "partner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3478,6 +3777,7 @@ export const Constants = {
         "cashier",
         "delivery_staff",
         "blogger",
+        "partner",
       ],
     },
   },

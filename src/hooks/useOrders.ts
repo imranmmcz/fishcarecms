@@ -66,6 +66,8 @@ export interface CreateOrderData {
   payment_trx_id?: string;
   payment_sender_number?: string;
   shipping_cost?: number;
+  referral_code?: string;
+  referral_discount?: number;
 }
 
 export function useOrders() {
@@ -139,7 +141,8 @@ export function useOrders() {
       }, 0);
 
       const shippingCost = orderData.shipping_cost || 0;
-      const totalAmount = subtotal + shippingCost;
+      const referralDiscount = orderData.referral_discount || 0;
+      const totalAmount = Math.max(subtotal - referralDiscount, 0) + shippingCost;
 
       // Generate order number
       const { data: orderNumData } = await supabase.rpc("generate_order_number");
@@ -159,6 +162,9 @@ export function useOrders() {
         sender_number: orderData.payment_sender_number || null,
         notes: orderData.customer_note || null,
         subtotal, shipping_cost: shippingCost, total_amount: totalAmount,
+        referral_code: orderData.referral_code || null,
+        referral_discount: referralDiscount,
+        discount_amount: referralDiscount,
       }).select().single();
 
       if (insertErr) throw insertErr;

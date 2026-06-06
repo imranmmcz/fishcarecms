@@ -11,7 +11,7 @@ import {
   LayoutDashboard, Users, Settings, BarChart3, Home, Shield, User, Package,
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
   Building2, FileText, CloudUpload, Palette, Store, ChevronDown, CreditCard,
-  Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, MessageSquare, Zap, type LucideIcon,
+  Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, MessageSquare, Zap, Handshake, Ticket, DollarSign, type LucideIcon,
   Menu, X, LogOut, ChevronLeft, ChevronRight, Languages,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -225,6 +225,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     ],
   };
 
+  const partnersGroup: MenuGroup = {
+    label: "Partners",
+    icon: Handshake,
+    items: [
+      { title: "Partners", url: "/admin/partners", icon: Handshake, permissionKey: "admin_users" },
+      { title: "Referral Codes", url: "/admin/partners/codes", icon: Ticket, permissionKey: "admin_users" },
+      { title: "Commissions", url: "/admin/partners/commissions", icon: DollarSign, permissionKey: "admin_users" },
+    ],
+  };
+
   const settingsGroup: MenuGroup = {
     label: at.settingsGroup,
     icon: Settings,
@@ -243,7 +253,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     ],
   };
 
-  const allGroups = [cmsGroup, ecommerceGroup, settingsGroup];
+  const allGroups = [cmsGroup, ecommerceGroup, partnersGroup, settingsGroup];
 
   useEffect(() => {
     if (!isLoading && !user) navigate("/auth");
@@ -304,6 +314,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         onNavigate={onNavigate} collapsed={collapsed} />
 
       <SidebarMenuGroup group={ecommerceGroup} {...menuProps}
+        onNavigate={onNavigate} collapsed={collapsed} />
+
+      <SidebarMenuGroup group={partnersGroup} {...menuProps}
         onNavigate={onNavigate} collapsed={collapsed} />
 
       {(isAdmin || hasPermission(userRole || "", "admin_pos")) && (
