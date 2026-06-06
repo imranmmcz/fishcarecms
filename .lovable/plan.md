@@ -1,79 +1,77 @@
-## MegaShop Homepage Style Improvement
 
-Refresh only the **MegaShop** homepage layout (`src/components/layouts/MegaShopHome.tsx` and its `MegaShopHeader`/`MegaShopFooter`) with a magazine-style composition, premium green palette, and modern tech typography. Classic and Modern layouts stay untouched.
+# Partner Referral, Coupon & Commission System
 
-### Design Tokens (added to `src/index.css` + `tailwind.config.ts`)
+Given the size (10+ tables, partner portal, admin tooling, wallet, withdrawals, reports, notifications), I'll ship this in **3 phases**. Each phase is independently usable. We start with Phase 1 now; you approve it, ship it, then say "go" for Phase 2.
 
-- **Primary green**: `#25671E` → HSL `113 55% 26%`
-- **Accent lime**: `#4CAF10` → HSL `97 83% 37%`
-- **Supporting**: warm cream surface, deep forest text, soft sage muted
-- New gradient tokens: `--gradient-hero` (forest → lime), `--gradient-card` (cream → sage tint)
-- New shadow tokens: `--shadow-magazine` (soft layered), `--shadow-feature` (elevated)
-- **Fonts**: Space Grotesk (headings) + DM Sans (body), loaded via Google Fonts in `index.html`; mapped to `font-display` and `font-sans` in Tailwind. Bengali text continues using existing Bengali font stack as a fallback.
+## Decisions locked
+- Partner login = reuse existing auth + new `partner` role (added to `app_role` enum).
+- Discount reduces order total. Commission % is calculated on the **discounted subtotal** (excludes shipping).
+- Single-level only. Schema includes no MLM hooks.
+- Bengali-first UI, mobile responsive, dark-mode aware (uses existing design tokens).
 
-### Magazine Layout Structure
+---
 
-```text
-┌──────────────────────────────────────────────────┐
-│  MegaShopHeader (compact, refined spacing)       │
-├──────────────────────────────────────────────────┤
-│  FEATURED HERO STRIP (magazine cover)            │
-│  ┌──────────────┬──────────────┬──────────────┐  │
-│  │              │  Eyebrow     │ Side feature │  │
-│  │  Big Hero    │  Big H1      │ card (promo) │  │
-│  │  (7 cols)    │  CTA buttons ├──────────────┤  │
-│  │              │  (3 cols)    │ Side feature │  │
-│  └──────────────┴──────────────┴──────────────┘  │
-├──────────────────────────────────────────────────┤
-│  Category pill rail (kept, restyled)             │
-├──────────────────────────────────────────────────┤
-│  FLASH SALE band (full-width, dark green)        │
-├──────────────────────────────────────────────────┤
-│  FEATURED PRODUCTS — editorial grid              │
-│  [Big card 2×2] [Card] [Card]                    │
-│                 [Card] [Card]                    │
-├──────────────────────────────────────────────────┤
-│  FARMING TOOLS — bento (1 large + 6 small)       │
-├──────────────────────────────────────────────────┤
-│  "From the Field" editorial split                │
-│  (FishHealthAdvice on left, ProductSlider right) │
-├──────────────────────────────────────────────────┤
-│  CTA banner (forest→lime gradient, asymmetric)   │
-├──────────────────────────────────────────────────┤
-│  MegaShopFooter                                  │
-└──────────────────────────────────────────────────┘
-```
+## Phase 1 — Foundation (this iteration)
 
-### Section-level Changes
+**Goal:** Partners can apply, admin can approve, codes work at checkout, commissions are recorded on delivery.
 
-1. **Hero** — Replace the 3+1 grid with a 10-col magazine layout: HeroSlider on the left (cols 1–7), an editorial text block + dual CTAs (cols 8–10 top), two stacked promo cards (cols 8–10 bottom). Adds an eyebrow tag ("নতুন সিজন / New Season").
-2. **Category rail** — Pills get a subtle border, hover lifts with green accent underline.
-3. **Flash sale** — Wrapped in a full-bleed dark-green band with a magazine-style label ("সীমিত সময়ের অফার").
-4. **Featured Products** — Replace carousel with a 4-column editorial grid: first product spans 2×2 as a "cover product"; remaining 6 fill the rest. Adds section eyebrow + serif-feel display heading using Space Grotesk weight 700.
-5. **Modules** — Convert to bento: first tile (Pond Calculator) spans 2×2 with illustration treatment; 6 smaller tiles around it. Keeps existing `ModuleCard` props.
-6. **Editorial split** — New 2-column band combining `FishHealthAdvice` (left) and a compact `ProductSlider` (right) under a shared "From the Field / মাঠ থেকে" header.
-7. **CTA** — Asymmetric layout: large headline left, stacked CTAs right, decorative leaf/wave SVG accent using accent lime.
-8. **AdUnit slots** — Kept in the same positions but with magazine-styled containers (cream background, rounded-2xl).
+### Database (one migration)
+- Add `'partner'` to `app_role` enum.
+- `partners` — user_id (FK auth.users), status (pending/approved/rejected/suspended), full_name, father_name, mother_name, dob, nid_number, mobile, whatsapp, email, present_address, permanent_address, profile_photo_url, nid_front_url, nid_back_url, company_name, company_type, designation, company_address, trade_license, reference_person, reference_mobile, bank_name, account_name, account_number, branch_name, bkash, nagad, rocket, experience, notes, social_links jsonb, approved_at, approved_by, rejection_reason.
+- `partner_referral_codes` — partner_id, code (unique, uppercase), discount_type (percentage/fixed/free_shipping), discount_value, max_discount_amount, min_order_amount, commission_type (percentage/fixed), commission_value, usage_limit, used_count, valid_from, valid_until, is_active.
+- `partner_referral_clicks` — code, ip, user_agent, referrer, landing_url, clicked_at (lightweight attribution log).
+- `partner_commissions` — partner_id, order_id, code_id, code_used, order_subtotal, discount_amount, commissionable_amount, commission_type, commission_value, commission_amount, status (pending/approved/paid/cancelled), approved_at, paid_at.
+- Extend `orders` with: `referral_code`, `partner_id`, `referral_discount` (numeric).
+- RLS: partners read/update own row (limited fields), admins manage all; partners see only their own codes/commissions; public can SELECT active codes by `code` value (needed for validation at checkout); commissions write only via trigger.
+- Trigger: when `orders.status` transitions to `delivered`, mark related `partner_commissions` row `approved`. On `cancelled`/`refunded`, mark `cancelled`.
+- Trigger: when an order with `referral_code` is INSERTed, create `partner_commissions` row (status=`pending`).
+- All required `GRANT`s.
 
-### Files to Edit
+### Frontend
+- **`/partner/apply`** — public registration form (sign in first if not authed), all required fields, document uploads to `partner-documents` storage bucket (created private with admin + owner RLS). Bengali labels.
+- **Auto-attribution**: small effect in `App.tsx` reads `?ref=CODE` from URL → stores in `localStorage('referral_code')` + logs a click row.
+- **Checkout integration** (`src/pages/Checkout.tsx`):
+  - "Apply Coupon / Referral Code" field with validation against `partner_referral_codes` (active, within dates, under usage limit, meets min_order_amount).
+  - Shows discount line; writes `referral_code`, `partner_id`, `referral_discount` on the order.
+- **Admin → `/admin/partners`** — list with status filter, view application + documents, Approve / Reject / Suspend / Request docs. Approving auto-generates a code (`PARTNER` + 4-digit) if none exists and grants `partner` role.
+- **Admin → `/admin/partners/codes`** — create/edit codes manually, set discount + commission rules, activate/deactivate.
+- **Admin → `/admin/partners/commissions`** — table of commissions with status filter, bulk approve.
 
-- `src/index.css` — add HSL tokens, gradient/shadow tokens, font-family vars
-- `tailwind.config.ts` — register `font-display`, new color tokens, shadow tokens
-- `index.html` — add Space Grotesk + DM Sans Google Fonts preconnect/link
-- `src/components/layouts/MegaShopHome.tsx` — full restructure (magazine sections)
-- `src/components/layouts/MegaShopHeader.tsx` — spacing/typography polish only
-- `src/components/layouts/MegaShopFooter.tsx` — spacing/typography polish only
+### Sidebar / routing
+- Add "Partners" group to `AdminLayout` with three links above.
+- Add public route for `/partner/apply`.
 
-### Out of Scope
+---
 
-- Classic / Modern home layouts
-- Product card internals, header search/menu logic, business logic
-- Backend, data fetching, RLS, routes
-- Other pages (Shop, Product Details, etc.)
+## Phase 2 — Partner Portal (next iteration)
 
-### Responsive
+- New `partner` layout + `ProtectedRoute requirePartner`.
+- `/partner` dashboard widgets: total referral orders, total sales, total commission, pending/approved/paid, available balance.
+- Charts (Recharts): monthly sales, monthly commission.
+- Tables: recent referred orders, commission history.
+- `/partner/profile` — edit limited fields, change docs.
+- `/partner/codes` — view own code(s), copy referral link, share buttons.
+- Bilingual, mobile cards on small screens.
 
-- Mobile (≤640px): magazine grid collapses to single column; bento becomes 2-col; cover product becomes full-width.
-- Tablet (768–1024px): 2-col editorial grids.
-- Desktop (≥1024px): full magazine layout as diagrammed.
-- Maintains 360px minimum per project standard.
+## Phase 3 — Wallet, Withdrawals, Reports, Notifications
+
+- `partner_wallets` (balance, pending, withdrawable — maintained via triggers).
+- `partner_withdrawals` (method, amount, status, admin notes).
+- Partner withdraw request UI + admin approval queue + mark paid.
+- Admin reports: sales by partner, top performers, payout report, PDF/CSV/Excel export (reuses existing PDF infra with Kalpurush font).
+- Notifications: partner approved, sale received, commission added, withdrawal approved/paid — via existing `notifications` table + SMS/WhatsApp/email channels already wired.
+- Optional fraud guards: prevent self-referral (block when `order.user_id = partner.user_id`), one code per order, duplicate-IP detection counter.
+
+---
+
+## Out of scope (won't build unless asked)
+- Multi-level / two-tier commissions.
+- Per-product / per-category / per-brand commission rules (current model is per-code; we can extend in Phase 3 if needed — say the word).
+- Coupon stacking with existing `campaigns` coupons. Referral codes are validated independently; only one code applies per order.
+
+---
+
+## Phase 1 deliverables (files)
+- New migration: partners + codes + clicks + commissions + triggers + RLS + grants + storage bucket policies.
+- New: `src/pages/PartnerApply.tsx`, `src/pages/AdminPartners.tsx`, `src/pages/AdminPartnerCodes.tsx`, `src/pages/AdminPartnerCommissions.tsx`, `src/hooks/usePartnerCode.ts`.
+- Edited: `src/App.tsx` (routes + ref capture), `src/pages/Checkout.tsx` (coupon field), `src/components/AdminLayout.tsx` (sidebar links), `src/hooks/useOrders.ts` (pass referral fields).
