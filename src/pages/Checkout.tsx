@@ -32,6 +32,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { divisions, districtsByDivision, upazilasByDistrict } from "@/data/bangladeshLocationData";
+import { usePartnerCode } from "@/hooks/usePartnerCode";
+import { getStoredReferral, clearStoredReferral } from "@/components/ReferralCapture";
+import { Ticket, X as XIcon } from "lucide-react";
 import {
   ShoppingBag,
   CreditCard,
@@ -57,6 +60,10 @@ const Checkout = () => {
   const [createAccount, setCreateAccount] = useState(false);
   const [accountEmail, setAccountEmail] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  const { validate: validateCoupon, apply: applyCoupon, clear: clearCoupon, applied: appliedCoupon, isValidating: validatingCoupon } = usePartnerCode();
+  const [referralDiscount, setReferralDiscount] = useState(0);
+  const [freeShippingByCode, setFreeShippingByCode] = useState(false);
   const [formData, setFormData] = useState({
     shipping_name: "",
     shipping_mobile: "",
@@ -105,7 +112,9 @@ const Checkout = () => {
     totalWeight,
     formData.payment_method
   );
-  const total = subtotal + shippingCost;
+  const effectiveShipping = freeShippingByCode ? 0 : shippingCost;
+  const discountedSubtotal = Math.max(subtotal - referralDiscount, 0);
+  const total = discountedSubtotal + effectiveShipping;
 
   // Check if delivery charge is mandatory for current payment method
   const isDeliveryMandatory = deliverySettings.deliveryChargeMandatory === 'all' ||
@@ -113,6 +122,39 @@ const Checkout = () => {
 
   // Partial payment calculation
   const partialPayment = calculatePartialPayment(total);
+
+  // Auto-apply stored referral from ?ref=
+  useEffect(() => {
+    const stored = getStoredReferral();
+    if (stored && !appliedCoupon && subtotal > 0) {
+      setCouponInput(stored);
+      validateCoupon(stored, subtotal).then((r) => {
+        if (r.valid && r.code) {
+          applyCoupon(r.code);
+          setReferralDiscount(r.discountAmount || 0);
+          setFreeShippingByCode(!!r.freeShipping);
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal]);
+
+  const handleApplyCoupon = async () => {
+    const r = await validateCoupon(couponInput, subtotal);
+    if (!r.valid) { toast.error(r.error || "Invalid"); return; }
+    applyCoupon(r.code!);
+    setReferralDiscount(r.discountAmount || 0);
+    setFreeShippingByCode(!!r.freeShipping);
+    toast.success(language === "bn" ? "কোড প্রয়োগ হয়েছে" : "Code applied");
+  };
+
+  const handleClearCoupon = () => {
+    clearCoupon();
+    setReferralDiscount(0);
+    setFreeShippingByCode(false);
+    setCouponInput("");
+    clearStoredReferral();
+  };
   const payableAmount = usePartialPayment ? partialPayment.advanceAmount : total;
   const dueAmount = usePartialPayment ? partialPayment.dueAmount : 0;
   const translations = {
@@ -217,7 +259,9 @@ const Checkout = () => {
         customer_note: formData.customer_note,
         payment_trx_id: formData.payment_trx_id,
         payment_sender_number: formData.payment_sender_number,
-        shipping_cost: shippingCost,
+        shipping_cost: effectiveShipping,
+        referral_code: appliedCoupon?.code,
+        referral_discount: referralDiscount,
         partial_payment: usePartialPayment,
         advance_amount: usePartialPayment ? partialPayment.advanceAmount : undefined,
         due_amount: usePartialPayment ? partialPayment.dueAmount : undefined,
