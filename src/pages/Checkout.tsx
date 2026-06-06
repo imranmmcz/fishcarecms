@@ -761,12 +761,40 @@ const Checkout = () => {
                       <span className="text-muted-foreground">{translations.subtotal}</span>
                       <span>{formatPrice(subtotal)}</span>
                     </div>
+                    {appliedCoupon && referralDiscount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>{language === "bn" ? "ডিসকাউন্ট" : "Discount"} ({appliedCoupon.code})</span>
+                        <span>− {formatPrice(referralDiscount)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{translations.shipping}</span>
-                      {shippingCost === 0 ? (
+                      {effectiveShipping === 0 ? (
                         <span className="text-primary font-medium">{translations.free}</span>
                       ) : (
-                        <span className="font-medium">{formatPrice(shippingCost)}</span>
+                        <span className="font-medium">{formatPrice(effectiveShipping)}</span>
+                      )}
+                    </div>
+                    {/* Coupon / Referral Code */}
+                    <div className="rounded-lg border border-dashed p-2 space-y-2">
+                      {appliedCoupon ? (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="flex items-center gap-2 font-medium text-green-600">
+                            <Ticket className="h-4 w-4" />{appliedCoupon.code}
+                          </span>
+                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={handleClearCoupon}>
+                            <XIcon className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Input value={couponInput} onChange={(e) => setCouponInput(e.target.value)}
+                            placeholder={language === "bn" ? "কুপন / রেফারেল কোড" : "Coupon / Referral code"}
+                            className="h-9" />
+                          <Button type="button" size="sm" disabled={validatingCoupon || !couponInput} onClick={handleApplyCoupon}>
+                            {validatingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : (language === "bn" ? "প্রয়োগ" : "Apply")}
+                          </Button>
+                        </div>
                       )}
                     </div>
                     {isDeliveryMandatory && shippingCost > 0 && (
