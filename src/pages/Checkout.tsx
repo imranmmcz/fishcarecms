@@ -351,6 +351,7 @@ const Checkout = () => {
 
       // Success
       clearCart();
+      clearStoredReferral();
       toast.success(language === "bn" ? "অর্ডার সফল হয়েছে!" : "Order placed successfully!");
       navigate(`/order-confirmation/${order?.order_number}`);
     } catch (error) {
