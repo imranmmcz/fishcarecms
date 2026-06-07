@@ -123,6 +123,14 @@ import PartnerApply from "./pages/PartnerApply";
 import AdminPartners from "./pages/AdminPartners";
 import AdminPartnerCodes from "./pages/AdminPartnerCodes";
 import AdminPartnerCommissions from "./pages/AdminPartnerCommissions";
+import AdminPartnerWithdrawals from "./pages/AdminPartnerWithdrawals";
+import PartnerDashboard from "./pages/partner/PartnerDashboard";
+import PartnerCommissions from "./pages/partner/PartnerCommissions";
+import PartnerClicks from "./pages/partner/PartnerClicks";
+import PartnerSales from "./pages/partner/PartnerSales";
+import PartnerCodes from "./pages/partner/PartnerCodes";
+import PartnerProfile from "./pages/partner/PartnerProfile";
+import PartnerWallet from "./pages/partner/PartnerWallet";
 import { ReferralCapture } from "./components/ReferralCapture";
 
 import { GLOBAL_QUERY_DEFAULTS } from "@/lib/queryConfig";
@@ -241,6 +249,14 @@ const App = () => (
                       <Route path="/admin/partners" element={<ProtectedRoute requireAdmin><AdminPartners /></ProtectedRoute>} />
                       <Route path="/admin/partners/codes" element={<ProtectedRoute requireAdmin><AdminPartnerCodes /></ProtectedRoute>} />
                       <Route path="/admin/partners/commissions" element={<ProtectedRoute requireAdmin><AdminPartnerCommissions /></ProtectedRoute>} />
+                      <Route path="/admin/partners/withdrawals" element={<ProtectedRoute requireAdmin><AdminPartnerWithdrawals /></ProtectedRoute>} />
+                      <Route path="/partner" element={<ProtectedRoute><PartnerDashboard /></ProtectedRoute>} />
+                      <Route path="/partner/codes" element={<ProtectedRoute><PartnerCodes /></ProtectedRoute>} />
+                      <Route path="/partner/clicks" element={<ProtectedRoute><PartnerClicks /></ProtectedRoute>} />
+                      <Route path="/partner/sales" element={<ProtectedRoute><PartnerSales /></ProtectedRoute>} />
+                      <Route path="/partner/commissions" element={<ProtectedRoute><PartnerCommissions /></ProtectedRoute>} />
+                      <Route path="/partner/wallet" element={<ProtectedRoute><PartnerWallet /></ProtectedRoute>} />
+                      <Route path="/partner/profile" element={<ProtectedRoute><PartnerProfile /></ProtectedRoute>} />
                       <Route path="/pos" element={<ProtectedRoute requireAdmin><POSDashboard /></ProtectedRoute>} />
                       <Route path="/pos/sell" element={<ProtectedRoute requireAdmin><AdminPOS /></ProtectedRoute>} />
                       <Route path="/pos/history" element={<ProtectedRoute requireAdmin><POSHistory /></ProtectedRoute>} />

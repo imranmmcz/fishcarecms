@@ -232,6 +232,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       { title: "Partners", url: "/admin/partners", icon: Handshake, permissionKey: "admin_users" },
       { title: "Referral Codes", url: "/admin/partners/codes", icon: Ticket, permissionKey: "admin_users" },
       { title: "Commissions", url: "/admin/partners/commissions", icon: DollarSign, permissionKey: "admin_users" },
+      { title: "Withdrawals", url: "/admin/partners/withdrawals", icon: DollarSign, permissionKey: "admin_users" },
     ],
   };
 
