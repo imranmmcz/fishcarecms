@@ -2220,6 +2220,106 @@ export type Database = {
           },
         ]
       }
+      partner_wallets: {
+        Row: {
+          available_balance: number
+          created_at: string
+          id: string
+          partner_id: string
+          pending_balance: number
+          total_earned: number
+          total_paid: number
+          updated_at: string
+        }
+        Insert: {
+          available_balance?: number
+          created_at?: string
+          id?: string
+          partner_id: string
+          pending_balance?: number
+          total_earned?: number
+          total_paid?: number
+          updated_at?: string
+        }
+        Update: {
+          available_balance?: number
+          created_at?: string
+          id?: string
+          partner_id?: string
+          pending_balance?: number
+          total_earned?: number
+          total_paid?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_wallets_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_withdrawals: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          id: string
+          method: string
+          partner_id: string
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string
+          status: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          admin_notes?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          method?: string
+          partner_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          partner_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_withdrawals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partners: {
         Row: {
           account_name: string | null
@@ -3603,6 +3703,10 @@ export type Database = {
       manage_backup_cron: {
         Args: { _action: string; _backup_scope?: string; _schedule?: string }
         Returns: Json
+      }
+      recompute_partner_wallet: {
+        Args: { _partner_id: string }
+        Returns: undefined
       }
     }
     Enums: {
