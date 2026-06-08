@@ -36,6 +36,17 @@ export default function PartnerWallet() {
   useEffect(() => { load(); }, [partner?.id]);
 
   useEffect(() => {
+    if (!partner) return;
+    const channel = (supabase as any)
+      .channel(`partner-wallet-${partner.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "partner_wallets", filter: `partner_id=eq.${partner.id}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "partner_withdrawals", filter: `partner_id=eq.${partner.id}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "partner_commissions", filter: `partner_id=eq.${partner.id}` }, () => load())
+      .subscribe();
+    return () => { (supabase as any).removeChannel(channel); };
+  }, [partner?.id]);
+
+  useEffect(() => {
     if (open && partner) {
       setForm((f) => ({
         ...f,
