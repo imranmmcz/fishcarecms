@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Search, X, Phone, Mail, Bell, Globe } from "lucide-react";
+import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Phone, Mail, Bell, Globe } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -21,32 +21,6 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { usePageContent } from "@/hooks/usePageContent";
 import { SearchSuggestions } from "@/components/SearchSuggestions";
 
-/* ── Mobile search toggle ── */
-const MobileSearchToggle = () => {
-  const [open, setOpen] = useState(false);
-  const { language } = useLanguage();
-
-  return (
-    <div className="md:hidden">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setOpen((v) => !v)}
-        aria-label={open ? (language === "bn" ? "অনুসন্ধান বন্ধ করুন" : "Close search") : (language === "bn" ? "অনুসন্ধান খুলুন" : "Open search")}
-        aria-expanded={open}
-      >
-        {open ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-      </Button>
-      {open && (
-        <div className="absolute left-0 right-0 top-full bg-background border-b border-border p-2 z-50">
-          <SearchSuggestions
-            placeholder={language === "bn" ? "পণ্য খুঁজুন..." : "Search products..."}
-          />
-        </div>
-      )}
-    </div>
-  );
-};
 
 /* ── Top utility bar ── */
 const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
@@ -243,28 +217,25 @@ export const Header = () => {
             )}
             <div className="flex flex-col">
               <span className="text-base md:text-xl lg:text-2xl font-bold text-foreground leading-tight">{companyName}</span>
-              <span className="text-[10px] md:text-xs lg:text-sm text-muted-foreground leading-tight">{companySubtitle}</span>
+              <span className="hidden sm:block text-[10px] md:text-xs lg:text-sm text-muted-foreground leading-tight">{companySubtitle}</span>
             </div>
           </Link>
 
-          {/* Search Bar - Desktop */}
+          {/* Search Bar - All screens */}
           <SearchSuggestions
-            className="hidden md:block flex-1 max-w-xl mx-6"
+            className="flex-1 min-w-0 max-w-xl mx-2 md:mx-6"
             placeholder={language === "bn" ? "মাছের ওষুধ, চিকিৎসা খুঁজুন..." : "Search for fish medicines, treatments..."}
           />
 
           {/* Right side: phone + actions */}
           <div className="flex items-center gap-0 md:gap-4 shrink-0">
             {/* Phone - always visible */}
-            <a href={`tel:${headerData?.topBarPhone || "01978865277"}`} className="flex items-center gap-1.5 shrink-0">
+            <a href={`tel:${headerData?.topBarPhone || "01978865277"}`} className="hidden md:flex items-center gap-1.5 shrink-0">
               <Phone className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               <span className="hidden sm:inline text-xs md:text-sm font-bold text-foreground">
                 {headerData?.topBarPhone || "01978865277"}
               </span>
             </a>
-
-            {/* Mobile Search */}
-            <MobileSearchToggle />
 
             {/* Notifications */}
             {user && <NotificationBell />}
