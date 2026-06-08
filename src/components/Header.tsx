@@ -221,24 +221,21 @@ export const Header = () => {
             </div>
           </Link>
 
-          {/* Search Bar - Desktop */}
+          {/* Search Bar - All screens */}
           <SearchSuggestions
-            className="hidden md:block flex-1 max-w-xl mx-6"
+            className="flex-1 min-w-0 max-w-xl mx-2 md:mx-6"
             placeholder={language === "bn" ? "মাছের ওষুধ, চিকিৎসা খুঁজুন..." : "Search for fish medicines, treatments..."}
           />
 
           {/* Right side: phone + actions */}
           <div className="flex items-center gap-0 md:gap-4 shrink-0">
             {/* Phone - always visible */}
-            <a href={`tel:${headerData?.topBarPhone || "01978865277"}`} className="flex items-center gap-1.5 shrink-0">
+            <a href={`tel:${headerData?.topBarPhone || "01978865277"}`} className="hidden md:flex items-center gap-1.5 shrink-0">
               <Phone className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               <span className="hidden sm:inline text-xs md:text-sm font-bold text-foreground">
                 {headerData?.topBarPhone || "01978865277"}
               </span>
             </a>
-
-            {/* Mobile Search */}
-            <MobileSearchToggle />
 
             {/* Notifications */}
             {user && <NotificationBell />}
