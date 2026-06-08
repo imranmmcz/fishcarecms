@@ -12,9 +12,8 @@ export default function PartnerDashboard() {
   const [chart, setChart] = useState<{ date: string; commission: number }[]>([]);
   const [recent, setRecent] = useState<any[]>([]);
 
-  useEffect(() => {
+  const load = async () => {
     if (!partner) return;
-    (async () => {
       const [{ data: commissions }, { data: wallet }, { count: clickCount }, { count: salesCount }] = await Promise.all([
         (supabase as any).from("partner_commissions").select("*").eq("partner_id", partner.id).order("created_at", { ascending: false }),
         (supabase as any).from("partner_wallets").select("*").eq("partner_id", partner.id).maybeSingle(),
@@ -44,7 +43,19 @@ export default function PartnerDashboard() {
       });
       setChart(Array.from(map.entries()).map(([date, commission]) => ({ date: date.slice(5), commission })));
       setRecent((commissions || []).slice(0, 5));
-    })();
+  };
+
+  useEffect(() => { load(); }, [partner?.id]);
+
+  useEffect(() => {
+    if (!partner) return;
+    const channel = (supabase as any)
+      .channel(`partner-dashboard-${partner.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "partner_wallets", filter: `partner_id=eq.${partner.id}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "partner_commissions", filter: `partner_id=eq.${partner.id}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "partner_withdrawals", filter: `partner_id=eq.${partner.id}` }, () => load())
+      .subscribe();
+    return () => { (supabase as any).removeChannel(channel); };
   }, [partner?.id]);
 
   const cards = [
