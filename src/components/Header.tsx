@@ -21,32 +21,6 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { usePageContent } from "@/hooks/usePageContent";
 import { SearchSuggestions } from "@/components/SearchSuggestions";
 
-/* ── Mobile search toggle ── */
-const MobileSearchToggle = () => {
-  const [open, setOpen] = useState(false);
-  const { language } = useLanguage();
-
-  return (
-    <div className="md:hidden">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setOpen((v) => !v)}
-        aria-label={open ? (language === "bn" ? "অনুসন্ধান বন্ধ করুন" : "Close search") : (language === "bn" ? "অনুসন্ধান খুলুন" : "Open search")}
-        aria-expanded={open}
-      >
-        {open ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-      </Button>
-      {open && (
-        <div className="absolute left-0 right-0 top-full bg-background border-b border-border p-2 z-50">
-          <SearchSuggestions
-            placeholder={language === "bn" ? "পণ্য খুঁজুন..." : "Search products..."}
-          />
-        </div>
-      )}
-    </div>
-  );
-};
 
 /* ── Top utility bar ── */
 const TopBar = ({ headerData }: { headerData: Record<string, any> | null }) => {
