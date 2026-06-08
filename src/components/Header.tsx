@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Search, X, Phone, Mail, Bell, Globe } from "lucide-react";
+import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Phone, Mail, Bell, Globe } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
