@@ -3,12 +3,6 @@ import { Fish, Phone, Mail, MapPin, Facebook, Youtube, MessageCircle, Instagram,
 import { useLanguage } from "@/contexts/LanguageContext";
 import { UnderwaterEffect } from "@/components/UnderwaterEffect";
 import { usePageContent } from "@/hooks/usePageContent";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 
 const iconMap: Record<string, any> = {
   Facebook, Youtube, MessageCircle, Instagram, Twitter, Globe, Linkedin, Github,
