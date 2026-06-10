@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Zap, Clock, ShoppingCart, ArrowRight } from "lucide-react";
+import { Zap, Clock, ShoppingCart, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { useActiveFlashSale } from "@/hooks/useFlashSales";
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -55,6 +55,7 @@ export function FlashSaleSection() {
   const { formatPrice } = useCurrency();
   const { language } = useLanguage();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
 
   if (isLoading || !flashSale || flashSale.items.length === 0) return null;
 
@@ -118,7 +119,12 @@ export function FlashSaleSection() {
 
       <div className="container relative z-10">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          aria-expanded={expanded}
+          className="w-full flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 text-left"
+        >
           <div className="flex items-center gap-3">
             <div className="bg-white/20 backdrop-blur rounded-xl p-2.5 animate-pulse">
               <Zap className="h-7 w-7 text-white" />
@@ -136,11 +142,16 @@ export function FlashSaleSection() {
               <span className="text-sm font-medium">{isBn ? "শেষ হবে:" : "Ends in:"}</span>
             </div>
             <CountdownTimer endTime={flashSale.end_time} />
+            <span className="ml-2 bg-white/20 backdrop-blur rounded-full p-1.5 text-white" aria-hidden>
+              {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </span>
           </div>
-        </div>
+        </button>
 
-        {/* Products Slider */}
-        <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory" style={{ scrollbarWidth: "none" }}>
+        {/* Products Slider — visible on click */}
+        {expanded && (
+        <>
+        <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory animate-fade-in" style={{ scrollbarWidth: "none" }}>
           {flashSale.items.map(item => {
             if (!item.product) return null;
             const p = item.product;
@@ -213,6 +224,8 @@ export function FlashSaleSection() {
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
+        </>
+        )}
       </div>
     </section>
   );
