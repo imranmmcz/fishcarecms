@@ -46,28 +46,29 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, description, price, discount_percentage, category, image_url, external_link, stock_quantity, sku, unit, reorder_level, company_id, brand_id, cost_price, created_at, updated_at")
+        .select("id, name, description, price, discount_percentage, category, image_url, external_link, stock_quantity, sku, unit, reorder_level, company_id, brand_id, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      setProducts((data || []).map(p => ({
-        ...p,
-        cost_price: p.cost_price || 0,
-      })));
-    } catch (error) {
-      // Anonymous visitors don't have access to cost_price; retry without it
+      const base = (data || []).map(p => ({ ...p, cost_price: 0 }));
+      setProducts(base);
+
+      // Admin-only: enrich with cost prices via security-definer RPC
       try {
-        const { data, error: retryError } = await supabase
-          .from("products")
-          .select("id, name, description, price, discount_percentage, category, image_url, external_link, stock_quantity, sku, unit, reorder_level, company_id, brand_id, created_at, updated_at")
-          .order("created_at", { ascending: false });
-        if (retryError) throw retryError;
-        setProducts((data || []).map(p => ({ ...p, cost_price: 0 })));
-      } catch (retryErr) {
-        console.error("Error fetching products:", retryErr);
-        toast.error("পণ্য লোড করতে সমস্যা হয়েছে");
+        const { data: costData } = await supabase.rpc("get_products_cost_map");
+        if (costData && costData.length > 0) {
+          const map = new Map<string, number>(
+            costData.map((c: { id: string; cost_price: number | null }) => [c.id, Number(c.cost_price) || 0])
+          );
+          setProducts(base.map(p => ({ ...p, cost_price: map.get(p.id) ?? 0 })));
+        }
+      } catch {
+        // Non-admin users get cost_price = 0, which is expected
       }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast.error("পণ্য লোড করতে সমস্যা হয়েছে");
     } finally {
       setIsLoading(false);
     }

@@ -3679,12 +3679,33 @@ export type Database = {
       generate_purchase_order_number: { Args: never; Returns: string }
       generate_shift_number: { Args: never; Returns: string }
       get_email_by_mobile: { Args: { mobile_number: string }; Returns: string }
+      get_product_variations_cost_map: {
+        Args: never
+        Returns: {
+          cost_price: number
+          id: string
+        }[]
+      }
+      get_products_cost_map: {
+        Args: never
+        Returns: {
+          cost_price: number
+          id: string
+        }[]
+      }
       get_public_tables: {
         Args: never
         Returns: {
           label: string
           label_bn: string
           name: string
+        }[]
+      }
+      get_review_emails: {
+        Args: never
+        Returns: {
+          id: string
+          user_email: string
         }[]
       }
       has_permission: {
