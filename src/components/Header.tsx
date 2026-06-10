@@ -215,9 +215,9 @@ export const Header = () => {
                 <span className="text-sm md:text-lg font-bold text-background">FC</span>
               </div>
             )}
-            <div className="flex flex-col">
+            <div className="hidden sm:flex flex-col">
               <span className="text-base md:text-xl lg:text-2xl font-bold text-foreground leading-tight">{companyName}</span>
-              <span className="hidden sm:block text-[10px] md:text-xs lg:text-sm text-muted-foreground leading-tight">{companySubtitle}</span>
+              <span className="text-[10px] md:text-xs lg:text-sm text-muted-foreground leading-tight">{companySubtitle}</span>
             </div>
           </Link>
 
