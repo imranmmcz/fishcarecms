@@ -221,13 +221,20 @@ const Footer = () => {
           </Accordion>
         </div>
 
-        {/* Grid — sm and up */}
-        <div className="hidden sm:grid sm:grid-cols-2 gap-8 mt-8" style={{ gridTemplateColumns: undefined }}>
-          <style>{`@media (min-width: 1024px) { .footer-desktop-grid { grid-template-columns: repeat(${3 + linkGroups.length}, minmax(0, 1fr)) !important; } }`}</style>
-          <div className="contents lg:hidden" />
-          <div className="hidden lg:contents" />
+        {/* Grid — sm and up. Columns: Brand + N link groups + Social + Contact */}
+        <div
+          className="hidden sm:grid sm:grid-cols-2 gap-8 mt-8"
+          style={{
+            gridTemplateColumns: undefined,
+          }}
+        >
+          <style>{`
+            @media (min-width: 1024px) {
+              .footer-desktop-grid { grid-template-columns: repeat(${3 + linkGroups.length}, minmax(0, 1fr)); }
+            }
+          `}</style>
         </div>
-        <div className="hidden sm:grid sm:grid-cols-2 gap-8 footer-desktop-grid" style={{ marginTop: '-2rem' }}>
+        <div className="hidden sm:grid sm:grid-cols-2 gap-8 mt-8 footer-desktop-grid">
           {/* Column 1: Logo & Company Details */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
