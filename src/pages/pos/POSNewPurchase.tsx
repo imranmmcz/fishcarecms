@@ -44,8 +44,10 @@ export default function POSNewPurchase() {
   const { data: products = [] } = useQuery({
     queryKey: ["pos-products-purchase"],
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, name, cost_price, sku").order("name");
-      return data || [];
+      const { data } = await supabase.from("products").select("id, name, sku").order("name");
+      const { data: costs } = await supabase.rpc("get_products_cost_map");
+      const costMap = new Map<string, number>((costs || []).map((c: { id: string; cost_price: number | null }) => [c.id, Number(c.cost_price) || 0]));
+      return (data || []).map((p: any) => ({ ...p, cost_price: costMap.get(p.id) ?? 0 }));
     },
   });
 

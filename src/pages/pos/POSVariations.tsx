@@ -127,9 +127,11 @@ export default function POSVariations() {
     queryFn: async () => {
       const { data } = await supabase
         .from("product_variations")
-        .select("*")
+        .select("id, product_id, variation_name, sku, price, stock_quantity, unit, weight_value, weight_unit, is_active, created_at, updated_at")
         .order("created_at", { ascending: false });
-      return (data || []) as Variation[];
+      const { data: costs } = await supabase.rpc("get_product_variations_cost_map");
+      const costMap = new Map<string, number>((costs || []).map((c: { id: string; cost_price: number | null }) => [c.id, Number(c.cost_price) || 0]));
+      return ((data || []).map((v: any) => ({ ...v, cost_price: costMap.get(v.id) ?? 0 }))) as Variation[];
     },
   });
 

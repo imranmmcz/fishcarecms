@@ -348,8 +348,10 @@ function StockReportTab() {
   const { data: products = [] } = useQuery({
     queryKey: ["pos-report-stock"],
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, name, sku, category, stock_quantity, reorder_level, price, cost_price").order("name");
-      return data || [];
+      const { data } = await supabase.from("products").select("id, name, sku, category, stock_quantity, reorder_level, price").order("name");
+      const { data: costs } = await supabase.rpc("get_products_cost_map");
+      const costMap = new Map<string, number>((costs || []).map((c: { id: string; cost_price: number | null }) => [c.id, Number(c.cost_price) || 0]));
+      return (data || []).map((p: any) => ({ ...p, cost_price: costMap.get(p.id) ?? 0 }));
     },
   });
 
@@ -471,8 +473,10 @@ function ProfitLossReportTab() {
   const { data: products = [] } = useQuery({
     queryKey: ["pos-report-profitloss-products"],
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, name, cost_price, price");
-      return data || [];
+      const { data } = await supabase.from("products").select("id, name, price");
+      const { data: costs } = await supabase.rpc("get_products_cost_map");
+      const costMap = new Map<string, number>((costs || []).map((c: { id: string; cost_price: number | null }) => [c.id, Number(c.cost_price) || 0]));
+      return (data || []).map((p: any) => ({ ...p, cost_price: costMap.get(p.id) ?? 0 }));
     },
   });
 
