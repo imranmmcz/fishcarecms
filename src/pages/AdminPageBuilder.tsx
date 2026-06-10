@@ -69,6 +69,12 @@ interface QuickLinkItem {
   path: string;
 }
 
+interface LinkGroupItem {
+  heading_bn: string;
+  heading_en: string;
+  links: QuickLinkItem[];
+}
+
 interface SocialLinkItem {
   name: string;
   icon: string;
