@@ -39,6 +39,7 @@ const Footer = () => {
     { name_bn: t.feedManagement, name_en: "Feed Management", path: "/feed-management" },
     { name_bn: t.fishAdvice, name_en: "Fish Advice", path: "/fish-advice" },
     { name_bn: t.shop, name_en: "Shop", path: "/shop" },
+    { name_bn: "পার্টনার আবেদন", name_en: "Become a Partner", path: "/partner/apply" },
   ];
 
   const socialLinks = footerData?.socialLinks || [
@@ -58,6 +59,18 @@ const Footer = () => {
   const quickLinksHeading = footerData
     ? (language === "bn" ? footerData.quickLinksHeading_bn : footerData.quickLinksHeading_en)
     : (language === "bn" ? "দ্রুত লিংক" : "Quick Links");
+
+  // Build link groups: prefer admin-configured linkGroups, fall back to single Quick Links group
+  type LinkItem = { name_bn: string; name_en: string; path: string };
+  type LinkGroup = { heading_bn: string; heading_en: string; links: LinkItem[] };
+  const rawGroups: LinkGroup[] = Array.isArray(footerData?.linkGroups) && footerData!.linkGroups.length > 0
+    ? footerData!.linkGroups
+    : [{
+        heading_bn: footerData?.quickLinksHeading_bn || "দ্রুত লিংক",
+        heading_en: footerData?.quickLinksHeading_en || "Quick Links",
+        links: quickLinks,
+      }];
+  const linkGroups = rawGroups.filter(g => Array.isArray(g.links) && g.links.length > 0);
 
   const socialHeading = footerData
     ? (language === "bn" ? footerData.socialHeading_bn : footerData.socialHeading_en)
@@ -97,26 +110,28 @@ const Footer = () => {
         {/* Accordion — extra-small screens only */}
         <div className="sm:hidden mt-4">
           <Accordion type="multiple" className="w-full">
-            <AccordionItem value="quick-links" className="border-b border-white/10">
-              <AccordionTrigger className="text-sm font-semibold py-3 hover:no-underline" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
-                {quickLinksHeading}
-              </AccordionTrigger>
-              <AccordionContent>
-                <ul className="space-y-2">
-                  {quickLinks.map((link: any, i: number) => (
-                    <li key={i}>
-                      <Link
-                        to={link.path}
-                        className="hover:text-primary transition-colors text-sm"
-                        style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
-                      >
-                        {language === "bn" ? link.name_bn : link.name_en}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
+            {linkGroups.map((group, gi) => (
+              <AccordionItem key={`grp-${gi}`} value={`links-${gi}`} className="border-b border-white/10">
+                <AccordionTrigger className="text-sm font-semibold py-3 hover:no-underline" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
+                  {language === "bn" ? group.heading_bn : group.heading_en}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ul className="space-y-2">
+                    {group.links.map((link, i) => (
+                      <li key={i}>
+                        <Link
+                          to={link.path}
+                          className="hover:text-primary transition-colors text-sm"
+                          style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
+                        >
+                          {language === "bn" ? link.name_bn : link.name_en}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
 
             <AccordionItem value="social" className="border-b border-white/10">
               <AccordionTrigger className="text-sm font-semibold py-3 hover:no-underline" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
@@ -206,8 +221,13 @@ const Footer = () => {
           </Accordion>
         </div>
 
-        {/* Grid — sm and up */}
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-8">
+        {/* Grid — sm and up. Columns: Brand + N link groups + Social + Contact */}
+        <style>{`
+          @media (min-width: 1024px) {
+            .footer-desktop-grid { grid-template-columns: repeat(${3 + linkGroups.length}, minmax(0, 1fr)); }
+          }
+        `}</style>
+        <div className="hidden sm:grid sm:grid-cols-2 gap-8 mt-8 footer-desktop-grid">
           {/* Column 1: Logo & Company Details */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
@@ -223,23 +243,27 @@ const Footer = () => {
             <p className="text-sm leading-relaxed" style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}>{companyDesc}</p>
           </div>
 
-          {/* Column 2: Quick Links */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>{quickLinksHeading}</h3>
-            <ul className="space-y-2">
-              {quickLinks.map((link: any, i: number) => (
-                <li key={i}>
-                  <Link
-                    to={link.path}
-                    className="hover:text-primary transition-colors text-sm"
-                    style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
-                  >
-                    {language === "bn" ? link.name_bn : link.name_en}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Columns: Link Groups */}
+          {linkGroups.map((group, gi) => (
+            <div key={`gc-${gi}`} className="space-y-4">
+              <h3 className="text-lg font-semibold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
+                {language === "bn" ? group.heading_bn : group.heading_en}
+              </h3>
+              <ul className="space-y-2">
+                {group.links.map((link, i) => (
+                  <li key={i}>
+                    <Link
+                      to={link.path}
+                      className="hover:text-primary transition-colors text-sm"
+                      style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
+                    >
+                      {language === "bn" ? link.name_bn : link.name_en}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           {/* Column 3: Social Media */}
           <div className="space-y-4">

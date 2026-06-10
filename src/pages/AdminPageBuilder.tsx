@@ -69,6 +69,12 @@ interface QuickLinkItem {
   path: string;
 }
 
+interface LinkGroupItem {
+  heading_bn: string;
+  heading_en: string;
+  links: QuickLinkItem[];
+}
+
 interface SocialLinkItem {
   name: string;
   icon: string;
@@ -382,6 +388,50 @@ export default function AdminPageBuilder() {
     const items = [...(footerSection.content.socialLinks || [])];
     items.splice(index, 1);
     updateSectionContent("footer", "socialLinks", items);
+  };
+
+  // Footer Link Group handlers (multi-section accordion management)
+  const getLinkGroups = (): LinkGroupItem[] => {
+    const footerSection = getSection("footer");
+    if (!footerSection) return [];
+    if (Array.isArray(footerSection.content.linkGroups) && footerSection.content.linkGroups.length > 0) {
+      return footerSection.content.linkGroups;
+    }
+    // Seed from legacy quickLinks on first use
+    return [{
+      heading_bn: footerSection.content.quickLinksHeading_bn || "দ্রুত লিংক",
+      heading_en: footerSection.content.quickLinksHeading_en || "Quick Links",
+      links: footerSection.content.quickLinks || [],
+    }];
+  };
+  const writeLinkGroups = (groups: LinkGroupItem[]) =>
+    updateSectionContent("footer", "linkGroups", groups);
+  const addLinkGroup = () =>
+    writeLinkGroups([...getLinkGroups(), { heading_bn: "নতুন সেকশন", heading_en: "New Section", links: [] }]);
+  const removeLinkGroup = (gi: number) => {
+    const g = [...getLinkGroups()]; g.splice(gi, 1); writeLinkGroups(g);
+  };
+  const updateGroupHeading = (gi: number, field: "heading_bn" | "heading_en", value: string) => {
+    const g = [...getLinkGroups()]; g[gi] = { ...g[gi], [field]: value }; writeLinkGroups(g);
+  };
+  const addGroupLink = (gi: number) => {
+    const g = [...getLinkGroups()];
+    g[gi] = { ...g[gi], links: [...(g[gi].links || []), { name_bn: "নতুন লিংক", name_en: "New Link", path: "/" }] };
+    writeLinkGroups(g);
+  };
+  const updateGroupLink = (gi: number, li: number, field: keyof QuickLinkItem, value: string) => {
+    const g = [...getLinkGroups()];
+    const links = [...(g[gi].links || [])];
+    links[li] = { ...links[li], [field]: value };
+    g[gi] = { ...g[gi], links };
+    writeLinkGroups(g);
+  };
+  const removeGroupLink = (gi: number, li: number) => {
+    const g = [...getLinkGroups()];
+    const links = [...(g[gi].links || [])];
+    links.splice(li, 1);
+    g[gi] = { ...g[gi], links };
+    writeLinkGroups(g);
   };
 
   const socialIconOptions = [
@@ -1234,56 +1284,63 @@ export default function AdminPageBuilder() {
                   </div>
                 </div>
 
-                {/* Quick Links */}
+                {/* Footer Link Groups (accordion sections) */}
                 <div className="border rounded-lg p-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold">দ্রুত লিংক</h4>
-                    <Button size="sm" onClick={addQuickLink}>
-                      <Plus className="h-4 w-4 mr-1" />
-                      যোগ করুন
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <h4 className="font-semibold">ফুটার লিংক গ্রুপ</h4>
+                      <p className="text-xs text-muted-foreground">প্রতিটি গ্রুপ মোবাইলে একটি অ্যাকর্ডিয়ন সেকশন ও ডেস্কটপে একটি কলাম হিসেবে দেখাবে।</p>
+                    </div>
+                    <Button size="sm" onClick={addLinkGroup}>
+                      <Plus className="h-4 w-4 mr-1" /> নতুন গ্রুপ
                     </Button>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>হেডিং (বাংলা)</Label>
-                      <Input
-                        value={footerSection?.content.quickLinksHeading_bn || ""}
-                        onChange={(e) => updateSectionContent("footer", "quickLinksHeading_bn", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>হেডিং (English)</Label>
-                      <Input
-                        value={footerSection?.content.quickLinksHeading_en || ""}
-                        onChange={(e) => updateSectionContent("footer", "quickLinksHeading_en", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    {(footerSection?.content.quickLinks || []).map((item: QuickLinkItem, index: number) => (
-                      <div key={index} className="flex items-center gap-3 border rounded-lg p-3">
-                        <div className="flex-1 grid grid-cols-3 gap-2">
-                          <Input
-                            placeholder="নাম (বাংলা)"
-                            value={item.name_bn}
-                            onChange={(e) => updateQuickLink(index, "name_bn", e.target.value)}
-                          />
-                          <Input
-                            placeholder="Name (EN)"
-                            value={item.name_en}
-                            onChange={(e) => updateQuickLink(index, "name_en", e.target.value)}
-                          />
-                          <Input
-                            placeholder="পাথ (/shop)"
-                            value={item.path}
-                            onChange={(e) => updateQuickLink(index, "path", e.target.value)}
-                          />
+                  <div className="space-y-4">
+                    {getLinkGroups().map((group, gi) => (
+                      <div key={gi} className="border rounded-lg p-3 space-y-3 bg-muted/30">
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1 grid md:grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <Label className="text-xs">হেডিং (বাংলা)</Label>
+                              <Input
+                                value={group.heading_bn}
+                                onChange={(e) => updateGroupHeading(gi, "heading_bn", e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Heading (EN)</Label>
+                              <Input
+                                value={group.heading_en}
+                                onChange={(e) => updateGroupHeading(gi, "heading_en", e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <Button variant="destructive" size="icon" onClick={() => removeLinkGroup(gi)} title="সম্পূর্ণ গ্রুপ মুছুন">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button variant="destructive" size="icon" onClick={() => removeQuickLink(index)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="space-y-2">
+                          {(group.links || []).map((item, li) => (
+                            <div key={li} className="flex items-center gap-2 border rounded p-2 bg-background">
+                              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <Input placeholder="নাম (বাংলা)" value={item.name_bn} onChange={(e) => updateGroupLink(gi, li, "name_bn", e.target.value)} />
+                                <Input placeholder="Name (EN)" value={item.name_en} onChange={(e) => updateGroupLink(gi, li, "name_en", e.target.value)} />
+                                <Input placeholder="পাথ (/shop)" value={item.path} onChange={(e) => updateGroupLink(gi, li, "path", e.target.value)} />
+                              </div>
+                              <Button variant="destructive" size="icon" onClick={() => removeGroupLink(gi, li)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button size="sm" variant="outline" onClick={() => addGroupLink(gi)}>
+                            <Plus className="h-4 w-4 mr-1" /> লিংক যোগ করুন
+                          </Button>
+                        </div>
                       </div>
                     ))}
+                    {getLinkGroups().length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">এখনও কোনো লিংক গ্রুপ নেই। উপরের বাটন থেকে যোগ করুন।</p>
+                    )}
                   </div>
                 </div>
 
