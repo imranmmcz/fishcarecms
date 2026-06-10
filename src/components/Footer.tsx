@@ -107,119 +107,94 @@ const Footer = () => {
           <p className="text-sm leading-relaxed mt-3 max-w-sm" style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}>{companyDesc}</p>
         </div>
 
-        {/* Accordion — extra-small screens only */}
-        <div className="sm:hidden mt-4">
-          <Accordion type="multiple" className="w-full">
-            {linkGroups.map((group, gi) => (
-              <AccordionItem key={`grp-${gi}`} value={`links-${gi}`} className="border-b border-white/10">
-                <AccordionTrigger className="text-sm font-semibold py-3 hover:no-underline" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
-                  {language === "bn" ? group.heading_bn : group.heading_en}
-                </AccordionTrigger>
-                <AccordionContent>
-                  <ul className="space-y-2">
-                    {group.links.map((link, i) => (
-                      <li key={i}>
-                        <Link
-                          to={link.path}
-                          className="hover:text-primary transition-colors text-sm"
-                          style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
-                        >
-                          {language === "bn" ? link.name_bn : link.name_en}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
+        {/* Two-column grid — extra-small screens only */}
+        <div className="sm:hidden mt-6 grid grid-cols-2 gap-x-4 gap-y-6">
+          {linkGroups.map((group, gi) => (
+            <div key={`m-grp-${gi}`} className="space-y-2">
+              <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
+                {language === "bn" ? group.heading_bn : group.heading_en}
+              </h3>
+              <ul className="space-y-1.5">
+                {group.links.map((link, i) => (
+                  <li key={i}>
+                    <Link
+                      to={link.path}
+                      className="hover:text-primary transition-colors text-xs"
+                      style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
+                    >
+                      {language === "bn" ? link.name_bn : link.name_en}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
-            <AccordionItem value="social" className="border-b border-white/10">
-              <AccordionTrigger className="text-sm font-semibold py-3 hover:no-underline" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
-                {socialHeading}
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="flex flex-col space-y-3">
-                  {socialLinks.map((social: any, i: number) => {
-                    const IconComponent = iconMap[social.icon] || Globe;
-                    return (
-                      <a
-                        key={i}
-                        href={social.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 hover:text-primary transition-colors text-sm group"
-                        style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
-                      >
-                        <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                          <IconComponent className="w-4 h-4" />
-                        </div>
-                        <span>{social.name}</span>
-                      </a>
-                    );
-                  })}
-                </div>
-                <p className="text-xs pt-2" style={{ color: 'hsl(var(--footer-text, 215 19% 78%) / 0.7)' }}>{socialSubtext}</p>
-                {fbUrl && (
-                  <div className="mt-4 rounded-lg overflow-hidden p-3" style={{ backgroundColor: 'hsl(var(--footer-bg, 210 29% 18%) / 0.8)', border: '1px solid hsl(var(--footer-text, 215 19% 78%) / 0.15)' }}>
-                    <p className="text-xs mb-2 font-medium" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
-                      {language === "bn" ? "আমাদের সাথে যুক্ত থাকুন" : "Stay Connected"}
-                    </p>
-                    <div className="rounded-md overflow-hidden w-full" style={{ colorScheme: 'light' }}>
-                      <iframe
-                        src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(fbUrl)}&tabs=&width=500&height=130&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true&appId`}
-                        width="100%"
-                        height="130"
-                        style={{ border: 'none', overflow: 'hidden', borderRadius: '6px', width: '100%', maxWidth: '100%' }}
-                        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                        loading="lazy"
-                        title="Facebook Page"
-                      />
-                    </div>
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="contact" className="border-b border-white/10">
-              <AccordionTrigger className="text-sm font-semibold py-3 hover:no-underline" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
-                {contactHeading}
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-3">
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>{socialHeading}</h3>
+            <div className="flex flex-col space-y-2">
+              {socialLinks.map((social: any, i: number) => {
+                const IconComponent = iconMap[social.icon] || Globe;
+                return (
                   <a
-                    href={`tel:${phone.replace(/\s/g, '')}`}
-                    className="flex items-center gap-3 hover:text-primary transition-colors text-sm"
+                    key={i}
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 hover:text-primary transition-colors text-xs"
                     style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
                   >
-                    <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
-                      <Phone className="w-4 h-4" />
+                    <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
+                      <IconComponent className="w-3.5 h-3.5" />
                     </div>
-                    <span>{phone}</span>
+                    <span>{social.name}</span>
                   </a>
-                  <a
-                    href={`mailto:${email}`}
-                    className="flex items-center gap-3 hover:text-primary transition-colors text-sm"
-                    style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}
-                  >
-                    <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
-                      <Mail className="w-4 h-4" />
-                    </div>
-                    <span>{email}</span>
-                  </a>
-                  <div className="flex items-start gap-3 text-sm" style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}>
-                    <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p>{addressLine1}</p>
-                      <p>{addressLine2}</p>
-                    </div>
-                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>{contactHeading}</h3>
+            <div className="space-y-2 text-xs" style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}>
+              <a href={`tel:${phone.replace(/\s/g, '')}`} className="flex items-start gap-2 hover:text-primary transition-colors">
+                <Phone className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                <span className="break-all">{phone}</span>
+              </a>
+              <a href={`mailto:${email}`} className="flex items-start gap-2 hover:text-primary transition-colors">
+                <Mail className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                <span className="break-all">{email}</span>
+              </a>
+              <div className="flex items-start gap-2">
+                <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                <div>
+                  <p>{addressLine1}</p>
+                  <p>{addressLine2}</p>
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Facebook widget — full width on mobile under the 2-col grid */}
+        {fbUrl && (
+          <div className="sm:hidden mt-6 rounded-lg overflow-hidden p-3" style={{ backgroundColor: 'hsl(var(--footer-bg, 210 29% 18%) / 0.8)', border: '1px solid hsl(var(--footer-text, 215 19% 78%) / 0.15)' }}>
+            <p className="text-xs mb-2 font-medium" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>
+              {language === "bn" ? "আমাদের সাথে যুক্ত থাকুন" : "Stay Connected"}
+            </p>
+            <div className="rounded-md overflow-hidden w-full" style={{ colorScheme: 'light' }}>
+              <iframe
+                src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(fbUrl)}&tabs=&width=500&height=130&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true&appId`}
+                width="100%"
+                height="130"
+                style={{ border: 'none', overflow: 'hidden', borderRadius: '6px', width: '100%', maxWidth: '100%' }}
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                loading="lazy"
+                title="Facebook Page"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Grid — sm and up. Columns: Brand + N link groups + Social + Contact */}
         <style>{`
