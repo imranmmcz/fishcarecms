@@ -390,6 +390,50 @@ export default function AdminPageBuilder() {
     updateSectionContent("footer", "socialLinks", items);
   };
 
+  // Footer Link Group handlers (multi-section accordion management)
+  const getLinkGroups = (): LinkGroupItem[] => {
+    const footerSection = getSection("footer");
+    if (!footerSection) return [];
+    if (Array.isArray(footerSection.content.linkGroups) && footerSection.content.linkGroups.length > 0) {
+      return footerSection.content.linkGroups;
+    }
+    // Seed from legacy quickLinks on first use
+    return [{
+      heading_bn: footerSection.content.quickLinksHeading_bn || "দ্রুত লিংক",
+      heading_en: footerSection.content.quickLinksHeading_en || "Quick Links",
+      links: footerSection.content.quickLinks || [],
+    }];
+  };
+  const writeLinkGroups = (groups: LinkGroupItem[]) =>
+    updateSectionContent("footer", "linkGroups", groups);
+  const addLinkGroup = () =>
+    writeLinkGroups([...getLinkGroups(), { heading_bn: "নতুন সেকশন", heading_en: "New Section", links: [] }]);
+  const removeLinkGroup = (gi: number) => {
+    const g = [...getLinkGroups()]; g.splice(gi, 1); writeLinkGroups(g);
+  };
+  const updateGroupHeading = (gi: number, field: "heading_bn" | "heading_en", value: string) => {
+    const g = [...getLinkGroups()]; g[gi] = { ...g[gi], [field]: value }; writeLinkGroups(g);
+  };
+  const addGroupLink = (gi: number) => {
+    const g = [...getLinkGroups()];
+    g[gi] = { ...g[gi], links: [...(g[gi].links || []), { name_bn: "নতুন লিংক", name_en: "New Link", path: "/" }] };
+    writeLinkGroups(g);
+  };
+  const updateGroupLink = (gi: number, li: number, field: keyof QuickLinkItem, value: string) => {
+    const g = [...getLinkGroups()];
+    const links = [...(g[gi].links || [])];
+    links[li] = { ...links[li], [field]: value };
+    g[gi] = { ...g[gi], links };
+    writeLinkGroups(g);
+  };
+  const removeGroupLink = (gi: number, li: number) => {
+    const g = [...getLinkGroups()];
+    const links = [...(g[gi].links || [])];
+    links.splice(li, 1);
+    g[gi] = { ...g[gi], links };
+    writeLinkGroups(g);
+  };
+
   const socialIconOptions = [
     "Facebook", "Youtube", "MessageCircle", "Instagram", "Twitter", "Globe", 
     "Linkedin", "Github", "Send", "Music2", "Phone", "Mail", "MapPin",
