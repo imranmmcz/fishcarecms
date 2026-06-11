@@ -123,6 +123,16 @@ export function FlashSaleSection() {
           type="button"
           onClick={() => setExpanded(v => !v)}
           aria-expanded={expanded}
+          aria-controls="flash-sale-panel"
+          aria-label={isBn
+            ? `${expanded ? "ফ্ল্যাশ সেল লুকান" : "ফ্ল্যাশ সেল দেখুন"}: ${title}`
+            : `${expanded ? "Hide" : "Show"} flash sale: ${title}`}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && expanded) {
+              e.preventDefault();
+              setExpanded(false);
+            }
+          }}
           className="w-full flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 text-left"
         >
           <div className="flex items-center gap-3">
@@ -149,6 +159,12 @@ export function FlashSaleSection() {
         </button>
 
         {/* Products Slider — visible on click */}
+        <div
+          id="flash-sale-panel"
+          role="region"
+          aria-label={isBn ? "ফ্ল্যাশ সেল পণ্য" : "Flash sale products"}
+          hidden={!expanded}
+        >
         {expanded && (
         <>
         <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory animate-fade-in" style={{ scrollbarWidth: "none" }}>
@@ -226,6 +242,7 @@ export function FlashSaleSection() {
         </div>
         </>
         )}
+        </div>
       </div>
     </section>
   );
