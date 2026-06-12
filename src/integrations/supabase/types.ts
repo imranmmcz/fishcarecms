@@ -3245,6 +3245,54 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_logs: {
+        Row: {
+          action: string | null
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          policy_name: string | null
+          request_path: string | null
+          resource_table: string | null
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          policy_name?: string | null
+          request_path?: string | null
+          resource_table?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          policy_name?: string | null
+          request_path?: string | null
+          resource_table?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       sms_logs: {
         Row: {
           api_response: string | null
@@ -3721,6 +3769,18 @@ export type Database = {
       }
       is_mobile_available: { Args: { mobile_number: string }; Returns: boolean }
       is_user_blocked: { Args: { check_user_id: string }; Returns: boolean }
+      log_security_event: {
+        Args: {
+          _action?: string
+          _details?: Json
+          _event_type: string
+          _policy_name?: string
+          _request_path?: string
+          _resource_table?: string
+          _severity?: string
+        }
+        Returns: string
+      }
       manage_backup_cron: {
         Args: { _action: string; _backup_scope?: string; _schedule?: string }
         Returns: Json
