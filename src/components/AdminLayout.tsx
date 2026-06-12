@@ -250,6 +250,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       { title: at.databaseExport, url: "/admin/database-export", icon: Database, permissionKey: "admin_backup" },
       { title: at.seoFiles, url: "/admin/seo-files", icon: Globe, permissionKey: "admin_settings" },
       { title: at.systemBackup, url: "/admin/backup", icon: CloudUpload, permissionKey: "admin_backup" },
+      { title: "Security Logs", url: "/admin/security-logs", icon: Shield, permissionKey: "admin_users" },
       { title: at.profile, url: "/admin/profile", icon: User },
     ],
   };
