@@ -12,7 +12,7 @@ import {
   Megaphone, Layout, TrendingUp, Database, ShoppingCart, Warehouse, UserCheck,
   Building2, FileText, CloudUpload, Palette, Store, ChevronDown, CreditCard,
   Mail, Globe, Sliders, Stethoscope, Calculator, MonitorSmartphone, Clock, MessageSquare, Zap, Handshake, Ticket, DollarSign, type LucideIcon,
-  Menu, X, LogOut, ChevronLeft, ChevronRight, Languages,
+  Menu, X, LogOut, ChevronLeft, ChevronRight, Languages, Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
