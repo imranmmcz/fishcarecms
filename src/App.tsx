@@ -69,6 +69,7 @@ import AdminDatabaseExport from "./pages/AdminDatabaseExport";
 import AdminSeoFiles from "./pages/AdminSeoFiles";
 import AdminBackup from "./pages/AdminBackup";
 import AdminSecurityLogs from "./pages/AdminSecurityLogs";
+import AdminNotificationPreferences from "./pages/AdminNotificationPreferences";
 import AdminEcommerceOverview from "./pages/AdminEcommerceOverview";
 import AdminPages from "./pages/AdminPages";
 import CustomPage from "./pages/CustomPage";
