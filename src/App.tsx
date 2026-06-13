@@ -69,6 +69,7 @@ import AdminDatabaseExport from "./pages/AdminDatabaseExport";
 import AdminSeoFiles from "./pages/AdminSeoFiles";
 import AdminBackup from "./pages/AdminBackup";
 import AdminSecurityLogs from "./pages/AdminSecurityLogs";
+import AdminNotificationPreferences from "./pages/AdminNotificationPreferences";
 import AdminEcommerceOverview from "./pages/AdminEcommerceOverview";
 import AdminPages from "./pages/AdminPages";
 import CustomPage from "./pages/CustomPage";
@@ -226,6 +227,7 @@ const App = () => (
                       <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
                       <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
                       <Route path="/admin/security-logs" element={<ProtectedRoute requireAdmin><AdminSecurityLogs /></ProtectedRoute>} />
+                      <Route path="/admin/notification-preferences" element={<ProtectedRoute requireAdmin><AdminNotificationPreferences /></ProtectedRoute>} />
                       <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AdminReports /></ProtectedRoute>} />
                       <Route path="/admin/ads" element={<ProtectedRoute requireAdmin><AdminAds /></ProtectedRoute>} />
                       <Route path="/admin/page-builder" element={<ProtectedRoute requireAdmin><AdminPageBuilder /></ProtectedRoute>} />
