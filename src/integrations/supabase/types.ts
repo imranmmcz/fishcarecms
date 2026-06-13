@@ -155,6 +155,42 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notification_preferences: {
+        Row: {
+          created_at: string
+          email_address: string | null
+          email_enabled: boolean
+          event_types: string[]
+          id: string
+          in_app_enabled: boolean
+          min_severity: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_address?: string | null
+          email_enabled?: boolean
+          event_types?: string[]
+          id?: string
+          in_app_enabled?: boolean
+          min_severity?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_address?: string | null
+          email_enabled?: boolean
+          event_types?: string[]
+          id?: string
+          in_app_enabled?: boolean
+          min_severity?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       alert_logs: {
         Row: {
           alert_id: string
