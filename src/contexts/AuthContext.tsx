@@ -71,6 +71,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Tracks whether the user's role row has been fetched yet.
+  // Starts true so route guards wait until we know the role.
+  const [roleLoading, setRoleLoading] = useState(true);
 
   const isAdmin = userRole === 'admin';
   const isFarmer = userRole === 'farmer';
@@ -151,12 +154,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const loadUserData = async (userId: string) => {
+    setRoleLoading(true);
     const [profileData, role] = await Promise.all([
       fetchProfile(userId),
       fetchUserRole(userId),
     ]);
     setProfile(profileData);
     setUserRole(role);
+    setRoleLoading(false);
   };
 
   useEffect(() => {
@@ -172,6 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setProfile(null);
           setUserRole(null);
+          setRoleLoading(false);
         }
       }
     );
@@ -184,6 +190,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (session?.user) {
         await loadUserData(session.user.id);
+      } else {
+        setRoleLoading(false);
       }
     });
 
