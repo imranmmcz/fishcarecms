@@ -6,6 +6,8 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 
+const { initDatabase } = require('./config/initDatabase');
+
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const productRoutes = require('./routes/products');
@@ -141,8 +143,23 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 FishCare API Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 Allowed Origins: ${uniqueOrigins.join(', ')}`);
-});
+(async () => {
+  try {
+    // Auto-create database + apply every schema file in database/ on boot.
+    // Safe on re-runs (uses CREATE TABLE IF NOT EXISTS / INSERT IGNORE).
+    await initDatabase();
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('🛑 Refusing to start API server — database init failed.');
+      process.exit(1);
+    } else {
+      console.warn('⚠️  Starting API server despite database init errors (dev mode).');
+    }
+  }
+
+  app.listen(PORT, () => {
+    console.log(`🚀 FishCare API Server running on port ${PORT}`);
+    console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌐 Allowed Origins: ${uniqueOrigins.join(', ')}`);
+  });
+})();
