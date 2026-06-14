@@ -49,6 +49,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   session: Session | null;
   isLoading: boolean;
+  roleLoading: boolean;
   isAdmin: boolean;
   isFarmer: boolean;
   isCustomer: boolean;
