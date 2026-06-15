@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Phone, Mail, Bell, Globe } from "lucide-react";
+import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Phone, Mail, Bell, Globe, Search, X } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -141,6 +141,7 @@ export const Header = () => {
   const { wishlistCount } = useWishlist();
   const { getSectionContent } = usePageContent();
   const [hideNav, setHideNav] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -221,14 +222,26 @@ export const Header = () => {
             </div>
           </Link>
 
-          {/* Search Bar - All screens */}
+          {/* Search Bar — full on md+, collapsible icon on mobile */}
           <SearchSuggestions
-            className="flex-1 min-w-0 max-w-xl mx-2 md:mx-6"
+            className="hidden md:flex flex-1 min-w-0 max-w-xl mx-2 md:mx-6"
             placeholder={language === "bn" ? "মাছের ওষুধ, চিকিৎসা খুঁজুন..." : "Search for fish medicines, treatments..."}
           />
+          <div className="flex-1 md:hidden" />
 
           {/* Right side: phone + actions */}
           <div className="flex items-center gap-0 md:gap-4 shrink-0">
+            {/* Mobile search toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-8 w-8"
+              aria-label={language === "bn" ? "সার্চ" : "Search"}
+              onClick={() => setMobileSearchOpen((v) => !v)}
+            >
+              {mobileSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            </Button>
+
             {/* Phone - always visible */}
             <a href={`tel:${headerData?.topBarPhone || "01978865277"}`} className="hidden md:flex items-center gap-1.5 shrink-0">
               <Phone className="h-4 w-4 md:h-5 md:w-5 text-primary" />
@@ -269,6 +282,16 @@ export const Header = () => {
             </Sheet>
           </div>
         </div>
+
+        {/* Mobile search row (toggled) */}
+        {mobileSearchOpen && (
+          <div className="md:hidden border-t border-border px-3 py-2 animate-fade-in" style={{ backgroundColor: 'hsl(var(--header-bg, var(--background)))' }}>
+            <SearchSuggestions
+              className="w-full"
+              placeholder={language === "bn" ? "খুঁজুন..." : "Search..."}
+            />
+          </div>
+        )}
       </div>
 
       {/* ─── Row 3: Navigation - Desktop ─── */}
