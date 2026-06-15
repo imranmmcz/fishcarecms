@@ -107,7 +107,7 @@ export function PartnerLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
-      <main className="flex-1 lg:ml-64 p-4 md:p-6 max-w-full overflow-x-hidden">
+      <main className="flex-1 lg:ml-64 p-4 md:p-6 max-w-full overflow-x-hidden dashboard-main">
         {children}
       </main>
     </div>

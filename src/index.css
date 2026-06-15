@@ -318,3 +318,48 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* ============================================================
+   Dashboard / Admin internal-page responsive guardrails
+   Applies only to content inside dashboard/admin/POS/partner
+   main areas so public storefront layouts are untouched.
+   ============================================================ */
+@layer utilities {
+  /* Auto horizontal scroll for any table that overflows on small screens */
+  .dashboard-main table,
+  main table {
+    max-width: 100%;
+  }
+
+  @media (max-width: 640px) {
+    /* Wrap raw tables so they scroll horizontally on phones */
+    .dashboard-main :where(table):not(.no-mobile-scroll) {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Tighten typography for page headers on phones */
+    .dashboard-main h1 { font-size: 1.125rem; line-height: 1.5rem; }
+    .dashboard-main h2 { font-size: 1rem;     line-height: 1.4rem; }
+
+    /* Card padding on phones */
+    .dashboard-main [data-slot="card-content"],
+    .dashboard-main [data-slot="card-header"] {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
+    /* Prevent iOS auto-zoom on focused inputs */
+    .dashboard-main input,
+    .dashboard-main select,
+    .dashboard-main textarea {
+      font-size: 16px;
+    }
+
+    /* Avoid horizontal page overflow from wide grids/flex rows */
+    .dashboard-main { min-width: 0; }
+    .dashboard-main * { min-width: 0; }
+  }
+}

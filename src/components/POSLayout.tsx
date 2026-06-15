@@ -368,7 +368,7 @@ export function POSLayout({ children }: POSLayoutProps) {
             </div>
           </header>
 
-          <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-49px)]">
+          <div className="p-4 md:p-6 bg-background/80 backdrop-blur-sm min-h-[calc(100vh-49px)] dashboard-main min-w-0 overflow-x-hidden">
             {children}
           </div>
         </div>
