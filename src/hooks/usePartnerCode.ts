@@ -33,12 +33,9 @@ export function usePartnerCode() {
     if (!code) return { valid: false, error: "কোড লিখুন" };
     setIsValidating(true);
     try {
-      const { data, error } = await (supabase as any)
-        .from("partner_referral_codes")
-        .select("*")
-        .ilike("code", code)
-        .eq("is_active", true)
-        .maybeSingle();
+      const { data: rows, error } = await (supabase as any)
+        .rpc("validate_referral_code", { p_code: code });
+      const data = Array.isArray(rows) ? rows[0] : rows;
       if (error || !data) return { valid: false, error: "কোড পাওয়া যায়নি বা নিষ্ক্রিয়" };
       const c = data as ReferralCode;
       const now = new Date();
