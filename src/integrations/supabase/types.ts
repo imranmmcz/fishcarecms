@@ -3825,6 +3825,21 @@ export type Database = {
         Args: { _partner_id: string }
         Returns: undefined
       }
+      validate_referral_code: {
+        Args: { p_code: string }
+        Returns: {
+          code: string
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          partner_id: string
+          usage_limit: number
+          used_count: number
+          valid_from: string
+          valid_until: string
+        }[]
+      }
     }
     Enums: {
       alert_status: "pending" | "sent" | "completed" | "dismissed" | "overdue"
