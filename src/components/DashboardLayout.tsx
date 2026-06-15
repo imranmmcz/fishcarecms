@@ -562,7 +562,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </header>
 
             {/* Page Content */}
-            <main className="flex-1 p-4 md:p-6">
+            <main className="flex-1 p-4 md:p-6 dashboard-main min-w-0 overflow-x-hidden">
               <InactivityWarningBanner />
               {children}
             </main>
@@ -824,7 +824,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 p-4 md:p-6 dashboard-main min-w-0 overflow-x-hidden">
           <InactivityWarningBanner />
           {children}
         </main>
