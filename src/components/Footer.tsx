@@ -86,17 +86,17 @@ const Footer = () => {
       <UnderwaterEffect bubbleCount={18} fishCount={6} />
 
       <div className="container mx-auto px-4 py-12 relative z-10">
-        {/* Brand — always visible */}
-        <div className="mb-6 sm:mb-0">
+        {/* Brand — visible on xs only; desktop grid has its own logo column */}
+        <div className="mb-6 sm:hidden">
           <Link to="/" className="flex items-center gap-2">
             {siteLogoUrl ? (
-              <img src={siteLogoUrl} alt={companyName} className="w-10 h-10 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-lg object-contain" />
+              <img src={siteLogoUrl} alt={companyName} className="w-10 h-10 rounded-lg object-contain" />
             ) : (
-              <div className="w-10 h-10 md:w-14 md:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-                <Fish className="w-6 h-6 md:w-8 md:h-8 text-primary-foreground" />
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
+                <Fish className="w-6 h-6 text-primary-foreground" />
               </div>
             )}
-            <span className="text-xl md:text-2xl lg:text-3xl font-bold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>{companyName}</span>
+            <span className="text-xl font-bold" style={{ color: 'hsl(var(--footer-heading, 0 0% 100%))' }}>{companyName}</span>
           </Link>
           <p className="text-sm leading-relaxed mt-3 max-w-sm" style={{ color: 'hsl(var(--footer-text, 215 19% 78%))' }}>{companyDesc}</p>
         </div>
