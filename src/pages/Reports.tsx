@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { CalculatorSwitcher } from "@/components/CalculatorSwitcher";
 import Footer from "@/components/Footer";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Calendar, Trash2 } from "lucide-react";
@@ -137,6 +138,9 @@ const Reports = () => {
             </div>
           )}
         </div>
+      </div>
+      <div className="container mx-auto px-4">
+        <RecommendedProductsSlider category="calculator_related" titleBn="রিপোর্টের জন্য প্রস্তাবিত পণ্য" />
       </div>
       <Footer />
     </div>

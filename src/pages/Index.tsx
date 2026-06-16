@@ -69,11 +69,22 @@ const ClassicHome = () => {
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">{t.integratedModules}</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">{t.integratedModulesDesc}</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 animate-fade-in">
-            {modules.map((module) => (
-              <ModuleCard key={module.id} title={module.title} description={module.description} icon={module.icon} path={module.path} isActive={module.isActive} />
-            ))}
-          </div>
+          <Carousel opts={{ align: "start", loop: true }} className="w-full animate-fade-in">
+            <CarouselContent className="-ml-3 sm:-ml-4">
+              {modules.map((module) => (
+                <CarouselItem
+                  key={module.id}
+                  className="pl-3 sm:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
+                >
+                  <ModuleCard title={module.title} description={module.description} icon={module.icon} path={module.path} isActive={module.isActive} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <div className="flex justify-center gap-2 mt-6">
+              <CarouselPrevious className="static translate-y-0 bg-background hover:bg-primary hover:text-primary-foreground" />
+              <CarouselNext className="static translate-y-0 bg-background hover:bg-primary hover:text-primary-foreground" />
+            </div>
+          </Carousel>
         </div>
       </section>
 
