@@ -15,6 +15,7 @@ import { fishFaqData, faqCategories } from "@/data/fishFaqData";
 import { useToast } from "@/hooks/use-toast";
 import { VisualDiagnosisGuide } from "@/components/VisualDiagnosisGuide";
 import AdUnit from "@/components/AdUnit";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 
 interface Message {
   role: "user" | "assistant";
@@ -363,6 +364,7 @@ const FishAdvice = () => {
         <div className="mt-8">
           <AdUnit position="footer" />
         </div>
+        <RecommendedProductsSlider category="calculator_related" titleBn="মাছের পরামর্শের জন্য প্রস্তাবিত পণ্য" />
       </main>
       <Footer />
     </div>
