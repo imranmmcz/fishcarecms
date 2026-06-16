@@ -4,6 +4,75 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
+    <!-- Apply cached theme synchronously BEFORE first paint to eliminate FOUC.
+         Placed first in <head> so it runs before any stylesheet or font request.
+         Builds one cssText string + sets html background immediately to avoid CLS. -->
+    <script>
+      (function () {
+        try {
+          var d = document.documentElement;
+          d.style.colorScheme = "light";
+          var map = {
+            theme_primary: ["--primary", "--ring"],
+            theme_secondary: ["--secondary"],
+            theme_accent: ["--accent"],
+            theme_background: ["--background"],
+            theme_foreground: ["--foreground", "--card-foreground", "--popover-foreground"],
+            theme_card: ["--card", "--popover"],
+            theme_hover: ["--primary-glow"],
+            theme_button: ["--primary"],
+            theme_button_hover: ["--primary-glow"],
+            theme_link: ["--ring"],
+            theme_header_utility_bg: ["--header-utility-bg"],
+            theme_header_utility_text: ["--header-utility-text"],
+            theme_header_bg: ["--header-bg"],
+            theme_header_nav_bg: ["--header-nav-bg"],
+            theme_header_nav_text: ["--header-nav-text"],
+            theme_footer_bg: ["--footer-bg"],
+            theme_footer_text: ["--footer-text"],
+            theme_footer_heading: ["--footer-heading"],
+            theme_border: ["--border", "--input"],
+            theme_alert: ["--destructive"]
+          };
+          function h2h(hex) {
+            hex = String(hex).replace("#", "");
+            if (hex.length !== 6) return null;
+            var r = parseInt(hex.substr(0, 2), 16) / 255,
+                g = parseInt(hex.substr(2, 2), 16) / 255,
+                b = parseInt(hex.substr(4, 2), 16) / 255;
+            var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+            var hh = 0, s = 0, l = (mx + mn) / 2;
+            if (mx !== mn) {
+              var dd = mx - mn;
+              s = l > 0.5 ? dd / (2 - mx - mn) : dd / (mx + mn);
+              hh = mx === r ? ((g - b) / dd + (g < b ? 6 : 0)) / 6
+                 : mx === g ? ((b - r) / dd + 2) / 6
+                 : ((r - g) / dd + 4) / 6;
+            }
+            return Math.round(hh * 360) + " " + Math.round(s * 100) + "% " + Math.round(l * 100) + "%";
+          }
+          var raw = localStorage.getItem("lovable-theme-cache");
+          if (raw) {
+            var colors = JSON.parse(raw);
+            // Paint background immediately (avoids white flash + CLS)
+            if (colors.theme_background) d.style.backgroundColor = colors.theme_background;
+            // Build one cssText to minimize reflows
+            var css = "";
+            for (var k in colors) {
+              var vars = map[k], hsl = h2h(colors[k]);
+              if (!vars || !hsl) continue;
+              for (var i = 0; i < vars.length; i++) css += vars[i] + ":" + hsl + ";";
+            }
+            if (css) d.style.cssText += css;
+          }
+          var btn = localStorage.getItem("lovable-btn-style-cache");
+          if (btn && btn !== "default") d.setAttribute("data-btn-style", btn);
+          var layout = localStorage.getItem("lovable-layout-cache");
+          if (layout) d.setAttribute("data-layout", layout);
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
+
     <!-- Primary SEO -->
     <title>Fish Care | Fish Medicine, Pond Calculator & Aquaculture Solutions</title>
     <meta name="description" content="Fish Care provides fish medicine information, disease management, pond calculators, feed formulation, fish farming dashboard and aquaculture solutions in Bangladesh." />
@@ -51,69 +120,6 @@
 
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
-
-    <!-- Apply cached theme synchronously BEFORE first paint to eliminate FOUC -->
-    <script>
-      (function () {
-        try {
-          var cssVarMap = {
-            theme_primary: ["--primary", "--ring"],
-            theme_secondary: ["--secondary"],
-            theme_accent: ["--accent"],
-            theme_background: ["--background"],
-            theme_foreground: ["--foreground", "--card-foreground", "--popover-foreground"],
-            theme_card: ["--card", "--popover"],
-            theme_hover: ["--primary-glow"],
-            theme_button: ["--primary"],
-            theme_button_hover: ["--primary-glow"],
-            theme_link: ["--ring"],
-            theme_header_utility_bg: ["--header-utility-bg"],
-            theme_header_utility_text: ["--header-utility-text"],
-            theme_header_bg: ["--header-bg"],
-            theme_header_nav_bg: ["--header-nav-bg"],
-            theme_header_nav_text: ["--header-nav-text"],
-            theme_footer_bg: ["--footer-bg"],
-            theme_footer_text: ["--footer-text"],
-            theme_footer_heading: ["--footer-heading"],
-            theme_border: ["--border", "--input"],
-            theme_alert: ["--destructive"]
-          };
-          function hexToHsl(hex) {
-            hex = String(hex).replace("#", "");
-            if (hex.length !== 6) return null;
-            var r = parseInt(hex.substring(0, 2), 16) / 255;
-            var g = parseInt(hex.substring(2, 4), 16) / 255;
-            var b = parseInt(hex.substring(4, 6), 16) / 255;
-            var max = Math.max(r, g, b), min = Math.min(r, g, b);
-            var h = 0, s = 0, l = (max + min) / 2;
-            if (max !== min) {
-              var d = max - min;
-              s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-              switch (max) {
-                case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-                case g: h = ((b - r) / d + 2) / 6; break;
-                case b: h = ((r - g) / d + 4) / 6; break;
-              }
-            }
-            return Math.round(h * 360) + " " + Math.round(s * 100) + "% " + Math.round(l * 100) + "%";
-          }
-          var raw = localStorage.getItem("lovable-theme-cache");
-          if (raw) {
-            var colors = JSON.parse(raw);
-            var root = document.documentElement;
-            Object.keys(colors).forEach(function (key) {
-              var vars = cssVarMap[key];
-              var hsl = hexToHsl(colors[key]);
-              if (vars && hsl) vars.forEach(function (v) { root.style.setProperty(v, hsl); });
-            });
-          }
-          var btn = localStorage.getItem("lovable-btn-style-cache");
-          if (btn && btn !== "default") {
-            document.documentElement.setAttribute("data-btn-style", btn);
-          }
-        } catch (e) { /* ignore */ }
-      })();
-    </script>
 
     <!-- Performance: Preconnect / DNS prefetch for Core Web Vitals -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
