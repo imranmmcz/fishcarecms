@@ -52,6 +52,69 @@
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
 
+    <!-- Apply cached theme synchronously BEFORE first paint to eliminate FOUC -->
+    <script>
+      (function () {
+        try {
+          var cssVarMap = {
+            theme_primary: ["--primary", "--ring"],
+            theme_secondary: ["--secondary"],
+            theme_accent: ["--accent"],
+            theme_background: ["--background"],
+            theme_foreground: ["--foreground", "--card-foreground", "--popover-foreground"],
+            theme_card: ["--card", "--popover"],
+            theme_hover: ["--primary-glow"],
+            theme_button: ["--primary"],
+            theme_button_hover: ["--primary-glow"],
+            theme_link: ["--ring"],
+            theme_header_utility_bg: ["--header-utility-bg"],
+            theme_header_utility_text: ["--header-utility-text"],
+            theme_header_bg: ["--header-bg"],
+            theme_header_nav_bg: ["--header-nav-bg"],
+            theme_header_nav_text: ["--header-nav-text"],
+            theme_footer_bg: ["--footer-bg"],
+            theme_footer_text: ["--footer-text"],
+            theme_footer_heading: ["--footer-heading"],
+            theme_border: ["--border", "--input"],
+            theme_alert: ["--destructive"]
+          };
+          function hexToHsl(hex) {
+            hex = String(hex).replace("#", "");
+            if (hex.length !== 6) return null;
+            var r = parseInt(hex.substring(0, 2), 16) / 255;
+            var g = parseInt(hex.substring(2, 4), 16) / 255;
+            var b = parseInt(hex.substring(4, 6), 16) / 255;
+            var max = Math.max(r, g, b), min = Math.min(r, g, b);
+            var h = 0, s = 0, l = (max + min) / 2;
+            if (max !== min) {
+              var d = max - min;
+              s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+              switch (max) {
+                case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                case g: h = ((b - r) / d + 2) / 6; break;
+                case b: h = ((r - g) / d + 4) / 6; break;
+              }
+            }
+            return Math.round(h * 360) + " " + Math.round(s * 100) + "% " + Math.round(l * 100) + "%";
+          }
+          var raw = localStorage.getItem("lovable-theme-cache");
+          if (raw) {
+            var colors = JSON.parse(raw);
+            var root = document.documentElement;
+            Object.keys(colors).forEach(function (key) {
+              var vars = cssVarMap[key];
+              var hsl = hexToHsl(colors[key]);
+              if (vars && hsl) vars.forEach(function (v) { root.style.setProperty(v, hsl); });
+            });
+          }
+          var btn = localStorage.getItem("lovable-btn-style-cache");
+          if (btn && btn !== "default") {
+            document.documentElement.setAttribute("data-btn-style", btn);
+          }
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
+
     <!-- Performance: Preconnect / DNS prefetch for Core Web Vitals -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
