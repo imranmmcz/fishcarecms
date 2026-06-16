@@ -26,6 +26,9 @@ export function applyButtonStyle(style: string | null | undefined) {
   } else {
     root.setAttribute("data-btn-style", style);
   }
+  try {
+    localStorage.setItem("lovable-btn-style-cache", style || "default");
+  } catch { /* ignore */ }
 }
 
 /** Returns the override that best matches the pathname, or null. */
@@ -126,6 +129,9 @@ export function ThemeLoader() {
           });
           if (Object.keys(colors).length > 0) {
             applyThemeColors(colors);
+            try {
+              localStorage.setItem("lovable-theme-cache", JSON.stringify(colors));
+            } catch { /* ignore */ }
           }
           applyButtonStyle(btnStyle);
           cacheLoaded = true;
