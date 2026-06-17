@@ -118,6 +118,7 @@ import POSReports from "./pages/pos/POSReports";
 import POSExpenses from "./pages/pos/POSExpenses";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
+import HotDeals from "./pages/HotDeals";
 import ProductDetails from "./pages/ProductDetails";
 import Wishlist from "./pages/Wishlist";
 import TrackOrder from "./pages/TrackOrder";
@@ -179,6 +180,7 @@ const App = () => (
                       <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/modules" element={<Modules />} />
                       <Route path="/shop" element={<Shop />} />
+                     <Route path="/hot-deals" element={<HotDeals />} />
                       <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
                       <Route path="/product/:id" element={<ProductDetails />} />
                       <Route path="/checkout" element={<Checkout />} />

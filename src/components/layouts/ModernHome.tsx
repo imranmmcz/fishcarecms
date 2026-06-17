@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import SeoHead from "@/components/SeoHead";
-import { ModernHeader } from "./ModernHeader";
+import { Header } from "@/components/Header";
 import { ModernFooter } from "./ModernFooter";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { HeroSlider } from "@/components/home/HeroSlider";
@@ -44,7 +44,7 @@ export const ModernHome = () => {
         description={language === "bn" ? "আধুনিক প্রযুক্তি ব্যবহার করে মাছ চাষকে আরও লাভজনক এবং টেকসই করুন।" : "Make fish farming more profitable with modern technology."}
         url="/"
       />
-      <ModernHeader />
+      <Header />
 
       <AdUnit position="header" className="py-2 container" />
 

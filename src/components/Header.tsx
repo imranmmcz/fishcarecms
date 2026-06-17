@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Phone, Mail, Bell, Globe, Search, X } from "lucide-react";
+import { Menu, LogIn, Shield, LogOut, User, LayoutDashboard, Settings, Heart, ShoppingCart, Phone, Mail, Bell, Globe, Search, X, ChevronDown, Zap } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -301,6 +301,22 @@ export const Header = () => {
           style={{ backgroundColor: 'hsl(var(--header-nav-bg, var(--foreground)))' }}
         >
           <div className="container flex items-center gap-1 h-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1.5 px-4 h-full text-sm font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
+                  <Menu className="h-4 w-4" />
+                  {language === "bn" ? "সকল ক্যাটাগরি" : "All Categories"}
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52">
+                <DropdownMenuItem asChild><Link to="/shop?category=medicine">{language === "bn" ? "ঔষধ" : "Medicine"}</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/shop?category=food">{language === "bn" ? "মাছের খাদ্য" : "Fish Food"}</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/shop?category=accessories">{language === "bn" ? "সরঞ্জাম" : "Accessories"}</Link></DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild><Link to="/shop">{language === "bn" ? "সব পণ্য" : "All Products"}</Link></DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {navItems.map((item) => (
               <Link
                 key={item.path}
@@ -315,6 +331,15 @@ export const Header = () => {
                 {item.label}
               </Link>
             ))}
+            <Link
+              to="/hot-deals"
+              className="ml-auto flex items-center gap-1.5 px-3 h-full hover:bg-white/10 transition-colors"
+            >
+              <Zap className="h-3.5 w-3.5 text-yellow-400" />
+              <span className="text-xs font-bold text-yellow-400 animate-pulse">
+                {language === "bn" ? "🔥 হট ডিল" : "🔥 HOT DEALS"}
+              </span>
+            </Link>
           </div>
         </nav>
       </div>
@@ -352,6 +377,14 @@ const MobileNav = ({ navItems, location, user, isAdmin, userName, userInitials, 
         {item.label}
       </Link>
     ))}
+
+    <Link
+      to="/hot-deals"
+      className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-destructive/10 text-destructive font-semibold"
+    >
+      <Zap className="h-4 w-4" />
+      {language === "bn" ? "🔥 হট ডিল" : "🔥 Hot Deals"}
+    </Link>
 
     <div className="border-t border-border pt-4 mt-4 space-y-2">
       {user && (

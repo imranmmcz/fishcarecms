@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import SeoHead from "@/components/SeoHead";
-import { MegaShopHeader } from "./MegaShopHeader";
+import { Header } from "@/components/Header";
 import { MegaShopFooter } from "./MegaShopFooter";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { FlashSaleSection } from "@/components/home/FlashSaleSection";
@@ -85,7 +85,7 @@ export const MegaShopHome = () => {
         description={language === "bn" ? "আধুনিক প্রযুক্তি ব্যবহার করে মাছ চাষকে আরও লাভজনক এবং টেকসই করুন।" : "Make fish farming more profitable with modern technology."}
         url="/"
       />
-      <MegaShopHeader />
+      <Header />
 
       <AdUnit position="header" className="py-2 container px-3 sm:px-4" />
 
