@@ -74,7 +74,6 @@ const RecommendedProductsSlider = ({
           const { data } = await (supabase
             .from('products')
             .select('id, name, description, price, discount_percentage, image_url') as any)
-            .eq('is_active', true)
             .gt('stock_quantity', 0)
             .contains('recommendation_tags', [category])
             .limit(12);
@@ -96,8 +95,6 @@ const RecommendedProductsSlider = ({
         const { data: fallback } = await (supabase
           .from('products')
           .select('id, name, description, price, discount_percentage, image_url') as any)
-          .eq('is_active', true)
-          .gt('stock_quantity', 0)
           .limit(8);
         
         const existing = new Set(finalProducts.map(p => p.id));
