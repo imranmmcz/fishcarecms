@@ -378,6 +378,14 @@ const MobileNav = ({ navItems, location, user, isAdmin, userName, userInitials, 
       </Link>
     ))}
 
+    <Link
+      to="/hot-deals"
+      className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-destructive/10 text-destructive font-semibold"
+    >
+      <Zap className="h-4 w-4" />
+      {language === "bn" ? "🔥 হট ডিল" : "🔥 Hot Deals"}
+    </Link>
+
     <div className="border-t border-border pt-4 mt-4 space-y-2">
       {user && (
         <Link to="/wishlist" className="block">
