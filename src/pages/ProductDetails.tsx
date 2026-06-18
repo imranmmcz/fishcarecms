@@ -113,21 +113,41 @@ const ProductDetails = () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("*")
+          .select("id, name, description, price, discount_percentage, category, image_url, external_link, stock_quantity, sku, unit, reorder_level, company_id, brand_id, created_at, updated_at")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
-        if (data) {
+        if (error) {
+          console.error("[ProductDetails] products query failed", {
+            id,
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+          });
+          toast.error(
+            language === "bn"
+              ? `পণ্য লোড করতে সমস্যা: ${error.message}`
+              : `Failed to load product: ${error.message}`
+          );
+          return;
+        }
+        if (!data) {
+          console.warn("[ProductDetails] no product row for id", id);
+        } else {
           setProduct(data as ProductDetails);
         }
 
         // Fetch gallery images
-        const { data: images } = await supabase
+        const { data: images, error: imgErr } = await supabase
           .from("product_images")
           .select("id, image_url, is_primary, alt_text")
           .eq("product_id", id)
           .order("display_order", { ascending: true });
+
+        if (imgErr) {
+          console.error("[ProductDetails] product_images query failed", imgErr);
+        }
 
         if (images && images.length > 0) {
           setGalleryImages(images);
@@ -140,8 +160,8 @@ const ProductDetails = () => {
         } else {
           setGalleryImages([]);
         }
-      } catch (error) {
-        console.error("Error fetching product:", error);
+      } catch (error: any) {
+        console.error("[ProductDetails] unexpected error", error);
         toast.error(language === "bn" ? "পণ্য লোড করতে সমস্যা হয়েছে" : "Failed to load product");
       } finally {
         setIsLoading(false);
