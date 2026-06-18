@@ -257,40 +257,40 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 border-2 border-primary/20 shadow-lg">
+      <div className="space-y-6 max-w-full">
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+          <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary/20 shadow-lg shrink-0">
             <AvatarImage src={userAvatar || undefined} alt={userName} />
-            <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-xl font-bold">
+            <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-base sm:text-xl font-bold">
               {userName.charAt(0).toUpperCase() || "F"}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-foreground">{t.welcome}, {userName || (language === "bn" ? "কৃষক" : "Farmer")}!</h1>
-              <Badge variant="outline" className="text-xs">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-foreground break-words">{t.welcome}, {userName || (language === "bn" ? "কৃষক" : "Farmer")}!</h1>
+              <Badge variant="outline" className="text-[10px] sm:text-xs shrink-0">
                 {userRole === 'farmer' ? (language === "bn" ? "কৃষক" : "Farmer") : 
                  userRole === 'customer' ? (language === "bn" ? "কাস্টমার" : "Customer") : 
                  userRole === 'admin' ? (language === "bn" ? "অ্যাডমিন" : "Admin") : ""}
               </Badge>
             </div>
-            <p className="text-muted-foreground mt-1">{t.viewSummary}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t.viewSummary}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {stats.map((stat) => (
             <Card key={stat.title} className="shadow-elegant">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2 p-3 sm:p-6 sm:pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
                   {stat.title}
                 </CardTitle>
-                <div className={`p-2 rounded-full ${stat.bgColor}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                <div className={`p-1.5 sm:p-2 rounded-full ${stat.bgColor} shrink-0`}>
+                  <stat.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${stat.color}`} />
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <p className={`text-base sm:text-2xl font-bold break-words ${stat.color}`}>{stat.value}</p>
               </CardContent>
             </Card>
           ))}
