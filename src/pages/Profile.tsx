@@ -168,10 +168,10 @@ export default function Profile() {
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6 w-full">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">প্রোফাইল সেটিংস</h1>
-          <p className="text-muted-foreground">আপনার ব্যক্তিগত তথ্য আপডেট করুন</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">প্রোফাইল সেটিংস</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">আপনার ব্যক্তিগত তথ্য আপডেট করুন</p>
         </div>
 
         {/* Avatar Section */}
@@ -184,9 +184,9 @@ export default function Profile() {
             <CardDescription>আপনার প্রোফাইল ছবি পরিবর্তন করুন</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
               <div className="relative group">
-                <Avatar className="h-24 w-24 border-4 border-primary/20">
+                <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-primary/20">
                   <AvatarImage src={avatarUrl || undefined} alt={fullName} />
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground text-2xl font-semibold">
                     {fullName ? getInitials(fullName) : <User className="h-10 w-10" />}
