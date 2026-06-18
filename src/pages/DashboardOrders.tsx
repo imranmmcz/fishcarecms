@@ -178,10 +178,10 @@ const DashboardOrders = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Package className="h-6 w-6" />
+      <div className="space-y-6 max-w-full">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <Package className="h-5 w-5 sm:h-6 sm:w-6" />
             {translations.myOrders}
           </h1>
         </div>
@@ -255,7 +255,7 @@ const DashboardOrders = () => {
 
         {/* Order Details Dialog */}
         <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
@@ -266,7 +266,7 @@ const DashboardOrders = () => {
             {selectedOrder && (
               <div className="space-y-6">
                 {/* Order Info */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">{translations.orderNumber}</p>
                     <p className="font-semibold">{selectedOrder.order_number}</p>
@@ -311,7 +311,7 @@ const DashboardOrders = () => {
                   <h4 className="font-semibold mb-2 flex items-center gap-2">
                     {translations.paymentInfo}
                   </h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">{translations.paymentMethod}</p>
                       <p className="font-medium capitalize">
@@ -331,9 +331,9 @@ const DashboardOrders = () => {
                       </Badge>
                     </div>
                     {selectedOrder.transaction_id && (
-                      <div className="col-span-2">
+                      <div className="sm:col-span-2">
                         <p className="text-sm text-muted-foreground">{translations.trxId}</p>
-                        <p className="font-mono font-medium">{selectedOrder.transaction_id}</p>
+                        <p className="font-mono font-medium break-all">{selectedOrder.transaction_id}</p>
                       </div>
                     )}
                   </div>
