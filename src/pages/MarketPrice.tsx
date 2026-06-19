@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Header } from "@/components/Header";
 import Footer from "@/components/Footer";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -690,6 +691,7 @@ const MarketPrice = () => {
         </Card>
       </main>
 
+      <RecommendedProductsSlider category="calculator_related" titleBn="বাজার দরের জন্য প্রস্তাবিত পণ্য" titleEn="Recommended Products" />
       <Footer />
     </div>
   );
