@@ -691,7 +691,7 @@ const MarketPrice = () => {
         </Card>
       </main>
 
-      <RecommendedProductsSlider category="calculator_related" titleBn="বাজার দরের জন্য প্রস্তাবিত পণ্য" titleEn="Recommended Products" />
+      <RecommendedProductsSlider category="calculator_related" titleBn="বাজার দরের জন্য প্রস্তাবিত পণ্য" title="Recommended Products" />
       <Footer />
     </div>
   );
