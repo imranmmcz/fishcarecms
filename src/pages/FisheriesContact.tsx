@@ -251,6 +251,7 @@ const FisheriesContact = () => {
           </CardContent>
         </Card>
       </main>
+      <RecommendedProductsSlider category="calculator_related" titleBn="প্রস্তাবিত পণ্য" title="Recommended Products" />
       <Footer />
     </div>
   );

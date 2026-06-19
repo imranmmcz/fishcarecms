@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import AdUnit from "@/components/AdUnit";
 import ShareButtons from "@/components/ShareButtons";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 
 interface FishDetails {
   cultureDuration: string;
@@ -230,6 +231,7 @@ export default function FishSpecies() {
         </div>
       </main>
 
+      <RecommendedProductsSlider category="calculator_related" titleBn="প্রস্তাবিত পণ্য" title="Recommended Products" />
       <Footer />
       <ShareButtons
         title={content?.headline || "বাংলাদেশে প্রচলিত মাছ"}
