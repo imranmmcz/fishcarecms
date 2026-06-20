@@ -233,6 +233,47 @@ All colors MUST be HSL.
     letter-spacing: 0.01em;
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
+    /* Crisp Bengali conjuncts & vowel signs */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    font-variant-ligatures: common-ligatures contextual;
+  }
+
+  /* When Bengali is the active language, force the dynamic
+     Bengali stack on every text node (overrides display/sans). */
+  html[lang="bn"] body,
+  html[lang="bn"] h1,
+  html[lang="bn"] h2,
+  html[lang="bn"] h3,
+  html[lang="bn"] h4,
+  html[lang="bn"] h5,
+  html[lang="bn"] h6,
+  html[lang="bn"] p,
+  html[lang="bn"] span,
+  html[lang="bn"] a,
+  html[lang="bn"] button,
+  html[lang="bn"] input,
+  html[lang="bn"] textarea,
+  html[lang="bn"] select,
+  html[lang="bn"] li,
+  html[lang="bn"] td,
+  html[lang="bn"] th,
+  html[lang="bn"] label {
+    font-family: var(--font-bn) !important;
+  }
+
+  /* When English is active, keep English font for Latin text */
+  html[lang="en"] body {
+    font-family: var(--font-en);
+  }
+
+  /* Bengali line-height is taller than Latin — give descenders room */
+  html[lang="bn"] h1,
+  html[lang="bn"] h2,
+  html[lang="bn"] h3 {
+    line-height: 1.55;
   }
 
   h1, h2, h3, h4, h5, h6 {
