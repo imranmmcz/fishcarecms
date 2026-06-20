@@ -2,6 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   BENGALI FONT SYSTEM
+   Local @font-face declarations so the admin
+   can pick any Bengali font (Kalpurush, Nikosh,
+   SolaimanLipi, SiyamRupali, AdorshoLipi, Hind
+   Siliguri, Noto Sans Bengali) and have it
+   render correctly on web, print and PDF.
+   font-display: swap → no invisible text.
+   ============================================ */
+@font-face {
+  font-family: "Kalpurush";
+  src: url("/fonts/Kalpurush.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F, U+00A0-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "Nikosh";
+  src: url("/fonts/Nikosh.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F, U+00A0-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "SolaimanLipi";
+  src: url("/fonts/SolaimanLipi.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F, U+00A0-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "SiyamRupali";
+  src: url("/fonts/SiyamRupali.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F, U+00A0-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "AdorshoLipi";
+  src: url("/fonts/AdorshoLipi.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F, U+00A0-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "HindSiliguriLocal";
+  src: url("/fonts/HindSiliguri-Regular.ttf") format("truetype");
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "HindSiliguriLocal";
+  src: url("/fonts/HindSiliguri-Bold.ttf") format("truetype");
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "NotoSansBengaliLocal";
+  src: url("/fonts/NotoSansBengali-Regular.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F;
+}
+
+/* Default Bengali font stack — overridden at runtime by
+   LanguageFontSettings via --font-bn. Keep multiple
+   fallbacks so a missing primary never breaks rendering. */
+:root {
+  --font-bn: "Hind Siliguri", "HindSiliguriLocal", "Noto Sans Bengali",
+    "NotoSansBengaliLocal", "Kalpurush", "SolaimanLipi", "SiyamRupali",
+    "Nikosh", "AdorshoLipi", system-ui, sans-serif;
+  --font-en: "Inter", "DM Sans", system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -150,6 +233,47 @@ All colors MUST be HSL.
     letter-spacing: 0.01em;
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
+    /* Crisp Bengali conjuncts & vowel signs */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    font-variant-ligatures: common-ligatures contextual;
+  }
+
+  /* When Bengali is the active language, force the dynamic
+     Bengali stack on every text node (overrides display/sans). */
+  html[lang="bn"] body,
+  html[lang="bn"] h1,
+  html[lang="bn"] h2,
+  html[lang="bn"] h3,
+  html[lang="bn"] h4,
+  html[lang="bn"] h5,
+  html[lang="bn"] h6,
+  html[lang="bn"] p,
+  html[lang="bn"] span,
+  html[lang="bn"] a,
+  html[lang="bn"] button,
+  html[lang="bn"] input,
+  html[lang="bn"] textarea,
+  html[lang="bn"] select,
+  html[lang="bn"] li,
+  html[lang="bn"] td,
+  html[lang="bn"] th,
+  html[lang="bn"] label {
+    font-family: var(--font-bn) !important;
+  }
+
+  /* When English is active, keep English font for Latin text */
+  html[lang="en"] body {
+    font-family: var(--font-en);
+  }
+
+  /* Bengali line-height is taller than Latin — give descenders room */
+  html[lang="bn"] h1,
+  html[lang="bn"] h2,
+  html[lang="bn"] h3 {
+    line-height: 1.55;
   }
 
   h1, h2, h3, h4, h5, h6 {

@@ -20,10 +20,17 @@ export function usePrintHeaderFooter() {
   const userAddress = [user?.village, user?.upazila, user?.district, user?.division].filter(Boolean).join(', ');
 
   const getPrintStyles = () => `
-    @import url('https://fonts.maateen.me/nikosh/font.css');
+    /* Embed local Bengali fonts so print/PDF never falls back to
+       Latin-only fonts (which renders Bengali as boxes/tofu). */
+    @font-face{font-family:'Kalpurush';src:url('${window.location.origin}/fonts/Kalpurush.ttf') format('truetype');font-display:swap}
+    @font-face{font-family:'SolaimanLipi';src:url('${window.location.origin}/fonts/SolaimanLipi.ttf') format('truetype');font-display:swap}
+    @font-face{font-family:'HindSiliguriLocal';src:url('${window.location.origin}/fonts/HindSiliguri-Regular.ttf') format('truetype');font-weight:400 500;font-display:swap}
+    @font-face{font-family:'HindSiliguriLocal';src:url('${window.location.origin}/fonts/HindSiliguri-Bold.ttf') format('truetype');font-weight:600 900;font-display:swap}
     @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Hind Siliguri','Nikosh',sans-serif;padding:0;color:#333}
+    html,body{font-family:'Hind Siliguri','HindSiliguriLocal','Kalpurush','SolaimanLipi','Noto Sans Bengali',sans-serif;padding:0;color:#333;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;font-feature-settings:"kern" 1,"liga" 1,"calt" 1}
+    h1,h2,h3,h4,h5,h6{line-height:1.55}
+    p,li,td,th{line-height:1.8}
     .print-header{display:flex;align-items:center;gap:16px;padding:20px 30px;border-bottom:3px solid #7c3aed}
     .print-header img{width:60px;height:60px;object-fit:contain;border-radius:8px}
     .print-header .logo-placeholder{width:60px;height:60px;background:linear-gradient(135deg,#7c3aed,#06b6d4);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:bold}
@@ -44,7 +51,13 @@ export function usePrintHeaderFooter() {
     .print-footer .right{text-align:right}
     .print-footer .site-name{font-weight:700;color:#7c3aed;font-size:13px}
     .print-footer .promo{font-size:10px;color:#888;margin-top:4px}
-    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    @media print{
+      body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      @page{margin:12mm}
+      h1,h2,h3{page-break-after:avoid}
+      tr,img,table{page-break-inside:avoid}
+      thead{display:table-header-group}
+    }
   `;
 
   const getHeaderHtml = (reportTitle: string) => `
@@ -83,7 +96,23 @@ export function usePrintHeaderFooter() {
       ${getFooterHtml()}
     </body></html>`;
     const w = window.open('', '_blank');
-    if (w) { w.document.write(html); w.document.close(); w.print(); }
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+      // Wait for fonts to finish loading before printing so Bengali
+      // glyphs are rendered (not tofu boxes) in the printed output.
+      const triggerPrint = () => { try { w.focus(); w.print(); } catch {} };
+      try {
+        const fontsReady = (w.document as any).fonts?.ready;
+        if (fontsReady && typeof fontsReady.then === 'function') {
+          fontsReady.then(() => setTimeout(triggerPrint, 150));
+        } else {
+          setTimeout(triggerPrint, 600);
+        }
+      } catch {
+        setTimeout(triggerPrint, 600);
+      }
+    }
   };
 
   return { printReport, siteLogoUrl, siteName, sitePhone, siteEmail, siteAddress1, siteAddress2, siteUrl, userName, userMobile, userAddress };
