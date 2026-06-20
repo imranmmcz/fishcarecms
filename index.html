@@ -127,6 +127,23 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
 
+    <!-- Preload local Bengali font so first paint has correct glyphs
+         even when Google Fonts is blocked or slow -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/ttf"
+      href="/fonts/HindSiliguri-Regular.ttf"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/ttf"
+      href="/fonts/Kalpurush.ttf"
+      crossorigin
+    />
+
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
