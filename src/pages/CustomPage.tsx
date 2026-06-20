@@ -27,15 +27,49 @@ export default function CustomPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  const normalizeForStemming = (s: string) =>
+    s
+      .replace(/(ing|ed|s|es|ies|er|est|tion|ment|ness|ly|ful|less|able|ible|ize|ise|ify|en)$/, "")
+      .replace(/(গুলো|গুলি|মালা|বরণ|তা|ত্ব|নী|িকা|িক|কারী|দার|বিদ|গামী|প্রদ|জনক|ময়|বহুল|মান|গত|ভাব|তা|বিদ্যা|শালী|পূর্ণ|হীন)$/g, "");
+
   const isProductRelated = (p: CustomPage | null) => {
     if (!p) return false;
-    const haystack = `${p.slug} ${p.title} ${p.title_bn ?? ""} ${p.meta_title ?? ""} ${p.meta_description ?? ""} ${p.content ?? ""}`.toLowerCase();
+    const raw = `${p.slug} ${p.title} ${p.title_bn ?? ""} ${p.meta_title ?? ""} ${p.meta_description ?? ""} ${p.content ?? ""}`.toLowerCase();
+    const haystack = `${raw} ${normalizeForStemming(raw)}`;
+
     const keywords = [
-      "product", "shop", "store", "buy", "order", "sale", "deal", "offer", "price",
-      "fish", "feed", "medicine", "pond", "farm", "aquaculture",
-      "পণ্য", "দোকান", "কিনুন", "অর্ডার", "অফার", "ছাড়", "মূল্য", "দাম",
-      "মাছ", "খাবার", "ঔষধ", "ওষুধ", "পুকুর", "চাষ",
+      // English commerce & product roots
+      "product", "products", "shop", "shops", "store", "stores", "buy", "purchase", "cart", "checkout",
+      "order", "orders", "sale", "sales", "deal", "deals", "offer", "offers", "discount", "discounted",
+      "price", "prices", "pricing", "rate", "rates", "cost", "costs", "cheap", "best-price",
+      "catalog", "catalogue", "listing", "collection", "range", "inventory", "stock", "item", "items",
+      "goods", "merchandise", "commodity", "commodities", "brand", "brands", "category", "categories",
+      "ecommerce", "e-commerce", "online-shop", "online-store", "marketplace", "retail", "wholesale",
+      "new-arrival", "featured", "bestseller", "trending", "popular", "top-rated", "recommended",
+      "fish", "fishes", "aquarium", "aquatic", "pond", "ponds", "farm", "farms", "farming",
+      "aquaculture", "hatchery", "hatcheries", "feed", "feeds", "food", "foods", "supplement",
+      "supplements", "vitamin", "vitamins", "medicine", "medicines", "medication", "treatment",
+      "equipment", "gear", "tool", "tools", "net", "nets", "tank", "tanks", "pump", "pumps",
+      "filter", "filters", "oxygen", "aerator", "aerators", "generator", "boat", "boats",
+      "seed", "seeds", "spawn", "spawns", "fingerling", "fingerlings", "fry", "brood", "broodstock",
+      "culture", "cultivation", "production", "producer", "supplier", "supply", "supplies",
+      "care", "maintenance", "management", "solution", "solutions", "kit", "kits", "pack", "packs",
+      "bundle", "bundles", "combo", "combos", "package", "packages", "box", "boxes", "set", "sets",
+
+      // Bengali commerce & product roots
+      "পণ্য", "পণ্যসমূহ", "পণ্যসামগ্রী", "দোকান", "বাজার", "কিনুন", "ক্রয়", "বিক্রয়",
+      "অর্ডার", "অফার", "ছাড়", "ডিসকাউন্ট", "মূল্য", "দাম", "মূল্যনির্ধারণ", "মূল্যতালিকা",
+      "দর", "রেট", "সস্তা", "সেরাদাম", "ক্যাটালগ", "তালিকা", "সংগ্রহ", "সংগ্রহণ",
+      "স্টক", "জিনিস", "জিনিসপত্র", "মাল", "ব্র্যান্ড", "বিভাগ", "বিভাগীয়",
+      "নতুন", "বৈশিষ্ট্যযুক্ত", "জনপ্রিয়", "শীর্ষ", "সুপারিশকৃত",
+      "মাছ", "মাছের", "একুরিয়াম", "জলজ", "পুকুর", "খামার", "চাষ", "চাষাবাদ",
+      "হ্যাচারি", "খাবার", "খাদ্য", "সাপ্লিমেন্ট", "ভিটামিন", "ঔষধ", "ওষুধ", "চিকিৎসা",
+      "সরঞ্জাম", "যন্ত্রপাতি", "যন্ত্র", "জাল", "ট্যাংক", "পাম্প", "ফিল্টার", "অক্সিজেন",
+      "বিচ", "পোনা", "রেনু", "উৎপাদন", "উৎপাদক", "সরবরাহকারী", "সরবরাহ",
+      "পরিচর্যা", "রক্ষণাবেক্ষণ", "ব্যবস্থাপনা", "সমাধান", "কিট", "প্যাক", "প্যাকেজ",
+      "বান্ডেল", "কম্বো", "সেট", "বাক্স",
     ];
+
     return keywords.some((k) => haystack.includes(k.toLowerCase()));
   };
 
