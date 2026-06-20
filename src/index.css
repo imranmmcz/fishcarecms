@@ -2,6 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   BENGALI FONT SYSTEM
+   Local @font-face declarations so the admin
+   can pick any Bengali font (Kalpurush, Nikosh,
+   SolaimanLipi, SiyamRupali, AdorshoLipi, Hind
+   Siliguri, Noto Sans Bengali) and have it
+   render correctly on web, print and PDF.
+   font-display: swap → no invisible text.
+   ============================================ */
+@font-face {
+  font-family: "Kalpurush";
+  src: url("/fonts/Kalpurush.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F, U+00A0-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "Nikosh";
+  src: url("/fonts/Nikosh.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F, U+00A0-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "SolaimanLipi";
+  src: url("/fonts/SolaimanLipi.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F, U+00A0-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "SiyamRupali";
+  src: url("/fonts/SiyamRupali.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F, U+00A0-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "AdorshoLipi";
+  src: url("/fonts/AdorshoLipi.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F, U+00A0-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "HindSiliguriLocal";
+  src: url("/fonts/HindSiliguri-Regular.ttf") format("truetype");
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "HindSiliguriLocal";
+  src: url("/fonts/HindSiliguri-Bold.ttf") format("truetype");
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "NotoSansBengaliLocal";
+  src: url("/fonts/NotoSansBengali-Regular.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0980-09FF, U+0020-007F;
+}
+
+/* Default Bengali font stack — overridden at runtime by
+   LanguageFontSettings via --font-bn. Keep multiple
+   fallbacks so a missing primary never breaks rendering. */
+:root {
+  --font-bn: "Hind Siliguri", "HindSiliguriLocal", "Noto Sans Bengali",
+    "NotoSansBengaliLocal", "Kalpurush", "SolaimanLipi", "SiyamRupali",
+    "Nikosh", "AdorshoLipi", system-ui, sans-serif;
+  --font-en: "Inter", "DM Sans", system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
