@@ -7,6 +7,7 @@ import SeoHead from "@/components/SeoHead";
 import { FileText, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DOMPurify from "dompurify";
+import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 
 interface CustomPage {
   id: string;
@@ -25,6 +26,18 @@ export default function CustomPage() {
   const [page, setPage] = useState<CustomPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  const isProductRelated = (p: CustomPage | null) => {
+    if (!p) return false;
+    const haystack = `${p.slug} ${p.title} ${p.title_bn ?? ""} ${p.meta_title ?? ""} ${p.meta_description ?? ""} ${p.content ?? ""}`.toLowerCase();
+    const keywords = [
+      "product", "shop", "store", "buy", "order", "sale", "deal", "offer", "price",
+      "fish", "feed", "medicine", "pond", "farm", "aquaculture",
+      "পণ্য", "দোকান", "কিনুন", "অর্ডার", "অফার", "ছাড়", "মূল্য", "দাম",
+      "মাছ", "খাবার", "ঔষধ", "ওষুধ", "পুকুর", "চাষ",
+    ];
+    return keywords.some((k) => haystack.includes(k.toLowerCase()));
+  };
 
   useEffect(() => {
     const fetchPage = async () => {
@@ -109,6 +122,9 @@ export default function CustomPage() {
             </article>
           </div>
         ) : null}
+        {page && !loading && !notFound && isProductRelated(page) && (
+          <RecommendedProductsSlider title="Recommended Products" />
+        )}
       </main>
       <Footer />
     </div>
