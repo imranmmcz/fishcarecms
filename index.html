@@ -12,6 +12,13 @@
         try {
           var d = document.documentElement;
           d.style.colorScheme = "light";
+          // Sync <html lang> with saved language BEFORE first paint
+          // so the Bengali font CSS (html[lang="bn"] ...) applies
+          // immediately and there's no Latin→Bengali font flash.
+          try {
+            var savedLang = localStorage.getItem("appLanguage");
+            d.setAttribute("lang", savedLang === "en" ? "en" : "bn");
+          } catch (e2) { d.setAttribute("lang", "bn"); }
           var map = {
             theme_primary: ["--primary", "--ring"],
             theme_secondary: ["--secondary"],
