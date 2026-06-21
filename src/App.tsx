@@ -230,6 +230,7 @@ const App = () => (
                       <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
                       <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
                       <Route path="/admin/security-logs" element={<ProtectedRoute requireAdmin><AdminSecurityLogs /></ProtectedRoute>} />
+                      <Route path="/admin/security-dashboard" element={<ProtectedRoute requireAdmin><AdminSecurityDashboard /></ProtectedRoute>} />
                       <Route path="/admin/notification-preferences" element={<ProtectedRoute requireAdmin><AdminNotificationPreferences /></ProtectedRoute>} />
                       <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AdminReports /></ProtectedRoute>} />
                       <Route path="/admin/ads" element={<ProtectedRoute requireAdmin><AdminAds /></ProtectedRoute>} />
