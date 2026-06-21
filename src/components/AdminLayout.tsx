@@ -251,6 +251,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       { title: at.seoFiles, url: "/admin/seo-files", icon: Globe, permissionKey: "admin_settings" },
       { title: at.systemBackup, url: "/admin/backup", icon: CloudUpload, permissionKey: "admin_backup" },
       { title: "Security Logs", url: "/admin/security-logs", icon: Shield, permissionKey: "admin_users" },
+      { title: "Security Dashboard", url: "/admin/security-dashboard", icon: Shield, permissionKey: "admin_users" },
       { title: "Notification Preferences", url: "/admin/notification-preferences", icon: Bell, permissionKey: "admin_users" },
       { title: at.profile, url: "/admin/profile", icon: User },
     ],
