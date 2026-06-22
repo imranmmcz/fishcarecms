@@ -200,3 +200,63 @@ npm run build && rsync -avz --delete dist/ user@host:~/domains/.../public_html/
 | `.env.production.example` | Frontend build env (set `VITE_API_URL`) |
 
 You are now ready to ship 🚢
+
+---
+
+## 11. 🤖 Auto-deploy on `git push` (GitHub Actions → Hostinger)
+
+The workflow `.github/workflows/deploy-hostinger.yml` automatically deploys both **frontend** and **backend** to Hostinger every time you push to `main`.
+
+### What it does
+
+| Job | Steps |
+|---|---|
+| `deploy-frontend` | `npm ci` → `npm run build` → `rsync dist/ → public_html/` (with `.htaccess`) |
+| `deploy-backend` | `rsync hostinger-backend/ → server` (preserves `.env` + uploads) → `npm ci` → `pm2 restart fishcare-api` → health check |
+
+Both jobs run in parallel, and a `concurrency` guard prevents two deployments from overlapping.
+
+### One-time setup
+
+#### a) Generate a deploy SSH key (local machine)
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/hostinger_deploy -C "github-actions"
+# Add the PUBLIC key to Hostinger
+ssh-copy-id -i ~/.ssh/hostinger_deploy.pub -p 65002 u123456789@fishcare.com.bd
+# Test
+ssh -i ~/.ssh/hostinger_deploy -p 65002 u123456789@fishcare.com.bd "echo ok"
+```
+
+#### b) Add GitHub repository secrets
+
+GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**
+
+| Secret | Example | Purpose |
+|---|---|---|
+| `HOSTINGER_SSH_HOST` | `fishcare.com.bd` | SSH hostname |
+| `HOSTINGER_SSH_PORT` | `65002` | hPanel → Advanced → SSH Access |
+| `HOSTINGER_SSH_USER` | `u123456789` | Your Hostinger SSH user |
+| `HOSTINGER_SSH_KEY` | *(paste the entire `~/.ssh/hostinger_deploy` PRIVATE key)* | Auth for rsync/ssh |
+| `HOSTINGER_PUBLIC_HTML_PATH` | `/home/u123456789/domains/fishcare.com.bd/public_html` | Where the React build goes |
+| `HOSTINGER_BACKEND_PATH` | `/home/u123456789/hostinger-backend` | Backend folder on the server |
+| `VITE_API_URL` | `https://fishcare.com.bd/api` | Baked into the build + used for health check |
+| `VITE_SUPABASE_URL` | `https://xxxx.supabase.co` | Lovable Cloud URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | `eyJhbGciOi…` | Lovable Cloud anon key |
+| `VITE_SUPABASE_PROJECT_ID` | `cozwxamdldjkeeffjvvf` | Lovable Cloud project ref |
+
+> The backend `.env` on the server is **never** overwritten by deploys — the rsync excludes it. Edit it once on the server and PM2 will pick up changes on the next restart.
+
+#### c) First run
+
+Push any commit to `main` (or trigger manually via **Actions → Deploy to Hostinger → Run workflow**). Watch the Actions tab — both jobs should turn green within ~2 minutes. The final step `curl /api/health` confirms the live API is responding.
+
+### Rolling back
+
+- **Frontend**: re-run a previous successful workflow from the Actions tab (or `git revert` and push).
+- **Backend**: SSH in → `cd ~/hostinger-backend && git checkout <prev-sha> && pm2 restart fishcare-api` — or simply re-run the prior green workflow.
+
+### Safety notes
+
+- The PRIVATE deploy key never leaves GitHub Secrets; it's loaded into an in-memory `ssh-agent` per job.
+- `rsync --delete` is scoped to `dist/` and `hostinger-backend/` — it cannot touch `.env`, `uploads/`, or anything outside those paths.
+- Use a **dedicated** Hostinger SSH key for CI (don't reuse your personal key) so you can revoke it independently.
