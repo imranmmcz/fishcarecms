@@ -116,6 +116,17 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p ${{ secrets.HOSTINGER_SSH_PORT }} -H ${{ secrets.HOSTINGER_SSH_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Test SSH connectivity before rsync
+        run: |
+          output=$(ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} \
+            ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} \
+            "echo ok")
+          if [ "$output" != "ok" ]; then
+            echo "SSH connectivity test failed" >&2
+            exit 1
+          fi
+          echo "SSH connectivity OK"
+
       - name: Rsync hostinger-backend/ → server (preserve .env & uploads)
         run: |
           rsync -avz --delete \
