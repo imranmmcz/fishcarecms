@@ -211,8 +211,8 @@ The workflow `.github/workflows/deploy-hostinger.yml` automatically deploys both
 
 | Job | Steps |
 |---|---|
-| `deploy-frontend` | `npm ci` → `npm run build` → `rsync dist/ → public_html/` (with `.htaccess`) |
-| `deploy-backend` | `rsync hostinger-backend/ → server` (preserves `.env` + uploads) → `npm ci` → `pm2 restart fishcare-api` → health check |
+| `deploy-frontend` | `npm ci` → lint → test → `npm run build` → verify `dist/` → test SSH → `rsync dist/ → public_html/` (with `.htaccess`) |
+| `deploy-backend` | test SSH → `rsync hostinger-backend/ → server` (preserves `.env` + uploads) → `npm ci` → `pm2 restart fishcare-api` → health check |
 
 Both jobs run in parallel, and a `concurrency` guard prevents two deployments from overlapping.
 
