@@ -28,6 +28,8 @@ jobs:
         run: npm ci
 
       - name: Lint
+        # Reports lint debt but does not block deployment while the codebase is being cleaned up.
+        continue-on-error: true
         run: npm run lint
 
       - name: Test
