@@ -27,6 +27,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        # Reports lint debt but does not block deployment while the codebase is being cleaned up.
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
       - name: Write build env
         run: |
           cat > .env.production <<EOF
@@ -38,6 +46,25 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Verify Vite build output
+        run: |
+          set -e
+          if [ ! -f dist/index.html ]; then
+            echo "dist/index.html missing — build failed" >&2
+            exit 1
+          fi
+          if [ ! -d dist/assets ]; then
+            echo "dist/assets directory missing — build failed" >&2
+            exit 1
+          fi
+          js_count=$(find dist/assets -name '*.js' | wc -l)
+          css_count=$(find dist/assets -name '*.css' | wc -l)
+          if [ "$js_count" -lt 1 ] || [ "$css_count" -lt 1 ]; then
+            echo "Expected at least one JS and one CSS asset; found JS=$js_count CSS=$css_count" >&2
+            exit 1
+          fi
+          echo "Build verified: dist/index.html, $js_count JS asset(s), $css_count CSS asset(s)"
 
       - name: Ensure .htaccess is shipped with the build
         run: cp hostinger-backend/.htaccess dist/.htaccess
