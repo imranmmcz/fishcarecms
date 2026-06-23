@@ -219,12 +219,37 @@ Both jobs run in parallel, and a `concurrency` guard prevents two deployments fr
 ### One-time setup
 
 #### a) Generate a deploy SSH key (local machine)
+
+Run this once on your local computer. The `-N ""` creates a key **without a passphrase** so GitHub Actions can use it non-interactively.
+
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/hostinger_deploy -C "github-actions"
-# Add the PUBLIC key to Hostinger
-ssh-copy-id -i ~/.ssh/hostinger_deploy.pub -p 65002 u123456789@fishcare.com.bd
-# Test
+# Create a dedicated ed25519 key for GitHub Actions → Hostinger
+ssh-keygen -t ed25519 -a 100 \
+  -f ~/.ssh/hostinger_deploy \
+  -C "github-actions-fishcare" \
+  -N ""
+
+# Restrict permissions (required by SSH)
+chmod 600 ~/.ssh/hostinger_deploy
+chmod 644 ~/.ssh/hostinger_deploy.pub
+```
+
+**Add the PUBLIC key to Hostinger** — choose one method:
+
+1. **Automatic (if `ssh-copy-id` is available):**
+   ```bash
+   ssh-copy-id -i ~/.ssh/hostinger_deploy.pub -p 65002 u123456789@fishcare.com.bd
+   ```
+
+2. **Manual (hPanel):**
+   - hPanel → **Advanced → SSH Access**
+   - Paste the contents of `~/.ssh/hostinger_deploy.pub`
+   - Save
+
+**Test the key:**
+```bash
 ssh -i ~/.ssh/hostinger_deploy -p 65002 u123456789@fishcare.com.bd "echo ok"
+# Expected output: ok
 ```
 
 #### b) Add GitHub repository secrets
