@@ -256,19 +256,21 @@ ssh -i ~/.ssh/hostinger_deploy -p 65002 u123456789@fishcare.com.bd "echo ok"
 
 GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**
 
-| Secret | Example | Purpose |
-|---|---|---|
-| `HOSTINGER_SSH_HOST` | `fishcare.com.bd` | SSH hostname |
-| `HOSTINGER_SSH_PORT` | `65002` | hPanel → Advanced → SSH Access |
-| `HOSTINGER_SSH_USER` | `u123456789` | Your Hostinger SSH user |
-| `HOSTINGER_SSH_KEY` | *(paste the entire `~/.ssh/hostinger_deploy` PRIVATE key)* | Auth for rsync/ssh |
-| `HOSTINGER_PUBLIC_HTML_PATH` | `/home/u123456789/domains/fishcare.com.bd/public_html` | Where the React build goes |
-| `HOSTINGER_BACKEND_PATH` | `/home/u123456789/hostinger-backend` | Backend folder on the server |
-| `VITE_API_URL` | `https://fishcare.com.bd/api` | Baked into the build + used for health check |
-| `VITE_SUPABASE_URL` | `https://xxxx.supabase.co` | Lovable Cloud URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | `eyJhbGciOi…` | Lovable Cloud anon key |
-| `VITE_SUPABASE_PROJECT_ID` | `cozwxamdldjkeeffjvvf` | Lovable Cloud project ref |
+Use the checklist below. Paste each value and click **Add secret** before moving to the next one.
 
+- [ ] `HOSTINGER_SSH_HOST` — your domain, e.g. `fishcare.com.bd` (hPanel → Advanced → SSH Access)
+- [ ] `HOSTINGER_SSH_PORT` — SSH port, e.g. `65002` (hPanel → Advanced → SSH Access)
+- [ ] `HOSTINGER_SSH_USER` — Hostinger SSH user, e.g. `u123456789`
+- [ ] `HOSTINGER_SSH_KEY` — **entire private key content** from `~/.ssh/hostinger_deploy` (not a file path). Copy from `-----BEGIN OPENSSH PRIVATE KEY-----` through `-----END OPENSSH PRIVATE KEY-----`.
+- [ ] `HOSTINGER_PUBLIC_HTML_PATH` — absolute path to the web root, e.g. `/home/u123456789/domains/fishcare.com.bd/public_html`
+- [ ] `HOSTINGER_BACKEND_PATH` — absolute path to the backend on the server, e.g. `/home/u123456789/hostinger-backend`
+- [ ] `VITE_API_URL` — public API URL baked into the frontend build, e.g. `https://fishcare.com.bd/api`
+- [ ] `VITE_SUPABASE_URL` — Lovable Cloud / Supabase project URL
+- [ ] `VITE_SUPABASE_PUBLISHABLE_KEY` — Lovable Cloud / Supabase anon/public key
+- [ ] `VITE_SUPABASE_PROJECT_ID` — Lovable Cloud / Supabase project reference ID
+
+> **Note:** There is no `HOSTINGER_SSH_KEY_PATH` secret. The workflow loads the private key **value** directly into an in-memory SSH agent via `HOSTINGER_SSH_KEY`.
+>
 > The backend `.env` on the server is **never** overwritten by deploys — the rsync excludes it. Edit it once on the server and PM2 will pick up changes on the next restart.
 
 #### c) First run
