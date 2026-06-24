@@ -90,12 +90,69 @@ jobs:
           fi
           echo "SSH connectivity OK"
 
+      - name: Snapshot current public_html for rollback
+        id: snapshot_frontend
+        run: |
+          BACKUP="${{ secrets.HOSTINGER_PUBLIC_HTML_PATH }}.bak-${GITHUB_RUN_ID}"
+          echo "backup_path=$BACKUP" >> "$GITHUB_OUTPUT"
+          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} \
+            ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} \
+            "set -e; \
+             SRC='${{ secrets.HOSTINGER_PUBLIC_HTML_PATH }}'; \
+             DST='$BACKUP'; \
+             if [ -d \"\$SRC\" ]; then \
+               rm -rf \"\$DST\"; \
+               cp -a \"\$SRC\" \"\$DST\"; \
+               echo \"Snapshot created at \$DST\"; \
+             else \
+               echo \"No existing public_html to snapshot — skipping\"; \
+             fi"
+
       - name: Rsync dist/ → public_html/
+        id: rsync_frontend
         run: |
           rsync -avz --delete \
             -e "ssh -p ${{ secrets.HOSTINGER_SSH_PORT }}" \
             dist/ \
             ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}:${{ secrets.HOSTINGER_PUBLIC_HTML_PATH }}/
+
+      - name: Frontend post-deploy health check
+        id: health_frontend
+        run: |
+          sleep 3
+          # Verify the deployed index.html is reachable over HTTPS.
+          BASE="${{ secrets.VITE_API_URL }}"
+          # Strip trailing /api if present to get the site origin.
+          ORIGIN="${BASE%/api}"
+          curl -fsS -o /dev/null "$ORIGIN/index.html" \
+            || curl -fsS -o /dev/null "$ORIGIN/"
+
+      - name: Rollback frontend on failure
+        if: failure() && steps.snapshot_frontend.outputs.backup_path != ''
+        run: |
+          BACKUP="${{ steps.snapshot_frontend.outputs.backup_path }}"
+          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} \
+            ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} \
+            "set -e; \
+             SRC='${{ secrets.HOSTINGER_PUBLIC_HTML_PATH }}'; \
+             DST='$BACKUP'; \
+             if [ -d \"\$DST\" ]; then \
+               echo 'Restoring previous public_html from snapshot…'; \
+               rm -rf \"\$SRC\"; \
+               mv \"\$DST\" \"\$SRC\"; \
+               echo 'Rollback complete.'; \
+             else \
+               echo 'No snapshot found — cannot rollback.' >&2; \
+               exit 1; \
+             fi"
+
+      - name: Cleanup frontend snapshot on success
+        if: success() && steps.snapshot_frontend.outputs.backup_path != ''
+        run: |
+          BACKUP="${{ steps.snapshot_frontend.outputs.backup_path }}"
+          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} \
+            ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} \
+            "rm -rf '$BACKUP' && echo 'Snapshot $BACKUP cleaned up'"
 
   # ─────────────────────────────────────────────────────────────
   # 2) Sync backend folder and PM2-restart on the server
@@ -127,7 +184,31 @@ jobs:
           fi
           echo "SSH connectivity OK"
 
+      - name: Snapshot current backend for rollback
+        id: snapshot_backend
+        run: |
+          BACKUP="${{ secrets.HOSTINGER_BACKEND_PATH }}.bak-${GITHUB_RUN_ID}"
+          echo "backup_path=$BACKUP" >> "$GITHUB_OUTPUT"
+          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} \
+            ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} \
+            "set -e; \
+             SRC='${{ secrets.HOSTINGER_BACKEND_PATH }}'; \
+             DST='$BACKUP'; \
+             if [ -d \"\$SRC\" ]; then \
+               rm -rf \"\$DST\"; \
+               mkdir -p \"\$DST\"; \
+               # Copy everything except heavy/regenerable dirs; .env and uploads ARE preserved so rollback restores them.
+               rsync -a --delete \
+                 --exclude='node_modules' \
+                 --exclude='logs' \
+                 \"\$SRC\"/ \"\$DST\"/; \
+               echo \"Snapshot created at \$DST\"; \
+             else \
+               echo \"No existing backend directory to snapshot — skipping\"; \
+             fi"
+
       - name: Rsync hostinger-backend/ → server (preserve .env & uploads)
+        id: rsync_backend
         run: |
           rsync -avz --delete \
             --exclude='.env' \
@@ -141,6 +222,7 @@ jobs:
             ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}:${{ secrets.HOSTINGER_BACKEND_PATH }}/
 
       - name: Install deps & restart PM2
+        id: pm2_restart
         run: |
           ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} \
             ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} \
@@ -150,6 +232,40 @@ jobs:
              pm2 save"
 
       - name: Health check
+        id: health_backend
         run: |
           sleep 5
           curl -fsS ${{ secrets.VITE_API_URL }}/health || (echo "Health check failed" && exit 1)
+
+      - name: Rollback backend on failure
+        if: failure() && steps.snapshot_backend.outputs.backup_path != ''
+        run: |
+          BACKUP="${{ steps.snapshot_backend.outputs.backup_path }}"
+          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} \
+            ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} \
+            "set -e; \
+             SRC='${{ secrets.HOSTINGER_BACKEND_PATH }}'; \
+             DST='$BACKUP'; \
+             if [ -d \"\$DST\" ]; then \
+               echo 'Restoring previous backend from snapshot…'; \
+               # Restore code/config/.env/uploads from snapshot. node_modules stays in place (was excluded from snapshot). \
+               rsync -a --delete \
+                 --exclude='node_modules' \
+                 --exclude='logs' \
+                 \"\$DST\"/ \"\$SRC\"/; \
+               cd \"\$SRC\" && npm ci --omit=dev && \
+               (pm2 restart fishcare-api --update-env || pm2 start ecosystem.config.js --env production) && \
+               pm2 save; \
+               echo 'Backend rollback complete.'; \
+             else \
+               echo 'No snapshot found — cannot rollback.' >&2; \
+               exit 1; \
+             fi"
+
+      - name: Cleanup backend snapshot on success
+        if: success() && steps.snapshot_backend.outputs.backup_path != ''
+        run: |
+          BACKUP="${{ steps.snapshot_backend.outputs.backup_path }}"
+          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} \
+            ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} \
+            "rm -rf '$BACKUP' && echo 'Snapshot $BACKUP cleaned up'"
