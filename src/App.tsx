@@ -24,6 +24,10 @@ import { preloadBanglaFont } from "@/lib/pdfBanglaFont";
 
 // Pre-load Nikosh font for PDF generation
 preloadBanglaFont();
+
+// Hydrate per-module data-source routing (Supabase ⇄ MySQL) on app boot.
+import { loadRoutingFromServer } from "@/lib/dataSource";
+loadRoutingFromServer().catch(() => {});
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
 import Button3DShowcase from "./pages/Button3DShowcase";
