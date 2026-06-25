@@ -248,6 +248,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       { title: at.posPrint, url: "/admin/settings?tab=pos-print", icon: MonitorSmartphone, permissionKey: "admin_settings" },
       { title: at.users, url: "/admin/users", icon: Users, permissionKey: "admin_users" },
       { title: at.databaseExport, url: "/admin/database-export", icon: Database, permissionKey: "admin_backup" },
+     { title: "Database Config", url: "/admin/database-config", icon: Database, permissionKey: "admin_settings" },
       { title: at.seoFiles, url: "/admin/seo-files", icon: Globe, permissionKey: "admin_settings" },
       { title: at.systemBackup, url: "/admin/backup", icon: CloudUpload, permissionKey: "admin_backup" },
       { title: "Security Logs", url: "/admin/security-logs", icon: Shield, permissionKey: "admin_users" },
