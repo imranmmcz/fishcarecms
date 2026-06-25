@@ -1,30 +1,15 @@
 /**
- * ProductsContext - Supabase/Lovable Cloud Version
+ * ProductsContext - thin wrapper around `productsRepo` facade.
+ * Routes to Supabase or Hostinger MySQL based on /admin/database-config.
  */
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { productsRepo, type Product } from "@/repositories/products";
 
-export interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  cost_price: number;
-  discount_percentage: number | null;
-  category: string;
-  image_url: string | null;
-  external_link: string | null;
-  stock_quantity: number;
-  sku: string | null;
-  unit: string | null;
-  reorder_level: number | null;
-  company_id: string | null;
-  brand_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
+// Re-export so existing imports (`from "@/contexts/ProductsContext"`) keep working.
+export type { Product } from "@/repositories/products";
+export { getDiscountedPrice } from "@/repositories/products";
 
 interface ProductsContextType {
   products: Product[];
@@ -44,30 +29,10 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, name, description, price, discount_percentage, category, image_url, external_link, stock_quantity, sku, unit, reorder_level, company_id, brand_id, created_at, updated_at")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      const base = (data || []).map(p => ({ ...p, cost_price: 0 }));
-      setProducts(base);
-
-      // Admin-only: enrich with cost prices via security-definer RPC
-      try {
-        const { data: costData } = await supabase.rpc("get_products_cost_map");
-        if (costData && costData.length > 0) {
-          const map = new Map<string, number>(
-            costData.map((c: { id: string; cost_price: number | null }) => [c.id, Number(c.cost_price) || 0])
-          );
-          setProducts(base.map(p => ({ ...p, cost_price: map.get(p.id) ?? 0 })));
-        }
-      } catch {
-        // Non-admin users get cost_price = 0, which is expected
-      }
+      const list = await productsRepo.list();
+      setProducts(list);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error(`Error fetching products from ${productsRepo.source()}:`, error);
       toast.error("পণ্য লোড করতে সমস্যা হয়েছে");
     } finally {
       setIsLoading(false);
@@ -80,8 +45,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const addProduct = async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<boolean> => {
     try {
-      const { error } = await supabase.from("products").insert(product);
-      if (error) throw error;
+      await productsRepo.create(product);
       toast.success("পণ্য সফলভাবে যোগ করা হয়েছে");
       await fetchProducts();
       return true;
@@ -94,8 +58,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const updateProduct = async (id: string, product: Partial<Product>): Promise<boolean> => {
     try {
-      const { error } = await supabase.from("products").update(product).eq("id", id);
-      if (error) throw error;
+      await productsRepo.update(id, product);
       toast.success("পণ্য সফলভাবে আপডেট হয়েছে");
       await fetchProducts();
       return true;
@@ -108,8 +71,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteProduct = async (id: string): Promise<boolean> => {
     try {
-      const { error } = await supabase.from("products").delete().eq("id", id);
-      if (error) throw error;
+      await productsRepo.remove(id);
       toast.success("পণ্য সফলভাবে মুছে ফেলা হয়েছে");
       await fetchProducts();
       return true;
@@ -142,10 +104,4 @@ export const useProducts = () => {
     throw new Error("useProducts must be used within a ProductsProvider");
   }
   return context;
-};
-
-// Helper to calculate discounted price
-export const getDiscountedPrice = (price: number, discountPercentage: number): number => {
-  if (discountPercentage <= 0) return price;
-  return Math.round(price * (1 - discountPercentage / 100));
 };
