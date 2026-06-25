@@ -1,77 +1,120 @@
+# MySQL হাইব্রিড ইন্টিগ্রেশন প্ল্যান
 
-# Partner Referral, Coupon & Commission System
-
-Given the size (10+ tables, partner portal, admin tooling, wallet, withdrawals, reports, notifications), I'll ship this in **3 phases**. Each phase is independently usable. We start with Phase 1 now; you approve it, ship it, then say "go" for Phase 2.
-
-## Decisions locked
-- Partner login = reuse existing auth + new `partner` role (added to `app_role` enum).
-- Discount reduces order total. Commission % is calculated on the **discounted subtotal** (excludes shipping).
-- Single-level only. Schema includes no MLM hooks.
-- Bengali-first UI, mobile responsive, dark-mode aware (uses existing design tokens).
+লক্ষ্য: এডমিন প্যানেল থেকে MySQL কানেকশন কনফিগার ও টেস্ট করা, এবং নির্দিষ্ট মডিউল (Products, Orders, POS, Customers ইত্যাদি) Supabase-এর পরিবর্তে MySQL এ চালানো। Auth, Storage, Realtime, RLS-নির্ভর সংবেদনশীল মডিউল (user_roles, partners, security_audit_logs, profiles) Supabase-এই থাকবে।
 
 ---
 
-## Phase 1 — Foundation (this iteration)
+## Phase 1 — Foundation (এই টার্নে ডেলিভারেবল)
 
-**Goal:** Partners can apply, admin can approve, codes work at checkout, commissions are recorded on delivery.
+### 1.1 Admin UI: MySQL Connection Manager
+নতুন পেজ `/admin/database-config` —
+- Connection ফর্ম: host, port, user, password, database, ssl toggle
+- "Test Connection" বাটন → `hostinger-backend/routes/database.js` এর `/api/database/test` কল করে
+- "Save" → encrypted আকারে সেভ (Supabase `system_settings` টেবিলে key `mysql_connection_config`, password আলাদা edge function secret এ)
+- Module toggle table: ১২টি সাপোর্টেড মডিউলের জন্য `supabase | mysql` ড্রপডাউন
+  - Products, Product Variations, Categories, Brands
+  - Orders, Order Items, Customers
+  - POS Sales, POS Sale Items, POS Shifts, POS Expenses
+  - Stock Adjustments
+- পরিবর্তন সেভ হলে `system_settings` এর `data_source_routing` JSON আপডেট হবে
 
-### Database (one migration)
-- Add `'partner'` to `app_role` enum.
-- `partners` — user_id (FK auth.users), status (pending/approved/rejected/suspended), full_name, father_name, mother_name, dob, nid_number, mobile, whatsapp, email, present_address, permanent_address, profile_photo_url, nid_front_url, nid_back_url, company_name, company_type, designation, company_address, trade_license, reference_person, reference_mobile, bank_name, account_name, account_number, branch_name, bkash, nagad, rocket, experience, notes, social_links jsonb, approved_at, approved_by, rejection_reason.
-- `partner_referral_codes` — partner_id, code (unique, uppercase), discount_type (percentage/fixed/free_shipping), discount_value, max_discount_amount, min_order_amount, commission_type (percentage/fixed), commission_value, usage_limit, used_count, valid_from, valid_until, is_active.
-- `partner_referral_clicks` — code, ip, user_agent, referrer, landing_url, clicked_at (lightweight attribution log).
-- `partner_commissions` — partner_id, order_id, code_id, code_used, order_subtotal, discount_amount, commissionable_amount, commission_type, commission_value, commission_amount, status (pending/approved/paid/cancelled), approved_at, paid_at.
-- Extend `orders` with: `referral_code`, `partner_id`, `referral_discount` (numeric).
-- RLS: partners read/update own row (limited fields), admins manage all; partners see only their own codes/commissions; public can SELECT active codes by `code` value (needed for validation at checkout); commissions write only via trigger.
-- Trigger: when `orders.status` transitions to `delivered`, mark related `partner_commissions` row `approved`. On `cancelled`/`refunded`, mark `cancelled`.
-- Trigger: when an order with `referral_code` is INSERTed, create `partner_commissions` row (status=`pending`).
-- All required `GRANT`s.
+### 1.2 Backend: MySQL Connection Layer
+`hostinger-backend/` এ যোগ:
+- `db/mysql.js` — `mysql2/promise` pool, connection config DB থেকে লোড
+- `routes/database.js` — `POST /api/database/test`, `POST /api/database/save-config`, `POST /api/database/sync-schema`
+- `db/schema-mysql.sql` — ১২টি মডিউলের MySQL CREATE TABLE (UUID → CHAR(36), JSONB → JSON, timestamps → DATETIME)
+- `db/sync.js` — প্রথমবার কানেক্ট হলে schema auto-create + Supabase থেকে initial data কপি (ইনিশিয়াল মাইগ্রেশন স্ক্রিপ্ট)
 
-### Frontend
-- **`/partner/apply`** — public registration form (sign in first if not authed), all required fields, document uploads to `partner-documents` storage bucket (created private with admin + owner RLS). Bengali labels.
-- **Auto-attribution**: small effect in `App.tsx` reads `?ref=CODE` from URL → stores in `localStorage('referral_code')` + logs a click row.
-- **Checkout integration** (`src/pages/Checkout.tsx`):
-  - "Apply Coupon / Referral Code" field with validation against `partner_referral_codes` (active, within dates, under usage limit, meets min_order_amount).
-  - Shows discount line; writes `referral_code`, `partner_id`, `referral_discount` on the order.
-- **Admin → `/admin/partners`** — list with status filter, view application + documents, Approve / Reject / Suspend / Request docs. Approving auto-generates a code (`PARTNER` + 4-digit) if none exists and grants `partner` role.
-- **Admin → `/admin/partners/codes`** — create/edit codes manually, set discount + commission rules, activate/deactivate.
-- **Admin → `/admin/partners/commissions`** — table of commissions with status filter, bulk approve.
+### 1.3 Frontend: Data Layer Abstraction
+নতুন `src/lib/dataSource/` ফোল্ডার:
+- `index.ts` — `getDataSource(module: ModuleName): 'supabase' | 'mysql'` (system_settings থেকে cache-সহ পড়ে)
+- `products.ts`, `orders.ts`, `pos.ts`, `customers.ts` — প্রতিটিতে একই ইন্টারফেস, ভেতরে রাউটিং
+  ```ts
+  export const productsRepo = {
+    list: async (...) => isMysql('products') ? mysqlApi.get('/products') : supabase.from('products').select(...)
+  }
+  ```
+- Existing component গুলো ধাপে ধাপে `supabase.from('products')` → `productsRepo.list()` এ migrate
 
-### Sidebar / routing
-- Add "Partners" group to `AdminLayout` with three links above.
-- Add public route for `/partner/apply`.
-
----
-
-## Phase 2 — Partner Portal (next iteration)
-
-- New `partner` layout + `ProtectedRoute requirePartner`.
-- `/partner` dashboard widgets: total referral orders, total sales, total commission, pending/approved/paid, available balance.
-- Charts (Recharts): monthly sales, monthly commission.
-- Tables: recent referred orders, commission history.
-- `/partner/profile` — edit limited fields, change docs.
-- `/partner/codes` — view own code(s), copy referral link, share buttons.
-- Bilingual, mobile cards on small screens.
-
-## Phase 3 — Wallet, Withdrawals, Reports, Notifications
-
-- `partner_wallets` (balance, pending, withdrawable — maintained via triggers).
-- `partner_withdrawals` (method, amount, status, admin notes).
-- Partner withdraw request UI + admin approval queue + mark paid.
-- Admin reports: sales by partner, top performers, payout report, PDF/CSV/Excel export (reuses existing PDF infra with Kalpurush font).
-- Notifications: partner approved, sale received, commission added, withdrawal approved/paid — via existing `notifications` table + SMS/WhatsApp/email channels already wired.
-- Optional fraud guards: prevent self-referral (block when `order.user_id = partner.user_id`), one code per order, duplicate-IP detection counter.
+### 1.4 Module Migration (Phase 1 এ Products + Orders + POS)
+- ১২টি মডিউলের মধ্যে এই ৩টি মডিউলের পেজগুলো repo abstraction এ পোর্ট হবে
+- বাকি ৯টি মডিউলের repo স্কেলিটন থাকবে, পরবর্তী ফেজে পোর্ট
 
 ---
 
-## Out of scope (won't build unless asked)
-- Multi-level / two-tier commissions.
-- Per-product / per-category / per-brand commission rules (current model is per-code; we can extend in Phase 3 if needed — say the word).
-- Coupon stacking with existing `campaigns` coupons. Referral codes are validated independently; only one code applies per order.
+## Phase 2 — পরবর্তী টার্ন (এই প্ল্যানে নয়, পরে এগোব)
+- বাকি মডিউলগুলো পোর্ট
+- Realtime polling fallback MySQL মডিউলের জন্য
+- Bi-directional sync (Supabase ↔ MySQL)
+- File upload Hostinger filesystem এ
 
 ---
 
-## Phase 1 deliverables (files)
-- New migration: partners + codes + clicks + commissions + triggers + RLS + grants + storage bucket policies.
-- New: `src/pages/PartnerApply.tsx`, `src/pages/AdminPartners.tsx`, `src/pages/AdminPartnerCodes.tsx`, `src/pages/AdminPartnerCommissions.tsx`, `src/hooks/usePartnerCode.ts`.
-- Edited: `src/App.tsx` (routes + ref capture), `src/pages/Checkout.tsx` (coupon field), `src/components/AdminLayout.tsx` (sidebar links), `src/hooks/useOrders.ts` (pass referral fields).
+## Technical Details
+
+**Routing storage** — `system_settings` টেবিলে:
+```json
+{
+  "setting_key": "data_source_routing",
+  "setting_value": {"products":"mysql","orders":"mysql","pos_sales":"supabase",...}
+}
+```
+
+**MySQL credentials** — admin save করলে backend `hostinger-backend/.env` এ লেখা হবে না; বরং `mysql_config` টেবিলে encrypted (AES-256-GCM, key = `MYSQL_CONFIG_ENCRYPTION_KEY` secret) সেভ হবে। Backend রিকোয়েস্টে decrypt করে pool বানাবে।
+
+**API base URL** — frontend `VITE_API_URL` (ইতিমধ্যে আছে) ব্যবহার করে `hostinger-backend` এ কল করবে।
+
+**Auth flow অপরিবর্তিত** — সব MySQL endpoint Supabase JWT validate করবে (`hostinger-backend/middleware/auth.js` ইতিমধ্যে আছে), user_id দিয়ে ownership check।
+
+**Schema diff** — `POST /api/database/sync-schema` চললে: MySQL এ যেসব টেবিল নেই সেগুলো create + Supabase থেকে rows কপি (batched, idempotent, `ON DUPLICATE KEY UPDATE`)।
+
+**ASCII flow:**
+```text
+Browser ──► productsRepo.list()
+              │
+              ├─ routing='supabase' ─► supabase.from('products')
+              └─ routing='mysql' ────► fetch(VITE_API_URL+'/api/products')
+                                          │
+                                          └─► hostinger-backend ──► MySQL pool ──► Hostinger MySQL
+```
+
+---
+
+## Files to Create / Edit
+
+**New:**
+- `src/pages/admin/DatabaseConfig.tsx` — connection form + module toggles
+- `src/lib/dataSource/index.ts`, `products.ts`, `orders.ts`, `pos.ts`, `customers.ts`
+- `src/lib/apiClient.ts` — axios wrapper with Supabase JWT
+- `hostinger-backend/db/mysql.js`
+- `hostinger-backend/db/schema-mysql.sql`
+- `hostinger-backend/db/sync.js`
+- `hostinger-backend/routes/database.js`
+- `hostinger-backend/routes/products.js`, `orders.js`, `pos.js`, `customers.js`
+- `hostinger-backend/lib/crypto.js` — AES encrypt/decrypt
+
+**Edit:**
+- `hostinger-backend/server.js` — নতুন routes mount
+- `hostinger-backend/package.json` — `mysql2` যোগ
+- `src/App.tsx` — `/admin/database-config` route
+- `src/components/admin/AdminSidebar.tsx` — নতুন মেনু আইটেম
+- Products/Orders/POS পেজগুলো (~১৫টা ফাইল) — `supabase.from(...)` → `repo.*`
+
+**Migration:**
+- `system_settings` এ default row insert: `data_source_routing` = সব `supabase`
+- নতুন table `mysql_config` (encrypted credentials)
+
+**Secrets:**
+- `MYSQL_CONFIG_ENCRYPTION_KEY` (32-byte, auto-generate)
+
+---
+
+## Constraints / Risks
+
+- **Phase 1 এ ১২ মডিউলের মধ্যে ৩টি সম্পূর্ণ পোর্ট হবে** (Products, Orders, POS)। বাকিগুলোর জন্য UI toggle থাকবে কিন্তু backend না বানানো পর্যন্ত enable করলে error দেখাবে।
+- **RLS হারানোর ঝুঁকি**: MySQL এ RLS নেই, প্রতিটি route এ `req.user.id` দিয়ে manual ownership check বাধ্যতামূলক।
+- **Realtime ভেঙে যাবে** যেসব মডিউল MySQL এ যাবে — Phase 1 এ এদের জন্য realtime subscription disable, polling দিয়ে replace।
+- **Triggers/DB functions**: order number generation, stock auto-decrement ইত্যাদি backend route এ Node.js কোডে পোর্ট হবে।
+- **প্রথম schema sync ভারী হতে পারে** — UI তে progress + chunked transfer দেখাব।
+
+আপনি অনুমোদন দিলে Phase 1 শুরু করব।

@@ -24,6 +24,10 @@ import { preloadBanglaFont } from "@/lib/pdfBanglaFont";
 
 // Pre-load Nikosh font for PDF generation
 preloadBanglaFont();
+
+// Hydrate per-module data-source routing (Supabase ⇄ MySQL) on app boot.
+import { loadRoutingFromServer } from "@/lib/dataSource";
+loadRoutingFromServer().catch(() => {});
 import Index from "./pages/Index";
 import Modules from "./pages/Modules";
 import Button3DShowcase from "./pages/Button3DShowcase";
@@ -70,6 +74,7 @@ import AdminSeoFiles from "./pages/AdminSeoFiles";
 import AdminBackup from "./pages/AdminBackup";
 import AdminSecurityLogs from "./pages/AdminSecurityLogs";
 import AdminSecurityDashboard from "./pages/AdminSecurityDashboard";
+import AdminDatabaseConfig from "./pages/AdminDatabaseConfig";
 import AdminNotificationPreferences from "./pages/AdminNotificationPreferences";
 import AdminEcommerceOverview from "./pages/AdminEcommerceOverview";
 import AdminPages from "./pages/AdminPages";
@@ -240,6 +245,7 @@ const App = () => (
                       <Route path="/admin/customers" element={<ProtectedRoute requireAdmin><AdminCustomers /></ProtectedRoute>} />
                       <Route path="/admin/suppliers" element={<ProtectedRoute requireAdmin><AdminSuppliers /></ProtectedRoute>} />
                       <Route path="/admin/database-export" element={<ProtectedRoute requireAdmin><AdminDatabaseExport /></ProtectedRoute>} />
+                      <Route path="/admin/database-config" element={<ProtectedRoute requireAdmin><AdminDatabaseConfig /></ProtectedRoute>} />
                       <Route path="/admin/seo-files" element={<ProtectedRoute requireAdmin><AdminSeoFiles /></ProtectedRoute>} />
                       <Route path="/admin/backup" element={<ProtectedRoute requireAdmin><AdminBackup /></ProtectedRoute>} />
                       <Route path="/admin/ecommerce-overview" element={<ProtectedRoute requireAdmin><AdminEcommerceOverview /></ProtectedRoute>} />
