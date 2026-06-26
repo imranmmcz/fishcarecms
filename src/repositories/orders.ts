@@ -80,6 +80,9 @@ export interface ListParams {
   limit?: number;
   userScope?: "self" | "all";
   userId?: string | null;
+  dateFrom?: string;
+  dateTo?: string;
+  includeItems?: boolean;
 }
 
 function normalizeOrder(o: any): Order {
@@ -127,15 +130,24 @@ function normalizeItem(i: any): OrderItem {
 // ---------------- Supabase implementation ----------------
 
 async function listFromSupabase(params: ListParams = {}): Promise<Order[]> {
-  let query = supabase.from("orders").select("*").order("created_at", { ascending: false });
+  const cols = params.includeItems ? "*, items:order_items(*)" : "*";
+  let query = supabase.from("orders").select(cols).order("created_at", { ascending: false });
   if (params.userScope !== "all" && params.userId) {
     query = query.eq("user_id", params.userId);
   }
   if (params.status && params.status !== "all") query = query.eq("status", params.status);
+  if (params.dateFrom) query = query.gte("created_at", params.dateFrom);
+  if (params.dateTo) query = query.lte("created_at", params.dateTo);
   if (params.limit) query = query.limit(params.limit);
   const { data, error } = await query;
   if (error) throw error;
-  return (data || []).map(normalizeOrder);
+  return (data || []).map((row: any) => {
+    const order = normalizeOrder(row);
+    if (params.includeItems && Array.isArray(row.items)) {
+      order.items = row.items.map(normalizeItem);
+    }
+    return order;
+  });
 }
 
 async function getFromSupabase(orderId: string): Promise<Order | null> {
@@ -249,7 +261,16 @@ async function listFromMysql(params: ListParams = {}): Promise<Order[]> {
   qs.set("offset", "0");
   // Backend auto-scopes non-admin callers to their own orders via JWT.
   const res = await apiClient.get<MysqlListResponse>(`/api/orders?${qs.toString()}`);
-  return (res.orders || []).map(normalizeOrder);
+  let rows = (res.orders || []).map(normalizeOrder);
+  if (params.dateFrom) {
+    const f = new Date(params.dateFrom).getTime();
+    rows = rows.filter((o) => new Date(o.created_at).getTime() >= f);
+  }
+  if (params.dateTo) {
+    const t = new Date(params.dateTo).getTime();
+    rows = rows.filter((o) => new Date(o.created_at).getTime() <= t);
+  }
+  return rows;
 }
 
 async function getFromMysql(orderId: string): Promise<Order | null> {

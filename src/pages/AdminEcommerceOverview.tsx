@@ -3,6 +3,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { ordersRepo } from "@/repositories/orders";
 import {
   ShoppingCart, CreditCard, Package, RefreshCw,
   TrendingUp, Calendar, BarChart2, Eye, Award,
@@ -69,13 +70,23 @@ const AdminEcommerceOverview = () => {
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from("orders")
-        .select("id, order_number, customer_name, total_amount, status, payment_status, payment_method, created_at")
-        .gte("created_at", from.toISOString())
-        .lte("created_at", to.toISOString())
-        .order("created_at", { ascending: false });
-      setOrders(data || []);
+      const rows = await ordersRepo.list({
+        userScope: "all",
+        dateFrom: from.toISOString(),
+        dateTo: to.toISOString(),
+      });
+      setOrders(
+        rows.map((o) => ({
+          id: o.id,
+          order_number: o.order_number,
+          customer_name: o.customer_name,
+          total_amount: o.total_amount,
+          status: o.status,
+          payment_status: o.payment_status,
+          payment_method: o.payment_method,
+          created_at: o.created_at,
+        }))
+      );
     } catch (err) {
       console.error("Error fetching orders:", err);
     } finally {
