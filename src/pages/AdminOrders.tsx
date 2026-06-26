@@ -8,6 +8,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { supabase } from "@/integrations/supabase/client";
+import { ordersRepo } from "@/repositories/orders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -156,28 +157,18 @@ const AdminOrders = () => {
   const fetchOrders = useCallback(async () => {
     setIsLoading(true);
     try {
-      let query = supabase
-        .from("orders")
-        .select(`*, items:order_items(*)`)
-        .order("created_at", { ascending: false });
-
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
-
-      if (dateFrom) {
-        const fromISO = new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate()).toISOString();
-        query = query.gte("created_at", fromISO);
-      }
-
-      if (dateTo) {
-        const toISO = new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate(), 23, 59, 59).toISOString();
-        query = query.lte("created_at", toISO);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setOrders((data as Order[]) || []);
+      const rows = await ordersRepo.list({
+        userScope: "all",
+        status: statusFilter,
+        includeItems: true,
+        dateFrom: dateFrom
+          ? new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate()).toISOString()
+          : undefined,
+        dateTo: dateTo
+          ? new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate(), 23, 59, 59).toISOString()
+          : undefined,
+      });
+      setOrders(rows as unknown as Order[]);
     } catch (err) {
       console.error("Error fetching orders:", err);
       toast.error(language === "bn" ? "অর্ডার লোড করতে সমস্যা হয়েছে" : "Failed to load orders");
@@ -244,12 +235,7 @@ const AdminOrders = () => {
     if (!selectedOrder || !newStatus) return;
     setIsUpdating(true);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq("id", selectedOrder.id);
-
-      if (error) throw error;
+      await ordersRepo.updateStatus(selectedOrder.id, newStatus);
 
       // Send email notification
       if (selectedOrder.customer_email) {
