@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { ordersRepo } from "@/repositories/orders";
 import { ShoppingCart, Package, TrendingUp, TrendingDown, Users, Clock, CheckCircle, Truck, XCircle, DollarSign, AlertTriangle, User, MapPin, Phone, Mail, CalendarDays, Search, Waves, Fish, Filter, CalendarIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -160,30 +161,34 @@ const AdminDashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     try {
       const { start, end } = getDateRange();
-      let filteredQuery = supabase.from("orders").select("total_amount, status, created_at");
-      if (start) filteredQuery = filteredQuery.gte("created_at", start);
-      if (end) filteredQuery = filteredQuery.lte("created_at", end);
-
+      // Route order widgets through the facade so MySQL routing (Admin →
+      // Database Config) flips them automatically. The facade preserves the
+      // same date-range / status filters as the Supabase queries.
       const [
-        { data: filteredOrders },
+        filteredOrdersRaw,
         { count: productCount },
         { count: userCount },
         { data: lowStock },
-        { data: recent },
+        recentRaw,
       ] = await Promise.all([
-        filteredQuery,
+        ordersRepo.list({
+          userScope: "all",
+          dateFrom: start ?? undefined,
+          dateTo: end ?? undefined,
+          limit: 5000,
+        }),
         supabase.from("products").select("*", { count: "exact", head: true }),
         supabase.from("profiles").select("*", { count: "exact", head: true }),
         supabase.from("products").select("id").lt("stock_quantity", 10),
-        (() => {
-          let q = supabase.from("orders").select("id, order_number, customer_name, total_amount, status, payment_method, payment_status, created_at").order("created_at", { ascending: false });
-          if (start) q = q.gte("created_at", start);
-          if (end) q = q.lte("created_at", end);
-          return q.limit(10);
-        })(),
+        ordersRepo.list({
+          userScope: "all",
+          dateFrom: start ?? undefined,
+          dateTo: end ?? undefined,
+          limit: 10,
+        }),
       ]);
 
-      const orders = filteredOrders || [];
+      const orders = filteredOrdersRaw || [];
       const byStatus: Record<string, number> = {};
       orders.forEach(o => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
       const totalSales = orders.reduce((s, o) => s + Number(o.total_amount), 0);
@@ -200,7 +205,16 @@ const AdminDashboard = () => {
         deliveredOrders: byStatus["delivered"] || 0,
         cancelledOrders: byStatus["cancelled"] || 0,
       });
-      setRecentOrders(recent || []);
+      setRecentOrders((recentRaw || []).map((o) => ({
+        id: o.id,
+        order_number: o.order_number,
+        customer_name: o.customer_name,
+        total_amount: o.total_amount,
+        status: o.status,
+        payment_method: o.payment_method,
+        payment_status: o.payment_status,
+        created_at: o.created_at,
+      })));
 
       const dailyMap: Record<string, number> = {};
       orders.forEach(o => {
@@ -225,16 +239,16 @@ const AdminDashboard = () => {
     setIsUserLoading(true);
     try {
       const [
-        { data: userOrders }, { data: roleData }, { data: pondsData },
+        userOrdersRaw, { data: roleData }, { data: pondsData },
         { data: incomesData }, { data: expensesData },
       ] = await Promise.all([
-        supabase.from("orders").select("id, order_number, customer_name, total_amount, status, payment_method, payment_status, created_at").eq("user_id", userId).order("created_at", { ascending: false }),
+        ordersRepo.list({ userId, limit: 500 }),
         supabase.from("user_roles").select("role").eq("user_id", userId).limit(1),
         supabase.from("farmer_ponds").select("id, status, fish_count, fish_types").eq("user_id", userId),
         supabase.from("farmer_incomes").select("amount").eq("user_id", userId),
         supabase.from("farmer_expenses").select("amount").eq("user_id", userId),
       ]);
-      const orders = userOrders || [];
+      const orders = userOrdersRaw || [];
       const byStatus: Record<string, number> = {};
       orders.forEach(o => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
       const ponds = pondsData || [];
