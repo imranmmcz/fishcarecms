@@ -22,6 +22,7 @@ import {
   StopCircle, History, Package, UserPlus, Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { customersRepo } from "@/repositories/customers";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -106,11 +107,12 @@ export default function AdminPOS() {
   }, []);
 
   const fetchCustomers = async () => {
-    const { data } = await supabase
-      .from("customers")
-      .select("id, customer_name, customer_phone, customer_email, shipping_address")
-      .order("customer_name");
-    if (data) setCustomers(data);
+    try {
+      const data = await customersRepo.list();
+      setCustomers(data as unknown as Customer[]);
+    } catch (err) {
+      console.error("Failed to load customers:", err);
+    }
   };
 
   const filteredCustomers = customers.filter(c =>
@@ -137,18 +139,19 @@ export default function AdminPOS() {
       toast.error("নাম ও ফোন নম্বর আবশ্যক");
       return;
     }
-    const { data, error } = await supabase.from("customers").insert({
-      customer_name: newCustomerName,
-      customer_phone: newCustomerPhone,
-      customer_email: newCustomerEmail || null,
-    }).select().single();
-    if (error) {
+    try {
+      const data = await customersRepo.create({
+        customer_name: newCustomerName,
+        customer_phone: newCustomerPhone,
+        customer_email: newCustomerEmail || null,
+      });
+      toast.success("কাস্টমার যোগ হয়েছে");
+      setCustomers(prev => [...prev, data as unknown as Customer]);
+      selectCustomer(data as unknown as Customer);
+    } catch {
       toast.error("কাস্টমার যোগ করতে সমস্যা হয়েছে");
       return;
     }
-    toast.success("কাস্টমার যোগ হয়েছে");
-    setCustomers(prev => [...prev, data as Customer]);
-    selectCustomer(data as Customer);
     setShowAddCustomer(false);
     setNewCustomerName("");
     setNewCustomerPhone("");
