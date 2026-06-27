@@ -259,6 +259,11 @@ async function listFromMysql(params: ListParams = {}): Promise<Order[]> {
   if (params.status && params.status !== "all") qs.set("status", params.status);
   qs.set("limit", String(params.limit ?? 200));
   qs.set("offset", "0");
+  // When the caller pins a specific user, forward it so admins viewing
+  // another user's dashboard see that user's orders (not their own).
+  if (params.userId && params.userScope !== "all") {
+    qs.set("user_id", params.userId);
+  }
   // Backend auto-scopes non-admin callers to their own orders via JWT.
   const res = await apiClient.get<MysqlListResponse>(`/api/orders?${qs.toString()}`);
   let rows = (res.orders || []).map(normalizeOrder);
