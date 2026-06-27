@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, Users, ShoppingCart, Phone, Mail, MapPin, Eye, Plus, UserPlus, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { customersRepo } from "@/repositories/customers";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -74,13 +75,14 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
   const fetchCustomers = async () => {
     try {
       setIsLoading(true);
-      
-      // Fetch from customers table
-      const { data: savedCustomers, error: savedError } = await supabase
-        .from('customers')
-        .select('*');
-      
-      if (savedError) console.error('Error fetching saved customers:', savedError);
+
+      // Fetch from customers table (routed via facade — Supabase or MySQL)
+      let savedCustomers: any[] = [];
+      try {
+        savedCustomers = await customersRepo.list();
+      } catch (savedError) {
+        console.error('Error fetching saved customers:', savedError);
+      }
 
       // Get unique customers from orders with aggregated data
       const { data, error } = await supabase
