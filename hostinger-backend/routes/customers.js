@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('../config/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { normalizePhone } = require('../utils/phone');
 
 const router = express.Router();
 
@@ -30,6 +31,19 @@ function pickFields(body) {
   return out;
 }
 
+/**
+ * Ensure `customer_phone_normalized` mirrors `customer_phone` on every
+ * write. The DB unique index lives on the normalized column, so this is
+ * what makes "01712345678", "+8801712345678", "8801712345678" and
+ * " 017-1234-5678 " all dedupe to the same customer.
+ */
+function withNormalizedPhone(data) {
+  if (data.customer_phone !== undefined) {
+    data.customer_phone_normalized = normalizePhone(data.customer_phone);
+  }
+  return data;
+}
+
 // GET /api/customers?search=&limit=&offset=
 router.get('/', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -40,9 +54,19 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     let where = 'WHERE 1=1';
     const params = [];
     if (search) {
-      where += ' AND (customer_name LIKE ? OR customer_phone LIKE ? OR customer_email LIKE ?)';
+      // Match on raw phone, normalized phone (so "+8801..." finds "017...")
+      // and name / email.
       const s = `%${search}%`;
-      params.push(s, s, s);
+      const normalized = normalizePhone(search);
+      const nLike = normalized ? `%${normalized}%` : null;
+      if (nLike) {
+        where +=
+          ' AND (customer_name LIKE ? OR customer_phone LIKE ? OR customer_phone_normalized LIKE ? OR customer_email LIKE ?)';
+        params.push(s, s, nLike, s);
+      } else {
+        where += ' AND (customer_name LIKE ? OR customer_phone LIKE ? OR customer_email LIKE ?)';
+        params.push(s, s, s);
+      }
     }
 
     const [rows] = await db.execute(
@@ -77,9 +101,12 @@ router.get('/:id', authenticateToken, requireAdmin, async (req, res) => {
 // POST /api/customers?upsert=phone -> upsert by customer_phone
 router.post('/', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const data = pickFields(req.body || {});
+    const data = withNormalizedPhone(pickFields(req.body || {}));
     if (!data.customer_name || !data.customer_phone) {
       return res.status(400).json({ error: 'customer_name and customer_phone are required' });
+    }
+    if (!data.customer_phone_normalized) {
+      return res.status(400).json({ error: 'customer_phone must contain digits' });
     }
 
     const upsert = String(req.query.upsert || '').toLowerCase() === 'phone';
@@ -91,10 +118,12 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
     let sql = `INSERT INTO customers (${cols.join(', ')}) VALUES (${placeholders})`;
     if (upsert) {
       const updates = Object.keys(data)
-        .filter((k) => k !== 'customer_phone')
+        .filter((k) => k !== 'customer_phone_normalized')
         .map((k) => `${k} = VALUES(${k})`)
         .join(', ');
-      sql += updates ? ` ON DUPLICATE KEY UPDATE ${updates}` : ' ON DUPLICATE KEY UPDATE customer_phone = customer_phone';
+      sql += updates
+        ? ` ON DUPLICATE KEY UPDATE ${updates}`
+        : ' ON DUPLICATE KEY UPDATE customer_phone_normalized = customer_phone_normalized';
     }
 
     try {
@@ -107,8 +136,8 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
     }
 
     const [rows] = await db.execute(
-      'SELECT * FROM customers WHERE customer_phone = ? LIMIT 1',
-      [data.customer_phone]
+      'SELECT * FROM customers WHERE customer_phone_normalized = ? LIMIT 1',
+      [data.customer_phone_normalized]
     );
     res.status(201).json({ customer: rows[0] });
   } catch (err) {
@@ -120,9 +149,15 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
 // PUT /api/customers/:id
 router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const data = pickFields(req.body || {});
+    const data = withNormalizedPhone(pickFields(req.body || {}));
     const keys = Object.keys(data);
     if (keys.length === 0) return res.status(400).json({ error: 'No updatable fields provided' });
+    if (
+      data.customer_phone !== undefined &&
+      !data.customer_phone_normalized
+    ) {
+      return res.status(400).json({ error: 'customer_phone must contain digits' });
+    }
 
     const setSql = keys.map((k) => `${k} = ?`).join(', ');
     const [result] = await db.execute(
