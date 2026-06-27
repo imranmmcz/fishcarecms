@@ -275,17 +275,20 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
         const phone = fields[1] || '';
         if (!name || !phone) { skipped++; continue; }
 
-        const { error } = await supabase.from('customers').upsert({
-          customer_name: name,
-          customer_phone: phone,
-          customer_email: fields[2] || null,
-          division: fields[3] || null,
-          district: fields[4] || null,
-          upazila: fields[5] || null,
-          shipping_address: fields[6] || null,
-        }, { onConflict: 'customer_phone' });
-
-        if (error) { skipped++; } else { imported++; }
+        try {
+          await customersRepo.upsertByPhone({
+            customer_name: name,
+            customer_phone: phone,
+            customer_email: fields[2] || null,
+            division: fields[3] || null,
+            district: fields[4] || null,
+            upazila: fields[5] || null,
+            shipping_address: fields[6] || null,
+          });
+          imported++;
+        } catch {
+          skipped++;
+        }
       }
 
       toast.success(`${imported} জন কাস্টমার ইমপোর্ট হয়েছে${skipped > 0 ? `, ${skipped} টি বাদ পড়েছে` : ''}`);
