@@ -17,23 +17,39 @@ SET @sql := IF(
 PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- 2) Backfill the normalized value for any row that doesn't have it yet.
---    Mirrors utils/phone.js: digits only; strip BD "88" country code (13
---    digits) or leading "0" (11 digits).
+--    Mirrors utils/phone.js step-by-step so backfill matches what the API
+--    will write going forward.
+
+-- 2a) Digits only.
 UPDATE customers
-SET customer_phone_normalized = (
-  CASE
-    WHEN CHAR_LENGTH(REGEXP_REPLACE(IFNULL(customer_phone, ''), '[^0-9]', '')) = 13
-         AND LEFT(REGEXP_REPLACE(customer_phone, '[^0-9]', ''), 2) = '88'
-      THEN SUBSTRING(REGEXP_REPLACE(customer_phone, '[^0-9]', ''), 3)
-    WHEN CHAR_LENGTH(REGEXP_REPLACE(IFNULL(customer_phone, ''), '[^0-9]', '')) = 11
-         AND LEFT(REGEXP_REPLACE(customer_phone, '[^0-9]', ''), 1) = '0'
-      THEN SUBSTRING(REGEXP_REPLACE(customer_phone, '[^0-9]', ''), 2)
-    WHEN CHAR_LENGTH(REGEXP_REPLACE(IFNULL(customer_phone, ''), '[^0-9]', '')) = 0
-      THEN NULL
-    ELSE REGEXP_REPLACE(customer_phone, '[^0-9]', '')
-  END
-)
+SET customer_phone_normalized = REGEXP_REPLACE(IFNULL(customer_phone, ''), '[^0-9]', '')
 WHERE customer_phone_normalized IS NULL;
+
+-- 2b) Strip international "00" exit prefix on long numbers.
+UPDATE customers
+SET customer_phone_normalized = SUBSTRING(customer_phone_normalized, 3)
+WHERE customer_phone_normalized IS NOT NULL
+  AND CHAR_LENGTH(customer_phone_normalized) > 11
+  AND LEFT(customer_phone_normalized, 2) = '00';
+
+-- 2c) Strip BD "88" country code (covers "+8801..." and "8801...").
+UPDATE customers
+SET customer_phone_normalized = SUBSTRING(customer_phone_normalized, 3)
+WHERE customer_phone_normalized IS NOT NULL
+  AND CHAR_LENGTH(customer_phone_normalized) >= 12
+  AND LEFT(customer_phone_normalized, 2) = '88';
+
+-- 2d) Strip leading "0" on the 11-digit local form.
+UPDATE customers
+SET customer_phone_normalized = SUBSTRING(customer_phone_normalized, 2)
+WHERE customer_phone_normalized IS NOT NULL
+  AND CHAR_LENGTH(customer_phone_normalized) = 11
+  AND LEFT(customer_phone_normalized, 1) = '0';
+
+-- 2e) Empty string → NULL so the unique index doesn't collide on blanks.
+UPDATE customers
+SET customer_phone_normalized = NULL
+WHERE customer_phone_normalized = '';
 
 -- 3) Drop the old raw-phone unique index if it still exists (collision-prone).
 SET @idx_exists := (
