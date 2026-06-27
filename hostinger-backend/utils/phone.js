@@ -19,11 +19,14 @@
  */
 function normalizePhone(raw) {
   if (raw === null || raw === undefined) return null;
-  const digits = String(raw).replace(/\D+/g, '');
+  let digits = String(raw).replace(/\D+/g, '');
   if (!digits) return null;
-  if (digits.length === 13 && digits.startsWith('88')) return digits.slice(2);
-  if (digits.length === 11 && digits.startsWith('0')) return digits.slice(1);
-  return digits;
+  // Strip BD country code "88" if present (covers "+8801...", "008801...", "8801...").
+  if (digits.length >= 12 && digits.startsWith('88')) digits = digits.slice(2);
+  // Strip a single leading "0" (local BD prefix) if what remains is the
+  // typical 11-digit "0XXXXXXXXXX" form.
+  if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+  return digits || null;
 }
 
 module.exports = { normalizePhone };
