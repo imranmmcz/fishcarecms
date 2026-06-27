@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, Users, ShoppingCart, Phone, Mail, MapPin, Eye, Plus, UserPlus, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { customersRepo } from "@/repositories/customers";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -74,13 +75,14 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
   const fetchCustomers = async () => {
     try {
       setIsLoading(true);
-      
-      // Fetch from customers table
-      const { data: savedCustomers, error: savedError } = await supabase
-        .from('customers')
-        .select('*');
-      
-      if (savedError) console.error('Error fetching saved customers:', savedError);
+
+      // Fetch from customers table (routed via facade — Supabase or MySQL)
+      let savedCustomers: any[] = [];
+      try {
+        savedCustomers = await customersRepo.list();
+      } catch (savedError) {
+        console.error('Error fetching saved customers:', savedError);
+      }
 
       // Get unique customers from orders with aggregated data
       const { data, error } = await supabase
@@ -150,24 +152,24 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
     }
     try {
       setIsSaving(true);
-      const { error } = await supabase.from('customers').insert({
-        customer_name: newCustomer.customer_name.trim(),
-        customer_phone: newCustomer.customer_phone.trim(),
-        customer_email: newCustomer.customer_email.trim() || null,
-        division: newCustomer.division.trim() || null,
-        district: newCustomer.district.trim() || null,
-        upazila: newCustomer.upazila.trim() || null,
-        village: newCustomer.village.trim() || null,
-        shipping_address: newCustomer.shipping_address.trim() || null,
-        notes: newCustomer.notes.trim() || null,
-      });
-      if (error) {
-        if (error.code === '23505') {
+      try {
+        await customersRepo.create({
+          customer_name: newCustomer.customer_name.trim(),
+          customer_phone: newCustomer.customer_phone.trim(),
+          customer_email: newCustomer.customer_email.trim() || null,
+          division: newCustomer.division.trim() || null,
+          district: newCustomer.district.trim() || null,
+          upazila: newCustomer.upazila.trim() || null,
+          village: newCustomer.village.trim() || null,
+          shipping_address: newCustomer.shipping_address.trim() || null,
+          notes: newCustomer.notes.trim() || null,
+        });
+      } catch (err: any) {
+        if (err?.code === '23505' || err?.status === 409) {
           toast.error('এই ফোন নম্বর দিয়ে ইতিমধ্যে একটি কাস্টমার আছে');
-        } else {
-          throw error;
+          return;
         }
-        return;
+        throw err;
       }
       toast.success('কাস্টমার সফলভাবে যোগ করা হয়েছে');
       setIsAddDialogOpen(false);
@@ -273,17 +275,20 @@ export default function AdminCustomers({ Layout = AdminLayout }: { Layout?: Reac
         const phone = fields[1] || '';
         if (!name || !phone) { skipped++; continue; }
 
-        const { error } = await supabase.from('customers').upsert({
-          customer_name: name,
-          customer_phone: phone,
-          customer_email: fields[2] || null,
-          division: fields[3] || null,
-          district: fields[4] || null,
-          upazila: fields[5] || null,
-          shipping_address: fields[6] || null,
-        }, { onConflict: 'customer_phone' });
-
-        if (error) { skipped++; } else { imported++; }
+        try {
+          await customersRepo.upsertByPhone({
+            customer_name: name,
+            customer_phone: phone,
+            customer_email: fields[2] || null,
+            division: fields[3] || null,
+            district: fields[4] || null,
+            upazila: fields[5] || null,
+            shipping_address: fields[6] || null,
+          });
+          imported++;
+        } catch {
+          skipped++;
+        }
       }
 
       toast.success(`${imported} জন কাস্টমার ইমপোর্ট হয়েছে${skipped > 0 ? `, ${skipped} টি বাদ পড়েছে` : ''}`);
