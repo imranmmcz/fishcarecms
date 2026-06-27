@@ -21,7 +21,9 @@ function normalizePhone(raw) {
   if (raw === null || raw === undefined) return null;
   let digits = String(raw).replace(/\D+/g, '');
   if (!digits) return null;
-  // Strip BD country code "88" if present (covers "+8801...", "008801...", "8801...").
+  // Strip an international "00" exit prefix if present (e.g. "008801...").
+  if (digits.length > 11 && digits.startsWith('00')) digits = digits.slice(2);
+  // Strip BD country code "88" if present (covers "+8801...", "8801...").
   if (digits.length >= 12 && digits.startsWith('88')) digits = digits.slice(2);
   // Strip a single leading "0" (local BD prefix) if what remains is the
   // typical 11-digit "0XXXXXXXXXX" form.
