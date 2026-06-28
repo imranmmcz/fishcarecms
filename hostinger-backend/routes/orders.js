@@ -77,25 +77,27 @@ router.get('/', authenticateToken, async (req, res) => {
       params.push(date_to);
     }
     if (search) {
-      const s = `%${search}%`;
+      // Force case-insensitive matching regardless of column collation by
+      // lowercasing both sides. Mirrors Supabase `ilike` semantics.
+      const s = `%${String(search).toLowerCase()}%`;
       // Mirror Supabase semantics: match order_number, shipping name/mobile,
       // and the joined account email/name. When include_items is requested,
       // also match any line-item product name or product_id.
       if (include_items === '1' || include_items === 'true') {
         query += ` AND (
-          o.order_number LIKE ? OR o.shipping_name LIKE ? OR o.shipping_mobile LIKE ?
-          OR u.full_name LIKE ? OR u.email LIKE ?
+          LOWER(o.order_number) LIKE ? OR LOWER(o.shipping_name) LIKE ? OR LOWER(o.shipping_mobile) LIKE ?
+          OR LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ?
           OR EXISTS (
             SELECT 1 FROM order_items oi
             WHERE oi.order_id = o.id
-              AND (oi.product_name LIKE ? OR CAST(oi.product_id AS CHAR) LIKE ?)
+              AND (LOWER(oi.product_name) LIKE ? OR LOWER(CAST(oi.product_id AS CHAR)) LIKE ?)
           )
         )`;
         params.push(s, s, s, s, s, s, s);
       } else {
         query += ` AND (
-          o.order_number LIKE ? OR o.shipping_name LIKE ? OR o.shipping_mobile LIKE ?
-          OR u.full_name LIKE ? OR u.email LIKE ?
+          LOWER(o.order_number) LIKE ? OR LOWER(o.shipping_name) LIKE ? OR LOWER(o.shipping_mobile) LIKE ?
+          OR LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ?
         )`;
         params.push(s, s, s, s, s);
       }
