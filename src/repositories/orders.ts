@@ -264,18 +264,18 @@ async function listFromMysql(params: ListParams = {}): Promise<Order[]> {
   if (params.userId && params.userScope !== "all") {
     qs.set("user_id", params.userId);
   }
+  if (params.dateFrom) qs.set("date_from", params.dateFrom);
+  if (params.dateTo) qs.set("date_to", params.dateTo);
+  if (params.includeItems) qs.set("include_items", "1");
   // Backend auto-scopes non-admin callers to their own orders via JWT.
   const res = await apiClient.get<MysqlListResponse>(`/api/orders?${qs.toString()}`);
-  let rows = (res.orders || []).map(normalizeOrder);
-  if (params.dateFrom) {
-    const f = new Date(params.dateFrom).getTime();
-    rows = rows.filter((o) => new Date(o.created_at).getTime() >= f);
-  }
-  if (params.dateTo) {
-    const t = new Date(params.dateTo).getTime();
-    rows = rows.filter((o) => new Date(o.created_at).getTime() <= t);
-  }
-  return rows;
+  return (res.orders || []).map((row: any) => {
+    const order = normalizeOrder(row);
+    if (params.includeItems && Array.isArray(row.items)) {
+      order.items = row.items.map(normalizeItem);
+    }
+    return order;
+  });
 }
 
 async function getFromMysql(orderId: string): Promise<Order | null> {
