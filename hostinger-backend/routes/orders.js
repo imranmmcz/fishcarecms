@@ -33,7 +33,16 @@ const generateOrderNumber = async () => {
 // Get all orders (Admin) or user's orders
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const { status, user_id, limit = 50, offset = 0 } = req.query;
+    const {
+      status,
+      user_id,
+      limit = 50,
+      offset = 0,
+      date_from,
+      date_to,
+      include_items,
+      search,
+    } = req.query;
     const isAdmin = req.user.role === 'admin';
     
     let query = `
@@ -59,10 +68,46 @@ router.get('/', authenticateToken, async (req, res) => {
       params.push(status);
     }
 
+    if (date_from) {
+      query += ' AND o.created_at >= ?';
+      params.push(date_from);
+    }
+    if (date_to) {
+      query += ' AND o.created_at <= ?';
+      params.push(date_to);
+    }
+    if (search) {
+      query += ' AND (o.order_number LIKE ? OR o.shipping_name LIKE ? OR o.shipping_mobile LIKE ?)';
+      const s = `%${search}%`;
+      params.push(s, s, s);
+    }
+
     query += ' ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
     const [orders] = await db.execute(query, params);
+
+    // Optionally embed order items so admin lists with drill-down state
+    // can render line-items without a per-order round trip.
+    if (include_items === '1' || include_items === 'true') {
+      const ids = orders.map((o) => o.id);
+      if (ids.length > 0) {
+        const placeholders = ids.map(() => '?').join(',');
+        const [items] = await db.execute(
+          `SELECT * FROM order_items WHERE order_id IN (${placeholders})`,
+          ids
+        );
+        const byOrder = items.reduce((acc, it) => {
+          (acc[it.order_id] = acc[it.order_id] || []).push(it);
+          return acc;
+        }, {});
+        orders.forEach((o) => {
+          o.items = byOrder[o.id] || [];
+        });
+      } else {
+        orders.forEach((o) => { o.items = []; });
+      }
+    }
 
     // Get total count
     let countQuery = 'SELECT COUNT(*) as total FROM orders WHERE 1=1';
@@ -79,6 +124,19 @@ router.get('/', authenticateToken, async (req, res) => {
     if (status) {
       countQuery += ' AND status = ?';
       countParams.push(status);
+    }
+    if (date_from) {
+      countQuery += ' AND created_at >= ?';
+      countParams.push(date_from);
+    }
+    if (date_to) {
+      countQuery += ' AND created_at <= ?';
+      countParams.push(date_to);
+    }
+    if (search) {
+      countQuery += ' AND (order_number LIKE ? OR shipping_name LIKE ? OR shipping_mobile LIKE ?)';
+      const s = `%${search}%`;
+      countParams.push(s, s, s);
     }
 
     const [countResult] = await db.execute(countQuery, countParams);
