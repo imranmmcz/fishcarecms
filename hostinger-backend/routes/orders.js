@@ -155,7 +155,7 @@ router.get('/', authenticateToken, async (req, res) => {
       countParams.push(date_to);
     }
     if (search) {
-      const s = `%${search}%`;
+      const s = `%${String(search).toLowerCase()}%`;
       if (include_items === '1' || include_items === 'true') {
         countQuery = countQuery.replace(
           'FROM orders WHERE 1=1',
@@ -164,12 +164,12 @@ router.get('/', authenticateToken, async (req, res) => {
          .replace(/\bstatus = \?/g, 'o.status = ?')
          .replace(/\buser_id = \?/g, 'o.user_id = ?');
         countQuery += ` AND (
-          o.order_number LIKE ? OR o.shipping_name LIKE ? OR o.shipping_mobile LIKE ?
-          OR u.full_name LIKE ? OR u.email LIKE ?
+          LOWER(o.order_number) LIKE ? OR LOWER(o.shipping_name) LIKE ? OR LOWER(o.shipping_mobile) LIKE ?
+          OR LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ?
           OR EXISTS (
             SELECT 1 FROM order_items oi
             WHERE oi.order_id = o.id
-              AND (oi.product_name LIKE ? OR CAST(oi.product_id AS CHAR) LIKE ?)
+              AND (LOWER(oi.product_name) LIKE ? OR LOWER(CAST(oi.product_id AS CHAR)) LIKE ?)
           )
         )`;
         countParams.push(s, s, s, s, s, s, s);
@@ -181,8 +181,8 @@ router.get('/', authenticateToken, async (req, res) => {
          .replace(/\bstatus = \?/g, 'o.status = ?')
          .replace(/\buser_id = \?/g, 'o.user_id = ?');
         countQuery += ` AND (
-          o.order_number LIKE ? OR o.shipping_name LIKE ? OR o.shipping_mobile LIKE ?
-          OR u.full_name LIKE ? OR u.email LIKE ?
+          LOWER(o.order_number) LIKE ? OR LOWER(o.shipping_name) LIKE ? OR LOWER(o.shipping_mobile) LIKE ?
+          OR LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ?
         )`;
         countParams.push(s, s, s, s, s);
       }
