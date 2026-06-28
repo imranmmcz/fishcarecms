@@ -77,9 +77,28 @@ router.get('/', authenticateToken, async (req, res) => {
       params.push(date_to);
     }
     if (search) {
-      query += ' AND (o.order_number LIKE ? OR o.shipping_name LIKE ? OR o.shipping_mobile LIKE ?)';
       const s = `%${search}%`;
-      params.push(s, s, s);
+      // Mirror Supabase semantics: match order_number, shipping name/mobile,
+      // and the joined account email/name. When include_items is requested,
+      // also match any line-item product name or product_id.
+      if (include_items === '1' || include_items === 'true') {
+        query += ` AND (
+          o.order_number LIKE ? OR o.shipping_name LIKE ? OR o.shipping_mobile LIKE ?
+          OR u.full_name LIKE ? OR u.email LIKE ?
+          OR EXISTS (
+            SELECT 1 FROM order_items oi
+            WHERE oi.order_id = o.id
+              AND (oi.product_name LIKE ? OR CAST(oi.product_id AS CHAR) LIKE ?)
+          )
+        )`;
+        params.push(s, s, s, s, s, s, s);
+      } else {
+        query += ` AND (
+          o.order_number LIKE ? OR o.shipping_name LIKE ? OR o.shipping_mobile LIKE ?
+          OR u.full_name LIKE ? OR u.email LIKE ?
+        )`;
+        params.push(s, s, s, s, s);
+      }
     }
 
     query += ' ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
@@ -134,9 +153,37 @@ router.get('/', authenticateToken, async (req, res) => {
       countParams.push(date_to);
     }
     if (search) {
-      countQuery += ' AND (order_number LIKE ? OR shipping_name LIKE ? OR shipping_mobile LIKE ?)';
       const s = `%${search}%`;
-      countParams.push(s, s, s);
+      if (include_items === '1' || include_items === 'true') {
+        countQuery = countQuery.replace(
+          'FROM orders WHERE 1=1',
+          'FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE 1=1'
+        ).replace(/\bcreated_at\b/g, 'o.created_at')
+         .replace(/\bstatus = \?/g, 'o.status = ?')
+         .replace(/\buser_id = \?/g, 'o.user_id = ?');
+        countQuery += ` AND (
+          o.order_number LIKE ? OR o.shipping_name LIKE ? OR o.shipping_mobile LIKE ?
+          OR u.full_name LIKE ? OR u.email LIKE ?
+          OR EXISTS (
+            SELECT 1 FROM order_items oi
+            WHERE oi.order_id = o.id
+              AND (oi.product_name LIKE ? OR CAST(oi.product_id AS CHAR) LIKE ?)
+          )
+        )`;
+        countParams.push(s, s, s, s, s, s, s);
+      } else {
+        countQuery = countQuery.replace(
+          'FROM orders WHERE 1=1',
+          'FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE 1=1'
+        ).replace(/\bcreated_at\b/g, 'o.created_at')
+         .replace(/\bstatus = \?/g, 'o.status = ?')
+         .replace(/\buser_id = \?/g, 'o.user_id = ?');
+        countQuery += ` AND (
+          o.order_number LIKE ? OR o.shipping_name LIKE ? OR o.shipping_mobile LIKE ?
+          OR u.full_name LIKE ? OR u.email LIKE ?
+        )`;
+        countParams.push(s, s, s, s, s);
+      }
     }
 
     const [countResult] = await db.execute(countQuery, countParams);
