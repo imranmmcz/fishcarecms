@@ -21,6 +21,7 @@ const farmingRoutes = require('./routes/farming');
 const extrasRoutes = require('./routes/extras');
 const uploadRoutes = require('./routes/uploads');
 const customerRoutes = require('./routes/customers');
+const posRoutes = require('./routes/pos');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -112,6 +113,7 @@ app.use('/api/ad-settings', adSettingsRoutes);
 app.use('/api/page-content', pageContentRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/pos', posRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/farming', farmingRoutes);
 app.use('/api', extrasRoutes);

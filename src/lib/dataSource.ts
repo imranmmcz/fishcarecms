@@ -36,6 +36,10 @@ export const MYSQL_READY_MODULES: ReadonlySet<RoutableModule> = new Set([
   "orders",
   "order_items",
   "customers",
+  "pos_sales",
+  "pos_sale_items",
+  "pos_shifts",
+  "pos_expenses",
 ]);
 
 const LS_KEY = "data_source_routing";
