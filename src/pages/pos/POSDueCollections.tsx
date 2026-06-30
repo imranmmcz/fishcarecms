@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { posRepo } from "@/repositories/pos";
 import { toast } from "sonner";
 
 interface DueSale {
@@ -82,22 +83,22 @@ export default function POSDueCollections() {
   }, []);
 
   const fetchDueSales = async () => {
-    const { data, error } = await supabase
-      .from("pos_sales")
-      .select("id, sale_number, customer_name, customer_phone, total_amount, paid_amount, due_amount, created_at")
-      .eq("payment_type", "due")
-      .gt("due_amount", 0)
-      .order("created_at", { ascending: false });
-    if (!error && data) setDueSales(data as DueSale[]);
+    try {
+      const sales = await posRepo.sales.list({ payment_type: "due", min_due: 0, limit: 500 });
+      setDueSales(sales.filter((s) => s.due_amount > 0) as unknown as DueSale[]);
+    } catch (e) {
+      console.error("fetchDueSales", e);
+    }
   };
 
   const fetchPayments = async (saleId: string) => {
-    const { data } = await supabase
-      .from("pos_due_payments")
-      .select("*")
-      .eq("sale_id", saleId)
-      .order("created_at", { ascending: false });
-    setPayments((data || []) as DuePayment[]);
+    try {
+      const list = await posRepo.sales.listDuePayments(saleId);
+      setPayments(list as DuePayment[]);
+    } catch (e) {
+      console.error("fetchPayments", e);
+      setPayments([]);
+    }
   };
 
   const openPaymentDialog = async (sale: DueSale) => {
@@ -125,27 +126,25 @@ export default function POSDueCollections() {
 
     setIsProcessing(true);
     try {
-      // Insert payment record
-      const { error: payError } = await supabase.from("pos_due_payments").insert({
-        sale_id: selectedSale.id,
-        amount,
-        payment_method: paymentMethod,
-        mobile_banking_provider: paymentMethod === "mobile_banking" ? mobileBankingProvider : null,
-        transaction_id: paymentMethod === "mobile_banking" ? transactionId : null,
-        notes: paymentNotes || null,
-        collected_by: user.id,
-      });
-      if (payError) throw payError;
+      await posRepo.sales.addDuePayment(
+        selectedSale.id,
+        {
+          amount,
+          payment_method: paymentMethod,
+          mobile_banking_provider: paymentMethod === "mobile_banking" ? mobileBankingProvider : null,
+          transaction_id: paymentMethod === "mobile_banking" ? transactionId : null,
+          notes: paymentNotes || null,
+        },
+        user.id,
+      );
 
-      // Update sale due_amount and paid_amount
       const newDue = selectedSale.due_amount - amount;
       const newPaid = selectedSale.paid_amount + amount;
-      const { error: updateError } = await supabase.from("pos_sales").update({
+      await posRepo.sales.updateAfterDuePayment(selectedSale.id, {
         due_amount: newDue,
         paid_amount: newPaid,
         payment_type: newDue <= 0 ? "full" : "due",
-      }).eq("id", selectedSale.id);
-      if (updateError) throw updateError;
+      });
 
       toast.success(`৳${amount.toFixed(0)} পেমেন্ট গ্রহণ করা হয়েছে`);
       

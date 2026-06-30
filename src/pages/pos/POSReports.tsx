@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { posRepo } from "@/repositories/pos";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -127,10 +128,7 @@ function SalesReportTab() {
 
   const { data: sales = [] } = useQuery({
     queryKey: ["pos-report-sales"],
-    queryFn: async () => {
-      const { data } = await supabase.from("pos_sales").select("*").order("created_at", { ascending: false });
-      return data || [];
-    },
+    queryFn: () => posRepo.sales.list({ limit: 1000 }),
   });
 
   const filtered = useMemo(() => {
