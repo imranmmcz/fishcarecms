@@ -121,6 +121,9 @@ export interface ListSalesParams {
   date_from?: string;
   date_to?: string;
   search?: string;
+  payment_type?: string;
+  payment_method?: string;
+  min_due?: number;
   includeItems?: boolean;
   limit?: number;
 }
@@ -226,6 +229,9 @@ async function listSalesSb(p: ListSalesParams): Promise<PosSale[]> {
   if (p.status) q = q.eq("status", p.status);
   if (p.shift_id) q = q.eq("shift_id", p.shift_id);
   if (p.customer_phone) q = q.eq("customer_phone", p.customer_phone);
+  if (p.payment_type) q = q.eq("payment_type", p.payment_type);
+  if (p.payment_method) q = q.eq("payment_method", p.payment_method);
+  if (typeof p.min_due === "number") q = q.gt("due_amount", p.min_due);
   if (p.date_from) q = q.gte("created_at", p.date_from);
   if (p.date_to) q = q.lte("created_at", p.date_to);
   if (p.search) q = q.or(`sale_number.ilike.%${p.search}%,customer_name.ilike.%${p.search}%,customer_phone.ilike.%${p.search}%`);
@@ -240,6 +246,9 @@ async function listSalesMy(p: ListSalesParams): Promise<PosSale[]> {
   if (p.status) qs.set("status", p.status);
   if (p.shift_id) qs.set("shift_id", p.shift_id);
   if (p.customer_phone) qs.set("customer_phone", p.customer_phone);
+  if (p.payment_type) qs.set("payment_type", p.payment_type);
+  if (p.payment_method) qs.set("payment_method", p.payment_method);
+  if (typeof p.min_due === "number") qs.set("min_due", String(p.min_due));
   if (p.date_from) qs.set("date_from", p.date_from);
   if (p.date_to) qs.set("date_to", p.date_to);
   if (p.search) qs.set("search", p.search);
@@ -485,6 +494,26 @@ export const posRepo = {
         : supabase.from("pos_due_payments").insert([{
             sale_id: saleId, collected_by: userId, ...payload,
           }]).then((r) => { if (r.error) throw r.error; return r.data; }),
+    listDuePayments: async (saleId: string): Promise<any[]> => {
+      if (getDataSource("pos_sales") === "mysql") {
+        const res = await apiClient.get<{ sale: any }>(`/api/pos/sales/${encodeURIComponent(saleId)}`);
+        return res.sale?.due_payments || [];
+      }
+      const { data, error } = await supabase
+        .from("pos_due_payments").select("*").eq("sale_id", saleId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    updateAfterDuePayment: async (
+      saleId: string,
+      patch: { paid_amount: number; due_amount: number; payment_type?: string },
+    ): Promise<void> => {
+      // MySQL backend already updates the sale row inside the due-payment txn.
+      if (getDataSource("pos_sales") === "mysql") return;
+      const { error } = await supabase.from("pos_sales").update(patch).eq("id", saleId);
+      if (error) throw error;
+    },
   },
 
   // Shifts

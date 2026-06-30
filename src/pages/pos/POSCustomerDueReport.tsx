@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { posRepo } from "@/repositories/pos";
 import { toast } from "sonner";
 
 interface CustomerDue {
@@ -42,13 +43,8 @@ export default function POSCustomerDueReport() {
   const { data: dueSales = [] } = useQuery({
     queryKey: ["pos-customer-due-report"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("pos_sales")
-        .select("id, sale_number, customer_name, customer_phone, total_amount, paid_amount, due_amount, created_at")
-        .eq("payment_type", "due")
-        .gt("due_amount", 0)
-        .order("created_at", { ascending: false });
-      return data || [];
+      const sales = await posRepo.sales.list({ payment_type: "due", min_due: 0, limit: 1000 });
+      return sales.filter((s) => s.due_amount > 0);
     },
   });
 

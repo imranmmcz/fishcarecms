@@ -128,13 +128,17 @@ router.patch('/shifts/:id/close', authenticateToken, async (req, res) => {
 router.get('/sales', authenticateToken, async (req, res) => {
   try {
     const { date_from, date_to, status, shift_id, customer_phone,
-            include_items, limit = 100, offset = 0, search } = req.query;
+            include_items, limit = 100, offset = 0, search,
+            payment_type, payment_method, min_due } = req.query;
     const where = [];
     const params = [];
     if (!isAdmin(req)) { where.push('user_id = ?'); params.push(req.user.id); }
     if (status) { where.push('status = ?'); params.push(status); }
     if (shift_id) { where.push('shift_id = ?'); params.push(shift_id); }
     if (customer_phone) { where.push('customer_phone = ?'); params.push(customer_phone); }
+    if (payment_type) { where.push('payment_type = ?'); params.push(payment_type); }
+    if (payment_method) { where.push('payment_method = ?'); params.push(payment_method); }
+    if (min_due !== undefined && min_due !== '') { where.push('due_amount > ?'); params.push(Number(min_due) || 0); }
     if (date_from) { where.push('created_at >= ?'); params.push(date_from); }
     if (date_to) { where.push('created_at <= ?'); params.push(date_to); }
     if (search) {

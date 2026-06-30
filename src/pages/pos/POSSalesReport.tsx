@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { FileText, TrendingUp, CreditCard, Banknote, Filter, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { posRepo } from "@/repositories/pos";
 
 const getDateRange = (period: string) => {
   const now = new Date();
@@ -47,10 +47,7 @@ export default function POSSalesReport() {
 
   const { data: sales = [] } = useQuery({
     queryKey: ["pos-sales-report"],
-    queryFn: async () => {
-      const { data } = await supabase.from("pos_sales").select("*").order("created_at", { ascending: false });
-      return data || [];
-    },
+    queryFn: () => posRepo.sales.list({ limit: 1000 }),
   });
 
   const filtered = useMemo(() => {
