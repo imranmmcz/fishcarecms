@@ -4,20 +4,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RotateCcw } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { posRepo } from "@/repositories/pos";
 
 export default function POSSalesReturns() {
   const [sales, setSales] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchReturns = async () => {
-      const { data } = await supabase
-        .from("pos_sales")
-        .select("*")
-        .eq("status", "refunded")
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (data) setSales(data);
+      try {
+        const data = await posRepo.sales.list({ status: "refunded", limit: 50 });
+        setSales(data);
+      } catch { /* ignore */ }
     };
     fetchReturns();
   }, []);

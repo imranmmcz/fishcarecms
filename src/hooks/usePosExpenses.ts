@@ -1,29 +1,10 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { posRepo, PosExpenseCategory as RepoCategory, PosExpense as RepoExpense } from '@/repositories/pos';
 
-export interface ExpenseCategory {
-  id: string;
-  name: string;
-  name_bn: string;
-  description: string | null;
-  is_active: boolean;
-  created_at: string;
-}
-
-export interface PosExpense {
-  id: string;
-  category_id: string | null;
-  amount: number;
-  description: string | null;
-  expense_date: string;
-  payment_method: string;
-  reference_no: string | null;
-  user_id: string;
-  created_at: string;
-  category?: ExpenseCategory;
-}
+export type ExpenseCategory = RepoCategory;
+export type PosExpense = RepoExpense;
 
 export function usePosExpenses() {
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
@@ -33,61 +14,79 @@ export function usePosExpenses() {
   const { user } = useAuth();
 
   const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from('pos_expense_categories')
-      .select('*')
-      .order('name');
-    if (!error) setCategories(data || []);
+    try {
+      const data = await posRepo.expenseCategories.list();
+      setCategories(data);
+    } catch (e) { /* ignore */ }
   };
 
   const fetchExpenses = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('pos_expenses')
-      .select('*, category:pos_expense_categories(*)')
-      .order('expense_date', { ascending: false });
-    if (!error) setExpenses(data || []);
+    try {
+      const data = await posRepo.expenses.list();
+      setExpenses(data);
+    } catch (e) { /* ignore */ }
     setLoading(false);
   };
 
   // Category CRUD
   const createCategory = async (cat: { name: string; name_bn: string; description?: string }) => {
-    const { data, error } = await supabase.from('pos_expense_categories').insert([cat]).select().single();
-    if (error) { toast({ title: 'ত্রুটি', description: error.message, variant: 'destructive' }); throw error; }
-    setCategories(prev => [...prev, data]);
-    toast({ title: 'সফল', description: 'ক্যাটাগরি যোগ হয়েছে' });
-    return data;
+    try {
+      const data = await posRepo.expenseCategories.create(cat);
+      setCategories(prev => [...prev, data]);
+      toast({ title: 'সফল', description: 'ক্যাটাগরি যোগ হয়েছে' });
+      return data;
+    } catch (error: any) {
+      toast({ title: 'ত্রুটি', description: error?.message || 'ব্যর্থ', variant: 'destructive' });
+      throw error;
+    }
   };
 
   const updateCategory = async (id: string, cat: Partial<ExpenseCategory>) => {
-    const { data, error } = await supabase.from('pos_expense_categories').update(cat).eq('id', id).select().single();
-    if (error) { toast({ title: 'ত্রুটি', description: error.message, variant: 'destructive' }); throw error; }
-    setCategories(prev => prev.map(c => c.id === id ? data : c));
-    toast({ title: 'সফল', description: 'ক্যাটাগরি আপডেট হয়েছে' });
+    try {
+      const data = await posRepo.expenseCategories.update(id, cat);
+      setCategories(prev => prev.map(c => c.id === id ? data : c));
+      toast({ title: 'সফল', description: 'ক্যাটাগরি আপডেট হয়েছে' });
+    } catch (error: any) {
+      toast({ title: 'ত্রুটি', description: error?.message || 'ব্যর্থ', variant: 'destructive' });
+      throw error;
+    }
   };
 
   const deleteCategory = async (id: string) => {
-    const { error } = await supabase.from('pos_expense_categories').delete().eq('id', id);
-    if (error) { toast({ title: 'ত্রুটি', description: error.message, variant: 'destructive' }); throw error; }
-    setCategories(prev => prev.filter(c => c.id !== id));
-    toast({ title: 'সফল', description: 'ক্যাটাগরি মুছে ফেলা হয়েছে' });
+    try {
+      await posRepo.expenseCategories.delete(id);
+      setCategories(prev => prev.filter(c => c.id !== id));
+      toast({ title: 'সফল', description: 'ক্যাটাগরি মুছে ফেলা হয়েছে' });
+    } catch (error: any) {
+      toast({ title: 'ত্রুটি', description: error?.message || 'ব্যর্থ', variant: 'destructive' });
+      throw error;
+    }
   };
 
   // Expense CRUD
   const createExpense = async (exp: { category_id?: string; amount: number; description?: string; expense_date: string; payment_method: string; reference_no?: string }) => {
     if (!user) return;
-    const { data, error } = await supabase.from('pos_expenses').insert([{ ...exp, user_id: user.id }]).select('*, category:pos_expense_categories(*)').single();
-    if (error) { toast({ title: 'ত্রুটি', description: error.message, variant: 'destructive' }); throw error; }
-    setExpenses(prev => [data, ...prev]);
-    toast({ title: 'সফল', description: 'খরচ যোগ হয়েছে' });
-    return data;
+    try {
+      const data = await posRepo.expenses.create(exp as any, user.id);
+      setExpenses(prev => [data, ...prev]);
+      toast({ title: 'সফল', description: 'খরচ যোগ হয়েছে' });
+      return data;
+    } catch (error: any) {
+      toast({ title: 'ত্রুটি', description: error?.message || 'ব্যর্থ', variant: 'destructive' });
+      throw error;
+    }
   };
 
   const deleteExpense = async (id: string) => {
-    const { error } = await supabase.from('pos_expenses').delete().eq('id', id);
-    if (error) { toast({ title: 'ত্রুটি', description: error.message, variant: 'destructive' }); throw error; }
-    setExpenses(prev => prev.filter(e => e.id !== id));
-    toast({ title: 'সফল', description: 'খরচ মুছে ফেলা হয়েছে' });
+    try {
+      await posRepo.expenses.delete(id);
+      setExpenses(prev => prev.filter(e => e.id !== id));
+      toast({ title: 'সফল', description: 'খরচ মুছে ফেলা হয়েছে' });
+    } catch (error: any) {
+      toast({ title: 'ত্রুটি', description: error?.message || 'ব্যর্থ', variant: 'destructive' });
+      throw error;
+    }
   };
 
   useEffect(() => {
