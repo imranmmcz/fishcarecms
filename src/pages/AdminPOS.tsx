@@ -359,12 +359,13 @@ export default function AdminPOS() {
 
   const fetchSalesHistory = async () => {
     if (!activeShift) return;
-    const { data } = await supabase
-      .from("pos_sales")
-      .select("*")
-      .eq("shift_id", activeShift.id)
-      .order("created_at", { ascending: false });
-    setSalesHistory(data || []);
+    try {
+      const data = await posRepo.sales.list({ shift_id: activeShift.id, limit: 500 });
+      setSalesHistory(data);
+    } catch (e) {
+      console.error("fetchSalesHistory", e);
+      setSalesHistory([]);
+    }
     setShowHistory(true);
   };
 
