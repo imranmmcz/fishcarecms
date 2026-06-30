@@ -16,6 +16,7 @@ import {
   FileText, Package, RotateCcw, ArrowLeftRight, HandCoins,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { posRepo } from "@/repositories/pos";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
@@ -121,26 +122,24 @@ export default function POSDashboard() {
 
   const fetchActiveShift = async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from("pos_shifts")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("status", "open")
-      .maybeSingle();
-    if (data) setActiveShift(data);
+    try {
+      const data = await posRepo.shifts.active(user.id);
+      if (data) setActiveShift(data);
+    } catch { /* ignore */ }
   };
 
   const fetchStats = async () => {
     const { from, to } = getDateRange(quickFilter, customFrom, customTo);
-    let q = supabase
-      .from("pos_sales")
-      .select("total_amount, payment_method, due_amount")
-      .gte("created_at", from)
-      .lte("created_at", to);
-
-    if (paymentFilter !== "all") q = q.eq("payment_method", paymentFilter);
-
-    const { data } = await q;
+    const data = await posRepo.sales
+      .list({
+        date_from: from,
+        date_to: to,
+        ...(paymentFilter !== "all" ? { status: undefined } : {}),
+      })
+      .catch(() => [] as any[]);
+    const filteredByPayment = paymentFilter === "all"
+      ? data
+      : data.filter((r: any) => r.payment_method === paymentFilter);
 
     const { data: purchaseData } = await supabase
       .from("purchase_orders")
@@ -148,11 +147,8 @@ export default function POSDashboard() {
       .gte("created_at", from)
       .lte("created_at", to);
 
-    const { data: allDueSales } = await supabase
-      .from("pos_sales")
-      .select("due_amount")
-      .eq("payment_type", "due")
-      .gt("due_amount", 0);
+    const allDueSalesData = await posRepo.sales.list({ limit: 1000 }).catch(() => [] as any[]);
+    const allDueSales = allDueSalesData.filter((r: any) => r.payment_type === "due" && (r.due_amount || 0) > 0);
 
     const totalPurchase = purchaseData?.reduce((s, r) => s + (r.total_amount || 0), 0) || 0;
     const purchaseDue = purchaseData?.filter(r => r.status === "pending" || r.status === "ordered")
@@ -161,12 +157,13 @@ export default function POSDashboard() {
     const totalSalesDue = allDueSales?.reduce((s, r) => s + (r.due_amount || 0), 0) || 0;
     const totalSalesDueCount = allDueSales?.length || 0;
 
-    if (data) {
+    {
+      const d = filteredByPayment;
       setTodayStats({
-        totalSales: data.reduce((s, r) => s + (r.total_amount || 0), 0),
-        totalTransactions: data.length,
-        cashSales: data.filter(r => r.payment_method === "cash").reduce((s, r) => s + (r.total_amount || 0), 0),
-        mobileSales: data.filter(r => r.payment_method === "mobile_banking").reduce((s, r) => s + (r.total_amount || 0), 0),
+        totalSales: d.reduce((s: number, r: any) => s + (r.total_amount || 0), 0),
+        totalTransactions: d.length,
+        cashSales: d.filter((r: any) => r.payment_method === "cash").reduce((s: number, r: any) => s + (r.total_amount || 0), 0),
+        mobileSales: d.filter((r: any) => r.payment_method === "mobile_banking").reduce((s: number, r: any) => s + (r.total_amount || 0), 0),
         totalPurchase,
         purchaseDue,
         totalSalesDue,
@@ -177,30 +174,20 @@ export default function POSDashboard() {
 
   const fetchRecentSales = async () => {
     const { from, to } = getDateRange(quickFilter, customFrom, customTo);
-    let q = supabase
-      .from("pos_sales")
-      .select("*")
-      .gte("created_at", from)
-      .lte("created_at", to)
-      .order("created_at", { ascending: false })
-      .limit(10);
-
-    if (paymentFilter !== "all") q = q.eq("payment_method", paymentFilter);
-
-    const { data } = await q;
-    if (data) setRecentSales(data);
+    try {
+      const data = await posRepo.sales.list({ date_from: from, date_to: to, limit: 50 });
+      const filtered = paymentFilter === "all" ? data : data.filter((r: any) => r.payment_method === paymentFilter);
+      setRecentSales(filtered.slice(0, 10));
+    } catch { /* ignore */ }
   };
 
   const fetchRecentShifts = async () => {
     const { from, to } = getDateRange(quickFilter, customFrom, customTo);
-    const { data } = await supabase
-      .from("pos_shifts")
-      .select("*")
-      .gte("opened_at", from)
-      .lte("opened_at", to)
-      .order("opened_at", { ascending: false })
-      .limit(5);
-    if (data) setRecentShifts(data);
+    try {
+      const all = await posRepo.shifts.list();
+      const inRange = all.filter((s: any) => s.opened_at >= from && s.opened_at <= to).slice(0, 5);
+      setRecentShifts(inRange);
+    } catch { /* ignore */ }
   };
 
   const resetFilters = () => {

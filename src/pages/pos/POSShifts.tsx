@@ -6,7 +6,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Clock } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { posRepo } from "@/repositories/pos";
 
 export default function POSShifts() {
   const [shifts, setShifts] = useState<any[]>([]);
@@ -16,12 +16,10 @@ export default function POSShifts() {
   }, []);
 
   const fetchShifts = async () => {
-    const { data } = await supabase
-      .from("pos_shifts")
-      .select("*")
-      .order("opened_at", { ascending: false })
-      .limit(50);
-    if (data) setShifts(data);
+    try {
+      const data = await posRepo.shifts.list();
+      setShifts(data.slice(0, 50));
+    } catch { /* ignore */ }
   };
 
   return (
