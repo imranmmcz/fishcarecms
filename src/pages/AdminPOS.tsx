@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { customersRepo } from "@/repositories/customers";
+import { posRepo } from "@/repositories/pos";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -169,30 +170,23 @@ export default function AdminPOS() {
 
   const fetchActiveShift = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("pos_shifts")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("status", "open")
-      .maybeSingle();
-    if (!error && data) setActiveShift(data as Shift);
+    try {
+      const s = await posRepo.shifts.active(user.id);
+      if (s) setActiveShift(s as unknown as Shift);
+    } catch (e) {
+      console.error("fetchActiveShift", e);
+    }
   };
 
   const openShift = async () => {
     if (!user) return;
-    const { data: numData } = await supabase.rpc("generate_shift_number");
-    const shiftNumber = numData || `SHIFT-${Date.now()}`;
-    const { data, error } = await supabase.from("pos_shifts").insert({
-      user_id: user.id,
-      shift_number: shiftNumber,
-      opening_amount: parseFloat(openingAmount) || 0,
-      status: "open",
-    }).select().single();
-    if (error) {
+    try {
+      const data = await posRepo.shifts.open(user.id, parseFloat(openingAmount) || 0);
+      setActiveShift(data as unknown as Shift);
+    } catch {
       toast.error("শিফট শুরু করতে সমস্যা হয়েছে");
       return;
     }
-    setActiveShift(data as Shift);
     setIsShiftDialogOpen(false);
     setOpeningAmount("");
     toast.success("শিফট শুরু হয়েছে");
@@ -200,15 +194,9 @@ export default function AdminPOS() {
 
   const closeShift = async () => {
     if (!activeShift) return;
-    const expectedAmount = activeShift.opening_amount + activeShift.cash_sales;
-    const { error } = await supabase.from("pos_shifts").update({
-      status: "closed",
-      closing_amount: parseFloat(closingAmount) || 0,
-      expected_amount: expectedAmount,
-      closed_at: new Date().toISOString(),
-      notes: closingNotes || null,
-    }).eq("id", activeShift.id);
-    if (error) {
+    try {
+      await posRepo.shifts.close(activeShift.id, parseFloat(closingAmount) || 0, closingNotes || undefined);
+    } catch {
       toast.error("শিফট বন্ধ করতে সমস্যা হয়েছে");
       return;
     }
@@ -292,62 +280,53 @@ export default function AdminPOS() {
 
     setIsProcessing(true);
     try {
-      const { data: numData } = await supabase.rpc("generate_pos_sale_number");
-      const saleNumber = numData || `POS-${Date.now()}`;
-
       const dueAmount = paymentMethod === "due" ? Math.max(0, totalAmount - paid) : 0;
       const actualPaid = paymentMethod === "due" ? paid : (paymentMethod === "cash" ? paid : totalAmount);
 
-      const { data: sale, error: saleError } = await supabase.from("pos_sales").insert({
-        sale_number: saleNumber,
-        shift_id: activeShift.id,
-        user_id: user.id,
-        customer_name: customerName || null,
-        customer_phone: customerPhone || null,
-        payment_method: paymentMethod === "due" ? "due" : paymentMethod,
-        payment_type: paymentMethod === "due" ? "due" : "full",
-        subtotal,
-        discount_amount: discount,
-        total_amount: totalAmount,
-        paid_amount: actualPaid,
-        due_amount: dueAmount,
-        change_amount: paymentMethod === "cash" ? Math.max(0, changeAmount) : 0,
-        mobile_banking_provider: paymentMethod === "mobile_banking" ? mobileBankingProvider : null,
-        transaction_id: paymentMethod === "mobile_banking" ? transactionId : null,
-        notes: notes || null,
-      }).select().single();
+      const sale = await posRepo.sales.create(
+        {
+          shift_id: activeShift.id,
+          customer_name: customerName || null,
+          customer_phone: customerPhone || null,
+          payment_method: paymentMethod === "due" ? "due" : paymentMethod,
+          payment_type: paymentMethod === "due" ? "due" : "full",
+          discount_amount: discount,
+          paid_amount: actualPaid,
+          change_amount: paymentMethod === "cash" ? Math.max(0, changeAmount) : 0,
+          mobile_banking_provider: paymentMethod === "mobile_banking" ? mobileBankingProvider : null,
+          transaction_id: paymentMethod === "mobile_banking" ? transactionId : null,
+          notes: notes || null,
+          items: cart.map((i) => ({
+            product_id: i.product.id,
+            product_name: i.product.name,
+            quantity: i.quantity,
+            unit_price: i.unit_price,
+            discount_percentage: i.discount,
+          })),
+        },
+        user.id,
+      );
 
-      if (saleError) throw saleError;
-
-      const items = cart.map(i => ({
-        sale_id: sale.id,
-        product_id: i.product.id,
-        product_name: i.product.name,
-        unit_price: i.unit_price,
-        quantity: i.quantity,
-        discount_percentage: i.discount,
-        total_price: i.total,
-      }));
-      const { error: itemsError } = await supabase.from("pos_sale_items").insert(items);
-      if (itemsError) throw itemsError;
-
-      // Update stock
-      for (const item of cart) {
-        await supabase.from("products").update({
-          stock_quantity: item.product.stock_quantity - item.quantity,
-        }).eq("id", item.product.id);
+      // MySQL backend handles stock decrement + shift aggregation server-side.
+      // For Supabase routing keep the existing inline updates.
+      if (posRepo.sales.source() === "supabase") {
+        for (const item of cart) {
+          await supabase.from("products").update({
+            stock_quantity: item.product.stock_quantity - item.quantity,
+          }).eq("id", item.product.id);
+        }
+        const cashAdd = paymentMethod === "cash" ? totalAmount : (paymentMethod === "due" ? paid : 0);
+        const mobileAdd = paymentMethod === "mobile_banking" ? totalAmount : 0;
+        await supabase.from("pos_shifts").update({
+          cash_sales: activeShift.cash_sales + cashAdd,
+          mobile_banking_sales: activeShift.mobile_banking_sales + mobileAdd,
+          total_sales: activeShift.total_sales + totalAmount,
+          total_transactions: activeShift.total_transactions + 1,
+        }).eq("id", activeShift.id);
       }
 
-      // Update shift totals
       const cashAdd = paymentMethod === "cash" ? totalAmount : (paymentMethod === "due" ? paid : 0);
       const mobileAdd = paymentMethod === "mobile_banking" ? totalAmount : 0;
-      await supabase.from("pos_shifts").update({
-        cash_sales: activeShift.cash_sales + cashAdd,
-        mobile_banking_sales: activeShift.mobile_banking_sales + mobileAdd,
-        total_sales: activeShift.total_sales + totalAmount,
-        total_transactions: activeShift.total_transactions + 1,
-      }).eq("id", activeShift.id);
-
       setActiveShift(prev => prev ? {
         ...prev,
         cash_sales: prev.cash_sales + cashAdd,
@@ -356,7 +335,7 @@ export default function AdminPOS() {
         total_transactions: prev.total_transactions + 1,
       } : null);
 
-      setLastSale({ ...sale, items: cart, saleNumber, dueAmount: paymentMethod === "due" ? Math.max(0, totalAmount - paid) : 0 });
+      setLastSale({ ...sale, items: cart, saleNumber: sale.sale_number, dueAmount: paymentMethod === "due" ? Math.max(0, totalAmount - paid) : 0 });
       setShowReceipt(true);
       setCart([]);
       setPaidAmount("");
