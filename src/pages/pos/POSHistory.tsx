@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { History, Search, MoreVertical, Eye, Pencil, Trash2, Printer, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { posRepo } from "@/repositories/pos";
 
 interface SaleItem {
   id: string;
@@ -96,12 +97,10 @@ export default function POSHistory() {
   }, []);
 
   const fetchSales = async () => {
-    const { data } = await supabase
-      .from("pos_sales")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (data) setSales(data);
+    try {
+      const data = await posRepo.sales.list({ limit: 100 });
+      setSales(data);
+    } catch { /* ignore */ }
   };
 
   const fetchPrintConfig = async () => {
@@ -121,12 +120,12 @@ export default function POSHistory() {
 
   const fetchSaleItems = async (saleId: string) => {
     setLoadingItems(true);
-    const { data } = await supabase
-      .from("pos_sale_items")
-      .select("*")
-      .eq("sale_id", saleId)
-      .order("created_at");
-    setSaleItems(data || []);
+    try {
+      const sale = await posRepo.sales.get(saleId);
+      setSaleItems((sale?.items as any[]) || []);
+    } catch {
+      setSaleItems([]);
+    }
     setLoadingItems(false);
   };
 
