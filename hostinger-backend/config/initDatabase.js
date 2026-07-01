@@ -26,6 +26,7 @@ const RUN_ORDER = [
   'reviews_schema.sql',
   'shipment_tracking_schema.sql',
   'pos_schema.sql',
+  'catalog_schema.sql',
   'complete_schema.sql',
 ];
 
