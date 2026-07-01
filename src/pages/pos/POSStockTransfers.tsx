@@ -9,9 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeftRight, Plus, Search } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { productsRepo } from "@/repositories/products";
+import { stockAdjustmentsRepo } from "@/repositories/stockAdjustments";
 
 export default function POSStockTransfers() {
   const queryClient = useQueryClient();
@@ -25,21 +26,19 @@ export default function POSStockTransfers() {
   const { data: products = [] } = useQuery({
     queryKey: ["products-for-transfer"],
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, name, stock_quantity, sku").order("name");
-      return data || [];
+      const rows = await productsRepo.list();
+      return rows.map((p) => ({
+        id: p.id,
+        name: p.name,
+        stock_quantity: p.stock_quantity,
+        sku: p.sku,
+      }));
     },
   });
 
   const { data: adjustments = [], isLoading } = useQuery({
     queryKey: ["stock-adjustments"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("stock_adjustments")
-        .select("*, products(name, sku)")
-        .order("created_at", { ascending: false })
-        .limit(100);
-      return data || [];
-    },
+    queryFn: () => stockAdjustmentsRepo.list({ includeProduct: true, limit: 100 }),
   });
 
   const transferMutation = useMutation({
@@ -48,25 +47,12 @@ export default function POSStockTransfers() {
       if (!product) throw new Error("পণ্য পাওয়া যায়নি");
       const qty = parseInt(quantity);
       if (!qty || qty <= 0) throw new Error("সঠিক পরিমাণ দিন");
-
-      const newQty = transferType === "in" ? product.stock_quantity + qty : product.stock_quantity - qty;
-      if (newQty < 0) throw new Error("স্টকে পর্যাপ্ত পণ্য নেই");
-
-      const { error: adjError } = await supabase.from("stock_adjustments").insert({
+      await stockAdjustmentsRepo.create({
         product_id: selectedProduct,
         adjustment_type: transferType === "in" ? "stock_in" : "stock_out",
         quantity_change: transferType === "in" ? qty : -qty,
-        previous_quantity: product.stock_quantity,
-        new_quantity: newQty,
         notes: notes || `স্টক ${transferType === "in" ? "ইন" : "আউট"}`,
       });
-      if (adjError) throw adjError;
-
-      const { error: prodError } = await supabase
-        .from("products")
-        .update({ stock_quantity: newQty })
-        .eq("id", selectedProduct);
-      if (prodError) throw prodError;
     },
     onSuccess: () => {
       toast.success("স্টক ট্রান্সফার সফল হয়েছে");

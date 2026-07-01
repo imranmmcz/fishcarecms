@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { stockAdjustmentsRepo } from "@/repositories/stockAdjustments";
 import {
   Table,
   TableBody,
@@ -56,17 +56,8 @@ export function StockHistory() {
   const fetchAdjustments = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("stock_adjustments")
-        .select(`
-          *,
-          product:products(name, sku)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      setAdjustments(data || []);
+      const rows = await stockAdjustmentsRepo.list({ includeProduct: true, limit: 100 });
+      setAdjustments(rows as unknown as StockAdjustment[]);
     } catch (error) {
       console.error("Error fetching stock adjustments:", error);
     } finally {
