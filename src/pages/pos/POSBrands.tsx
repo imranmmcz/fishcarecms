@@ -10,9 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Award, Plus, Pencil, Trash2, Search } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { brandsRepo } from "@/repositories/brands";
 
 export default function POSBrands() {
   const queryClient = useQueryClient();
@@ -25,10 +25,7 @@ export default function POSBrands() {
 
   const { data: brands = [], isLoading } = useQuery({
     queryKey: ["pos-brands"],
-    queryFn: async () => {
-      const { data } = await supabase.from("brands").select("*").order("name");
-      return data || [];
-    },
+    queryFn: () => brandsRepo.list(),
   });
 
   const saveMutation = useMutation({
@@ -36,11 +33,9 @@ export default function POSBrands() {
       if (!name.trim()) throw new Error("ব্র্যান্ডের নাম দিন");
       const payload = { name: name.trim(), name_bn: nameBn.trim() || null, is_active: isActive };
       if (editing) {
-        const { error } = await supabase.from("brands").update(payload).eq("id", editing.id);
-        if (error) throw error;
+        await brandsRepo.update(editing.id, payload);
       } else {
-        const { error } = await supabase.from("brands").insert(payload);
-        if (error) throw error;
+        await brandsRepo.create(payload);
       }
     },
     onSuccess: () => {
@@ -52,10 +47,7 @@ export default function POSBrands() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("brands").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => brandsRepo.remove(id),
     onSuccess: () => {
       toast.success("ব্র্যান্ড মুছে ফেলা হয়েছে");
       queryClient.invalidateQueries({ queryKey: ["pos-brands"] });
