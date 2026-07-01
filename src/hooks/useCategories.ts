@@ -1,20 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { categoriesRepo, Category as RepoCategory } from '@/repositories/categories';
 
-export interface Category {
-  id: string;
-  name: string;
-  name_bn: string;
-  slug: string;
-  description: string | null;
-  icon: string | null;
-  is_active: boolean;
-  display_order: number;
-  parent_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export type Category = RepoCategory;
 
 export interface CategoryFormData {
   name: string;
@@ -35,13 +23,8 @@ export function useCategories() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('display_order', { ascending: true });
-
-      if (error) throw error;
-      setCategories(data || []);
+      const data = await categoriesRepo.list();
+      setCategories(data);
     } catch (error: any) {
       console.error('Error fetching categories:', error);
       toast({
@@ -56,17 +39,8 @@ export function useCategories() {
 
   const createCategory = async (categoryData: CategoryFormData) => {
     try {
-      // Generate slug from name if not provided
       const slug = categoryData.slug || categoryData.name.toLowerCase().replace(/\s+/g, '-');
-      
-      const { data, error } = await supabase
-        .from('categories')
-        .insert([{ ...categoryData, slug }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      const data = await categoriesRepo.create({ ...categoryData, slug });
       setCategories(prev => [...prev, data]);
       toast({
         title: 'সফল',
@@ -86,15 +60,7 @@ export function useCategories() {
 
   const updateCategory = async (id: string, categoryData: Partial<CategoryFormData>) => {
     try {
-      const { data, error } = await supabase
-        .from('categories')
-        .update(categoryData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      const data = await categoriesRepo.update(id, categoryData);
       setCategories(prev => prev.map(cat => cat.id === id ? data : cat));
       toast({
         title: 'সফল',
@@ -114,13 +80,7 @@ export function useCategories() {
 
   const deleteCategory = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
+      await categoriesRepo.remove(id);
       setCategories(prev => prev.filter(cat => cat.id !== id));
       toast({
         title: 'সফল',

@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Layers, Plus, Pencil, Trash2, Package, Search } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useState } from "react";
+import { productsRepo } from "@/repositories/products";
+import { productVariationsRepo } from "@/repositories/productVariations";
 
 const UNIT_OPTIONS = [
   { value: "kg", label: "কেজি (kg)" },
@@ -114,25 +115,16 @@ export default function POSVariations() {
   const { data: products = [] } = useQuery({
     queryKey: ["products-for-variations"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("id, name, category")
-        .order("name");
-      return data || [];
+      const rows = await productsRepo.list();
+      return rows
+        .map((p) => ({ id: p.id, name: p.name, category: p.category }))
+        .sort((a, b) => a.name.localeCompare(b.name));
     },
   });
 
   const { data: variations = [], isLoading } = useQuery({
     queryKey: ["product-variations"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("product_variations")
-        .select("id, product_id, variation_name, sku, price, stock_quantity, unit, weight_value, is_active, created_at, updated_at")
-        .order("created_at", { ascending: false });
-      const { data: costs } = await supabase.rpc("get_product_variations_cost_map");
-      const costMap = new Map<string, number>((costs || []).map((c: { id: string; cost_price: number | null }) => [c.id, Number(c.cost_price) || 0]));
-      return ((data || []).map((v: any) => ({ ...v, cost_price: costMap.get(v.id) ?? 0 }))) as Variation[];
-    },
+    queryFn: () => productVariationsRepo.list() as Promise<Variation[]>,
   });
 
   const saveMutation = useMutation({
@@ -148,18 +140,10 @@ export default function POSVariations() {
         sku: formData.sku || null,
         is_active: formData.is_active,
       };
-
       if (formData.id) {
-        const { error } = await supabase
-          .from("product_variations")
-          .update({ ...payload, updated_at: new Date().toISOString() })
-          .eq("id", formData.id);
-        if (error) throw error;
+        await productVariationsRepo.update(formData.id, payload);
       } else {
-        const { error } = await supabase
-          .from("product_variations")
-          .insert(payload);
-        if (error) throw error;
+        await productVariationsRepo.create(payload);
       }
     },
     onSuccess: () => {
@@ -171,10 +155,7 @@ export default function POSVariations() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("product_variations").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => productVariationsRepo.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-variations"] });
       toast.success("ভ্যারিয়েশন মুছে ফেলা হয়েছে");
