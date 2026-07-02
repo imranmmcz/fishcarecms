@@ -33,6 +33,8 @@ const labelFor = (m: RoutableModule, bn: boolean) => {
     pos_shifts: ["POS শিফট", "POS Shifts"],
     pos_expenses: ["POS খরচ", "POS Expenses"],
     stock_adjustments: ["স্টক সমন্বয়", "Stock Adjustments"],
+    purchase_orders: ["ক্রয় অর্ডার", "Purchase Orders"],
+    purchase_order_items: ["ক্রয় আইটেম", "Purchase Order Items"],
   };
   return map[m][bn ? 0 : 1];
 };
