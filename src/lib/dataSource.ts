@@ -23,6 +23,8 @@ export const ROUTABLE_MODULES = [
   "pos_shifts",
   "pos_expenses",
   "stock_adjustments",
+  "purchase_orders",
+  "purchase_order_items",
 ] as const;
 
 export type RoutableModule = (typeof ROUTABLE_MODULES)[number];
@@ -41,6 +43,8 @@ export const MYSQL_READY_MODULES: ReadonlySet<RoutableModule> = new Set([
   "pos_shifts",
   "pos_expenses",
   "stock_adjustments",
+  "purchase_orders",
+  "purchase_order_items",
 ]);
 
 const LS_KEY = "data_source_routing";

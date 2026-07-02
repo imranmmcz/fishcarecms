@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ShoppingBag, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { purchasesRepo } from "@/repositories/purchases";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -74,30 +75,22 @@ export default function POSNewPurchase() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (items.length === 0) throw new Error("কমপক্ষে একটি পণ্য যোগ করুন");
-
-      const { data: numData } = await supabase.rpc("generate_purchase_order_number");
-      const orderNumber = numData || `PO-${Date.now()}`;
-
-      const { data: order, error: orderErr } = await supabase.from("purchase_orders").insert({
-        order_number: orderNumber,
-        company_id: companyId || null,
-        subtotal,
-        total_amount: totalAmount,
-        notes: notes || null,
-        created_by: user?.id,
-        status: "pending",
-      }).select().single();
-      if (orderErr) throw orderErr;
-
-      const orderItems = items.map(i => ({
-        purchase_order_id: order.id,
-        product_id: i.product_id,
-        quantity: i.quantity,
-        unit_cost: i.unit_cost,
-        total_cost: i.total_cost,
-      }));
-      const { error: itemsErr } = await supabase.from("purchase_order_items").insert(orderItems);
-      if (itemsErr) throw itemsErr;
+      await purchasesRepo.create({
+        order: {
+          company_id: companyId || null,
+          subtotal,
+          total_amount: totalAmount,
+          notes: notes || null,
+          created_by: user?.id,
+          status: "pending",
+        },
+        items: items.map(i => ({
+          product_id: i.product_id,
+          quantity: i.quantity,
+          unit_cost: i.unit_cost,
+          total_cost: i.total_cost,
+        })),
+      });
     },
     onSuccess: () => {
       toast.success("ক্রয় অর্ডার সফলভাবে তৈরি হয়েছে");

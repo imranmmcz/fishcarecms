@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ListOrdered, Search, Eye } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { purchasesRepo } from "@/repositories/purchases";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
@@ -14,14 +14,8 @@ export default function POSPurchaseList() {
   const [search, setSearch] = useState("");
 
   const { data: purchases = [], isLoading } = useQuery({
-    queryKey: ["pos-purchases"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("purchase_orders")
-        .select("*, companies(name), purchase_order_items(quantity, total_cost)")
-        .order("created_at", { ascending: false });
-      return data || [];
-    },
+    queryKey: ["pos-purchases", purchasesRepo.source()],
+    queryFn: () => purchasesRepo.list({ includeItems: true, limit: 500 }),
   });
 
   const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
