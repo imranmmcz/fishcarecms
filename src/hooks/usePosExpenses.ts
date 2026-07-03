@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { posRepo, PosExpenseCategory as RepoCategory, PosExpense as RepoExpense } from '@/repositories/pos';
+import { useModulePolling } from '@/hooks/useModulePolling';
 
 export type ExpenseCategory = RepoCategory;
 export type PosExpense = RepoExpense;
@@ -93,6 +94,9 @@ export function usePosExpenses() {
     fetchCategories();
     fetchExpenses();
   }, []);
+
+  // MySQL routing → polling replaces realtime.
+  useModulePolling('pos_expenses', fetchExpenses, 20000);
 
   return { categories, expenses, loading, fetchCategories, fetchExpenses, createCategory, updateCategory, deleteCategory, createExpense, deleteExpense };
 }

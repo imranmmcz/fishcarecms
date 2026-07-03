@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { FileText, ShoppingBag, TrendingUp, Clock, Filter, Calendar } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { purchasesRepo } from "@/repositories/purchases";
 
 const getDateRange = (period: string) => {
   const now = new Date();
@@ -47,8 +47,13 @@ export default function POSPurchaseReport() {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["pos-purchase-report"],
     queryFn: async () => {
-      const { data } = await supabase.from("purchase_orders").select("total_amount, status, created_at, order_date");
-      return data || [];
+      const rows = await purchasesRepo.list({ limit: 1000 });
+      return rows.map((r) => ({
+        total_amount: r.total_amount,
+        status: r.status,
+        created_at: r.created_at,
+        order_date: r.order_date,
+      }));
     },
   });
 

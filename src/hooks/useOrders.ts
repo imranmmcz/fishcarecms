@@ -13,6 +13,7 @@ import {
   type OrderStats,
   type CreateOrderInput,
 } from "@/repositories/orders";
+import { useModulePolling } from "@/hooks/useModulePolling";
 
 export type { Order, OrderItem, OrderStats } from "@/repositories/orders";
 export type CreateOrderData = CreateOrderInput;
@@ -85,6 +86,9 @@ export function useOrders() {
   };
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  // Polling fallback when orders are routed to MySQL (no Supabase realtime).
+  useModulePolling("orders", fetchOrders, 15000);
 
   return { orders, isLoading, error, fetchOrders, getOrder, createOrder, updateOrderStatus, cancelOrder, getOrderStats, refetch: fetchOrders };
 }

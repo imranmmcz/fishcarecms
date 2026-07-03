@@ -35,6 +35,9 @@ export type RoutingMap = Record<RoutableModule, DataSource>;
  *  Others appear in the admin UI but the toggle warns the user. */
 export const MYSQL_READY_MODULES: ReadonlySet<RoutableModule> = new Set([
   "products",
+  "product_variations",
+  "categories",
+  "brands",
   "orders",
   "order_items",
   "customers",

@@ -6,6 +6,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { toast } from "sonner";
 import { productsRepo, type Product } from "@/repositories/products";
+import { useModulePolling } from "@/hooks/useModulePolling";
 
 // Re-export so existing imports (`from "@/contexts/ProductsContext"`) keep working.
 export type { Product } from "@/repositories/products";
@@ -42,6 +43,9 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  // MySQL routing → no Supabase realtime; poll for stock/price updates.
+  useModulePolling("products", fetchProducts, 20000);
 
   const addProduct = async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<boolean> => {
     try {
