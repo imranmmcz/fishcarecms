@@ -18,6 +18,8 @@ import {
 import { pingBackend } from "@/lib/apiClient";
 import MySQLBackendSettings from "@/components/admin/MySQLBackendSettings";
 import { Database, Loader2, RefreshCw, Save, ShieldAlert } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRightLeft, Activity } from "lucide-react";
 
 const labelFor = (m: RoutableModule, bn: boolean) => {
   const map: Record<RoutableModule, [string, string]> = {
@@ -141,6 +143,12 @@ export default function AdminDatabaseConfig() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/data-migration"><ArrowRightLeft className="h-4 w-4 mr-2" />{bn ? "মাইগ্রেশন" : "Migration"}</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/system-health"><Activity className="h-4 w-4 mr-2" />{bn ? "হেলথ" : "Health"}</Link>
+          </Button>
           <Badge variant={backendUp ? "default" : backendUp === false ? "destructive" : "secondary"}>
             {backendUp === null
               ? bn ? "অজানা" : "Unknown"
