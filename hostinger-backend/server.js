@@ -25,6 +25,10 @@ const posRoutes = require('./routes/pos');
 const catalogRoutes = require('./routes/catalog');
 const stockRoutes = require('./routes/stock');
 const purchaseRoutes = require('./routes/purchases');
+const healthRoutes = require('./routes/health');
+const migrationRoutes = require('./routes/migration');
+const { metricsMiddleware } = require('./middleware/metrics');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,7 +50,11 @@ const uploadsDir = path.join(__dirname, 'uploads');
 
 // Security middleware
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  frameguard: { action: 'deny' },
+  noSniff: true,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }));
 
 // Global rate limiting
@@ -103,6 +111,9 @@ app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Request metrics + X-Request-Id (must come after body parser, before routes)
+app.use(metricsMiddleware);
+
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -124,6 +135,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/farming', farmingRoutes);
 app.use('/api', extrasRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/health', healthRoutes);
+app.use('/api/migration', migrationRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -135,18 +148,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  // Handle CORS errors specifically
-  if (err.message && err.message.includes('CORS')) {
-    return res.status(403).json({ error: 'Access denied: CORS policy violation' });
-  }
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
-});
+// Structured error middleware (must be after routes)
+app.use(errorHandler);
 
 // 404 handler
 app.use((req, res) => {
