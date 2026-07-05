@@ -185,6 +185,7 @@ const App = () => (
                       <Route path="/_showcase/button-3d" element={<Button3DShowcase />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/register" element={<Register />} />
+                      <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                       <Route path="/forgot-password" element={<ForgotPassword />} />
                       <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/modules" element={<Modules />} />
