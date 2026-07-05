@@ -171,12 +171,14 @@ import { z as z3 } from "npm:zod@^3.25.76";
 var list_fish_species_default = defineTool3({
   name: "list_fish_species",
   title: "List fish species",
-  description: "List the fish species supported by FishCare calculators and content.",
+  description: "List the fish species supported by FishCare calculators and content. Requires a signed-in FishCare user.",
   inputSchema: {
     search: z3.string().optional().describe("Optional keyword filter (matches Bangla or English name).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: ({ search }) => {
+  handler: ({ search }, ctx) => {
+    const denied = requireAuth(ctx);
+    if (denied) return denied;
     const list = search ? FISH_SPECIES_OPTIONS.filter((s) => {
       const q = search.toLowerCase();
       return JSON.stringify(s).toLowerCase().includes(q);

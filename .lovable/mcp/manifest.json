@@ -80,7 +80,7 @@
       {
         "name": "list_fish_species",
         "title": "List fish species",
-        "description": "List the fish species supported by FishCare calculators and content.",
+        "description": "List the fish species supported by FishCare calculators and content. Requires a signed-in FishCare user.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
