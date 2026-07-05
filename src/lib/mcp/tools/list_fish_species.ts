@@ -1,5 +1,5 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { FISH_SPECIES_OPTIONS } from "@/data/FISH_SPECIES_OPTIONS";
+import { FISH_SPECIES_OPTIONS } from "@/data/fishSpeciesOptions";
 import { z } from "zod";
 
 export default defineTool({
