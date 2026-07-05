@@ -59,6 +59,7 @@ import DashboardOrders from "./pages/DashboardOrders";
 import DashboardBlog from "./pages/DashboardBlog";
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
+import OAuthConsent from "./pages/OAuthConsent";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
