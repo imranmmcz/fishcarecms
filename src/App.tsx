@@ -59,6 +59,7 @@ import DashboardOrders from "./pages/DashboardOrders";
 import DashboardBlog from "./pages/DashboardBlog";
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
+import OAuthConsent from "./pages/OAuthConsent";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -184,6 +185,7 @@ const App = () => (
                       <Route path="/_showcase/button-3d" element={<Button3DShowcase />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/register" element={<Register />} />
+                      <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                       <Route path="/forgot-password" element={<ForgotPassword />} />
                       <Route path="/reset-password" element={<ResetPassword />} />
                       <Route path="/modules" element={<Modules />} />

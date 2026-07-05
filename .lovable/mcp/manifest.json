@@ -3,19 +3,23 @@
   "sdk_version": "0.20.0",
   "path": "/functions/v1/mcp",
   "auth": {
-    "type": "none"
+    "type": "oauth",
+    "issuer": "https://cozwxamdldjkeeffjvvf.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
   },
   "mcp": {
     "server": {
       "name": "fishcare-mcp",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "title": "FishCare MCP"
     },
     "tools": [
       {
         "name": "list_products",
         "title": "List products",
-        "description": "List products from the FishCare shop catalog with optional search.",
+        "description": "List products from the FishCare shop catalog with optional search. Admin-only (returns internal cost_price).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -44,7 +48,7 @@
       {
         "name": "list_market_prices",
         "title": "List market prices",
-        "description": "List recent fish market prices submitted by users across Bangladesh.",
+        "description": "List recent fish market prices submitted by users across Bangladesh. Requires a signed-in FishCare user.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -76,7 +80,7 @@
       {
         "name": "list_fish_species",
         "title": "List fish species",
-        "description": "List the fish species supported by FishCare calculators and content.",
+        "description": "List the fish species supported by FishCare calculators and content. Requires a signed-in FishCare user.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,

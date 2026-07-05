@@ -3,27 +3,79 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/list_products.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { createClient } from "npm:@supabase/supabase-js@^2.86.0";
 import { z } from "npm:zod@^3.25.76";
+
+// src/lib/mcp/authz.ts
+import { createClient } from "npm:@supabase/supabase-js@^2.86.0";
+function supabaseForUser(ctx) {
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_PUBLISHABLE_KEY,
+    {
+      global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
+      auth: { persistSession: false, autoRefreshToken: false }
+    }
+  );
+}
+async function requireRole(ctx, role) {
+  if (!ctx.isAuthenticated()) {
+    return {
+      content: [{ type: "text", text: "Not authenticated. Sign in with your FishCare account." }],
+      isError: true
+    };
+  }
+  const supabase = supabaseForUser(ctx);
+  const { data, error } = await supabase.rpc("has_role", {
+    _user_id: ctx.getUserId(),
+    _role: role
+  });
+  if (error) {
+    return {
+      content: [{ type: "text", text: `Role check failed: ${error.message}` }],
+      isError: true
+    };
+  }
+  if (!data) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Forbidden. This tool requires the '${role}' role on your FishCare account.`
+        }
+      ],
+      isError: true
+    };
+  }
+  return null;
+}
+function requireAuth(ctx) {
+  if (!ctx.isAuthenticated()) {
+    return {
+      content: [{ type: "text", text: "Not authenticated. Sign in with your FishCare account." }],
+      isError: true
+    };
+  }
+  return null;
+}
+
+// src/lib/mcp/tools/list_products.ts
 var list_products_default = defineTool({
   name: "list_products",
   title: "List products",
-  description: "List products from the FishCare shop catalog with optional search.",
+  description: "List products from the FishCare shop catalog with optional search. Admin-only (returns internal cost_price).",
   inputSchema: {
     search: z.string().optional().describe("Optional keyword to filter by name."),
     limit: z.number().int().min(1).max(50).default(20).describe("Max rows to return.")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ search, limit }) => {
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_PUBLISHABLE_KEY,
-      { auth: { persistSession: false, autoRefreshToken: false } }
-    );
+  handler: async ({ search, limit }, ctx) => {
+    const denied = await requireRole(ctx, "admin");
+    if (denied) return denied;
+    const supabase = supabaseForUser(ctx);
     let q = supabase.from("products").select("id,name,price,cost_price,stock_quantity,category_id,image_url").limit(limit);
     if (search) q = q.ilike("name", `%${search}%`);
     const { data, error } = await q;
@@ -39,24 +91,21 @@ var list_products_default = defineTool({
 
 // src/lib/mcp/tools/list_market_prices.ts
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.86.0";
 import { z as z2 } from "npm:zod@^3.25.76";
 var list_market_prices_default = defineTool2({
   name: "list_market_prices",
   title: "List market prices",
-  description: "List recent fish market prices submitted by users across Bangladesh.",
+  description: "List recent fish market prices submitted by users across Bangladesh. Requires a signed-in FishCare user.",
   inputSchema: {
     fish_name: z2.string().optional().describe("Optional fish name filter."),
     location: z2.string().optional().describe("Optional location filter (district/market)."),
     limit: z2.number().int().min(1).max(50).default(20)
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ fish_name, location, limit }) => {
-    const supabase = createClient2(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_PUBLISHABLE_KEY,
-      { auth: { persistSession: false, autoRefreshToken: false } }
-    );
+  handler: async ({ fish_name, location, limit }, ctx) => {
+    const denied = requireAuth(ctx);
+    if (denied) return denied;
+    const supabase = supabaseForUser(ctx);
     let q = supabase.from("market_prices").select("*").order("created_at", { ascending: false }).limit(limit);
     if (fish_name) q = q.ilike("fish_name", `%${fish_name}%`);
     if (location) q = q.ilike("location", `%${location}%`);
@@ -122,12 +171,14 @@ import { z as z3 } from "npm:zod@^3.25.76";
 var list_fish_species_default = defineTool3({
   name: "list_fish_species",
   title: "List fish species",
-  description: "List the fish species supported by FishCare calculators and content.",
+  description: "List the fish species supported by FishCare calculators and content. Requires a signed-in FishCare user.",
   inputSchema: {
     search: z3.string().optional().describe("Optional keyword filter (matches Bangla or English name).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: ({ search }) => {
+  handler: ({ search }, ctx) => {
+    const denied = requireAuth(ctx);
+    if (denied) return denied;
     const list = search ? FISH_SPECIES_OPTIONS.filter((s) => {
       const q = search.toLowerCase();
       return JSON.stringify(s).toLowerCase().includes(q);
@@ -140,11 +191,16 @@ var list_fish_species_default = defineTool3({
 });
 
 // src/lib/mcp/index.ts
+var projectRef = "cozwxamdldjkeeffjvvf";
 var mcp_default = defineMcp({
   name: "fishcare-mcp",
   title: "FishCare MCP",
-  version: "0.1.0",
-  instructions: "Tools for the FishCare app: browse the shop product catalog, look up recent fish market prices across Bangladesh, and list supported fish species.",
+  version: "0.2.0",
+  instructions: "Tools for the FishCare app: browse the shop product catalog, look up recent fish market prices across Bangladesh, and list supported fish species. Users must sign in with their FishCare account; `list_products` requires admin role.",
+  auth: auth.oauth.issuer({
+    issuer: `https://${projectRef}.supabase.co/auth/v1`,
+    acceptedAudiences: "authenticated"
+  }),
   tools: [list_products_default, list_market_prices_default, list_fish_species_default]
 });
 
