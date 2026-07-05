@@ -52,6 +52,15 @@ async function requireRole(ctx, role) {
   }
   return null;
 }
+function requireAuth(ctx) {
+  if (!ctx.isAuthenticated()) {
+    return {
+      content: [{ type: "text", text: "Not authenticated. Sign in with your FishCare account." }],
+      isError: true
+    };
+  }
+  return null;
+}
 
 // src/lib/mcp/tools/list_products.ts
 var list_products_default = defineTool({
@@ -82,24 +91,21 @@ var list_products_default = defineTool({
 
 // src/lib/mcp/tools/list_market_prices.ts
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.86.0";
 import { z as z2 } from "npm:zod@^3.25.76";
 var list_market_prices_default = defineTool2({
   name: "list_market_prices",
   title: "List market prices",
-  description: "List recent fish market prices submitted by users across Bangladesh.",
+  description: "List recent fish market prices submitted by users across Bangladesh. Requires a signed-in FishCare user.",
   inputSchema: {
     fish_name: z2.string().optional().describe("Optional fish name filter."),
     location: z2.string().optional().describe("Optional location filter (district/market)."),
     limit: z2.number().int().min(1).max(50).default(20)
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ fish_name, location, limit }) => {
-    const supabase = createClient2(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_PUBLISHABLE_KEY,
-      { auth: { persistSession: false, autoRefreshToken: false } }
-    );
+  handler: async ({ fish_name, location, limit }, ctx) => {
+    const denied = requireAuth(ctx);
+    if (denied) return denied;
+    const supabase = supabaseForUser(ctx);
     let q = supabase.from("market_prices").select("*").order("created_at", { ascending: false }).limit(limit);
     if (fish_name) q = q.ilike("fish_name", `%${fish_name}%`);
     if (location) q = q.ilike("location", `%${location}%`);

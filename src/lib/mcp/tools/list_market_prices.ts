@@ -1,23 +1,22 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { requireAuth, supabaseForUser } from "../authz";
 
 export default defineTool({
   name: "list_market_prices",
   title: "List market prices",
-  description: "List recent fish market prices submitted by users across Bangladesh.",
+  description:
+    "List recent fish market prices submitted by users across Bangladesh. Requires a signed-in FishCare user.",
   inputSchema: {
     fish_name: z.string().optional().describe("Optional fish name filter."),
     location: z.string().optional().describe("Optional location filter (district/market)."),
     limit: z.number().int().min(1).max(50).default(20),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ fish_name, location, limit }) => {
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    );
+  handler: async ({ fish_name, location, limit }, ctx) => {
+    const denied = requireAuth(ctx);
+    if (denied) return denied;
+    const supabase = supabaseForUser(ctx);
     let q = supabase
       .from("market_prices")
       .select("*")

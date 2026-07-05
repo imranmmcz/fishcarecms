@@ -48,7 +48,7 @@
       {
         "name": "list_market_prices",
         "title": "List market prices",
-        "description": "List recent fish market prices submitted by users across Bangladesh.",
+        "description": "List recent fish market prices submitted by users across Bangladesh. Requires a signed-in FishCare user.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
