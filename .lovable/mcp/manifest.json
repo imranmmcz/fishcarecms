@@ -19,7 +19,7 @@
       {
         "name": "list_products",
         "title": "List products",
-        "description": "List products from the FishCare shop catalog with optional search.",
+        "description": "List products from the FishCare shop catalog with optional search. Admin-only (returns internal cost_price).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,

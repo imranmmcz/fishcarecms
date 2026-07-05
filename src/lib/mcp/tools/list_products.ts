@@ -1,22 +1,21 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { requireRole, supabaseForUser } from "../authz";
 
 export default defineTool({
   name: "list_products",
   title: "List products",
-  description: "List products from the FishCare shop catalog with optional search.",
+  description:
+    "List products from the FishCare shop catalog with optional search. Admin-only (returns internal cost_price).",
   inputSchema: {
     search: z.string().optional().describe("Optional keyword to filter by name."),
     limit: z.number().int().min(1).max(50).default(20).describe("Max rows to return."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ search, limit }) => {
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    );
+  handler: async ({ search, limit }, ctx) => {
+    const denied = await requireRole(ctx, "admin");
+    if (denied) return denied;
+    const supabase = supabaseForUser(ctx);
     let q = supabase
       .from("products")
       .select("id,name,price,cost_price,stock_quantity,category_id,image_url")

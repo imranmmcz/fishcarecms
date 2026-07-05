@@ -7,23 +7,66 @@ import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/list_products.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { createClient } from "npm:@supabase/supabase-js@^2.86.0";
 import { z } from "npm:zod@^3.25.76";
+
+// src/lib/mcp/authz.ts
+import { createClient } from "npm:@supabase/supabase-js@^2.86.0";
+function supabaseForUser(ctx) {
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_PUBLISHABLE_KEY,
+    {
+      global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
+      auth: { persistSession: false, autoRefreshToken: false }
+    }
+  );
+}
+async function requireRole(ctx, role) {
+  if (!ctx.isAuthenticated()) {
+    return {
+      content: [{ type: "text", text: "Not authenticated. Sign in with your FishCare account." }],
+      isError: true
+    };
+  }
+  const supabase = supabaseForUser(ctx);
+  const { data, error } = await supabase.rpc("has_role", {
+    _user_id: ctx.getUserId(),
+    _role: role
+  });
+  if (error) {
+    return {
+      content: [{ type: "text", text: `Role check failed: ${error.message}` }],
+      isError: true
+    };
+  }
+  if (!data) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Forbidden. This tool requires the '${role}' role on your FishCare account.`
+        }
+      ],
+      isError: true
+    };
+  }
+  return null;
+}
+
+// src/lib/mcp/tools/list_products.ts
 var list_products_default = defineTool({
   name: "list_products",
   title: "List products",
-  description: "List products from the FishCare shop catalog with optional search.",
+  description: "List products from the FishCare shop catalog with optional search. Admin-only (returns internal cost_price).",
   inputSchema: {
     search: z.string().optional().describe("Optional keyword to filter by name."),
     limit: z.number().int().min(1).max(50).default(20).describe("Max rows to return.")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ search, limit }) => {
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_PUBLISHABLE_KEY,
-      { auth: { persistSession: false, autoRefreshToken: false } }
-    );
+  handler: async ({ search, limit }, ctx) => {
+    const denied = await requireRole(ctx, "admin");
+    if (denied) return denied;
+    const supabase = supabaseForUser(ctx);
     let q = supabase.from("products").select("id,name,price,cost_price,stock_quantity,category_id,image_url").limit(limit);
     if (search) q = q.ilike("name", `%${search}%`);
     const { data, error } = await q;
