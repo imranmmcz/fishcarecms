@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,10 @@ const loginSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
+  // Only same-origin relative paths are safe to redirect to.
+  const safeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
   const { signIn, user, isAdmin, userRole, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const { loginContent, siteLogoUrl, siteName } = useAuthPageContent();
@@ -31,13 +35,15 @@ const Auth = () => {
 
   useEffect(() => {
     if (user && userRole) {
-      if (isAdmin) {
+      if (safeNext) {
+        window.location.href = safeNext;
+      } else if (isAdmin) {
         navigate("/admin");
       } else {
         navigate("/dashboard");
       }
     }
-  }, [user, userRole, isAdmin, navigate]);
+  }, [user, userRole, isAdmin, navigate, safeNext]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
