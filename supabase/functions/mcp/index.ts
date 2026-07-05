@@ -73,7 +73,51 @@ var list_market_prices_default = defineTool2({
 
 // src/lib/mcp/tools/list_fish_species.ts
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { FISH_SPECIES_OPTIONS } from "npm:@/data/fishSpeciesOptions";
+
+// src/data/fishSpeciesOptions.ts
+var FISH_SPECIES_OPTIONS = [
+  // কার্প জাতীয়
+  { value: "\u09B0\u09C1\u0987", label: "\u09B0\u09C1\u0987 (Rohu)", key: "rohu" },
+  { value: "\u0995\u09BE\u09A4\u09B2\u09BE", label: "\u0995\u09BE\u09A4\u09B2\u09BE (Catla)", key: "katla" },
+  { value: "\u09AE\u09C3\u0997\u09C7\u09B2", label: "\u09AE\u09C3\u0997\u09C7\u09B2 (Mrigal)", key: "mrigal" },
+  { value: "\u09B8\u09BF\u09B2\u09AD\u09BE\u09B0 \u0995\u09BE\u09B0\u09CD\u09AA", label: "\u09B8\u09BF\u09B2\u09AD\u09BE\u09B0 \u0995\u09BE\u09B0\u09CD\u09AA (Silver Carp)", key: "silver_carp" },
+  { value: "\u0997\u09CD\u09B0\u09BE\u09B8 \u0995\u09BE\u09B0\u09CD\u09AA", label: "\u0997\u09CD\u09B0\u09BE\u09B8 \u0995\u09BE\u09B0\u09CD\u09AA (Grass Carp)", key: "grass_carp" },
+  { value: "\u0995\u09AE\u09A8 \u0995\u09BE\u09B0\u09CD\u09AA", label: "\u0995\u09AE\u09A8 \u0995\u09BE\u09B0\u09CD\u09AA (Common Carp)", key: "common_carp" },
+  { value: "\u09AE\u09BF\u09B0\u09B0 \u0995\u09BE\u09B0\u09CD\u09AA", label: "\u09AE\u09BF\u09B0\u09B0 \u0995\u09BE\u09B0\u09CD\u09AA (Mirror Carp)", key: "mirror_carp" },
+  { value: "\u0995\u09BE\u09B2\u09AC\u09BE\u0989\u09B8", label: "\u0995\u09BE\u09B2\u09AC\u09BE\u0989\u09B8 (Kalbaus)", key: "kalbaus" },
+  // ক্যাটফিশ
+  { value: "\u09AA\u09BE\u0999\u09CD\u0997\u09BE\u09B8", label: "\u09AA\u09BE\u0999\u09CD\u0997\u09BE\u09B8 (Pangasius)", key: "pangas" },
+  { value: "\u09A5\u09BE\u0987 \u09AA\u09BE\u0999\u09CD\u0997\u09BE\u09B6", label: "\u09A5\u09BE\u0987 \u09AA\u09BE\u0999\u09CD\u0997\u09BE\u09B6 (Thai Pangas)", key: "thai_pangas" },
+  { value: "\u09B6\u09BF\u0982", label: "\u09B6\u09BF\u0982 (Stinging Catfish)", key: "shing" },
+  { value: "\u09AE\u09BE\u0997\u09C1\u09B0", label: "\u09AE\u09BE\u0997\u09C1\u09B0 (Walking Catfish)", key: "magur" },
+  { value: "\u09A5\u09BE\u0987 \u09AE\u09BE\u0997\u09C1\u09B0", label: "\u09A5\u09BE\u0987 \u09AE\u09BE\u0997\u09C1\u09B0 (Thai Magur)", key: "thai_magur" },
+  { value: "\u09AA\u09BE\u09AC\u09A6\u09BE", label: "\u09AA\u09BE\u09AC\u09A6\u09BE (Pabda)", key: "pabda" },
+  { value: "\u0997\u09C1\u09B2\u09B6\u09BE", label: "\u0997\u09C1\u09B2\u09B6\u09BE (Gulsha Tengra)", key: "gulsha" },
+  { value: "\u099F\u09C7\u0982\u09B0\u09BE", label: "\u099F\u09C7\u0982\u09B0\u09BE (Mystus Tengra)", key: "tengra" },
+  { value: "\u09AC\u09CB\u09AF\u09BC\u09BE\u09B2", label: "\u09AC\u09CB\u09AF\u09BC\u09BE\u09B2 (Boal)", key: "boal" },
+  { value: "\u0986\u0987\u09A1\u09BC", label: "\u0986\u0987\u09A1\u09BC (Long-whiskered Catfish)", key: "ayre" },
+  // তেলাপিয়া
+  { value: "\u09A4\u09C7\u09B2\u09BE\u09AA\u09BF\u09AF\u09BC\u09BE", label: "\u09A4\u09C7\u09B2\u09BE\u09AA\u09BF\u09AF\u09BC\u09BE (Tilapia)", key: "tilapia" },
+  { value: "\u0997\u09BF\u09AB\u099F \u09A4\u09C7\u09B2\u09BE\u09AA\u09BF\u09AF\u09BC\u09BE", label: "\u0997\u09BF\u09AB\u099F \u09A4\u09C7\u09B2\u09BE\u09AA\u09BF\u09AF\u09BC\u09BE (GIFT Tilapia)", key: "gift_tilapia" },
+  { value: "\u09AE\u09A8\u09CB\u09B8\u09C7\u0995\u09CD\u09B8 \u09A4\u09C7\u09B2\u09BE\u09AA\u09BF\u09AF\u09BC\u09BE", label: "\u09AE\u09A8\u09CB\u09B8\u09C7\u0995\u09CD\u09B8 \u09A4\u09C7\u09B2\u09BE\u09AA\u09BF\u09AF\u09BC\u09BE (Monosex Tilapia)", key: "monosex_tilapia" },
+  // কই ও দেশি মাছ
+  { value: "\u0995\u0987", label: "\u0995\u0987 (Climbing Perch)", key: "koi" },
+  { value: "\u09A5\u09BE\u0987 \u0995\u0987", label: "\u09A5\u09BE\u0987 \u0995\u0987 (Thai Koi)", key: "thai_koi" },
+  { value: "\u09B6\u09CB\u09B2", label: "\u09B6\u09CB\u09B2 (Snakehead Murrel)", key: "shol" },
+  { value: "\u099F\u09BE\u0995\u09BF", label: "\u099F\u09BE\u0995\u09BF (Spotted Snakehead)", key: "taki" },
+  { value: "\u099A\u09BF\u09A4\u09B2", label: "\u099A\u09BF\u09A4\u09B2 (Clown Knifefish)", key: "chital" },
+  { value: "\u09AC\u09BE\u099F\u09BE", label: "\u09AC\u09BE\u099F\u09BE (Bata)", key: "bata" },
+  // চিংড়ি
+  { value: "\u0997\u09B2\u09A6\u09BE \u099A\u09BF\u0982\u09A1\u09BC\u09BF", label: "\u0997\u09B2\u09A6\u09BE \u099A\u09BF\u0982\u09A1\u09BC\u09BF (Giant Freshwater Prawn)", key: "golda" },
+  { value: "\u09AC\u09BE\u0997\u09A6\u09BE \u099A\u09BF\u0982\u09A1\u09BC\u09BF", label: "\u09AC\u09BE\u0997\u09A6\u09BE \u099A\u09BF\u0982\u09A1\u09BC\u09BF (Tiger Shrimp)", key: "bagda" }
+];
+var FISH_SPECIES_NAMES = FISH_SPECIES_OPTIONS.map((f) => f.value);
+var FISH_SPECIES_WITH_ALL = [
+  { value: "all", label: "\u09B8\u0995\u09B2 \u09AA\u09CD\u09B0\u099C\u09BE\u09A4\u09BF" },
+  ...FISH_SPECIES_OPTIONS
+];
+
+// src/lib/mcp/tools/list_fish_species.ts
 import { z as z3 } from "npm:zod@^3.25.76";
 var list_fish_species_default = defineTool3({
   name: "list_fish_species",
