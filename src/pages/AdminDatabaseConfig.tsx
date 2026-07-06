@@ -37,6 +37,11 @@ const labelFor = (m: RoutableModule, bn: boolean) => {
     stock_adjustments: ["স্টক সমন্বয়", "Stock Adjustments"],
     purchase_orders: ["ক্রয় অর্ডার", "Purchase Orders"],
     purchase_order_items: ["ক্রয় আইটেম", "Purchase Order Items"],
+    farmer_ponds: ["খামার পুকুর", "Farmer Ponds"],
+    farmer_incomes: ["খামার আয়", "Farmer Incomes"],
+    farmer_expenses: ["খামার ব্যয়", "Farmer Expenses"],
+    farmer_samplings: ["স্যাম্পলিং", "Farmer Samplings"],
+    farming_alerts: ["ফার্মিং অ্যালার্ট", "Farming Alerts"],
   };
   return map[m][bn ? 0 : 1];
 };

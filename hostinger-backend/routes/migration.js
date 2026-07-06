@@ -70,6 +70,26 @@ const MODULES = {
     table: 'purchase_order_items',
     columns: ['id', 'purchase_order_id', 'product_id', 'product_name', 'quantity', 'unit_price', 'total_price', 'created_at'],
   },
+  farmer_ponds: {
+    table: 'farmer_ponds',
+    columns: ['id', 'user_id', 'name', 'area', 'area_unit', 'depth', 'depth_unit', 'fish_types', 'fish_count', 'stocking_date', 'fish_stock_entries', 'total_stocking_cost', 'status', 'notes', 'created_at', 'updated_at'],
+  },
+  farmer_incomes: {
+    table: 'farmer_incomes',
+    columns: ['id', 'user_id', 'date', 'category', 'description', 'amount', 'pond_name', 'fish_type', 'fish_weight', 'fish_price', 'created_at', 'updated_at'],
+  },
+  farmer_expenses: {
+    table: 'farmer_expenses',
+    columns: ['id', 'user_id', 'date', 'category', 'description', 'amount', 'pond_name', 'created_at', 'updated_at'],
+  },
+  farmer_samplings: {
+    table: 'farmer_samplings',
+    columns: ['id', 'user_id', 'pond_id', 'pond_name', 'date', 'fish_entries', 'total_fish', 'total_weight', 'avg_weight', 'notes', 'created_at'],
+  },
+  farming_alerts: {
+    table: 'farming_alerts',
+    columns: ['id', 'user_id', 'created_by', 'pond_id', 'pond_name', 'title', 'title_bn', 'message', 'message_bn', 'alert_type', 'fish_species', 'alert_date', 'alert_time', 'priority', 'status', 'channels', 'is_global', 'is_recurring', 'recurrence_interval', 'created_at', 'updated_at'],
+  },
 };
 
 router.get('/count/:module', authenticateToken, requireAdmin, async (req, res, next) => {
