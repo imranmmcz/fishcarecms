@@ -203,6 +203,112 @@ router.delete('/samplings/:id', authenticateToken, async (req, res) => {
 
 // ===================== DASHBOARD SETTINGS =====================
 
+// ===================== FARMING ALERTS =====================
+
+router.get('/alerts', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.query.user_id && req.user.role === 'admin' ? req.query.user_id : req.user.id;
+    const [alerts] = await db.execute(
+      `SELECT * FROM farming_alerts
+         WHERE user_id = ? OR is_global = 1
+         ORDER BY alert_date DESC, alert_time DESC`,
+      [userId]
+    );
+    res.json({ data: alerts });
+  } catch (error) {
+    console.error('Get alerts error:', error);
+    res.status(500).json({ error: 'Failed to fetch alerts' });
+  }
+});
+
+router.post('/alerts', authenticateToken, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const [result] = await db.execute(
+      `INSERT INTO farming_alerts
+        (user_id, created_by, pond_id, pond_name, title, title_bn, message, message_bn,
+         alert_type, fish_species, alert_date, alert_time, priority, status, channels,
+         is_global, is_recurring, recurrence_interval)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        b.user_id ?? req.user.id,
+        req.user.id,
+        b.pond_id ?? null,
+        b.pond_name ?? null,
+        b.title,
+        b.title_bn ?? null,
+        b.message,
+        b.message_bn ?? null,
+        b.alert_type ?? 'general',
+        b.fish_species ?? null,
+        b.alert_date || new Date().toISOString().slice(0, 10),
+        b.alert_time ?? null,
+        b.priority ?? 'medium',
+        b.status ?? 'pending',
+        JSON.stringify(b.channels ?? []),
+        b.is_global ? 1 : 0,
+        b.is_recurring ? 1 : 0,
+        b.recurrence_interval ?? null,
+      ]
+    );
+    const [rows] = await db.execute('SELECT * FROM farming_alerts WHERE id = ?', [result.insertId]);
+    res.status(201).json({ data: rows[0] });
+  } catch (error) {
+    console.error('Create alert error:', error);
+    res.status(500).json({ error: 'Failed to create alert' });
+  }
+});
+
+router.put('/alerts/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fields = req.body || {};
+    const allowed = [
+      'pond_id', 'pond_name', 'title', 'title_bn', 'message', 'message_bn',
+      'alert_type', 'fish_species', 'alert_date', 'alert_time',
+      'priority', 'status', 'is_global', 'is_recurring', 'recurrence_interval',
+    ];
+    const updates = [];
+    const params = [];
+    for (const k of allowed) {
+      if (fields[k] !== undefined) {
+        updates.push(`${k} = ?`);
+        params.push(fields[k]);
+      }
+    }
+    if (fields.channels !== undefined) {
+      updates.push('channels = ?');
+      params.push(JSON.stringify(fields.channels));
+    }
+    if (updates.length === 0) return res.status(400).json({ error: 'No fields to update' });
+    params.push(id, req.user.id);
+    await db.execute(
+      `UPDATE farming_alerts SET ${updates.join(', ')}
+         WHERE id = ? AND (user_id = ? OR is_global = 1)`,
+      params
+    );
+    const [rows] = await db.execute('SELECT * FROM farming_alerts WHERE id = ?', [id]);
+    res.json({ data: rows[0] });
+  } catch (error) {
+    console.error('Update alert error:', error);
+    res.status(500).json({ error: 'Failed to update alert' });
+  }
+});
+
+router.delete('/alerts/:id', authenticateToken, async (req, res) => {
+  try {
+    await db.execute(
+      'DELETE FROM farming_alerts WHERE id = ? AND (user_id = ? OR is_global = 1)',
+      [req.params.id, req.user.id]
+    );
+    res.json({ message: 'Alert deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete alert' });
+  }
+});
+
+// ===================== DASHBOARD SETTINGS =====================
+
 router.get('/settings', authenticateToken, async (req, res) => {
   try {
     const [users] = await db.execute('SELECT dashboard_settings FROM users WHERE id = ?', [req.user.id]);

@@ -538,6 +538,37 @@ CREATE TABLE IF NOT EXISTS farmer_samplings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
+-- 27b. Farming Alerts Table (কৃষি সতর্কতা / রিমাইন্ডার)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS farming_alerts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    created_by INT,
+    pond_id INT,
+    pond_name VARCHAR(255),
+    title VARCHAR(255) NOT NULL,
+    title_bn VARCHAR(255),
+    message TEXT NOT NULL,
+    message_bn TEXT,
+    alert_type VARCHAR(64) NOT NULL DEFAULT 'general',
+    fish_species VARCHAR(128),
+    alert_date DATE NOT NULL DEFAULT (CURRENT_DATE),
+    alert_time TIME NULL,
+    priority VARCHAR(32) DEFAULT 'medium',
+    status VARCHAR(32) DEFAULT 'pending',
+    channels JSON DEFAULT NULL,
+    is_global TINYINT(1) DEFAULT 0,
+    is_recurring TINYINT(1) DEFAULT 0,
+    recurrence_interval VARCHAR(32),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (pond_id) REFERENCES farmer_ponds(id) ON DELETE SET NULL,
+    INDEX idx_user_id (user_id),
+    INDEX idx_alert_date (alert_date),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
 -- 28. Backup Logs Table
 -- =====================================================
 CREATE TABLE IF NOT EXISTS backup_logs (

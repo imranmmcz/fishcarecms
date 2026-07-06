@@ -20,7 +20,8 @@ type ModuleKey =
   | "categories" | "brands" | "products" | "product_variations"
   | "customers" | "orders" | "order_items"
   | "pos_shifts" | "pos_sales" | "pos_sale_items" | "pos_expenses"
-  | "stock_adjustments" | "purchase_orders" | "purchase_order_items";
+  | "stock_adjustments" | "purchase_orders" | "purchase_order_items"
+  | "farmer_ponds" | "farmer_incomes" | "farmer_expenses" | "farmer_samplings" | "farming_alerts";
 
 const MODULES: { key: ModuleKey; label: string; bn: string; supabaseTable: string }[] = [
   { key: "categories", label: "Categories", bn: "ক্যাটাগরি", supabaseTable: "categories" },
@@ -37,6 +38,11 @@ const MODULES: { key: ModuleKey; label: string; bn: string; supabaseTable: strin
   { key: "stock_adjustments", label: "Stock Adjustments", bn: "স্টক সমন্বয়", supabaseTable: "stock_adjustments" },
   { key: "purchase_orders", label: "Purchase Orders", bn: "ক্রয় অর্ডার", supabaseTable: "purchase_orders" },
   { key: "purchase_order_items", label: "Purchase Order Items", bn: "ক্রয় আইটেম", supabaseTable: "purchase_order_items" },
+  { key: "farmer_ponds", label: "Farmer Ponds", bn: "খামার পুকুর", supabaseTable: "farmer_ponds" },
+  { key: "farmer_incomes", label: "Farmer Incomes", bn: "খামার আয়", supabaseTable: "farmer_incomes" },
+  { key: "farmer_expenses", label: "Farmer Expenses", bn: "খামার ব্যয়", supabaseTable: "farmer_expenses" },
+  { key: "farmer_samplings", label: "Farmer Samplings", bn: "স্যাম্পলিং", supabaseTable: "farmer_samplings" },
+  { key: "farming_alerts", label: "Farming Alerts", bn: "ফার্মিং অ্যালার্ট", supabaseTable: "farming_alerts" },
 ];
 
 interface ModuleState {
