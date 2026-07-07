@@ -14,6 +14,7 @@ RewriteEngine On
     SetEnvIf Origin "^https://fishcare\.com\.bd$" ORIGIN_OK=$0
     SetEnvIf Origin "^https://www\.fishcare\.com\.bd$" ORIGIN_OK=$0
     SetEnvIf Origin "^https://blog\.fishcare\.com\.bd$" ORIGIN_OK=$0
+    SetEnvIf Origin "^https://new\.fishcare\.com\.bd$" ORIGIN_OK=$0
     SetEnvIf Origin "^https://([a-z0-9-]+\.)?lovableproject\.com$" ORIGIN_OK=$0
     SetEnvIf Origin "^https://([a-z0-9-]+\.)?lovable\.app$" ORIGIN_OK=$0
     

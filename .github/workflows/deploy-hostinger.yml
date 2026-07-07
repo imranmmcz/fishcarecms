@@ -112,6 +112,11 @@ jobs:
         id: rsync_frontend
         run: |
           rsync -avz --delete \
+            --exclude='api' \
+            --exclude='api/**' \
+            --exclude='uploads' \
+            --exclude='uploads/**' \
+            --exclude='.htaccess.bak-*' \
             -e "ssh -p ${{ secrets.HOSTINGER_SSH_PORT }}" \
             dist/ \
             ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}:${{ secrets.HOSTINGER_PUBLIC_HTML_PATH }}/
