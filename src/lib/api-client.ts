@@ -3,8 +3,9 @@
  * Hostinger-এ ডেপ্লয় করার সময় এই ক্লায়েন্ট ব্যবহার করুন
  */
 
-// API Base URL - Hostinger-এ ডেপ্লয় করার পর আপডেট করুন
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://blog.fishcare.com.bd/api';
+// API Base URL — same-domain deploy ব্যবহার করলে relative `/api`
+// (frontend আর backend একই subdomain এ থাকলে এটাই default হিসেবে কাজ করবে)।
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 interface ApiResponse<T = unknown> {
   data?: T;
