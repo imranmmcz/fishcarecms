@@ -17,6 +17,7 @@ import {
 } from "@/lib/dataSource";
 import { pingBackend } from "@/lib/apiClient";
 import MySQLBackendSettings from "@/components/admin/MySQLBackendSettings";
+import MySQLHealthPanel from "@/components/admin/MySQLHealthPanel";
 import { Database, Loader2, RefreshCw, Save, ShieldAlert } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ArrowRightLeft, Activity } from "lucide-react";
@@ -170,6 +171,9 @@ export default function AdminDatabaseConfig() {
 
       {/* Existing connection settings (API URL + MySQL creds reference) */}
       <MySQLBackendSettings />
+
+      {/* Live DB health from backend */}
+      <MySQLHealthPanel />
 
       <Card>
         <CardHeader>
