@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Database, Globe, Save, Loader2, RefreshCw, Eye, EyeOff, AlertTriangle, CheckCircle2, XCircle, Server } from "lucide-react";
+import { Info } from "lucide-react";
 
 interface MySQLConfig {
   host: string;
@@ -126,7 +127,9 @@ const MySQLBackendSettings = () => {
     setConnectionStatus("idle");
     try {
       const url = apiConfig.baseUrl.replace(/\/$/, "");
-      const response = await fetch(`${url}/health`, {
+      // baseUrl usually ends in /api (e.g. https://new.fishcare.com.bd/api)
+      const healthUrl = url.endsWith("/api") ? `${url}/health` : `${url}/api/health`;
+      const response = await fetch(healthUrl, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         signal: AbortSignal.timeout(10000),
@@ -159,6 +162,16 @@ const MySQLBackendSettings = () => {
 
   return (
     <div className="space-y-6">
+      {/* Read-only reference notice */}
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription className="text-sm">
+          {language === "bn"
+            ? "MySQL credentials নিরাপত্তার কারণে সরাসরি ব্রাউজার থেকে সেট হয় না। এগুলো Hostinger সার্ভারের hostinger-backend/.env ফাইলে থাকে। নিচের ফর্মটি শুধু reference/documentation — এখানে সেভ করলেও backend restart লাগবে না, কারণ backend আলাদা .env থেকে পড়ে।"
+            : "For security, MySQL credentials cannot be set directly from the browser. They live in hostinger-backend/.env on your Hostinger server. The form below is for reference only — saving here does not change the live backend, which reads its own .env."}
+        </AlertDescription>
+      </Alert>
+
       {/* Enable/Disable Toggle */}
       <Card className="border-primary/20">
         <CardHeader>
