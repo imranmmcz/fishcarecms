@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { appStorage } from "@/lib/appStorage";
 import { usePartner } from "@/hooks/usePartner";
 import { Loader2, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -35,7 +36,7 @@ export default function PartnerProfile() {
         "NID পেছনে": partner.nid_back_url,
       })) {
         if (!v) continue;
-        const { data } = await (supabase as any).storage.from("partner-documents")
+        const { data } = await appStorage.from("partner-documents")
           .createSignedUrl(String(v).replace(/^.*partner-documents\//, ""), 600);
         if (data?.signedUrl) list.push({ name: k, url: data.signedUrl });
       }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { appStorage } from "@/lib/appStorage";
 import { Button } from "@/components/ui/button";
 import { Button3D } from "@/components/ui/button-3d";
 import { Label } from "@/components/ui/label";
@@ -59,7 +60,7 @@ export const ProductImageGallery = ({ productId }: ProductImageGalleryProps) => 
         const fileExt = file.name.split(".").pop();
         const fileName = `${productId}/${Date.now()}-${i}.${fileExt}`;
 
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await appStorage
           .from("product-images")
           .upload(fileName, file, { upsert: false });
 
@@ -69,7 +70,7 @@ export const ProductImageGallery = ({ productId }: ProductImageGalleryProps) => 
           continue;
         }
 
-        const { data: urlData } = supabase.storage
+        const { data: urlData } = appStorage
           .from("product-images")
           .getPublicUrl(fileName);
 
@@ -118,7 +119,7 @@ export const ProductImageGallery = ({ productId }: ProductImageGalleryProps) => 
       const urlParts = image.image_url.split("/product-images/");
       if (urlParts.length > 1) {
         const filePath = decodeURIComponent(urlParts[1]);
-        await supabase.storage.from("product-images").remove([filePath]);
+        await appStorage.from("product-images").remove([filePath]);
       }
 
       const { error } = await supabase

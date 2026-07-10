@@ -41,7 +41,7 @@ if (!fs.existsSync(logsDir)) {
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads');
-['products', 'avatars', 'general'].forEach(dir => {
+['products', 'product-images', 'avatars', 'general', 'blog-images', 'private/partner-documents'].forEach(dir => {
   const fullPath = path.join(uploadsDir, dir);
   if (!fs.existsSync(fullPath)) {
     fs.mkdirSync(fullPath, { recursive: true });

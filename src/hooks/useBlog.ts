@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { appStorage } from "@/lib/appStorage";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
@@ -267,12 +268,12 @@ export function useBlogActions() {
       for (let i = 0; i < data.imageFiles.length; i++) {
         const file = data.imageFiles[i];
         const filePath = `${post.id}/${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await appStorage
           .from("blog-images")
           .upload(filePath, file);
 
         if (!uploadError) {
-          const { data: urlData } = supabase.storage.from("blog-images").getPublicUrl(filePath);
+          const { data: urlData } = appStorage.from("blog-images").getPublicUrl(filePath);
           await supabase.from("blog_images").insert({
             post_id: post.id,
             image_url: urlData.publicUrl,

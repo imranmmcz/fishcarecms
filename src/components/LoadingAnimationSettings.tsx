@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { appStorage } from "@/lib/appStorage";
 import { toast } from "sonner";
 import { Loader2, Save, Eye, Upload, X, ImageIcon } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -71,18 +72,18 @@ export function LoadingAnimationSettings() {
         try {
           const oldPath = settings.loading_animation_custom_image.split('/product-images/')[1];
           if (oldPath) {
-            await supabase.storage.from('product-images').remove([oldPath]);
+            await appStorage.from('product-images').remove([oldPath]);
           }
         } catch {}
       }
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await appStorage
         .from('product-images')
         .upload(`loading/${fileName}`, file, { contentType: file.type, upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = appStorage
         .from('product-images')
         .getPublicUrl(`loading/${fileName}`);
 
@@ -102,7 +103,7 @@ export function LoadingAnimationSettings() {
       try {
         const oldPath = settings.loading_animation_custom_image.split('/product-images/')[1];
         if (oldPath) {
-          await supabase.storage.from('product-images').remove([oldPath]);
+          await appStorage.from('product-images').remove([oldPath]);
         }
       } catch {}
     }
