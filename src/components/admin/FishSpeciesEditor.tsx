@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
+import { appStorage } from "@/lib/appStorage";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Save, Loader2, Fish, GripVertical, ImageIcon, X } from "lucide-react";
@@ -172,9 +173,9 @@ export function FishSpeciesEditor({ section, onUpdate }: Props) {
       for (const file of Array.from(files)) {
         const ext = file.name.split(".").pop();
         const path = `fish-species/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabase.storage.from("product-images").upload(path, file);
+        const { error } = await appStorage.from("product-images").upload(path, file);
         if (error) throw error;
-        const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
+        const { data: urlData } = appStorage.from("product-images").getPublicUrl(path);
         newImages.push(urlData.publicUrl);
       }
 

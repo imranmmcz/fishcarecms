@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { appStorage } from "@/lib/appStorage";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +65,7 @@ const PartnerApply = () => {
     try {
       const ext = file.name.split(".").pop();
       const path = `${user.id}/${field}-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("partner-documents").upload(path, file, { upsert: true });
+      const { error } = await appStorage.from("partner-documents").upload(path, file, { upsert: true });
       if (error) throw error;
       setForm((f) => ({ ...f, [field]: path }));
       toast.success(language === "bn" ? "আপলোড হয়েছে" : "Uploaded");

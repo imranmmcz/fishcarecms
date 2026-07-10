@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { appStorage } from "@/lib/appStorage";
 import { toast } from "sonner";
 import { Type, Save, Loader2, Upload, Eye, Globe, Link2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -170,10 +171,10 @@ export default function LanguageFontSettings() {
     setUploading(true);
     try {
       const path = `fonts/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      const { error: uploadError } = await appStorage.from("avatars").upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+      const { data: urlData } = appStorage.from("avatars").getPublicUrl(path);
       const fontName = file.name.replace(/\.(ttf|otf|woff|woff2)$/i, "");
       setConfig((prev) => ({ ...prev, custom_font_name: fontName, custom_font_url: urlData.publicUrl }));
       toast.success(bn ? "ফন্ট আপলোড সফল হয়েছে" : "Font uploaded successfully");

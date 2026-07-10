@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { appStorage } from "@/lib/appStorage";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { FileText, Save, Loader2, Upload, X, Eye, Palette, Settings2, Layout, Languages, Image } from "lucide-react";
@@ -116,9 +117,9 @@ const InvoiceSettings = () => {
     setIsUploading(true);
     try {
       const fileName = `invoice-logo-${Date.now()}.${file.name.split(".").pop()}`;
-      const { error } = await supabase.storage.from("product-images").upload(fileName, file, { upsert: true });
+      const { error } = await appStorage.from("product-images").upload(fileName, file, { upsert: true });
       if (error) throw error;
-      const { data } = supabase.storage.from("product-images").getPublicUrl(fileName);
+      const { data } = appStorage.from("product-images").getPublicUrl(fileName);
       setSettings((p) => ({ ...p, invoice_company_logo: data.publicUrl }));
       toast.success(tt("লোগো আপলোড হয়েছে", "Logo uploaded"));
     } catch (err) {
