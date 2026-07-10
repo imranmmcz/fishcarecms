@@ -176,11 +176,10 @@ export async function migrateBucketToHostinger(
   async function walk(prefix: string) {
     const { data, error } = await supabase.storage.from(bucket).list(prefix, { limit: 1000 });
     if (error) throw new Error(error.message);
-    for (const entry of data || []) {
+    for (const entry of (data || []) as any[]) {
       const full = prefix ? `${prefix}/${entry.name}` : entry.name;
-      // Folders in Supabase Storage show up with id === null
-      // @ts-expect-error – runtime shape
-      if (entry.id === null || entry.metadata == null) {
+      // Folders in Supabase Storage show up with id === null / no metadata
+      if (entry.id == null || entry.metadata == null) {
         await walk(full);
       } else {
         collected.push({ name: entry.name, path: full });
