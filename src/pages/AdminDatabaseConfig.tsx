@@ -18,6 +18,7 @@ import {
 import { pingBackend } from "@/lib/apiClient";
 import MySQLBackendSettings from "@/components/admin/MySQLBackendSettings";
 import MySQLHealthPanel from "@/components/admin/MySQLHealthPanel";
+import StorageBackendSettings from "@/components/admin/StorageBackendSettings";
 import { Database, Loader2, RefreshCw, Save, ShieldAlert } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ArrowRightLeft, Activity } from "lucide-react";
@@ -174,6 +175,9 @@ export default function AdminDatabaseConfig() {
 
       {/* Live DB health from backend */}
       <MySQLHealthPanel />
+
+      {/* Storage backend + Supabase→Hostinger migration */}
+      <StorageBackendSettings />
 
       <Card>
         <CardHeader>
