@@ -18,6 +18,7 @@ import RecommendedProductsSlider from "@/components/RecommendedProductsSlider";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { marketPricesRepo } from "@/repositories/marketPrices";
 import { getDivisions, getDistrictsByDivision, getUpazilasByDistrict } from "@/data/bangladeshLocationData";
 import { fishSpecies } from "@/data/fishData";
 import { format } from "date-fns";
@@ -124,7 +125,7 @@ const MarketPrice = () => {
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("market_prices").insert({
+      await marketPricesRepo.create({
         fish_name: formFishName,
         fish_name_bn: formFishNameBn,
         price_per_kg: parseFloat(formPrice),
@@ -135,7 +136,6 @@ const MarketPrice = () => {
         upazila: formUpazila,
         market_name: formMarketName || null,
       });
-      if (error) throw error;
       toast.success(language === "bn" ? "বাজার দর সফলভাবে জমা হয়েছে!" : "Market price submitted successfully!");
       setSubmitOpen(false);
       setFormFishName(""); setFormFishNameBn(""); setFormPrice("");
@@ -154,27 +154,14 @@ const MarketPrice = () => {
   const fetchPrices = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from("market_prices")
-        .select("*")
-        .order("fish_name_bn", { ascending: true });
+      const data = await marketPricesRepo.list({
+        division: division && division !== "all" ? division : undefined,
+        district: district && district !== "all" ? district : undefined,
+        upazila: upazila && upazila !== "all" ? upazila : undefined,
+        search: searchQuery || undefined,
+      });
+      data.sort((a, b) => a.fish_name_bn.localeCompare(b.fish_name_bn));
 
-      if (division && division !== "all") {
-        query = query.eq("division", division);
-      }
-      if (district && district !== "all") {
-        query = query.eq("district", district);
-      }
-      if (upazila && upazila !== "all") {
-        query = query.eq("upazila", upazila);
-      }
-      if (searchQuery) {
-        query = query.or(`fish_name.ilike.%${searchQuery}%,fish_name_bn.ilike.%${searchQuery}%`);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
       setPrices(data || []);
       setLastUpdated(new Date());
     } catch (error) {

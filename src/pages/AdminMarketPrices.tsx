@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { marketPricesRepo } from "@/repositories/marketPrices";
 import { getDivisions, getDistrictsByDivision, getUpazilasByDistrict } from "@/data/bangladeshLocationData";
 import { Plus, Pencil, Trash2, Fish, Search, Loader2, MapPin } from "lucide-react";
 import { format } from "date-fns";
@@ -60,18 +60,8 @@ const AdminMarketPrices = () => {
   const fetchPrices = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from("market_prices")
-        .select("*")
-        .order("updated_at", { ascending: false });
-
-      if (searchQuery) {
-        query = query.or(`fish_name.ilike.%${searchQuery}%,fish_name_bn.ilike.%${searchQuery}%,division.ilike.%${searchQuery}%,district.ilike.%${searchQuery}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setPrices(data || []);
+      const data = await marketPricesRepo.list({ search: searchQuery || undefined });
+      setPrices(data);
     } catch (error) {
       console.error("Error fetching prices:", error);
       toast.error("তথ্য লোড করতে সমস্যা হয়েছে");
@@ -156,18 +146,11 @@ const AdminMarketPrices = () => {
 
       if (selectedPrice) {
         // Update
-        const { error } = await supabase
-          .from("market_prices")
-          .update(payload)
-          .eq("id", selectedPrice.id);
-        if (error) throw error;
+        await marketPricesRepo.update(selectedPrice.id, payload);
         toast.success("বাজার দর সফলভাবে আপডেট হয়েছে");
       } else {
         // Insert
-        const { error } = await supabase
-          .from("market_prices")
-          .insert(payload);
-        if (error) throw error;
+        await marketPricesRepo.create(payload);
         toast.success("বাজার দর সফলভাবে যোগ হয়েছে");
       }
 
@@ -186,11 +169,7 @@ const AdminMarketPrices = () => {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("market_prices")
-        .delete()
-        .eq("id", selectedPrice.id);
-      if (error) throw error;
+      await marketPricesRepo.remove(selectedPrice.id);
       toast.success("বাজার দর সফলভাবে মুছে ফেলা হয়েছে");
       setDeleteDialogOpen(false);
       setSelectedPrice(null);
