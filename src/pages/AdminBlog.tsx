@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
-import { supabase } from "@/integrations/supabase/client";
+import { blogRepo } from "@/repositories/blog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,29 +21,34 @@ const AdminBlog = () => {
 
   const fetchPosts = async () => {
     setLoading(true);
-    let query = supabase.from("blog_posts").select("*").order("created_at", { ascending: false });
-    if (statusFilter !== "all") query = query.eq("status", statusFilter);
-    if (search) query = query.ilike("title", `%${search}%`);
-    const { data } = await query;
-    setPosts(data || []);
+    try {
+      const data = await blogRepo.listPosts({
+        status: statusFilter,
+        search: search || undefined,
+      });
+      setPosts(data);
+    } catch (error) {
+      console.error("Error fetching blog posts:", error);
+      setPosts([]);
+    }
     setLoading(false);
   };
 
   useEffect(() => { fetchPosts(); }, [statusFilter, search]);
 
   const updatePost = async (id: string, updates: Record<string, any>) => {
-    const { error } = await supabase.from("blog_posts").update(updates).eq("id", id);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      await blogRepo.updatePost(id, updates);
       toast({ title: language === "bn" ? "আপডেট হয়েছে" : "Updated" });
       fetchPosts();
+    } catch (error: any) {
+      toast({ title: "Error", description: error?.message || "Failed", variant: "destructive" });
     }
   };
 
   const deletePost = async (id: string) => {
     if (!confirm(language === "bn" ? "এই পোস্ট মুছে ফেলতে চান?" : "Delete this post?")) return;
-    await supabase.from("blog_posts").delete().eq("id", id);
+    await blogRepo.deletePost(id);
     toast({ title: language === "bn" ? "পোস্ট মুছে ফেলা হয়েছে" : "Post deleted" });
     fetchPosts();
   };

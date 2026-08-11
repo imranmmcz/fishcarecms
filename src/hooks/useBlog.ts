@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { blogRepo } from "@/repositories/blog";
+import { getDataSource } from "@/lib/dataSource";
 import { appStorage } from "@/lib/appStorage";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -76,50 +78,16 @@ export function useBlogPosts(filters?: { category?: string; search?: string; sor
 
   const fetchPosts = async () => {
     setLoading(true);
-    let query = supabase
-      .from("blog_posts")
-      .select("*")
-      .eq("status", "approved")
-      .order("is_pinned", { ascending: false });
-
-    if (filters?.category) {
-      query = query.eq("category", filters.category);
-    }
-    if (filters?.search) {
-      query = query.or(`title.ilike.%${filters.search}%,content.ilike.%${filters.search}%`);
-    }
-
-    if (filters?.sort === "most-commented") {
-      query = query.order("comment_count", { ascending: false });
-    } else if (filters?.sort === "most-viewed") {
-      query = query.order("view_count", { ascending: false });
-    } else {
-      query = query.order("created_at", { ascending: false });
-    }
-
-    const { data, error } = await query;
-    if (error) {
+    try {
+      const data = await blogRepo.listPosts({
+        category: filters?.category,
+        search: filters?.search,
+        sort: filters?.sort,
+      });
+      setPosts(data as BlogPost[]);
+    } catch (error) {
       console.error("Error fetching blog posts:", error);
-    } else {
-      // Fetch images for each post
-      const postIds = (data || []).map(p => p.id);
-      if (postIds.length > 0) {
-        const { data: images } = await supabase
-          .from("blog_images")
-          .select("*")
-          .in("post_id", postIds)
-          .order("display_order");
-        
-        const imageMap: Record<string, BlogImage[]> = {};
-        (images || []).forEach((img: any) => {
-          if (!imageMap[img.post_id]) imageMap[img.post_id] = [];
-          imageMap[img.post_id].push(img);
-        });
-
-        setPosts((data || []).map(p => ({ ...p, images: imageMap[p.id] || [] })));
-      } else {
-        setPosts([]);
-      }
+      setPosts([]);
     }
     setLoading(false);
   };
@@ -139,23 +107,11 @@ export function useBlogPost(slug: string | undefined) {
     if (!slug) return;
     const fetch = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("blog_posts")
-        .select("*")
-        .eq("slug", slug)
-        .single();
-
-      if (data) {
-        // Increment view
-        await supabase.from("blog_posts").update({ view_count: (data.view_count || 0) + 1 }).eq("id", data.id);
-        
-        const { data: images } = await supabase
-          .from("blog_images")
-          .select("*")
-          .eq("post_id", data.id)
-          .order("display_order");
-        
-        setPost({ ...data, images: images || [] });
+      try {
+        const data = await blogRepo.getPostBySlug(slug);
+        if (data) setPost(data as BlogPost);
+      } catch (error) {
+        console.error("Error fetching blog post:", error);
       }
       setLoading(false);
     };
@@ -172,15 +128,8 @@ export function useBlogComments(postId: string | undefined) {
   const fetchComments = async () => {
     if (!postId) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("blog_comments")
-      .select("*")
-      .eq("post_id", postId)
-      .eq("status", "approved")
-      .order("created_at", { ascending: true });
-
-    if (data) {
-      // Build nested comments
+    try {
+      const data = await blogRepo.listComments(postId);
       const map: Record<string, BlogComment> = {};
       const roots: BlogComment[] = [];
       data.forEach((c: any) => {
@@ -194,6 +143,8 @@ export function useBlogComments(postId: string | undefined) {
         }
       });
       setComments(roots);
+    } catch (error) {
+      console.error("Error fetching blog comments:", error);
     }
     setLoading(false);
   };
@@ -202,6 +153,13 @@ export function useBlogComments(postId: string | undefined) {
     fetchComments();
 
     if (!postId) return;
+
+    // MySQL routing has no realtime channel — poll instead.
+    if (getDataSource("blog_comments") === "mysql") {
+      const timer = window.setInterval(fetchComments, 20000);
+      return () => window.clearInterval(timer);
+    }
+
     const channel = supabase
       .channel(`blog-comments-${postId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "blog_comments", filter: `post_id=eq.${postId}` }, () => {
@@ -242,9 +200,9 @@ export function useBlogActions() {
     const slug = generateSlug(data.title);
     const authorRole = roleData?.role || "farmer";
 
-    const { data: post, error } = await supabase
-      .from("blog_posts")
-      .insert({
+    let post: Awaited<ReturnType<typeof blogRepo.createPost>> = null;
+    try {
+      post = await blogRepo.createPost({
         user_id: user.id,
         title: data.title,
         slug,
@@ -254,12 +212,9 @@ export function useBlogActions() {
         status: isAdmin ? "approved" : "pending",
         author_name: profile?.full_name || user.email?.split("@")[0] || "Anonymous",
         author_role: authorRole,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      });
+    } catch (error: any) {
+      toast({ title: "Error", description: error?.message || "Failed", variant: "destructive" });
       return null;
     }
 
@@ -274,7 +229,7 @@ export function useBlogActions() {
 
         if (!uploadError) {
           const { data: urlData } = appStorage.from("blog-images").getPublicUrl(filePath);
-          await supabase.from("blog_images").insert({
+          await blogRepo.addImage({
             post_id: post.id,
             image_url: urlData.publicUrl,
             alt_text: data.title,
@@ -303,23 +258,23 @@ export function useBlogActions() {
       .eq("user_id", user.id)
       .single();
 
-    const { data: comment, error } = await supabase
-      .from("blog_comments")
-      .insert({
+    let comment: Awaited<ReturnType<typeof blogRepo.createComment>> = null;
+    try {
+      comment = await blogRepo.createComment({
         post_id: postId,
         user_id: user.id,
         parent_id: parentId || null,
         author_name: profile?.full_name || user.email?.split("@")[0] || "Anonymous",
         author_role: roleData?.role || "farmer",
         comment_text: text,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      });
+    } catch (error: any) {
+      toast({ title: "Error", description: error?.message || "Failed", variant: "destructive" });
       return null;
     }
+
+    // Notifications live in Supabase only.
+    if (getDataSource("blog_posts") === "mysql") return comment;
 
     // Notify post author
     const { data: postData } = await supabase

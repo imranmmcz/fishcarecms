@@ -44,6 +44,10 @@ const labelFor = (m: RoutableModule, bn: boolean) => {
     farmer_expenses: ["খামার ব্যয়", "Farmer Expenses"],
     farmer_samplings: ["স্যাম্পলিং", "Farmer Samplings"],
     farming_alerts: ["ফার্মিং অ্যালার্ট", "Farming Alerts"],
+    market_prices: ["বাজার দর", "Market Prices"],
+    product_reviews: ["পণ্য রিভিউ", "Product Reviews"],
+    blog_posts: ["ব্লগ পোস্ট", "Blog Posts"],
+    blog_comments: ["ব্লগ মন্তব্য", "Blog Comments"],
   };
   return map[m][bn ? 0 : 1];
 };
