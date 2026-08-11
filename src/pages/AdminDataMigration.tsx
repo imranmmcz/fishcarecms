@@ -21,7 +21,8 @@ type ModuleKey =
   | "customers" | "orders" | "order_items"
   | "pos_shifts" | "pos_sales" | "pos_sale_items" | "pos_expenses"
   | "stock_adjustments" | "purchase_orders" | "purchase_order_items"
-  | "farmer_ponds" | "farmer_incomes" | "farmer_expenses" | "farmer_samplings" | "farming_alerts";
+  | "farmer_ponds" | "farmer_incomes" | "farmer_expenses" | "farmer_samplings" | "farming_alerts"
+  | "market_prices" | "product_reviews" | "blog_posts" | "blog_comments";
 
 const MODULES: { key: ModuleKey; label: string; bn: string; supabaseTable: string }[] = [
   { key: "categories", label: "Categories", bn: "ক্যাটাগরি", supabaseTable: "categories" },
@@ -43,6 +44,10 @@ const MODULES: { key: ModuleKey; label: string; bn: string; supabaseTable: strin
   { key: "farmer_expenses", label: "Farmer Expenses", bn: "খামার ব্যয়", supabaseTable: "farmer_expenses" },
   { key: "farmer_samplings", label: "Farmer Samplings", bn: "স্যাম্পলিং", supabaseTable: "farmer_samplings" },
   { key: "farming_alerts", label: "Farming Alerts", bn: "ফার্মিং অ্যালার্ট", supabaseTable: "farming_alerts" },
+  { key: "market_prices", label: "Market Prices", bn: "বাজার দর", supabaseTable: "market_prices" },
+  { key: "product_reviews", label: "Product Reviews", bn: "পণ্য রিভিউ", supabaseTable: "product_reviews" },
+  { key: "blog_posts", label: "Blog Posts", bn: "ব্লগ পোস্ট", supabaseTable: "blog_posts" },
+  { key: "blog_comments", label: "Blog Comments", bn: "ব্লগ মন্তব্য", supabaseTable: "blog_comments" },
 ];
 
 interface ModuleState {

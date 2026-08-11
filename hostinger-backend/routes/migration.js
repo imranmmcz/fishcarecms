@@ -86,6 +86,22 @@ const MODULES = {
     table: 'farmer_samplings',
     columns: ['id', 'user_id', 'pond_id', 'pond_name', 'date', 'fish_entries', 'total_fish', 'total_weight', 'avg_weight', 'notes', 'created_at'],
   },
+  market_prices: {
+    table: 'market_prices',
+    columns: ['id', 'fish_name', 'fish_name_bn', 'price_per_kg', 'min_price', 'max_price', 'division', 'district', 'upazila', 'market_name', 'price_date', 'created_at', 'updated_at'],
+  },
+  product_reviews: {
+    table: 'product_reviews',
+    columns: ['id', 'product_id', 'user_id', 'user_name', 'rating', 'title', 'comment', 'is_verified_purchase', 'is_approved', 'helpful_count', 'created_at', 'updated_at'],
+  },
+  blog_posts: {
+    table: 'blog_posts',
+    columns: ['id', 'user_id', 'title', 'slug', 'content', 'category', 'tags', 'status', 'is_pinned', 'is_comments_locked', 'view_count', 'comment_count', 'author_name', 'author_role', 'meta_title', 'meta_description', 'og_image', 'created_at', 'updated_at'],
+  },
+  blog_comments: {
+    table: 'blog_comments',
+    columns: ['id', 'post_id', 'user_id', 'parent_id', 'author_name', 'author_role', 'comment_text', 'image_url', 'helpful_count', 'status', 'created_at', 'updated_at'],
+  },
   farming_alerts: {
     table: 'farming_alerts',
     columns: ['id', 'user_id', 'created_by', 'pond_id', 'pond_name', 'title', 'title_bn', 'message', 'message_bn', 'alert_type', 'fish_species', 'alert_date', 'alert_time', 'priority', 'status', 'channels', 'is_global', 'is_recurring', 'recurrence_interval', 'created_at', 'updated_at'],
