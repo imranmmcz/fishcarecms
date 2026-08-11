@@ -1,9 +1,10 @@
 /**
- * Reviews Hook - Supabase Implementation
+ * Reviews Hook — routed through the reviews repository facade
+ * (Supabase or MySQL depending on Admin → Database Config).
  */
 
 import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { reviewsRepo } from "@/repositories/reviews";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -40,38 +41,13 @@ export function useReviews(productId?: string) {
     if (!productId) return;
     setIsLoading(true);
     try {
-      let query = supabase
-        .from("product_reviews")
-        .select("id, product_id, user_id, user_name, rating, title, comment, is_verified_purchase, is_approved, helpful_count, created_at, updated_at")
-        .eq("product_id", productId)
-        .eq("is_approved", true);
+      const rows = await reviewsRepo.list({
+        productId,
+        sort: params?.sort,
+        limit: params?.limit,
+      });
 
-      if (params?.sort === "newest") query = query.order("created_at", { ascending: false });
-      else if (params?.sort === "highest") query = query.order("rating", { ascending: false });
-      else if (params?.sort === "lowest") query = query.order("rating", { ascending: true });
-      else if (params?.sort === "helpful") query = query.order("helpful_count", { ascending: false });
-      else query = query.order("created_at", { ascending: false });
-
-      if (params?.limit) query = query.limit(params.limit);
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      const mapped: ProductReview[] = (data || []).map((r) => ({
-        id: r.id,
-        product_id: r.product_id,
-        user_id: r.user_id,
-        user_name: r.user_name || "Anonymous",
-        user_email: null,
-        rating: r.rating,
-        title: r.title,
-        comment: r.comment,
-        is_verified_purchase: r.is_verified_purchase || false,
-        is_approved: r.is_approved || true,
-        helpful_count: r.helpful_count || 0,
-        created_at: r.created_at,
-        updated_at: r.updated_at,
-      }));
+      const mapped: ProductReview[] = rows.map((r) => ({ ...r, user_email: null }));
 
       setReviews(mapped);
 
@@ -102,7 +78,7 @@ export function useReviews(productId?: string) {
       return false;
     }
     try {
-      const { error } = await supabase.from("product_reviews").insert({
+      await reviewsRepo.create({
         product_id: productId,
         user_id: user.id,
         user_name: user.full_name || user.email || "Anonymous",
@@ -111,7 +87,6 @@ export function useReviews(productId?: string) {
         title: data.title || null,
         comment: data.comment || null,
       });
-      if (error) throw error;
       toast.success("রিভিউ সফলভাবে যোগ হয়েছে");
       await fetchReviews();
       return true;
@@ -129,8 +104,7 @@ export function useReviews(productId?: string) {
       if (data.title !== undefined) updateData.title = data.title;
       if (data.comment !== undefined) updateData.comment = data.comment;
 
-      const { error } = await supabase.from("product_reviews").update(updateData).eq("id", reviewId);
-      if (error) throw error;
+      await reviewsRepo.update(reviewId, updateData as { rating?: number; title?: string; comment?: string });
       toast.success("রিভিউ আপডেট হয়েছে");
       await fetchReviews();
       return true;
@@ -143,8 +117,7 @@ export function useReviews(productId?: string) {
 
   const deleteReview = async (reviewId: string): Promise<boolean> => {
     try {
-      const { error } = await supabase.from("product_reviews").delete().eq("id", reviewId);
-      if (error) throw error;
+      await reviewsRepo.remove(reviewId);
       toast.success("রিভিউ মুছে ফেলা হয়েছে");
       await fetchReviews();
       return true;
@@ -161,14 +134,9 @@ export function useReviews(productId?: string) {
       return false;
     }
     try {
-      const { error } = await supabase.from("review_helpful_votes").insert({
-        review_id: reviewId,
-        user_id: user.id,
-      });
-      if (error) {
-        if (error.code === "23505") {
-          toast.info("আপনি ইতিমধ্যে ভোট দিয়েছেন");
-        }
+      const result = await reviewsRepo.markHelpful(reviewId, user.id);
+      if (result === "duplicate") {
+        toast.info("আপনি ইতিমধ্যে ভোট দিয়েছেন");
         return false;
       }
       toast.success("ধন্যবাদ আপনার ভোটের জন্য");
