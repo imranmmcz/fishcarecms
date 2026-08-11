@@ -68,9 +68,24 @@ async function runSchemaFile(conn, file) {
     await conn.query(sql);
     console.log(`   ✅ Applied: ${file}`);
   } catch (err) {
-    // Don't crash the server — log it. Most errors here are benign
-    // duplicate-object errors on re-runs against an existing database.
-    console.warn(`   ⚠️  ${file}: ${err.code || ''} ${err.sqlMessage || err.message}`);
+    // Fall back to statement-by-statement so one benign failure (duplicate
+    // column, unsupported ALTER) doesn't skip the rest of the file.
+    const statements = sql
+      .split(/;\s*\n/)
+      .map((s) => s.trim())
+      .filter((s) => s && !s.startsWith('--'));
+    let ok = 0;
+    let failed = 0;
+    for (const stmt of statements) {
+      try {
+        await conn.query(stmt);
+        ok++;
+      } catch (e) {
+        failed++;
+        console.warn(`   ⚠️  ${file}: ${e.code || ''} ${e.sqlMessage || e.message}`);
+      }
+    }
+    console.log(`   ✅ Applied: ${file} (${ok} ok, ${failed} skipped)`);
   }
 }
 
