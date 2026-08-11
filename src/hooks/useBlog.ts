@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { blogRepo } from "@/repositories/blog";
+import { getDataSource } from "@/lib/dataSource";
 import { appStorage } from "@/lib/appStorage";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -152,6 +153,13 @@ export function useBlogComments(postId: string | undefined) {
     fetchComments();
 
     if (!postId) return;
+
+    // MySQL routing has no realtime channel — poll instead.
+    if (getDataSource("blog_comments") === "mysql") {
+      const timer = window.setInterval(fetchComments, 20000);
+      return () => window.clearInterval(timer);
+    }
+
     const channel = supabase
       .channel(`blog-comments-${postId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "blog_comments", filter: `post_id=eq.${postId}` }, () => {
@@ -264,6 +272,9 @@ export function useBlogActions() {
       toast({ title: "Error", description: error?.message || "Failed", variant: "destructive" });
       return null;
     }
+
+    // Notifications live in Supabase only.
+    if (getDataSource("blog_posts") === "mysql") return comment;
 
     // Notify post author
     const { data: postData } = await supabase
