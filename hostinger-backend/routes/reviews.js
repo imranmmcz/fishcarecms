@@ -18,9 +18,10 @@ router.get('/product/:productId', optionalAuth, async (req, res) => {
 
     const [reviews] = await db.execute(
       `SELECT 
-        pr.id, pr.product_id, pr.user_id, pr.rating, pr.title, pr.review_text,
-        pr.is_verified_purchase, pr.helpful_count, pr.created_at,
-        u.full_name as user_name, u.avatar_url as user_avatar
+        pr.id, pr.product_id, pr.user_id, pr.rating, pr.title,
+        COALESCE(pr.comment, pr.review_text) AS review_text,
+        pr.is_verified_purchase, pr.is_approved, pr.helpful_count, pr.created_at, pr.updated_at,
+        COALESCE(pr.user_name, u.full_name) as user_name, u.avatar_url as user_avatar
       FROM product_reviews pr
       LEFT JOIN users u ON pr.user_id = u.id
       WHERE pr.product_id = ? AND pr.is_approved = TRUE
