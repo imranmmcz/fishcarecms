@@ -52,6 +52,7 @@ export interface BlogCommentRow {
 }
 
 export interface BlogPostQuery {
+  userId?: string;
   category?: string;
   search?: string;
   sort?: string;
@@ -101,6 +102,7 @@ export const blogRepo = {
     if (isMy()) {
       const params = new URLSearchParams();
       if (q.category) params.set("category", q.category);
+      if (q.userId) params.set("user_id", q.userId);
       if (q.search) params.set("search", q.search);
       if (q.sort) params.set("sort", q.sort);
       params.set("status", q.status ?? "approved");
@@ -112,6 +114,7 @@ export const blogRepo = {
     let query = supabase.from("blog_posts").select("*");
     if (!q.status || q.status !== "all") query = query.eq("status", q.status ?? "approved");
     if (q.category) query = query.eq("category", q.category);
+    if (q.userId) query = query.eq("user_id", q.userId);
     if (q.search) query = query.or(`title.ilike.%${q.search}%,content.ilike.%${q.search}%`);
     query = query.order("is_pinned", { ascending: false });
     if (q.sort === "most-commented") query = query.order("comment_count", { ascending: false });

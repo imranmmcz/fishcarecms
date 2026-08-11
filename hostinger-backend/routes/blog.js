@@ -30,11 +30,12 @@ async function attachImages(posts) {
 // ---------------- POSTS ----------------
 router.get('/posts', async (req, res) => {
   try {
-    const { category, search, sort, status = 'approved', limit = 100, offset = 0 } = req.query;
+    const { category, search, sort, status = 'approved', user_id, limit = 100, offset = 0 } = req.query;
     let sql = 'SELECT * FROM blog_posts WHERE 1=1';
     const params = [];
     if (status && status !== 'all') { sql += ' AND status = ?'; params.push(status); }
     if (category) { sql += ' AND category = ?'; params.push(category); }
+    if (user_id) { sql += ' AND user_id = ?'; params.push(user_id); }
     if (search) {
       sql += ' AND (title LIKE ? OR content LIKE ?)';
       params.push(`%${search}%`, `%${search}%`);
