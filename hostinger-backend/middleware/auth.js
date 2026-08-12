@@ -14,12 +14,16 @@ const authenticateToken = async (req, res, next) => {
     
     // Get user from database
     const [users] = await db.execute(
-      'SELECT id, email, full_name, role FROM users WHERE id = ?',
+      'SELECT id, email, full_name, role, is_blocked FROM users WHERE id = ?',
       [decoded.userId]
     );
 
     if (users.length === 0) {
       return res.status(401).json({ error: 'User not found' });
+    }
+
+    if (users[0].is_blocked) {
+      return res.status(403).json({ error: 'আপনার অ্যাকাউন্ট ব্লক করা হয়েছে।' });
     }
 
     req.user = users[0];
