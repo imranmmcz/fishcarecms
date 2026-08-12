@@ -335,4 +335,41 @@ router.get('/login-attempts', authenticateToken, async (req, res) => {
   res.json({ attempts, max_allowed: MAX_FAILED, lockout_minutes: LOCKOUT_MS / 60000 });
 });
 
+// Update own profile
+router.put('/profile', authenticateToken, async (req, res) => {
+  try {
+    const fields = ['full_name', 'mobile', 'division', 'district', 'upazila', 'village', 'avatar_url'];
+    const updates = [];
+    const params = [];
+    for (const f of fields) {
+      if (req.body[f] !== undefined) {
+        updates.push(`${f} = ?`);
+        params.push(req.body[f]);
+      }
+    }
+    if (updates.length === 0) return res.status(400).json({ error: 'No fields to update' });
+
+    if (req.body.mobile) {
+      const [dup] = await db.execute('SELECT id FROM users WHERE mobile = ? AND id <> ?', [req.body.mobile, req.user.id]);
+      if (dup.length > 0) {
+        return res.status(400).json({ error: 'এই মোবাইল নম্বর অন্য অ্যাকাউন্টে ব্যবহৃত হয়েছে।' });
+      }
+    }
+
+    updates.push('updated_at = NOW()');
+    params.push(req.user.id);
+    await db.execute(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+
+    const [users] = await db.execute(
+      `SELECT id, email, full_name, mobile, division, district, upazila, village, role, avatar_url, created_at
+         FROM users WHERE id = ?`,
+      [req.user.id]
+    );
+    res.json({ user: users[0] });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
 module.exports = router;
