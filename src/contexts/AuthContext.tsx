@@ -1,10 +1,15 @@
 /**
- * AuthContext - Supabase/Lovable Cloud Version
+ * AuthContext — hybrid auth.
+ * Provider is chosen at runtime (Admin → Database Config):
+ *   "supabase" (default) → Supabase/Lovable Cloud auth
+ *   "mysql"              → custom JWT auth against the Hostinger backend
  */
 
 import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { isMysqlAuth } from "@/lib/authProvider";
+import { mysqlAuth, type MysqlUser } from "@/lib/mysqlAuth";
 
 interface AddressData {
   mobile?: string;
@@ -67,11 +72,13 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const mysqlMode = isMysqlAuth();
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mysqlUser, setMysqlUser] = useState<MysqlUser | null>(null);
   // Tracks whether the user's role row has been fetched yet.
   // Starts true so route guards wait until we know the role.
   const [roleLoading, setRoleLoading] = useState(true);
@@ -79,10 +86,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAdmin = userRole === 'admin';
   const isFarmer = userRole === 'farmer';
   const isCustomer = userRole === 'customer';
-  const isAuthenticated = !!supabaseUser;
+  const isAuthenticated = mysqlMode ? !!mysqlUser : !!supabaseUser;
 
   // Build compatibility User object - memoized to prevent infinite re-renders
-  const user: User | null = useMemo(() => supabaseUser ? {
+  const user: User | null = useMemo(() => {
+    if (mysqlMode) {
+      return mysqlUser
+        ? {
+            id: String(mysqlUser.id),
+            email: mysqlUser.email || '',
+            full_name: mysqlUser.full_name ?? null,
+            role: mysqlUser.role || 'user',
+            mobile: mysqlUser.mobile ?? null,
+            division: mysqlUser.division ?? null,
+            district: mysqlUser.district ?? null,
+            upazila: mysqlUser.upazila ?? null,
+            village: mysqlUser.village ?? null,
+            avatar_url: mysqlUser.avatar_url ?? null,
+            created_at: mysqlUser.created_at ?? null,
+          }
+        : null;
+    }
+    return supabaseUser ? {
     id: supabaseUser.id,
     email: supabaseUser.email || '',
     full_name: profile?.full_name || supabaseUser.user_metadata?.full_name || null,
@@ -94,7 +119,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     village: profile?.village,
     avatar_url: profile?.avatar_url,
     created_at: supabaseUser.created_at,
-  } : null, [supabaseUser, profile, userRole]);
+  } : null;
+  }, [mysqlMode, mysqlUser, supabaseUser, profile, userRole]);
+
+  /** Map a MySQL user row onto the shared profile/role state. */
+  const applyMysqlUser = (u: MysqlUser | null) => {
+    setMysqlUser(u);
+    setUserRole((u?.role as UserRole) || null);
+    setProfile(
+      u
+        ? {
+            id: String(u.id),
+            user_id: String(u.id),
+            email: u.email ?? null,
+            full_name: u.full_name ?? null,
+            mobile: u.mobile ?? null,
+            division: u.division ?? null,
+            district: u.district ?? null,
+            upazila: u.upazila ?? null,
+            village: u.village ?? null,
+            avatar_url: u.avatar_url ?? null,
+          }
+        : null
+    );
+    setRoleLoading(false);
+  };
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -166,6 +215,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    if (mysqlMode) {
+      let active = true;
+      mysqlAuth
+        .me()
+        .then((u) => {
+          if (!active) return;
+          applyMysqlUser(u);
+        })
+        .catch(() => active && applyMysqlUser(null))
+        .finally(() => active && setIsLoading(false));
+      return () => {
+        active = false;
+      };
+    }
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -197,9 +261,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [mysqlMode]);
 
   const signIn = async (email: string, password: string) => {
+    if (mysqlMode) {
+      try {
+        const u = await mysqlAuth.signIn(email, password);
+        applyMysqlUser(u);
+        return { error: null };
+      } catch (e) {
+        return { error: e as Error };
+      }
+    }
+
     const { error, data } = await supabase.auth.signInWithPassword({ email, password });
     
     if (!error && data?.user) {
@@ -224,6 +298,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, fullName: string, addressData?: AddressData, roleType?: string) => {
+    if (mysqlMode) {
+      try {
+        if (addressData?.mobile) {
+          const available = await mysqlAuth.isMobileAvailable(addressData.mobile);
+          if (!available) {
+            return { error: new Error("এই মোবাইল নম্বর দিয়ে ইতোমধ্যে অ্যাকাউন্ট আছে। অন্য নম্বর ব্যবহার করুন।") };
+          }
+        }
+        const u = await mysqlAuth.signUp({
+          email,
+          password,
+          full_name: fullName,
+          mobile: addressData?.mobile,
+          division: addressData?.division,
+          district: addressData?.district,
+          upazila: addressData?.upazila,
+          village: addressData?.village,
+          role_type: roleType || 'farmer',
+        });
+        applyMysqlUser(u);
+        return { error: null };
+      } catch (e) {
+        return { error: e as Error };
+      }
+    }
+
     // Check duplicate mobile
     if (addressData?.mobile) {
       const { data: mobileAvailable } = await supabase.rpc("is_mobile_available", { mobile_number: addressData.mobile });
@@ -252,12 +352,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    if (mysqlMode) {
+      await mysqlAuth.signOut();
+      applyMysqlUser(null);
+      return;
+    }
     await supabase.auth.signOut();
     setProfile(null);
     setUserRole(null);
   };
 
   const updateProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
+    if (mysqlMode) {
+      if (!mysqlUser) return false;
+      try {
+        const u = await mysqlAuth.updateProfile({
+          full_name: data.full_name,
+          mobile: data.mobile,
+          division: data.division,
+          district: data.district,
+          upazila: data.upazila,
+          village: data.village,
+          avatar_url: data.avatar_url,
+        });
+        applyMysqlUser(u);
+        return true;
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        return false;
+      }
+    }
     if (!supabaseUser) return false;
     try {
       const { error } = await supabase
@@ -286,11 +410,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updatePassword = async (_currentPassword: string, newPassword: string) => {
+    if (mysqlMode) {
+      try {
+        await mysqlAuth.updatePassword(_currentPassword, newPassword);
+        return { error: null };
+      } catch (e) {
+        return { error: e as Error };
+      }
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     return { error: error as Error | null };
   };
 
   const refreshUser = async () => {
+    if (mysqlMode) {
+      const u = await mysqlAuth.me();
+      applyMysqlUser(u);
+      return;
+    }
     if (!supabaseUser) return;
     await loadUserData(supabaseUser.id);
   };
