@@ -75,7 +75,7 @@ setInterval(() => {
 // ===== Sign Up =====
 router.post('/signup', async (req, res) => {
   try {
-    const { email, password, full_name, mobile, division, district, upazila, village } = req.body;
+    const { email, password, full_name, mobile, division, district, upazila, village, role_type } = req.body;
 
     if (!email || !password || !full_name) {
       return res.status(400).json({ error: 'Email, password and full name are required' });
@@ -91,14 +91,28 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
+    // Mobile must be unique when provided
+    if (mobile) {
+      const [dupMobile] = await db.execute('SELECT id FROM users WHERE mobile = ?', [mobile]);
+      if (dupMobile.length > 0) {
+        return res.status(400).json({
+          error: 'এই মোবাইল নম্বর দিয়ে ইতোমধ্যে অ্যাকাউন্ট আছে। অন্য নম্বর ব্যবহার করুন।',
+          error_en: 'Mobile number already registered',
+        });
+      }
+    }
+
+    const ALLOWED_SIGNUP_ROLES = ['farmer', 'customer', 'user', 'blogger'];
+    const role = ALLOWED_SIGNUP_ROLES.includes(role_type) ? role_type : 'farmer';
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
     const [result] = await db.execute(
       `INSERT INTO users (email, password, full_name, mobile, division, district, upazila, village, role, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'user', NOW())`,
-      [email, hashedPassword, full_name, mobile || null, division || null, district || null, upazila || null, village || null]
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [email, hashedPassword, full_name, mobile || null, division || null, district || null, upazila || null, village || null, role]
     );
 
     // Generate token
@@ -114,7 +128,12 @@ router.post('/signup', async (req, res) => {
         id: result.insertId,
         email,
         full_name,
-        role: 'user'
+        mobile: mobile || null,
+        division: division || null,
+        district: district || null,
+        upazila: upazila || null,
+        village: village || null,
+        role
       },
       token
     });
@@ -124,17 +143,30 @@ router.post('/signup', async (req, res) => {
   }
 });
 
+// ===== Mobile availability check =====
+router.get('/mobile-available', async (req, res) => {
+  try {
+    const mobile = String(req.query.mobile || '').trim();
+    if (!mobile) return res.json({ available: true });
+    const [rows] = await db.execute('SELECT id FROM users WHERE mobile = ?', [mobile]);
+    res.json({ available: rows.length === 0 });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to check mobile' });
+  }
+});
+
 // ===== Sign In (with rate limiting + account lockout) =====
 router.post('/signin', loginLimiter, async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, identifier, password } = req.body;
+    const loginId = String(identifier || email || '').trim();
 
-    if (!email || !password) {
+    if (!loginId || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
     // Check account lockout
-    const lockStatus = checkAccountLock(email);
+    const lockStatus = checkAccountLock(loginId);
     if (lockStatus.locked) {
       return res.status(429).json({ 
         error: `অ্যাকাউন্ট সাময়িকভাবে লক করা হয়েছে। ${lockStatus.remainingMinutes} মিনিট পর আবার চেষ্টা করুন।`,
@@ -144,14 +176,16 @@ router.post('/signin', loginLimiter, async (req, res) => {
       });
     }
 
-    // Find user
+    // Find user by email OR mobile
     const [users] = await db.execute(
-      'SELECT id, email, password, full_name, role, avatar_url FROM users WHERE email = ?',
-      [email]
+      `SELECT id, email, password, full_name, mobile, division, district, upazila, village,
+              role, avatar_url, is_blocked, created_at
+         FROM users WHERE email = ? OR mobile = ? LIMIT 1`,
+      [loginId, loginId]
     );
 
     if (users.length === 0) {
-      const attemptInfo = recordFailedAttempt(email);
+      const attemptInfo = recordFailedAttempt(loginId);
       return res.status(401).json({ 
         error: 'ভুল ইমেইল বা পাসওয়ার্ড',
         error_en: 'Invalid email or password',
@@ -173,7 +207,7 @@ router.post('/signin', loginLimiter, async (req, res) => {
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      const attemptInfo = recordFailedAttempt(email);
+      const attemptInfo = recordFailedAttempt(loginId);
       
       let warningMsg = '';
       if (attemptInfo.remaining <= 2) {
@@ -188,7 +222,7 @@ router.post('/signin', loginLimiter, async (req, res) => {
     }
 
     // Success — clear failed attempts
-    clearFailedAttempts(email);
+    clearFailedAttempts(loginId);
 
     // Update last sign in
     try {
@@ -209,8 +243,14 @@ router.post('/signin', loginLimiter, async (req, res) => {
         id: user.id,
         email: user.email,
         full_name: user.full_name,
+        mobile: user.mobile,
+        division: user.division,
+        district: user.district,
+        upazila: user.upazila,
+        village: user.village,
         role: user.role,
-        avatar_url: user.avatar_url
+        avatar_url: user.avatar_url,
+        created_at: user.created_at
       },
       token
     });
@@ -293,6 +333,43 @@ router.get('/login-attempts', authenticateToken, async (req, res) => {
   }
   
   res.json({ attempts, max_allowed: MAX_FAILED, lockout_minutes: LOCKOUT_MS / 60000 });
+});
+
+// Update own profile
+router.put('/profile', authenticateToken, async (req, res) => {
+  try {
+    const fields = ['full_name', 'mobile', 'division', 'district', 'upazila', 'village', 'avatar_url'];
+    const updates = [];
+    const params = [];
+    for (const f of fields) {
+      if (req.body[f] !== undefined) {
+        updates.push(`${f} = ?`);
+        params.push(req.body[f]);
+      }
+    }
+    if (updates.length === 0) return res.status(400).json({ error: 'No fields to update' });
+
+    if (req.body.mobile) {
+      const [dup] = await db.execute('SELECT id FROM users WHERE mobile = ? AND id <> ?', [req.body.mobile, req.user.id]);
+      if (dup.length > 0) {
+        return res.status(400).json({ error: 'এই মোবাইল নম্বর অন্য অ্যাকাউন্টে ব্যবহৃত হয়েছে।' });
+      }
+    }
+
+    updates.push('updated_at = NOW()');
+    params.push(req.user.id);
+    await db.execute(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+
+    const [users] = await db.execute(
+      `SELECT id, email, full_name, mobile, division, district, upazila, village, role, avatar_url, created_at
+         FROM users WHERE id = ?`,
+      [req.user.id]
+    );
+    res.json({ user: users[0] });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
 });
 
 module.exports = router;

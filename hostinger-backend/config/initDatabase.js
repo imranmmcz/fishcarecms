@@ -28,6 +28,7 @@ const RUN_ORDER = [
   'pos_schema.sql',
   'catalog_schema.sql',
   'complete_schema.sql',
+  'auth_upgrade.sql',
 ];
 
 async function ensureDatabaseExists() {
