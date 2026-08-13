@@ -16,6 +16,7 @@ import {
   saveRouting,
 } from "@/lib/dataSource";
 import { pingBackend } from "@/lib/apiClient";
+import { isMysqlAuth } from "@/lib/authProvider";
 import MySQLBackendSettings from "@/components/admin/MySQLBackendSettings";
 import MySQLHealthPanel from "@/components/admin/MySQLHealthPanel";
 import StorageBackendSettings from "@/components/admin/StorageBackendSettings";
@@ -59,6 +60,7 @@ export default function AdminDatabaseConfig() {
   const bn = language === "bn";
 
   const [routing, setRouting] = useState<RoutingMap>(getRouting());
+  const authLocked = isMysqlAuth();
   const [saving, setSaving] = useState(false);
   const [pinging, setPinging] = useState(false);
   const [backendUp, setBackendUp] = useState<boolean | null>(null);
