@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getAuthProvider, setAuthProvider } from "@/lib/authProvider";
+import { saveRouting, allMysqlRouting } from "@/lib/dataSource";
 import { pingBackend } from "@/lib/apiClient";
 import { KeyRound, Loader2 } from "lucide-react";
 
@@ -36,6 +37,15 @@ export default function AuthBackendSettings() {
     const next = toMysql ? "mysql" : "supabase";
     setAuthProvider(next);
     setProvider(next);
+    if (toMysql) {
+      // Move every routable module to MySQL so no request runs against
+      // Supabase RLS without a session (which looks like a logout).
+      try {
+        await saveRouting(allMysqlRouting());
+      } catch {
+        /* local cache is already updated */
+      }
+    }
     toast({
       title: bn ? "অথ প্রোভাইডার পরিবর্তন হয়েছে" : "Auth provider changed",
       description: bn
