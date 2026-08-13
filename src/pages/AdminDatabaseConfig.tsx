@@ -16,6 +16,7 @@ import {
   saveRouting,
 } from "@/lib/dataSource";
 import { pingBackend } from "@/lib/apiClient";
+import { isMysqlAuth } from "@/lib/authProvider";
 import MySQLBackendSettings from "@/components/admin/MySQLBackendSettings";
 import MySQLHealthPanel from "@/components/admin/MySQLHealthPanel";
 import StorageBackendSettings from "@/components/admin/StorageBackendSettings";
@@ -59,6 +60,7 @@ export default function AdminDatabaseConfig() {
   const bn = language === "bn";
 
   const [routing, setRouting] = useState<RoutingMap>(getRouting());
+  const authLocked = isMysqlAuth();
   const [saving, setSaving] = useState(false);
   const [pinging, setPinging] = useState(false);
   const [backendUp, setBackendUp] = useState<boolean | null>(null);
@@ -200,6 +202,16 @@ export default function AdminDatabaseConfig() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {authLocked && (
+            <Alert>
+              <AlertDescription className="text-sm">
+                {bn
+                  ? "MySQL auth চালু আছে, তাই সব মডিউল স্বয়ংক্রিয়ভাবে MySQL-এ লক করা হয়েছে — Supabase-এ রাউট করলে সেশন না থাকায় লগআউট দেখাবে।"
+                  : "MySQL auth is active, so every module is locked to MySQL — routing to Supabase would appear signed-out (no session)."}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Alert>
             <AlertDescription className="text-sm">
               {bn
@@ -209,10 +221,10 @@ export default function AdminDatabaseConfig() {
           </Alert>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => setAll("supabase")}>
+            <Button variant="outline" size="sm" disabled={authLocked} onClick={() => setAll("supabase")}>
               {bn ? "সব Supabase-এ" : "All → Supabase"}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setAll("mysql")}>
+            <Button variant="outline" size="sm" disabled={authLocked} onClick={() => setAll("mysql")}>
               {bn ? "প্রস্তুত মডিউল MySQL-এ" : "Ready modules → MySQL"}
             </Button>
           </div>
@@ -236,7 +248,7 @@ export default function AdminDatabaseConfig() {
                     </Badge>
                     <Switch
                       checked={isMysql}
-                      disabled={!ready}
+                      disabled={!ready || authLocked}
                       onCheckedChange={(v) => toggleModule(m, v)}
                       aria-label={`Route ${m} to MySQL`}
                     />
@@ -247,7 +259,7 @@ export default function AdminDatabaseConfig() {
           </div>
 
           <div className="flex justify-end pt-2">
-            <Button onClick={handleSave} disabled={saving} size="lg">
+            <Button onClick={handleSave} disabled={saving || authLocked} size="lg">
               {saving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
