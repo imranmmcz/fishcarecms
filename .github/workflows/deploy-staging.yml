@@ -1,0 +1,237 @@
+name: Deploy to Staging
+
+# Staging deploys run from the `staging` branch (or manually) and target a
+# separate Hostinger folder + subdomain, e.g. staging.fishcare.com.bd.
+# All secrets are STAGING_* so production credentials are never touched.
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+env:
+  PM2_APP: fishcare-api-staging
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # 1) Build the React frontend and ship dist/ → staging public_html
+  # ─────────────────────────────────────────────────────────────
+  deploy-frontend:
+    name: Build & deploy frontend (staging)
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Write build env
+        run: |
+          cat > .env.production <<EOF
+          VITE_API_URL=${{ secrets.STAGING_VITE_API_URL }}
+          VITE_SUPABASE_URL=${{ secrets.STAGING_VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY=${{ secrets.STAGING_VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_PROJECT_ID=${{ secrets.STAGING_VITE_SUPABASE_PROJECT_ID }}
+          EOF
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify Vite build output
+        run: |
+          set -e
+          if [ ! -f dist/index.html ]; then
+            echo "dist/index.html missing — build failed" >&2
+            exit 1
+          fi
+          if [ ! -d dist/assets ]; then
+            echo "dist/assets directory missing — build failed" >&2
+            exit 1
+          fi
+          js_count=$(find dist/assets -name '*.js' | wc -l)
+          css_count=$(find dist/assets -name '*.css' | wc -l)
+          if [ "$js_count" -lt 1 ] || [ "$css_count" -lt 1 ]; then
+            echo "Expected at least one JS and one CSS asset; found JS=$js_count CSS=$css_count" >&2
+            exit 1
+          fi
+          echo "Build verified: $js_count JS asset(s), $css_count CSS asset(s)"
+
+      - name: Ship .htaccess with the build
+        run: cp hostinger-backend/.htaccess dist/.htaccess
+
+      - name: Block search engines on staging
+        run: |
+          printf 'User-agent: *\nDisallow: /\n' > dist/robots.txt
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
+
+      - name: Trust host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.STAGING_SSH_PORT }} -H ${{ secrets.STAGING_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Test SSH connectivity
+        run: |
+          output=$(ssh -p ${{ secrets.STAGING_SSH_PORT }} \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} "echo ok")
+          [ "$output" = "ok" ] || { echo "SSH connectivity test failed" >&2; exit 1; }
+          echo "SSH connectivity OK"
+
+      - name: Snapshot current staging public_html
+        id: snapshot_frontend
+        run: |
+          BACKUP="${{ secrets.STAGING_PUBLIC_HTML_PATH }}.bak-${GITHUB_RUN_ID}"
+          echo "backup_path=$BACKUP" >> "$GITHUB_OUTPUT"
+          ssh -p ${{ secrets.STAGING_SSH_PORT }} \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
+            "set -e; \
+             SRC='${{ secrets.STAGING_PUBLIC_HTML_PATH }}'; \
+             DST='$BACKUP'; \
+             if [ -d \"\$SRC\" ]; then rm -rf \"\$DST\"; cp -a \"\$SRC\" \"\$DST\"; echo \"Snapshot at \$DST\"; \
+             else echo 'No existing public_html — skipping snapshot'; fi"
+
+      - name: Rsync dist/ → staging public_html
+        run: |
+          rsync -avz --delete \
+            --exclude='api' --exclude='api/**' \
+            --exclude='uploads' --exclude='uploads/**' \
+            -e "ssh -p ${{ secrets.STAGING_SSH_PORT }}" \
+            dist/ \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }}:${{ secrets.STAGING_PUBLIC_HTML_PATH }}/
+
+      - name: Frontend health check
+        run: |
+          sleep 3
+          BASE="${{ secrets.STAGING_VITE_API_URL }}"
+          ORIGIN="${BASE%/api}"
+          curl -fsS -o /dev/null "$ORIGIN/index.html" || curl -fsS -o /dev/null "$ORIGIN/"
+
+      - name: Rollback frontend on failure
+        if: failure() && steps.snapshot_frontend.outputs.backup_path != ''
+        run: |
+          BACKUP="${{ steps.snapshot_frontend.outputs.backup_path }}"
+          ssh -p ${{ secrets.STAGING_SSH_PORT }} \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
+            "set -e; SRC='${{ secrets.STAGING_PUBLIC_HTML_PATH }}'; DST='$BACKUP'; \
+             if [ -d \"\$DST\" ]; then rm -rf \"\$SRC\"; mv \"\$DST\" \"\$SRC\"; echo 'Rollback complete.'; \
+             else echo 'No snapshot found — cannot rollback.' >&2; exit 1; fi"
+
+      - name: Cleanup snapshot on success
+        if: success() && steps.snapshot_frontend.outputs.backup_path != ''
+        run: |
+          ssh -p ${{ secrets.STAGING_SSH_PORT }} \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
+            "rm -rf '${{ steps.snapshot_frontend.outputs.backup_path }}'"
+
+  # ─────────────────────────────────────────────────────────────
+  # 2) Sync backend folder and PM2-restart the staging API
+  # ─────────────────────────────────────────────────────────────
+  deploy-backend:
+    name: Deploy backend (staging)
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
+
+      - name: Trust host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.STAGING_SSH_PORT }} -H ${{ secrets.STAGING_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Test SSH connectivity
+        run: |
+          output=$(ssh -p ${{ secrets.STAGING_SSH_PORT }} \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} "echo ok")
+          [ "$output" = "ok" ] || { echo "SSH connectivity test failed" >&2; exit 1; }
+
+      - name: Snapshot current staging backend
+        id: snapshot_backend
+        run: |
+          BACKUP="${{ secrets.STAGING_BACKEND_PATH }}.bak-${GITHUB_RUN_ID}"
+          echo "backup_path=$BACKUP" >> "$GITHUB_OUTPUT"
+          ssh -p ${{ secrets.STAGING_SSH_PORT }} \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
+            "set -e; SRC='${{ secrets.STAGING_BACKEND_PATH }}'; DST='$BACKUP'; \
+             if [ -d \"\$SRC\" ]; then rm -rf \"\$DST\"; mkdir -p \"\$DST\"; \
+               rsync -a --delete --exclude='node_modules' --exclude='logs' \"\$SRC\"/ \"\$DST\"/; \
+               echo \"Snapshot at \$DST\"; \
+             else echo 'No existing backend directory — skipping snapshot'; fi"
+
+      - name: Rsync hostinger-backend/ → staging (preserve .env & uploads)
+        run: |
+          rsync -avz --delete \
+            --exclude='.env' --exclude='node_modules' --exclude='logs' \
+            --exclude='uploads/products/*' \
+            --exclude='uploads/avatars/*' \
+            --exclude='uploads/general/*' \
+            -e "ssh -p ${{ secrets.STAGING_SSH_PORT }}" \
+            hostinger-backend/ \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }}:${{ secrets.STAGING_BACKEND_PATH }}/
+
+      - name: Install deps & restart PM2 (staging app)
+        run: |
+          ssh -p ${{ secrets.STAGING_SSH_PORT }} \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
+            "cd ${{ secrets.STAGING_BACKEND_PATH }} && \
+             npm ci --omit=dev && \
+             (pm2 restart ${{ env.PM2_APP }} --update-env || \
+              pm2 start ecosystem.config.js --name ${{ env.PM2_APP }} --env staging) && \
+             pm2 save"
+
+      - name: Backend health check
+        run: |
+          sleep 5
+          curl -fsS ${{ secrets.STAGING_VITE_API_URL }}/health || { echo "Health check failed" >&2; exit 1; }
+
+      - name: Smoke test key API routes
+        run: |
+          set -e
+          BASE="${{ secrets.STAGING_VITE_API_URL }}"
+          curl -fsS -o /dev/null "$BASE/health"
+          curl -fsS -o /dev/null "$BASE/api/products?limit=1" || echo "products route not public — skipped"
+
+      - name: Rollback backend on failure
+        if: failure() && steps.snapshot_backend.outputs.backup_path != ''
+        run: |
+          BACKUP="${{ steps.snapshot_backend.outputs.backup_path }}"
+          ssh -p ${{ secrets.STAGING_SSH_PORT }} \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
+            "set -e; SRC='${{ secrets.STAGING_BACKEND_PATH }}'; DST='$BACKUP'; \
+             if [ -d \"\$DST\" ]; then \
+               rsync -a --delete --exclude='node_modules' --exclude='logs' \"\$DST\"/ \"\$SRC\"/; \
+               cd \"\$SRC\" && npm ci --omit=dev && \
+               (pm2 restart ${{ env.PM2_APP }} --update-env || pm2 start ecosystem.config.js --name ${{ env.PM2_APP }} --env staging) && \
+               pm2 save; echo 'Backend rollback complete.'; \
+             else echo 'No snapshot found — cannot rollback.' >&2; exit 1; fi"
+
+      - name: Cleanup snapshot on success
+        if: success() && steps.snapshot_backend.outputs.backup_path != ''
+        run: |
+          ssh -p ${{ secrets.STAGING_SSH_PORT }} \
+            ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
+            "rm -rf '${{ steps.snapshot_backend.outputs.backup_path }}'"
