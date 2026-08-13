@@ -9,6 +9,7 @@
  * until an admin explicitly flips a module to `mysql`.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { isMysqlAuth } from "@/lib/authProvider";
 
 export const ROUTABLE_MODULES = [
   "products",
@@ -77,6 +78,14 @@ const defaultRouting = (): RoutingMap =>
     return acc;
   }, {} as RoutingMap);
 
+/** Every module forced to MySQL — used when custom MySQL auth is active,
+ *  because Supabase requests would run unauthenticated (RLS = signed out). */
+export const allMysqlRouting = (): RoutingMap =>
+  ROUTABLE_MODULES.reduce((acc, m) => {
+    acc[m] = "mysql";
+    return acc;
+  }, {} as RoutingMap);
+
 let cache: RoutingMap | null = null;
 
 function readLocal(): RoutingMap {
@@ -100,6 +109,8 @@ function writeLocal(map: RoutingMap) {
 
 /** Synchronous lookup used by repo facades on every call. */
 export function getDataSource(module: RoutableModule): DataSource {
+  // MySQL auth ⇒ no Supabase session exists, so never route to Supabase.
+  if (isMysqlAuth()) return "mysql";
   if (!cache) cache = readLocal();
   return cache[module] ?? "supabase";
 }
@@ -109,12 +120,19 @@ export function isMysql(module: RoutableModule): boolean {
 }
 
 export function getRouting(): RoutingMap {
+  if (isMysqlAuth()) return allMysqlRouting();
   if (!cache) cache = readLocal();
   return { ...cache };
 }
 
 /** Pull routing from Supabase and hydrate the local cache. Call on app boot. */
 export async function loadRoutingFromServer(): Promise<RoutingMap> {
+  if (isMysqlAuth()) {
+    const forced = allMysqlRouting();
+    cache = forced;
+    writeLocal(forced);
+    return forced;
+  }
   try {
     const { data, error } = await supabase
       .from("system_settings")
@@ -143,6 +161,8 @@ export async function loadRoutingFromServer(): Promise<RoutingMap> {
 export async function saveRouting(map: RoutingMap): Promise<void> {
   cache = { ...map };
   writeLocal(cache);
+  // With MySQL auth there is no Supabase session; skip the remote write.
+  if (isMysqlAuth()) return;
   const payload = JSON.stringify(cache);
   // Upsert: try update first, then insert if missing.
   const { error: updErr } = await supabase
