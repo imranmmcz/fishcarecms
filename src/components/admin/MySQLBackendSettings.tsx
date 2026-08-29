@@ -60,7 +60,9 @@ const MySQLBackendSettings = () => {
   useEffect(() => {
     try {
       const savedMySQL = localStorage.getItem(STORAGE_KEY);
-      if (savedMySQL) setMysqlConfig(JSON.parse(savedMySQL));
+      // Password is never persisted — keep it session-only (empty on reload)
+      if (savedMySQL) setMysqlConfig({ ...JSON.parse(savedMySQL), password: "" });
+
 
       const savedAPI = localStorage.getItem(API_STORAGE_KEY);
       if (savedAPI) setApiConfig(JSON.parse(savedAPI));
