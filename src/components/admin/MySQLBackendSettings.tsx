@@ -101,7 +101,10 @@ const MySQLBackendSettings = () => {
   const saveConfig = async () => {
     setIsSaving(true);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(mysqlConfig));
+      // Never persist the database password in the browser — the server reads it from its own .env
+      const { password: _omitPassword, ...safeMysqlConfig } = mysqlConfig;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(safeMysqlConfig));
+
       localStorage.setItem(API_STORAGE_KEY, JSON.stringify(apiConfig));
       localStorage.setItem(BACKEND_ENABLED_KEY, isEnabled.toString());
 
