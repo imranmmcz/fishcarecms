@@ -116,7 +116,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use(metricsMiddleware);
 
 // Static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, filePath) => {
+    // Prevent MIME sniffing and never render uploaded markup inline
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+    if (/\.(svg|svgz|html?|xml)$/i.test(filePath)) {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment');
+    }
+  },
+}));
 
 // API Routes
 app.use('/api/auth', authRoutes);
