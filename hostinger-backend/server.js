@@ -32,7 +32,10 @@ const { metricsMiddleware } = require('./middleware/metrics');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
+// Behind Hostinger/LiteSpeed Passenger proxy — required for correct client IPs
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
+
 
 // Ensure logs directory exists
 const logsDir = path.join(__dirname, 'logs');

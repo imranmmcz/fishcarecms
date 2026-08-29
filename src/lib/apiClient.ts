@@ -18,8 +18,12 @@ export function getApiBaseUrl(): string {
   } catch {
     /* ignore */
   }
-  return (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+  const envUrl = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+  if (envUrl) return envUrl;
+  // Production default: dedicated Hostinger API subdomain
+  return "https://api.fishcare.com.bd/api";
 }
+
 
 export class ApiError extends Error {
   status: number;
