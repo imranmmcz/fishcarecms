@@ -53,14 +53,14 @@ const generalStorage = multer.diskStorage({
 
 // File filter - only allow images
 const imageFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp|svg/;
+  const allowedTypes = /jpeg|jpg|png|gif|webp/; // SVG intentionally excluded (stored XSS risk)
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = allowedTypes.test(file.mimetype);
 
   if (extname && mimetype) {
     cb(null, true);
   } else {
-    cb(new Error('শুধুমাত্র ইমেজ ফাইল (JPEG, PNG, GIF, WebP, SVG) অনুমোদিত!'), false);
+    cb(new Error('শুধুমাত্র ইমেজ ফাইল (JPEG, PNG, GIF, WebP) অনুমোদিত!'), false);
   }
 };
 
@@ -114,9 +114,9 @@ const bucketStorage = multer.diskStorage({
 });
 
 const anyFileFilter = (req, file, cb) => {
-  const allowed = /jpeg|jpg|png|gif|webp|svg|pdf|doc|docx/;
+  const allowed = /jpeg|jpg|png|gif|webp|pdf|doc|docx/; // SVG intentionally excluded (stored XSS risk)
   const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-  const mt = /image\/|application\/pdf|application\/msword|application\/vnd\.openxml/.test(file.mimetype);
+  const mt = /image\/(jpeg|png|gif|webp)|application\/pdf|application\/msword|application\/vnd\.openxml/.test(file.mimetype);
   if (ext && mt) return cb(null, true);
   cb(new Error('অননুমোদিত ফাইল টাইপ'), false);
 };
