@@ -356,6 +356,7 @@ serve(async (req) => {
 
     let isAdmin = false;
     let isCronCall = false;
+    let userId: string | null = null;
 
     // Scheduled/system calls must present a valid cron secret
     if (CRON_SECRET && cronSecretHeader && cronSecretHeader === CRON_SECRET) {
@@ -380,7 +381,7 @@ serve(async (req) => {
         { global: { headers: { Authorization: authHeader } } }
       );
       const { data: userData } = await supabase.auth.getUser(token);
-      const userId = userData?.user?.id;
+      userId = userData?.user?.id ?? null;
 
       if (!userId) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
