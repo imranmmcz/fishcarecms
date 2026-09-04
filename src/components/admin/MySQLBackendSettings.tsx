@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Database, Globe, Save, Loader2, RefreshCw, Eye, EyeOff, AlertTriangle, CheckCircle2, XCircle, Server } from "lucide-react";
 import { Info } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/apiClient";
+
 
 interface MySQLConfig {
   host: string;
