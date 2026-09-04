@@ -7,8 +7,38 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const API_STORAGE_KEY = "api_server_config";
+const CANONICAL_API_URL = "https://api.fishcare.com.bd/api";
+const MIGRATION_FLAG = "api_server_config_migrated_v1";
+
+/**
+ * One-time migration: rewrite any legacy fishcare API base URL
+ * (e.g. https://new.fishcare.com.bd/api) to the dedicated API subdomain.
+ * Local/dev URLs are left untouched.
+ */
+function migrateLegacyApiUrl(): void {
+  try {
+    if (localStorage.getItem(MIGRATION_FLAG)) return;
+    const saved = localStorage.getItem(API_STORAGE_KEY);
+    if (saved) {
+      const cfg = JSON.parse(saved) as { baseUrl?: string };
+      const url = (cfg.baseUrl || "").trim();
+      const isLocal = /localhost|127\.0\.0\.1|:\d{4}/.test(url);
+      const isFishcare = /fishcare\.com\.bd/i.test(url);
+      if (url && !isLocal && isFishcare && url.replace(/\/$/, "") !== CANONICAL_API_URL) {
+        localStorage.setItem(
+          API_STORAGE_KEY,
+          JSON.stringify({ ...cfg, baseUrl: CANONICAL_API_URL })
+        );
+      }
+    }
+    localStorage.setItem(MIGRATION_FLAG, "1");
+  } catch {
+    /* ignore */
+  }
+}
 
 export function getApiBaseUrl(): string {
+  migrateLegacyApiUrl();
   try {
     const saved = localStorage.getItem(API_STORAGE_KEY);
     if (saved) {
@@ -21,8 +51,9 @@ export function getApiBaseUrl(): string {
   const envUrl = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
   if (envUrl) return envUrl;
   // Production default: dedicated Hostinger API subdomain
-  return "https://api.fishcare.com.bd/api";
+  return CANONICAL_API_URL;
 }
+
 
 
 export class ApiError extends Error {

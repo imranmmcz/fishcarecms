@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Database, Globe, Save, Loader2, RefreshCw, Eye, EyeOff, AlertTriangle, CheckCircle2, XCircle, Server } from "lucide-react";
 import { Info } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/apiClient";
+
 
 interface MySQLConfig {
   host: string;
@@ -64,8 +66,15 @@ const MySQLBackendSettings = () => {
       if (savedMySQL) setMysqlConfig({ ...JSON.parse(savedMySQL), password: "" });
 
 
+      // getApiBaseUrl() also migrates any legacy fishcare API URL to api.fishcare.com.bd
+      const migratedBase = getApiBaseUrl();
       const savedAPI = localStorage.getItem(API_STORAGE_KEY);
-      if (savedAPI) setApiConfig(JSON.parse(savedAPI));
+      const parsedAPI = savedAPI ? JSON.parse(savedAPI) : {};
+      setApiConfig({
+        frontendUrl: parsedAPI.frontendUrl || window.location.origin,
+        baseUrl: parsedAPI.baseUrl || migratedBase,
+      });
+
 
       const savedEnabled = localStorage.getItem(BACKEND_ENABLED_KEY);
       if (savedEnabled) setIsEnabled(savedEnabled === "true");
