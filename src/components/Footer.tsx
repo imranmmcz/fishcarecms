@@ -3,6 +3,8 @@ import { Fish, Phone, Mail, MapPin, Facebook, Youtube, MessageCircle, Instagram,
 import { useLanguage } from "@/contexts/LanguageContext";
 import { UnderwaterEffect } from "@/components/UnderwaterEffect";
 import { usePageContent } from "@/hooks/usePageContent";
+import ApiHealthWidget from "@/components/ApiHealthWidget";
+
 
 const iconMap: Record<string, any> = {
   Facebook, Youtube, MessageCircle, Instagram, Twitter, Globe, Linkedin, Github,
