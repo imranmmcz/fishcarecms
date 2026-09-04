@@ -3,6 +3,8 @@ import { Fish, Phone, Mail, MapPin, Facebook, Youtube, MessageCircle, Instagram,
 import { useLanguage } from "@/contexts/LanguageContext";
 import { UnderwaterEffect } from "@/components/UnderwaterEffect";
 import { usePageContent } from "@/hooks/usePageContent";
+import ApiHealthWidget from "@/components/ApiHealthWidget";
+
 
 const iconMap: Record<string, any> = {
   Facebook, Youtube, MessageCircle, Instagram, Twitter, Globe, Linkedin, Github,
@@ -320,10 +322,12 @@ const Footer = () => {
 
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
           <p className="text-center text-xs" style={{ color: 'hsl(var(--footer-text, 215 19% 78%) / 0.7)' }}>{bottomText}</p>
+          <ApiHealthWidget />
         </div>
       </div>
+
     </footer>
   );
 };
