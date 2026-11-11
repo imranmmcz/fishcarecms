@@ -1,0 +1,1 @@
+Keep API base/path composition in `src/lib/apiUrl.ts` so a configured `/api` prefix is never duplicated across backend requests.
