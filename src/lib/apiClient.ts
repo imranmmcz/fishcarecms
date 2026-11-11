@@ -5,6 +5,7 @@
  * middleware can verify the user.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { buildApiUrl } from "@/lib/apiUrl";
 
 const API_STORAGE_KEY = "api_server_config";
 const CANONICAL_API_URL = "https://api.fishcare.com.bd/api";
@@ -84,7 +85,7 @@ async function request<T>(
       null
     );
   }
-  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const url = buildApiUrl(base, path);
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(await authHeader()),
@@ -127,7 +128,7 @@ export async function pingBackend(): Promise<boolean> {
   const base = getApiBaseUrl();
   if (!base) return false;
   try {
-    const res = await fetch(`${base}/api/health`, {
+    const res = await fetch(buildApiUrl(base, "/api/health"), {
       method: "GET",
       signal: AbortSignal.timeout(10_000),
     });
