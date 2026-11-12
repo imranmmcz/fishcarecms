@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1794449720059,
+      "tag": "0000_secure_blog_and_login_tracking_policies",
+      "breakpoints": true
+    }
+  ]
+}
