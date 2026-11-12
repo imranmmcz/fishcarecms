@@ -274,11 +274,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
-    
-    if (!error && data?.user) {
+    const { data: loginData, error: loginError } = await supabase.functions.invoke<{
+      session?: { access_token: string; refresh_token: string };
+      user?: { id: string };
+      error?: string;
+    }>("secure-login", { body: { email, password } });
+
+    if (loginError) return { error: loginError };
+    if (loginData?.error || !loginData?.session || !loginData.user?.id) {
+      return { error: new Error(loginData?.error || "লগইন ব্যর্থ হয়েছে") };
+    }
+
+    const { error: sessionError } = await supabase.auth.setSession(loginData.session);
+    if (sessionError) return { error: sessionError };
+
+    if (loginData.user) {
       // Check if user is blocked
-      const { data: blockData } = await supabase.rpc("is_user_blocked", { check_user_id: data.user.id });
+      const { data: blockData } = await supabase.rpc("is_user_blocked", { check_user_id: loginData.user.id });
       if (blockData === true) {
         await supabase.auth.signOut();
         return { error: new Error("আপনার অ্যাকাউন্ট ব্লক করা হয়েছে। অ্যাডমিনের সাথে যোগাযোগ করুন।") };
@@ -287,14 +299,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Log login activity
       try {
         await supabase.from("user_activity_logs").insert({
-          user_id: data.user.id,
+          user_id: loginData.user.id,
           activity_type: "login",
           description: "ইউজার লগইন করেছেন",
         } as any);
       } catch {}
     }
     
-    return { error: error as Error | null };
+    return { error: null };
   };
 
   const signUp = async (email: string, password: string, fullName: string, addressData?: AddressData, roleType?: string) => {
