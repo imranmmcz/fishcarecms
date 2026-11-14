@@ -15,6 +15,13 @@
       "when": 1794658011233,
       "tag": "0001_restrict_review_helpful_vote_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794659447418,
+      "tag": "0002_restrict_role_permission_reads",
+      "breakpoints": true
     }
   ]
 }
