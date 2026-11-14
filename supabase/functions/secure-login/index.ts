@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     }
 
     const { data, error } = await authClient.auth.signInWithPassword({ email, password });
-    const forwardedIp = req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip");
+    const forwardedIp = req.headers.get("cf-connecting-ip");
     const { error: logError } = await adminClient.from("login_attempts").insert({
       email,
       success: !error,
