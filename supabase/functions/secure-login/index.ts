@@ -23,10 +23,10 @@ Deno.serve(async (req) => {
     const password = typeof body.password === "string" ? body.password : "";
 
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return jsonResponse({ error: "A valid email address is required" });
+      return jsonResponse({ error: "A valid email address is required" }, 400);
     }
     if (password.length < 6 || password.length > 1024) {
-      return jsonResponse({ error: "Invalid email or password" });
+      return jsonResponse({ error: "Invalid email or password" }, 400);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
         error: `অনেক বেশি ভুল চেষ্টা। ${rateLimit.remaining_minutes} মিনিট পর আবার চেষ্টা করুন।`,
         locked: true,
         remaining_minutes: rateLimit.remaining_minutes,
-      });
+      }, 429);
     }
 
     const { data, error } = await authClient.auth.signInWithPassword({ email, password });
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     if (logError) console.error("Secure login attempt could not be recorded");
 
     if (error || !data.session || !data.user) {
-      return jsonResponse({ error: error?.message || "Invalid email or password" });
+      return jsonResponse({ error: error?.message || "Invalid email or password" }, 401);
     }
 
     return jsonResponse({
