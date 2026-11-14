@@ -60,15 +60,30 @@ Deno.serve(async (req) => {
     }
 
     const { data, error } = await authClient.auth.signInWithPassword({ email, password });
+    let blocked = false;
+    if (!error && data.user) {
+      const { data: isBlocked, error: blockCheckError } = await adminClient.rpc(
+        "is_user_blocked",
+        { check_user_id: data.user.id },
+      );
+      if (blockCheckError) {
+        console.error("Secure login account status check failed");
+        return jsonResponse({ error: "Sign-in service is unavailable" }, 503);
+      }
+      blocked = isBlocked === true;
+    }
     const forwardedIp = req.headers.get("cf-connecting-ip");
     const { error: logError } = await adminClient.from("login_attempts").insert({
       email,
-      success: !error,
+      success: !error && !blocked,
       ip_address: forwardedIp?.slice(0, 100) ?? null,
       user_agent: req.headers.get("user-agent")?.slice(0, 500) ?? null,
     });
     if (logError) console.error("Secure login attempt could not be recorded");
 
+    if (blocked) {
+      return jsonResponse({ error: "আপনার অ্যাকাউন্ট ব্লক করা হয়েছে। অ্যাডমিনের সাথে যোগাযোগ করুন।", blocked: true }, 403);
+    }
     if (error || !data.session || !data.user) {
       return jsonResponse({ error: error?.message || "Invalid email or password" }, 401);
     }

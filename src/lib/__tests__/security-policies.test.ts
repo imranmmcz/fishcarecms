@@ -28,5 +28,6 @@ describe("security policy ownership", () => {
   it("removes direct login-attempt writes and records them from secure login", () => {
     expect(blogAndLoginMigration).toMatch(/REVOKE INSERT, UPDATE, DELETE ON public\.login_attempts FROM anon, authenticated/);
     expect(loginFunction).toMatch(/adminClient\.from\("login_attempts"\)\.insert/);
+    expect(loginFunction).toMatch(/success: !error && !blocked/);
   });
 });

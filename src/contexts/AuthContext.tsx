@@ -278,8 +278,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       session?: { access_token: string; refresh_token: string };
       user?: { id: string };
       error?: string;
+      blocked?: boolean;
     }>("secure-login", { body: { email, password } });
 
+    if (loginData?.blocked) {
+      return { error: new Error("আপনার অ্যাকাউন্ট ব্লক করা হয়েছে। অ্যাডমিনের সাথে যোগাযোগ করুন।") };
+    }
     if (loginError) return { error: loginError };
     if (loginData?.error || !loginData?.session || !loginData.user?.id) {
       return { error: new Error(loginData?.error || "লগইন ব্যর্থ হয়েছে") };
